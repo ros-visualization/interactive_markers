@@ -1,0 +1,15 @@
+<package>
+<description brief="SDL-based point cloud">
+A simple point cloud viewer written using SDL.
+</description>
+<author>Morgan Quigley mquigley@cs.stanford.edu</author>
+<license>BSD</license>
+<url>http://stair.stanford.edu</url>
+<depend package="roscpp"/>
+<depend package="std_msgs"/>
+<depend package="sdlgl"/>
+<export>
+  <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -lcloud_viewer -lGL -lGLU"/>
+</export>
+</package>
+
