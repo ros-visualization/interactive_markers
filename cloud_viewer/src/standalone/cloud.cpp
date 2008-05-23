@@ -1,16 +1,50 @@
+///////////////////////////////////////////////////////////////////////////////
+// This file provides a handy little cloud viewer
+//
+// Copyright (C) 2008, Morgan Quigley
+//
+// Redistribution and use in source and binary forms, with or without 
+// modification, are permitted provided that the following conditions are met:
+//   * Redistributions of source code must retain the above copyright notice, 
+//     this list of conditions and the following disclaimer.
+//   * Redistributions in binary form must reproduce the above copyright 
+//     notice, this list of conditions and the following disclaimer in the 
+//     documentation and/or other materials provided with the distribution.
+//   * Neither the name of Stanford University nor the names of its 
+//     contributors may be used to endorse or promote products derived from 
+//     this software without specific prior written permission.
+//   
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+// POSSIBILITY OF SUCH DAMAGE.
+
+
 #include <SDL.h>
 #include <cstdio>
 #include <unistd.h>
 #include <string.h>
 #include "cloud_viewer/cloud_viewer.h"
+#include <ctime>
 
 int main(int argc, char **argv)
 {
+  srand(time(NULL));
+  double frac_to_show = 1.0;
   if (argc < 2)
   {
     printf("please give the cloudfile as the first parameter\n");
     return 0;
   }
+  if (argc >= 3)
+    frac_to_show = atof(argv[2]);
 
   printf("opening [%s]\n", argv[1]);
   FILE *f = fopen(argv[1], "r");
@@ -29,12 +63,17 @@ int main(int argc, char **argv)
       printf("bad syntax on line %d\n", line_num);
       break;
     }
-    //y *= -1; // convert from right-hand coordinate system
     if (line_num == 1)
     {
       printf("%f %f %f\n", x, y, z);
     }
-    cloud_viewer.add_point(x, y, z, 255*r, 255*g, 255*b);
+    if (frac_to_show < 1.0)
+    {
+      if (rand() % 1000 <= (int)(frac_to_show * 1000))
+        cloud_viewer.add_point(x, y, z, 255*r, 255*g, 255*b);
+    }
+    else
+      cloud_viewer.add_point(x, y, z, 255*r, 255*g, 255*b);
     line_num++;
   }
   printf("read %d points\n", line_num);
@@ -46,7 +85,6 @@ int main(int argc, char **argv)
   }
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,   24);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-//  const int w = 640, h = 480;
   const int w = 1280, h = 960;
   if (SDL_SetVideoMode(w, h, 32, SDL_OPENGL | SDL_HWSURFACE) == 0)
   {
@@ -55,15 +93,9 @@ int main(int argc, char **argv)
   }
 
   cloud_viewer.set_opengl_params(w,h);
-  cloud_viewer.set_look_tgt(0, 0.5, 1.0);
+  cloud_viewer.set_look_tgt(0, 0, 0);
   cloud_viewer.render();
   SDL_GL_SwapBuffers();
-/*
-  for (int i = 0; i < 10000; i++)
-  {
-    cloud_viewer.add_point(rand() % 10, rand() % 10, rand() % 10, 255, 255, 255);
-  }
-*/
 
   bool done = false;
   while(!done)
