@@ -45,7 +45,7 @@
 #include <sys/stat.h>
 
 #include <vector>
-
+using namespace std;
 struct cloud_point {
 public:
   float x;
