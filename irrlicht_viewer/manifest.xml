@@ -9,6 +9,8 @@ This is a rendering engine for data visulization which uses the Irrlicht Renderi
 <url>http://pr.willowgarage.com/wiki/ROS</url>
 <depend package="irrlicht"/>
 <depend package="rosthread"/>
+<depend package="roscpp"/>
+<depend package="std_msgs"/>
 <export>
 </export>
 </package>

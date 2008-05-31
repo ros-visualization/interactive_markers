@@ -35,13 +35,16 @@ $(ILRENDER_LIB):  $(call objects,$(CUSTOM_NODES))
 test: ILRenderTest.cc ILRender.o ILClient.o $(ILRENDER_LIB) 
 	$(CPP) $(CPPFLAGS) -o $@ $^  $(LDFLAGS)
 
+test2: test2.cc ILRender.o ILClient.o $(ILRENDER_LIB) 
+	$(CPP) $(CPPFLAGS) -o $@ $^  $(LDFLAGS)
+
 build_lib: $(ILRENDER_LIB)
 
 # Special Targets
 
 clean:
-	$(CLEANCOMMAND)
-	rm -rf test
-	cd $(ILRENDER_PATH)/CustomNodes && $(CLEANCOMMAND)
+	rm -rf *.o *.a
+	rm -rf test test2
+	cd CustomNodes && rm -rf *.o
 
 

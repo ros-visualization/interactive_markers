@@ -28,10 +28,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //////////////////////////////////////////////////////////////////////////////
 
-// Feeder includes
-#include <feeder/UCData.hh>
-#include <feeder/PostProcessor.hh>
-#include "UCDPointCloud.hh"
+#include "rosthread/member_thread.h"
 
 // Renderer includes
 #include <irrlicht.h>
@@ -40,35 +37,34 @@
 #include "CustomNodes/ILPointCloud.hh"
 #include "CustomNodes/ILGrid.hh"
 
+#include "ros/node.h"
+#include "std_msgs/MsgPointCloudFloat32.h"
+#include "std_msgs/MsgEmpty.h"
+
 class PPILRender :
-  public PostProcessor<UCDPointCloud, UCData>
+  public ros::node
 {
 public:
-  typedef UCDPointCloud	input_t;
-  typedef UCData	output_t;
 
+  MsgPointCloudFloat32 cloudIn;
+  MsgEmpty shutter;
+
+  ILClient localClient;
+  ILRender *pLocalRenderer;
+  ILPointCloud *ilCloud;
+  ILGrid *ilGrid;
+  
   // Constructor
-  PPILRender(PPInfo<input_t> p_info, int scans_to_plot) : PostProcessor<input_t, output_t>(p_info) {
-    m_name = "PPILRender";
-    m_pOutputBuffer = new UCRingBuffer<output_t>(8);
-  };
+  PPILRender() : ros::node("ILRender"), localClient() {
 
-  ~PPILRender() {
-    disable();
-  };
-
-  void activeLoop() {
-    input_t* p_ibuff;
-
-    ILClient localClient;
-    ILRender *pLocalRenderer = ILClient::getSingleton();
+    pLocalRenderer = ILClient::getSingleton();
 
     pLocalRenderer->lock();
-    ILPointCloud *ilCloud = new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(), pLocalRenderer->manager(), 666);
-    ILGrid *ilGrid = new ILGrid(pLocalRenderer->manager()->getRootSceneNode(), pLocalRenderer->manager(), 667);
+    ilCloud = new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(), pLocalRenderer->manager(), 666);
+    ilGrid = new ILGrid(pLocalRenderer->manager()->getRootSceneNode(), pLocalRenderer->manager(), 667);
     pLocalRenderer->unlock();
 
-    ilCloud->preallocatePoints(100000);
+    ilCloud->preallocatePoints(65000);  //Can this go over MAX_RENDERABLE?
     pLocalRenderer->addNode(ilCloud);
     pLocalRenderer->enable(ilCloud);
 
@@ -76,24 +72,48 @@ public:
     pLocalRenderer->addNode(ilGrid);
     pLocalRenderer->enable(ilGrid);
 
-    while (m_enabled) {
-      p_ibuff = m_rInputBuffer.getLatestAndRetain();	// Block for new data
+    subscribe("cloud", cloudIn, &PPILRender::callback, this);
+    subscribe("shutter", shutter, &PPILRender::clear, this);
 
-      // Process data (this takes about 2500 usec for a 10Hz velodyne cycle)
-      pLocalRenderer->lock();
-      ilCloud->resetCount();
-      for(size_t i=0; i<p_ibuff->num_points; i++) {
-        ilCloud->addPoint(p_ibuff->rgX[i],
-                          p_ibuff->rgZ[i],
-                          p_ibuff->rgY[i],
-                          (int)(50+205*(p_ibuff->rgZ[i]/3)),0,0);
-      }
-      pLocalRenderer->unlock();
 
-      m_rInputBuffer.release(p_ibuff);
-      incrementMonitor();
-    }
+  };
+  
+  ~PPILRender() {
+    delete ilCloud;
+    delete ilGrid;
+  };
+
+  void clear()
+  {
+    std::cerr<< "Shutter"<<std::endl;
+    pLocalRenderer->lock();
+    ilCloud->resetCount();
+    pLocalRenderer->unlock();
   }
+
+  void callback() {
+    //std::cerr<<"recieved cloud"<<std::endl;
+    // Process data (this takes about 2500 usec for a 10Hz velodyne cycle)
+    pLocalRenderer->lock();
+    //    unsigned int temp = ilCloud->getCount();
+    //if (temp + cloudIn.get_pts_size() > ILPointCloud::MAX_RENDERABLE)
+    // {
+    //	std::cerr<< "Point Cloud Overflow, clearing" << std::endl;
+    //	ilCloud->resetCount();
+    // }
+
+    //    std::cerr<<"Points: " << cloudIn.get_pts_size() << std::endl;
+    for(size_t i=0; i < cloudIn.get_pts_size(); i = i + 3) { //FIXME protect form cloud overruns 65k
+      //      usleep(10);
+      //std::cerr<<"i = " << i << std::endl;
+      ilCloud->addPoint(cloudIn.pts[i].y,
+			cloudIn.pts[i].z,
+			cloudIn.pts[i].x,
+			(int)(128-100*(cloudIn.pts[i].z)),255,0);
+    }
+    pLocalRenderer->unlock();
+  };
+    
 };
 
 #endif // ifndef __PP_IL_RENDER_HH
