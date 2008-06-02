@@ -83,6 +83,8 @@ public:
     delete ilGrid;
   };
 
+  bool isEnabled(){return pLocalRenderer->isEnabled();};
+
   void clear()
   {
     std::cerr<< "Shutter"<<std::endl;

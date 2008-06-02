@@ -94,6 +94,8 @@ public:
   irr::video::IVideoDriver* driver();
   irr::scene::ISceneManager* manager();
 
+  bool isEnabled(){return m_enabled;};
+
 private:
   // Flags
   bool m_enabled;
