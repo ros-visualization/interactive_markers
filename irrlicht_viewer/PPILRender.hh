@@ -105,13 +105,13 @@ public:
     // }
 
     //    std::cerr<<"Points: " << cloudIn.get_pts_size() << std::endl;
-    for(size_t i=0; i < cloudIn.get_pts_size(); i = i + 3) { //FIXME protect form cloud overruns 65k
+    for(size_t i=0; i < cloudIn.get_pts_size(); i = i + 4) { //FIXME protect form cloud overruns 65k
       //      usleep(10);
       //std::cerr<<"i = " << i << std::endl;
-      ilCloud->addPoint(cloudIn.pts[i].y,
+      ilCloud->addPoint(-cloudIn.pts[i].y,
 			cloudIn.pts[i].z,
 			cloudIn.pts[i].x,
-			(int)(128-100*(cloudIn.pts[i].z)),255,0);
+			(int)cloudIn.chan[0].vals[i]/16.0,(int)cloudIn.chan[0].vals[i]/16.0,128);
     }
     pLocalRenderer->unlock();
   };
