@@ -3,7 +3,7 @@
 CPP = g++
 
 # Default Target
-all: build_lib
+all: build_lib viewer
 
 headers = $(filter %.hh %.h, $(1))
 noheaders = $(filter-out %.hh %.h, $(1))
@@ -35,7 +35,7 @@ $(ILRENDER_LIB):  $(call objects,$(CUSTOM_NODES))
 test: ILRenderTest.cc ILRender.o ILClient.o $(ILRENDER_LIB) 
 	$(CPP) $(CPPFLAGS) -o $@ $^  $(LDFLAGS)
 
-test2: test2.cc ILRender.o ILClient.o $(ILRENDER_LIB) 
+viewer: viewer.cc ILRender.o ILClient.o $(ILRENDER_LIB) 
 	$(CPP) $(CPPFLAGS) -o $@ $^  $(LDFLAGS)
 
 build_lib: $(ILRENDER_LIB)

@@ -70,10 +70,6 @@ public:
     ilGrid = new ILGrid(pLocalRenderer->manager()->getRootSceneNode(), pLocalRenderer->manager(), 667);
     pLocalRenderer->unlock();
 
-    ilCloud->preallocatePoints(65000);  //Can this go over MAX_RENDERABLE?
-    ilCloud1->preallocatePoints(65000);  //Can this go over MAX_RENDERABLE?
-    ilCloud2->preallocatePoints(65000);  //Can this go over MAX_RENDERABLE?
-    ilCloud3->preallocatePoints(65000);  //Can this go over MAX_RENDERABLE?
     pLocalRenderer->addNode(ilCloud);
     pLocalRenderer->enable(ilCloud);
     pLocalRenderer->addNode(ilCloud1);
@@ -130,22 +126,22 @@ public:
 	ilCloud->addPoint(-cloudIn.pts[i].y,
 			  cloudIn.pts[i].z,
 			  cloudIn.pts[i].x,
-			  (int)cloudIn.chan[0].vals[i]/16.0,(int)cloudIn.chan[0].vals[i]/16.0,128);
+			  (int)(cloudIn.chan[0].vals[i]/16.0),(int)(cloudIn.chan[0].vals[i]/16.0),128);
       else if ((i + 1)%4 == 0)
 	ilCloud1->addPoint(-cloudIn.pts[i].y,
 			   cloudIn.pts[i].z,
 			   cloudIn.pts[i].x,
-			   (int)cloudIn.chan[0].vals[i]/16.0,(int)cloudIn.chan[0].vals[i]/16.0,128);
+			   (int)(cloudIn.chan[0].vals[i]/16.0),(int)(cloudIn.chan[0].vals[i]/16.0),128);
       else if ((i + 2)%4 == 0)
 	ilCloud2->addPoint(-cloudIn.pts[i].y,
 			   cloudIn.pts[i].z,
 			   cloudIn.pts[i].x,
-			   (int)cloudIn.chan[0].vals[i]/16.0,(int)cloudIn.chan[0].vals[i]/16.0,128);
+			   (int)(cloudIn.chan[0].vals[i]/16.0),(int)(cloudIn.chan[0].vals[i]/16.0),128);
       else 
 	ilCloud3->addPoint(-cloudIn.pts[i].y,
 			   cloudIn.pts[i].z,
 			   cloudIn.pts[i].x,
-			   (int)cloudIn.chan[0].vals[i]/16.0,(int)cloudIn.chan[0].vals[i]/16.0,128);
+			   (int)(cloudIn.chan[0].vals[i]/16.0),(int)(cloudIn.chan[0].vals[i]/16.0),128);
     }
     pLocalRenderer->unlock();
   };

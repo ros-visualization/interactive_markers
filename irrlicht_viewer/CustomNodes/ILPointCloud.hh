@@ -39,9 +39,6 @@ public:
   ILPointCloud(irr::scene::ISceneNode* parent, irr::scene::ISceneManager* mgr, irr::s32 id);
   ~ILPointCloud();
 
-  // Memory management
-  void preallocatePoints(const size_t numPoints);
-  void deallocatePoints();
 
   // Manipulators
   void addPoint(const double x, const double y, const double z, const int r, const int g, const int b);
@@ -59,6 +56,11 @@ public:
   virtual irr::video::SMaterial& getMaterial(irr::u32 i);
 
 private:
+  // Memory management
+  void preallocatePoints(const size_t numPoints);
+  void deallocatePoints();
+
+
   size_t m_numPoints, m_numAllocPoints;
   irr::video::S3DVertex *m_points;
 

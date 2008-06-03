@@ -45,6 +45,8 @@ ILPointCloud::ILPointCloud(irr::scene::ISceneNode* parent,
   m_material.PointCloud = true;
   m_material.BackfaceCulling = false;
   m_material.Thickness = 2;
+
+  preallocatePoints(MAX_RENDERABLE);
 }
 
 ILPointCloud::~ILPointCloud() {
