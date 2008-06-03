@@ -126,22 +126,22 @@ public:
 	ilCloud->addPoint(-cloudIn.pts[i].y,
 			  cloudIn.pts[i].z,
 			  cloudIn.pts[i].x,
-			  (int)(cloudIn.chan[0].vals[i]/16.0),(int)(cloudIn.chan[0].vals[i]/16.0),128);
+			  (int)(cloudIn.pts[i].z * 32.0)+64,(int)(cloudIn.chan[0].vals[i]/16.0),128);
       else if ((i + 1)%4 == 0)
 	ilCloud1->addPoint(-cloudIn.pts[i].y,
 			   cloudIn.pts[i].z,
 			   cloudIn.pts[i].x,
-			   (int)(cloudIn.chan[0].vals[i]/16.0),(int)(cloudIn.chan[0].vals[i]/16.0),128);
+			   (int)(cloudIn.pts[i].z * 32.0)+64,(int)(cloudIn.chan[0].vals[i]/16.0),128);
       else if ((i + 2)%4 == 0)
 	ilCloud2->addPoint(-cloudIn.pts[i].y,
 			   cloudIn.pts[i].z,
 			   cloudIn.pts[i].x,
-			   (int)(cloudIn.chan[0].vals[i]/16.0),(int)(cloudIn.chan[0].vals[i]/16.0),128);
+			   (int)(cloudIn.pts[i].z * 32.0)+64,(int)(cloudIn.chan[0].vals[i]/16.0),128);
       else 
 	ilCloud3->addPoint(-cloudIn.pts[i].y,
 			   cloudIn.pts[i].z,
 			   cloudIn.pts[i].x,
-			   (int)(cloudIn.chan[0].vals[i]/16.0),(int)(cloudIn.chan[0].vals[i]/16.0),128);
+			   (int)(cloudIn.pts[i].z * 32.0)+64,(int)(cloudIn.chan[0].vals[i]/16.0),128);
     }
     pLocalRenderer->unlock();
   };
