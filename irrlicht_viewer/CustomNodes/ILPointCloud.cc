@@ -46,7 +46,7 @@ ILPointCloud::ILPointCloud(irr::scene::ISceneNode* parent,
   m_material.BackfaceCulling = false;
   m_material.Thickness = 2;
 
-  preallocatePoints(MAX_RENDERABLE);
+  preallocatePoints(1024);
 }
 
 ILPointCloud::~ILPointCloud() {
@@ -74,8 +74,15 @@ void ILPointCloud::deallocatePoints() {
 void ILPointCloud::addPoint(const double x, const double y, const double z,
                             const int r, const int g, const int b)
 {
+  if(m_numPoints >= MAX_RENDERABLE)
+    {
+      //std::cerr<<"Overfilling"<< std::endl;
+      return;
+    }
   if(m_numPoints == m_numAllocPoints) {
-    m_points = (video::S3DVertex*)realloc(m_points,2*m_numAllocPoints*sizeof(video::S3DVertex));
+    //std::cerr<<"Reallocating"<<std::endl;
+    m_numAllocPoints = MIN(2 * m_numAllocPoints, MAX_RENDERABLE);
+    m_points = (video::S3DVertex*)realloc(m_points,m_numAllocPoints*sizeof(video::S3DVertex));
   }
 
   m_points[m_numPoints].Pos.set(x,y,z);
@@ -89,15 +96,16 @@ void ILPointCloud::addPoints(double *rgX, double *rgY, double *rgZ,
                              const size_t numPoints)
 {
   if(m_numPoints+numPoints >= m_numAllocPoints) {
-    m_points = (video::S3DVertex*)realloc(m_points,numPoints*sizeof(video::S3DVertex));
+    m_numAllocPoints = MIN ( m_numPoints+numPoints, MAX_RENDERABLE);
+    m_points = (video::S3DVertex*)realloc(m_points,m_numAllocPoints * sizeof(video::S3DVertex));
   }
 
   for(int i=0; i<numPoints; i++) {
-    m_points[m_numPoints].Pos.set(rgX[i],rgY[i],rgZ[i]);
-    m_points[m_numPoints].Color.set(255,rgR[i],rgG[i],rgB[i]);
+    m_points[m_numPoints + i].Pos.set(rgX[i],rgY[i],rgZ[i]);
+    m_points[m_numPoints + i].Color.set(255,rgR[i],rgG[i],rgB[i]);
   }
   
-  m_numPoints = numPoints;
+  m_numPoints += numPoints;
 }
 
 void ILPointCloud::resetCount() {
