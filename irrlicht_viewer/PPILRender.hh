@@ -52,6 +52,9 @@ public:
   ILClient localClient;
   ILRender *pLocalRenderer;
   ILPointCloud *ilCloud;
+  ILPointCloud *ilCloud1;
+  ILPointCloud *ilCloud2;
+  ILPointCloud *ilCloud3;
   ILGrid *ilGrid;
   
   // Constructor
@@ -61,12 +64,24 @@ public:
 
     pLocalRenderer->lock();
     ilCloud = new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(), pLocalRenderer->manager(), 666);
+    ilCloud1 = new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(), pLocalRenderer->manager(), 668);
+    ilCloud2 = new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(), pLocalRenderer->manager(), 669);
+    ilCloud3 = new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(), pLocalRenderer->manager(), 670);
     ilGrid = new ILGrid(pLocalRenderer->manager()->getRootSceneNode(), pLocalRenderer->manager(), 667);
     pLocalRenderer->unlock();
 
     ilCloud->preallocatePoints(65000);  //Can this go over MAX_RENDERABLE?
+    ilCloud1->preallocatePoints(65000);  //Can this go over MAX_RENDERABLE?
+    ilCloud2->preallocatePoints(65000);  //Can this go over MAX_RENDERABLE?
+    ilCloud3->preallocatePoints(65000);  //Can this go over MAX_RENDERABLE?
     pLocalRenderer->addNode(ilCloud);
     pLocalRenderer->enable(ilCloud);
+    pLocalRenderer->addNode(ilCloud1);
+    pLocalRenderer->enable(ilCloud1);
+    pLocalRenderer->addNode(ilCloud2);
+    pLocalRenderer->enable(ilCloud2);
+    pLocalRenderer->addNode(ilCloud3);
+    pLocalRenderer->enable(ilCloud3);
 
     ilGrid->makegrid(100,1.0f,50,50,50);
     pLocalRenderer->addNode(ilGrid);
@@ -90,6 +105,9 @@ public:
     std::cerr<< "Shutter"<<std::endl;
     pLocalRenderer->lock();
     ilCloud->resetCount();
+    ilCloud1->resetCount();
+    ilCloud2->resetCount();
+    ilCloud3->resetCount();
     pLocalRenderer->unlock();
   }
 
@@ -105,13 +123,29 @@ public:
     // }
 
     //    std::cerr<<"Points: " << cloudIn.get_pts_size() << std::endl;
-    for(size_t i=0; i < cloudIn.get_pts_size(); i = i + 4) { //FIXME protect form cloud overruns 65k
+    for(size_t i=0; i < cloudIn.get_pts_size(); i ++) { //FIXME protect form cloud overruns 65k
       //      usleep(10);
       //std::cerr<<"i = " << i << std::endl;
-      ilCloud->addPoint(-cloudIn.pts[i].y,
-			cloudIn.pts[i].z,
-			cloudIn.pts[i].x,
-			(int)cloudIn.chan[0].vals[i]/16.0,(int)cloudIn.chan[0].vals[i]/16.0,128);
+      if (i%4 == 0)
+	ilCloud->addPoint(-cloudIn.pts[i].y,
+			  cloudIn.pts[i].z,
+			  cloudIn.pts[i].x,
+			  (int)cloudIn.chan[0].vals[i]/16.0,(int)cloudIn.chan[0].vals[i]/16.0,128);
+      else if ((i + 1)%4 == 0)
+	ilCloud1->addPoint(-cloudIn.pts[i].y,
+			   cloudIn.pts[i].z,
+			   cloudIn.pts[i].x,
+			   (int)cloudIn.chan[0].vals[i]/16.0,(int)cloudIn.chan[0].vals[i]/16.0,128);
+      else if ((i + 2)%4 == 0)
+	ilCloud2->addPoint(-cloudIn.pts[i].y,
+			   cloudIn.pts[i].z,
+			   cloudIn.pts[i].x,
+			   (int)cloudIn.chan[0].vals[i]/16.0,(int)cloudIn.chan[0].vals[i]/16.0,128);
+      else 
+	ilCloud3->addPoint(-cloudIn.pts[i].y,
+			   cloudIn.pts[i].z,
+			   cloudIn.pts[i].x,
+			   (int)cloudIn.chan[0].vals[i]/16.0,(int)cloudIn.chan[0].vals[i]/16.0,128);
     }
     pLocalRenderer->unlock();
   };
