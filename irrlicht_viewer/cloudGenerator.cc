@@ -18,10 +18,8 @@ public:
   };
   //  ~cloudGenerator(){return;};
   
-  
   void sendCloud()
   {
-    MsgPointCloudFloat32 cloud;
     cloud.set_pts_size(num_points);
     cloud.set_chan_size(1);
     cloud.chan[0].name = "intensities";
