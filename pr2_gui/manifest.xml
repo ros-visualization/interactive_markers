@@ -1,0 +1,18 @@
+<package>
+<description brief="PR2 GUI">
+
+A flexible visualization and teleoperation GUI for the PR2.
+
+</description>
+<author>Matthew Piccoli</author>
+<license>BSD</license>
+<url>http://pr.willowgarage.com/wiki/ROS</url>
+<depend package="irrlicht_viewer"/>
+<depend package="rosthread"/>
+<depend package="roscpp"/>
+<depend package="std_msgs"/>
+<export> 
+  <!-- <cpp cflags=" -I${prefix}/ -I${prefix}/CustomNodes/" lflags="-L${prefix}/ -lirrlicht_viewer"/> -->
+</export>
+</package>
+
