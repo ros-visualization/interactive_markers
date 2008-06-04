@@ -6,7 +6,7 @@ int main(int argc, char ** argv)
 
   PPILRender* myRenderer = new PPILRender();
 
-  while(myRenderer->isEnabled())
+  while(myRenderer->isEnabled() && myRenderer->ok())
     {
       sleep(1);
     }
