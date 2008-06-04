@@ -11,7 +11,8 @@ This is a rendering engine for data visulization which uses the Irrlicht Renderi
 <depend package="rosthread"/>
 <depend package="roscpp"/>
 <depend package="std_msgs"/>
-<export>
+<export> 
+  <cpp cflags=" -I${prefix}/ -I${prefix}/CustomNodes/" lflags="-L${prefix}/ -lirrlicht_viewer"/>
 </export>
 </package>
 
