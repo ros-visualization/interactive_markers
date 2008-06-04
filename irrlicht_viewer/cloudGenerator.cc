@@ -60,14 +60,14 @@ int main(int argc, char ** argv)
   ros::init(argc, argv);
 
   cloudGenerator myClouder;
-
-for (unsigned int i = 0; i < 1000000; i++)
-  {
-    myClouder.sendCloud();
-    if (i % 100)
-      myClouder.sendShutter();
-    usleep(10000);
-    
+  unsigned int i = 0;
+  while (myClouder.ok())
+    {
+      myClouder.sendCloud();
+      if (i++ % 100)
+	myClouder.sendShutter();
+      usleep(10000);
+      
   }
  
  ros::fini();
