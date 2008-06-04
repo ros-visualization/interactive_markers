@@ -30,7 +30,7 @@ public:
 	cloud.pts[i].x = cos((double)i/100.0 +seconds) * (1 - sin(seconds/45.0)) * 10.0;
 	cloud.pts[i].y = i * 0.01 + cos(seconds)*20.0 - 50;
 	cloud.pts[i].z = 10*sin((double)i/100.0+seconds) * cos(seconds/10.0);
-	cloud.chan[0].vals[i] = cos(i)*2000.0 + 2000;
+	cloud.chan[0].vals[i] = cos(seconds)*2000.0 + 2000;
       }
     
     publish("cloud",cloud);
