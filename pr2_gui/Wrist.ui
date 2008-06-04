@@ -1,0 +1,53 @@
+<!DOCTYPE UI><UI version="3.3" stdsetdef="1">
+<class>Wrist</class>
+<widget class="QMainWindow">
+    <property name="name">
+        <cstring>Wrist</cstring>
+    </property>
+    <property name="geometry">
+        <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>301</width>
+            <height>297</height>
+        </rect>
+    </property>
+    <property name="caption">
+        <string>Wrist</string>
+    </property>
+    <grid>
+        <property name="name">
+            <cstring>unnamed</cstring>
+        </property>
+        <widget class="QGroupBox" row="1" column="0">
+            <property name="name">
+                <cstring>Controls_GB</cstring>
+            </property>
+            <property name="title">
+                <string>Controls</string>
+            </property>
+        </widget>
+        <widget class="QLabel" row="0" column="0">
+            <property name="name">
+                <cstring>PLACEHOLDER_WristCam_label</cstring>
+            </property>
+            <property name="pixmap">
+                <pixmap></pixmap>
+            </property>
+            <property name="scaledContents">
+                <bool>true</bool>
+            </property>
+        </widget>
+    </grid>
+</widget>
+<toolbars>
+</toolbars>
+<includes>
+    <include location="local" impldecl="in implementation">Wrist.ui.h</include>
+</includes>
+<slots>
+    <slot>death()</slot>
+</slots>
+<pixmapinproject/>
+<layoutdefaults spacing="6" margin="11"/>
+</UI>

@@ -32,13 +32,7 @@
 
 using namespace irr;
 
-ILPointCloud::ILPointCloud(irr::scene::ISceneNode* parent,
-                           irr::scene::ISceneManager* mgr,
-                           irr::s32 id)
-: scene::ISceneNode(parent, mgr, id),
-  m_numPoints (0),
-  m_numAllocPoints (0),
-  m_points (NULL)
+ILPointCloud::ILPointCloud(irr::scene::ISceneNode* parent, irr::scene::ISceneManager* mgr, irr::s32 id) : scene::ISceneNode(parent, mgr, id), m_numPoints (0), m_numAllocPoints (0), m_points (NULL)
 {
   m_material.Lighting = false;
   m_material.Wireframe = false;
@@ -71,8 +65,7 @@ void ILPointCloud::deallocatePoints() {
 }
 
 // Manipulators
-void ILPointCloud::addPoint(const double x, const double y, const double z,
-                            const int r, const int g, const int b)
+void ILPointCloud::addPoint(const double x, const double y, const double z, const int r, const int g, const int b)
 {
   if(m_numPoints >= MAX_RENDERABLE)
     {
@@ -91,9 +84,7 @@ void ILPointCloud::addPoint(const double x, const double y, const double z,
   m_numPoints++;
 }
 
-void ILPointCloud::addPoints(double *rgX, double *rgY, double *rgZ,
-                             int *rgR, int *rgG, int *rgB,
-                             const size_t numPoints)
+void ILPointCloud::addPoints(double *rgX, double *rgY, double *rgZ, int *rgR, int *rgG, int *rgB, const size_t numPoints)
 {
   if(m_numPoints+numPoints >= m_numAllocPoints) {
     m_numAllocPoints = MIN ( m_numPoints+numPoints, MAX_RENDERABLE);
@@ -127,10 +118,7 @@ void ILPointCloud::render() {
   driver->setTransform(video::ETS_WORLD, AbsoluteTransformation);
 
   for(size_t i=0; i<m_numPoints; i+=MAX_RENDERABLE) {
-    driver->drawVertexPrimitiveList(m_points,MIN(m_numPoints-i, MAX_RENDERABLE),
-                                    NULL, MIN(m_numPoints-i,MAX_RENDERABLE), 
-                                    video::EVT_STANDARD,
-                                    scene::EPT_POINTS);
+    driver->drawVertexPrimitiveList(m_points,MIN(m_numPoints-i, MAX_RENDERABLE), NULL, MIN(m_numPoints-i,MAX_RENDERABLE), video::EVT_STANDARD, scene::EPT_POINTS);
   }
 }
 

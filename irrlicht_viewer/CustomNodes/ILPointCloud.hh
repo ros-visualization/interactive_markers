@@ -42,9 +42,7 @@ public:
 
   // Manipulators
   void addPoint(const double x, const double y, const double z, const int r, const int g, const int b);
-  void addPoints(double *rgX, double *rgY, double *rgZ,
-                 int *rgR, int *rgG, int *rgB,
-                 const size_t numPoints);
+  void addPoints(double *rgX, double *rgY, double *rgZ, int *rgR, int *rgG, int *rgB, const size_t numPoints);
   void resetCount();
 
   // Methods implemented for engine

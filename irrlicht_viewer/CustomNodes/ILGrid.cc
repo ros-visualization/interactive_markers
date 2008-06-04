@@ -32,10 +32,7 @@
 
 using namespace irr;
 
-ILGrid::ILGrid(irr::scene::ISceneNode* parent,
-                           irr::scene::ISceneManager* mgr,
-                           irr::s32 id)
-: scene::ISceneNode(parent, mgr, id)
+ILGrid::ILGrid(irr::scene::ISceneNode* parent, irr::scene::ISceneManager* mgr, irr::s32 id) : scene::ISceneNode(parent, mgr, id)
 {
   m_material.Lighting = false;
   m_material.Wireframe = true;
@@ -79,12 +76,8 @@ void ILGrid::render() {
   for(size_t i=0; i<=m_gridSize; i++) {
     inc = m_extent-i*m_cellLength;
 
-    driver->draw3DLine(core::vector3df(inc,0,-1*m_extent),
-                       core::vector3df(inc,0,m_extent),
-                       video::SColor(255,m_r,m_g,m_b));
-    driver->draw3DLine(core::vector3df(-1*m_extent,0,inc),
-                       core::vector3df(m_extent,0,inc),
-                       video::SColor(255,m_r,m_g,m_b));
+    driver->draw3DLine(core::vector3df(inc,0,-1*m_extent), core::vector3df(inc,0,m_extent), video::SColor(255,m_r,m_g,m_b));
+    driver->draw3DLine(core::vector3df(-1*m_extent,0,inc), core::vector3df(m_extent,0,inc), video::SColor(255,m_r,m_g,m_b));
   }
 }
 

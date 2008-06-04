@@ -1,0 +1,1159 @@
+<!DOCTYPE UI><UI version="3.3" stdsetdef="1">
+<class>Launcher</class>
+<widget class="QMainWindow">
+    <property name="name">
+        <cstring>Launcher</cstring>
+    </property>
+    <property name="geometry">
+        <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>688</width>
+            <height>554</height>
+        </rect>
+    </property>
+    <property name="caption">
+        <string>Launcher</string>
+    </property>
+    <grid>
+        <property name="name">
+            <cstring>unnamed</cstring>
+        </property>
+        <widget class="QButtonGroup" row="0" column="0">
+            <property name="name">
+                <cstring>Windows_BG</cstring>
+            </property>
+            <property name="sizePolicy">
+                <sizepolicy>
+                    <hsizetype>0</hsizetype>
+                    <vsizetype>0</vsizetype>
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                </sizepolicy>
+            </property>
+            <property name="title">
+                <string>Windows</string>
+            </property>
+            <grid>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <widget class="QCheckBox" row="1" column="1">
+                    <property name="name">
+                        <cstring>PTZR_Window_CB</cstring>
+                    </property>
+                    <property name="text">
+                        <string>Right PTZ</string>
+                    </property>
+                </widget>
+                <widget class="QCheckBox" row="2" column="0">
+                    <property name="name">
+                        <cstring>WristL_Window_CB</cstring>
+                    </property>
+                    <property name="text">
+                        <string>Left Wrist</string>
+                    </property>
+                </widget>
+                <widget class="QCheckBox" row="1" column="0">
+                    <property name="name">
+                        <cstring>PTZL_Window_CB</cstring>
+                    </property>
+                    <property name="sizePolicy">
+                        <sizepolicy>
+                            <hsizetype>1</hsizetype>
+                            <vsizetype>0</vsizetype>
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                        </sizepolicy>
+                    </property>
+                    <property name="text">
+                        <string>Left PTZ</string>
+                    </property>
+                </widget>
+                <widget class="QCheckBox" row="0" column="0">
+                    <property name="name">
+                        <cstring>Vis_Window_CB</cstring>
+                    </property>
+                    <property name="text">
+                        <string>3D Visualization</string>
+                    </property>
+                </widget>
+                <widget class="QCheckBox" row="0" column="1">
+                    <property name="name">
+                        <cstring>Stereo_Window_CB</cstring>
+                    </property>
+                    <property name="text">
+                        <string>Stereo</string>
+                    </property>
+                </widget>
+                <widget class="QCheckBox" row="2" column="1">
+                    <property name="name">
+                        <cstring>WristR_Window_CB</cstring>
+                    </property>
+                    <property name="text">
+                        <string>Right Wrist</string>
+                    </property>
+                </widget>
+                <widget class="QCheckBox" row="3" column="0">
+                    <property name="name">
+                        <cstring>Topdown_Window_CB</cstring>
+                    </property>
+                    <property name="text">
+                        <string>Top Down</string>
+                    </property>
+                </widget>
+                <widget class="QCheckBox" row="3" column="1">
+                    <property name="name">
+                        <cstring>Status_Window_CB</cstring>
+                    </property>
+                    <property name="text">
+                        <string>Status</string>
+                    </property>
+                </widget>
+            </grid>
+        </widget>
+        <widget class="QPushButton" row="0" column="1">
+            <property name="name">
+                <cstring>EmergencyStop_PB</cstring>
+            </property>
+            <property name="enabled">
+                <bool>false</bool>
+            </property>
+            <property name="paletteBackgroundColor">
+                <color>
+                    <red>228</red>
+                    <green>0</green>
+                    <blue>0</blue>
+                </color>
+            </property>
+            <property name="text">
+                <string>Emergency
+Stop</string>
+            </property>
+        </widget>
+        <widget class="QTextEdit" row="1" column="0" rowspan="1" colspan="2">
+            <property name="name">
+                <cstring>Console_TE</cstring>
+            </property>
+            <property name="readOnly">
+                <bool>true</bool>
+            </property>
+            <property name="undoRedoEnabled">
+                <bool>false</bool>
+            </property>
+        </widget>
+    </grid>
+</widget>
+<menubar>
+    <property name="name">
+        <cstring>MenuBar</cstring>
+    </property>
+    <item text="&amp;File" name="fileMenu">
+        <action name="fileNewAction"/>
+        <action name="fileOpenAction"/>
+        <action name="fileSaveAction"/>
+        <action name="fileSaveAsAction"/>
+        <separator/>
+        <action name="filePrintAction"/>
+        <separator/>
+        <action name="fileExitAction"/>
+    </item>
+    <item text="Settings" name="Settings">
+        <action name="settingsLoggingAction"/>
+        <item text="Logging" name="popupMenu_9" accel="">
+            <action name="settingsLoggingAllAction"/>
+            <action name="settingsLoggingBaseAction"/>
+            <item text="Base" name="popupMenu_11" accel="">
+                <action name="settingsLoggingBaseAllAction"/>
+                <action name="settingsLoggingBaseFL_CastorAction"/>
+                <item text="FL Castor" name="popupMenu_13" accel="">
+                    <action name="settingsLoggingBaseFL_CastorAllAction"/>
+                    <action name="settingsLoggingBaseFL_Castornew_itemAction"/>
+                    <action name="settingsLoggingBaseFL_CastorDrive_LAction"/>
+                    <action name="settingsLoggingBaseFL_CastorDrive_RAction"/>
+                </item>
+                <action name="settingsLoggingBaseFR_CastorAction"/>
+                <item text="FR Castor" name="popupMenu_18" accel="">
+                    <action name="settingsLoggingBaseFR_CastorAllAction"/>
+                    <action name="settingsLoggingBaseFR_CastorSteerAction"/>
+                    <action name="settingsLoggingBaseFR_CastorDrive_LAction"/>
+                    <action name="settingsLoggingBaseFR_CastorDrive_RAction"/>
+                </item>
+                <action name="settingsLoggingBaseRL_CastorAction"/>
+                <item text="RL Castor" name="popupMenu_23" accel="">
+                    <action name="settingsLoggingBaseRL_CastorAllAction"/>
+                    <action name="settingsLoggingBaseRL_Castornew_itemAction"/>
+                    <action name="settingsLoggingBaseRL_CastorDrive_LAction"/>
+                    <action name="settingsLoggingBaseRL_CastorDrive_RAction"/>
+                </item>
+                <action name="settingsLoggingBaseRR_CastorAction"/>
+                <item text="RR Castor" name="popupMenu_28" accel="">
+                    <action name="settingsLoggingBaseRR_CastorAllAction"/>
+                    <action name="settingsLoggingBaseRR_CastorSteerAction"/>
+                    <action name="settingsLoggingBaseRR_CastorDrive_LAction"/>
+                    <action name="settingsLoggingBaseRR_CastorDrive_RAction"/>
+                </item>
+                <action name="settingsLoggingBaseSpineAction"/>
+            </item>
+            <action name="settingsLoggingLeft_ArmAction"/>
+            <item text="Left Arm" name="popupMenu_34" accel="">
+                <action name="settingsLoggingLeft_ArmAllAction"/>
+                <action name="settingsLoggingLeft_ArmPanAction"/>
+                <action name="settingsLoggingLeft_ArmShoulder_pitchAction"/>
+                <action name="settingsLoggingLeft_ArmShoulder_RollAction"/>
+                <action name="settingsLoggingLeft_ArmElbow_PitchAction"/>
+                <action name="settingsLoggingLeft_ArmElbow_RollAction"/>
+                <action name="settingsLoggingLeft_ArmWrist_PitchAction"/>
+                <action name="settingsLoggingLeft_ArmWrist_RollAction"/>
+                <action name="settingsLoggingLeft_ArmGripperAction"/>
+            </item>
+            <action name="settingsLoggingRight_ArmAction"/>
+            <item text="Right Arm" name="popupMenu_44" accel="">
+                <action name="settingsLoggingRight_Armnew_itemAction"/>
+                <action name="settingsLoggingRight_ArmPanAction"/>
+                <action name="settingsLoggingRight_ArmShoulder_PitchAction"/>
+                <action name="settingsLoggingRight_ArmShoulder_RollAction"/>
+                <action name="settingsLoggingRight_ArmElbow_PitchAction"/>
+                <action name="settingsLoggingRight_ArmElbow_RollAction"/>
+                <action name="settingsLoggingRight_ArmWrist_pitchAction"/>
+                <action name="settingsLoggingRight_ArmWrist_RollAction"/>
+                <action name="settingsLoggingRight_ArmGripperAction"/>
+            </item>
+            <action name="settingsLoggingHeadAction"/>
+            <item text="Head" name="popupMenu_54" accel="">
+                <action name="settingsLoggingHeadAllAction"/>
+                <action name="settingsLoggingHeadYawAction"/>
+                <action name="settingsLoggingHeadPitchAction"/>
+                <action name="settingsLoggingHeadLaser_PitchAction"/>
+                <action name="settingsLoggingHeadPTZ_L_PanAction"/>
+                <action name="settingsLoggingHeadPTZ_L_TiltAction"/>
+                <action name="settingsLoggingHeadPTZ_R_PanAction"/>
+                <action name="settingsLoggingHeadPTZ_R_TiltAction"/>
+            </item>
+            <separator/>
+            <action name="settingsLoggingClear_LogAction"/>
+            <action name="settingsLoggingStop_LoggingAction"/>
+            <action name="settingsLoggingRemove_AllAction"/>
+        </item>
+    </item>
+    <item text="&amp;Help" name="helpMenu">
+        <action name="helpContentsAction"/>
+        <action name="helpIndexAction"/>
+        <separator/>
+        <action name="helpAboutAction"/>
+    </item>
+</menubar>
+<toolbars>
+</toolbars>
+<actions>
+    <action>
+        <property name="name">
+            <cstring>fileNewAction</cstring>
+        </property>
+        <property name="enabled">
+            <bool>false</bool>
+        </property>
+        <property name="iconSet">
+            <iconset>filenew</iconset>
+        </property>
+        <property name="text">
+            <string>New</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;New</string>
+        </property>
+        <property name="accel">
+            <string>Ctrl+N</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>fileOpenAction</cstring>
+        </property>
+        <property name="enabled">
+            <bool>false</bool>
+        </property>
+        <property name="iconSet">
+            <iconset>fileopen</iconset>
+        </property>
+        <property name="text">
+            <string>Open</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Open...</string>
+        </property>
+        <property name="accel">
+            <string>Ctrl+O</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>fileSaveAction</cstring>
+        </property>
+        <property name="enabled">
+            <bool>false</bool>
+        </property>
+        <property name="iconSet">
+            <iconset>filesave</iconset>
+        </property>
+        <property name="text">
+            <string>Save</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Save</string>
+        </property>
+        <property name="accel">
+            <string>Ctrl+S</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>fileSaveAsAction</cstring>
+        </property>
+        <property name="enabled">
+            <bool>false</bool>
+        </property>
+        <property name="text">
+            <string>Save As</string>
+        </property>
+        <property name="menuText">
+            <string>Save &amp;As...</string>
+        </property>
+        <property name="accel">
+            <string></string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>filePrintAction</cstring>
+        </property>
+        <property name="enabled">
+            <bool>false</bool>
+        </property>
+        <property name="iconSet">
+            <iconset>print</iconset>
+        </property>
+        <property name="text">
+            <string>Print</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Print...</string>
+        </property>
+        <property name="accel">
+            <string>Ctrl+P</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>fileExitAction</cstring>
+        </property>
+        <property name="enabled">
+            <bool>true</bool>
+        </property>
+        <property name="text">
+            <string>E&amp;xit</string>
+        </property>
+        <property name="menuText">
+            <string>E&amp;xit</string>
+        </property>
+        <property name="accel">
+            <string></string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>helpContentsAction</cstring>
+        </property>
+        <property name="enabled">
+            <bool>false</bool>
+        </property>
+        <property name="text">
+            <string>Contents</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Contents...</string>
+        </property>
+        <property name="accel">
+            <string></string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>helpIndexAction</cstring>
+        </property>
+        <property name="enabled">
+            <bool>false</bool>
+        </property>
+        <property name="text">
+            <string>Index</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Index...</string>
+        </property>
+        <property name="accel">
+            <string></string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>helpAboutAction</cstring>
+        </property>
+        <property name="enabled">
+            <bool>false</bool>
+        </property>
+        <property name="text">
+            <string>About</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;About</string>
+        </property>
+        <property name="accel">
+            <string></string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingAction</cstring>
+        </property>
+        <property name="enabled">
+            <bool>true</bool>
+        </property>
+        <property name="text">
+            <string>Logging</string>
+        </property>
+        <property name="menuText">
+            <string>Logging</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingBaseAction</cstring>
+        </property>
+        <property name="text">
+            <string>Base</string>
+        </property>
+        <property name="menuText">
+            <string>Base</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingRight_ArmAction</cstring>
+        </property>
+        <property name="text">
+            <string>Right Arm</string>
+        </property>
+        <property name="menuText">
+            <string>Right Arm</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingLeft_ArmAction</cstring>
+        </property>
+        <property name="text">
+            <string>Left Arm</string>
+        </property>
+        <property name="menuText">
+            <string>Left Arm</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingHeadAction</cstring>
+        </property>
+        <property name="text">
+            <string>Head</string>
+        </property>
+        <property name="menuText">
+            <string>Head</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingAllAction</cstring>
+        </property>
+        <property name="text">
+            <string>All</string>
+        </property>
+        <property name="menuText">
+            <string>All</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingBaseFL_CastorAction</cstring>
+        </property>
+        <property name="text">
+            <string>FL Castor</string>
+        </property>
+        <property name="menuText">
+            <string>FL Castor</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingBaseFR_CastorAction</cstring>
+        </property>
+        <property name="text">
+            <string>FR Castor</string>
+        </property>
+        <property name="menuText">
+            <string>FR Castor</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingBaseRL_CastorAction</cstring>
+        </property>
+        <property name="text">
+            <string>RL Castor</string>
+        </property>
+        <property name="menuText">
+            <string>RL Castor</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingBaseRR_CastorAction</cstring>
+        </property>
+        <property name="text">
+            <string>RR Castor</string>
+        </property>
+        <property name="menuText">
+            <string>RR Castor</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingBaseSpineAction</cstring>
+        </property>
+        <property name="text">
+            <string>Spine</string>
+        </property>
+        <property name="menuText">
+            <string>Spine</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingBaseFL_Castornew_itemAction</cstring>
+        </property>
+        <property name="text">
+            <string>Steer</string>
+        </property>
+        <property name="menuText">
+            <string>Steer</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingBaseFL_CastorDrive_LAction</cstring>
+        </property>
+        <property name="text">
+            <string>Drive L</string>
+        </property>
+        <property name="menuText">
+            <string>Drive L</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingBaseFL_CastorDrive_RAction</cstring>
+        </property>
+        <property name="text">
+            <string>Drive R</string>
+        </property>
+        <property name="menuText">
+            <string>Drive R</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingBaseFR_CastorSteerAction</cstring>
+        </property>
+        <property name="text">
+            <string>Steer</string>
+        </property>
+        <property name="menuText">
+            <string>Steer</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingBaseFR_CastorDrive_LAction</cstring>
+        </property>
+        <property name="text">
+            <string>Drive L</string>
+        </property>
+        <property name="menuText">
+            <string>Drive L</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingBaseFR_CastorDrive_RAction</cstring>
+        </property>
+        <property name="text">
+            <string>Drive R</string>
+        </property>
+        <property name="menuText">
+            <string>Drive R</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingBaseRL_Castornew_itemAction</cstring>
+        </property>
+        <property name="text">
+            <string>Steer</string>
+        </property>
+        <property name="menuText">
+            <string>Steer</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingBaseRL_CastorDrive_LAction</cstring>
+        </property>
+        <property name="text">
+            <string>Drive L</string>
+        </property>
+        <property name="menuText">
+            <string>Drive L</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingBaseRL_CastorDrive_RAction</cstring>
+        </property>
+        <property name="text">
+            <string>Drive R</string>
+        </property>
+        <property name="menuText">
+            <string>Drive R</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingBaseRR_CastorSteerAction</cstring>
+        </property>
+        <property name="text">
+            <string>Steer</string>
+        </property>
+        <property name="menuText">
+            <string>Steer</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingBaseRR_CastorDrive_LAction</cstring>
+        </property>
+        <property name="text">
+            <string>Drive L</string>
+        </property>
+        <property name="menuText">
+            <string>Drive L</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingBaseRR_CastorDrive_RAction</cstring>
+        </property>
+        <property name="text">
+            <string>Drive R</string>
+        </property>
+        <property name="menuText">
+            <string>Drive R</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingBaseRR_CastorAllAction</cstring>
+        </property>
+        <property name="text">
+            <string>All</string>
+        </property>
+        <property name="menuText">
+            <string>All</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingBaseRL_CastorAllAction</cstring>
+        </property>
+        <property name="text">
+            <string>All</string>
+        </property>
+        <property name="menuText">
+            <string>All</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingBaseFR_CastorAllAction</cstring>
+        </property>
+        <property name="text">
+            <string>All</string>
+        </property>
+        <property name="menuText">
+            <string>All</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingBaseFL_CastorAllAction</cstring>
+        </property>
+        <property name="text">
+            <string>All</string>
+        </property>
+        <property name="menuText">
+            <string>All</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingRight_Armnew_itemAction</cstring>
+        </property>
+        <property name="text">
+            <string>All</string>
+        </property>
+        <property name="menuText">
+            <string>All</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingBaseAllAction</cstring>
+        </property>
+        <property name="text">
+            <string>All</string>
+        </property>
+        <property name="menuText">
+            <string>All</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingRight_ArmPanAction</cstring>
+        </property>
+        <property name="text">
+            <string>Pan</string>
+        </property>
+        <property name="menuText">
+            <string>Pan</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingRight_ArmShoulder_PitchAction</cstring>
+        </property>
+        <property name="text">
+            <string>Shoulder Pitch</string>
+        </property>
+        <property name="menuText">
+            <string>Shoulder Pitch</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingRight_ArmShoulder_RollAction</cstring>
+        </property>
+        <property name="text">
+            <string>Shoulder Roll</string>
+        </property>
+        <property name="menuText">
+            <string>Shoulder Roll</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingRight_ArmElbow_PitchAction</cstring>
+        </property>
+        <property name="text">
+            <string>Elbow Pitch</string>
+        </property>
+        <property name="menuText">
+            <string>Elbow Pitch</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingRight_ArmElbow_RollAction</cstring>
+        </property>
+        <property name="text">
+            <string>Elbow Roll</string>
+        </property>
+        <property name="menuText">
+            <string>Elbow Roll</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingRight_ArmWrist_pitchAction</cstring>
+        </property>
+        <property name="text">
+            <string>Wrist Pitch</string>
+        </property>
+        <property name="menuText">
+            <string>Wrist Pitch</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingRight_ArmWrist_RollAction</cstring>
+        </property>
+        <property name="text">
+            <string>Wrist Roll</string>
+        </property>
+        <property name="menuText">
+            <string>Wrist Roll</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingRight_ArmGripperAction</cstring>
+        </property>
+        <property name="text">
+            <string>Gripper</string>
+        </property>
+        <property name="menuText">
+            <string>Gripper</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingLeft_ArmPanAction</cstring>
+        </property>
+        <property name="text">
+            <string>Pan</string>
+        </property>
+        <property name="menuText">
+            <string>Pan</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingLeft_ArmAllAction</cstring>
+        </property>
+        <property name="text">
+            <string>All</string>
+        </property>
+        <property name="menuText">
+            <string>All</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingLeft_ArmShoulder_pitchAction</cstring>
+        </property>
+        <property name="text">
+            <string>Shoulder Pitch</string>
+        </property>
+        <property name="menuText">
+            <string>Shoulder Pitch</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingLeft_ArmShoulder_RollAction</cstring>
+        </property>
+        <property name="text">
+            <string>Shoulder Roll</string>
+        </property>
+        <property name="menuText">
+            <string>Shoulder Roll</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingLeft_ArmElbow_PitchAction</cstring>
+        </property>
+        <property name="text">
+            <string>Elbow Pitch</string>
+        </property>
+        <property name="menuText">
+            <string>Elbow Pitch</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingLeft_ArmElbow_RollAction</cstring>
+        </property>
+        <property name="text">
+            <string>Elbow Roll</string>
+        </property>
+        <property name="menuText">
+            <string>Elbow Roll</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingLeft_ArmWrist_PitchAction</cstring>
+        </property>
+        <property name="text">
+            <string>Wrist Pitch</string>
+        </property>
+        <property name="menuText">
+            <string>Wrist Pitch</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingLeft_ArmWrist_RollAction</cstring>
+        </property>
+        <property name="text">
+            <string>Wrist Roll</string>
+        </property>
+        <property name="menuText">
+            <string>Wrist Roll</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingLeft_ArmGripperAction</cstring>
+        </property>
+        <property name="text">
+            <string>Gripper</string>
+        </property>
+        <property name="menuText">
+            <string>Gripper</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingHeadAllAction</cstring>
+        </property>
+        <property name="text">
+            <string>All</string>
+        </property>
+        <property name="menuText">
+            <string>All</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingHeadYawAction</cstring>
+        </property>
+        <property name="text">
+            <string>Yaw</string>
+        </property>
+        <property name="menuText">
+            <string>Yaw</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingHeadPitchAction</cstring>
+        </property>
+        <property name="text">
+            <string>Pitch</string>
+        </property>
+        <property name="menuText">
+            <string>Pitch</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingHeadLaser_PitchAction</cstring>
+        </property>
+        <property name="text">
+            <string>Laser Pitch</string>
+        </property>
+        <property name="menuText">
+            <string>Laser Pitch</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingHeadPTZ_L_PanAction</cstring>
+        </property>
+        <property name="text">
+            <string>PTZ L Pan</string>
+        </property>
+        <property name="menuText">
+            <string>PTZ L Pan</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingHeadPTZ_L_TiltAction</cstring>
+        </property>
+        <property name="text">
+            <string>PTZ L Tilt</string>
+        </property>
+        <property name="menuText">
+            <string>PTZ L Tilt</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingHeadPTZ_R_PanAction</cstring>
+        </property>
+        <property name="text">
+            <string>PTZ R Pan</string>
+        </property>
+        <property name="menuText">
+            <string>PTZ R Pan</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingHeadPTZ_R_TiltAction</cstring>
+        </property>
+        <property name="text">
+            <string>PTZ R Tilt</string>
+        </property>
+        <property name="menuText">
+            <string>PTZ R Tilt</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingClear_LogAction</cstring>
+        </property>
+        <property name="text">
+            <string>Clear Log</string>
+        </property>
+        <property name="menuText">
+            <string>Clear Log</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingStop_LoggingAction</cstring>
+        </property>
+        <property name="text">
+            <string>Stop Logging</string>
+        </property>
+        <property name="menuText">
+            <string>Stop Logging</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>settingsLoggingRemove_AllAction</cstring>
+        </property>
+        <property name="text">
+            <string>Remove All</string>
+        </property>
+        <property name="menuText">
+            <string>Remove All</string>
+        </property>
+    </action>
+</actions>
+<connections>
+    <connection>
+        <sender>helpIndexAction</sender>
+        <signal>activated()</signal>
+        <receiver>Launcher</receiver>
+        <slot>helpIndex()</slot>
+    </connection>
+    <connection>
+        <sender>helpContentsAction</sender>
+        <signal>activated()</signal>
+        <receiver>Launcher</receiver>
+        <slot>helpContents()</slot>
+    </connection>
+    <connection>
+        <sender>helpAboutAction</sender>
+        <signal>activated()</signal>
+        <receiver>Launcher</receiver>
+        <slot>helpAbout()</slot>
+    </connection>
+    <connection>
+        <sender>Vis_Window_CB</sender>
+        <signal>stateChanged(int)</signal>
+        <receiver>Launcher</receiver>
+        <slot>startStop_Visualization(int)</slot>
+    </connection>
+    <connection>
+        <sender>PTZL_Window_CB</sender>
+        <signal>stateChanged(int)</signal>
+        <receiver>Launcher</receiver>
+        <slot>startStop_PTZL(int)</slot>
+    </connection>
+    <connection>
+        <sender>PTZR_Window_CB</sender>
+        <signal>stateChanged(int)</signal>
+        <receiver>Launcher</receiver>
+        <slot>startStop_PTZR(int)</slot>
+    </connection>
+    <connection>
+        <sender>WristL_Window_CB</sender>
+        <signal>stateChanged(int)</signal>
+        <receiver>Launcher</receiver>
+        <slot>startStop_WristL(int)</slot>
+    </connection>
+    <connection>
+        <sender>WristR_Window_CB</sender>
+        <signal>stateChanged(int)</signal>
+        <receiver>Launcher</receiver>
+        <slot>startStop_WristR(int)</slot>
+    </connection>
+    <connection>
+        <sender>Stereo_Window_CB</sender>
+        <signal>stateChanged(int)</signal>
+        <receiver>Launcher</receiver>
+        <slot>startStop_Stereo(int)</slot>
+    </connection>
+    <connection>
+        <sender>Topdown_Window_CB</sender>
+        <signal>stateChanged(int)</signal>
+        <receiver>Launcher</receiver>
+        <slot>startStop_Topdown(int)</slot>
+    </connection>
+    <connection>
+        <sender>Status_Window_CB</sender>
+        <signal>stateChanged(int)</signal>
+        <receiver>Launcher</receiver>
+        <slot>startStop_Status(int)</slot>
+    </connection>
+    <connection>
+        <sender>fileExitAction</sender>
+        <signal>activated()</signal>
+        <receiver>Launcher</receiver>
+        <slot>death()</slot>
+    </connection>
+</connections>
+<includes>
+    <include location="local" impldecl="in declaration">Visualization.h</include>
+    <include location="local" impldecl="in declaration">PTZ.h</include>
+    <include location="local" impldecl="in declaration">Stereo.h</include>
+    <include location="local" impldecl="in declaration">Wrist.h</include>
+    <include location="local" impldecl="in declaration">Topdown.h</include>
+    <include location="local" impldecl="in declaration">Status.h</include>
+    <include location="local" impldecl="in implementation">Launcher.ui.h</include>
+</includes>
+<variables>
+    <variable access="private">Topdown *Topdown_Window;</variable>
+    <variable access="private">PTZ *PTZR_Window;</variable>
+    <variable access="private">PTZ *PTZL_Window;</variable>
+    <variable access="private">Visualization *Vis_Window;</variable>
+    <variable access="private">Stereo *Stereo_Window;</variable>
+    <variable access="private">Wrist *WristL_Window;</variable>
+    <variable access="private">Wrist *WristR_Window;</variable>
+    <variable>Status *Status_Window;</variable>
+</variables>
+<slots>
+    <slot>death()</slot>
+    <slot>helpIndex()</slot>
+    <slot>helpContents()</slot>
+    <slot>helpAbout()</slot>
+    <slot>consoleOut( QString line )</slot>
+    <slot>startStop_Visualization( int state )</slot>
+    <slot>startStop_PTZL( int state )</slot>
+    <slot>startStop_PTZR( int state )</slot>
+    <slot>startStop_WristL( int state )</slot>
+    <slot>startStop_WristR( int state )</slot>
+    <slot>startStop_Stereo( int state )</slot>
+    <slot>startStop_Topdown( int state )</slot>
+    <slot>startStop_Status( int state )</slot>
+</slots>
+<functions>
+    <function access="private" specifier="non virtual">init()</function>
+    <function access="private" specifier="non virtual">destroy()</function>
+</functions>
+<pixmapinproject/>
+<layoutdefaults spacing="6" margin="11"/>
+</UI>

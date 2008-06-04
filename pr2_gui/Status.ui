@@ -1,0 +1,29 @@
+<!DOCTYPE UI><UI version="3.3" stdsetdef="1">
+<class>Status</class>
+<widget class="QMainWindow">
+    <property name="name">
+        <cstring>Status</cstring>
+    </property>
+    <property name="geometry">
+        <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>471</width>
+            <height>343</height>
+        </rect>
+    </property>
+    <property name="caption">
+        <string>Status</string>
+    </property>
+</widget>
+<toolbars>
+</toolbars>
+<includes>
+    <include location="local" impldecl="in implementation">Status.ui.h</include>
+</includes>
+<slots>
+    <slot>death()</slot>
+</slots>
+<pixmapinproject/>
+<layoutdefaults spacing="6" margin="11"/>
+</UI>

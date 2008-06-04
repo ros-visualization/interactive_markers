@@ -41,8 +41,7 @@
 #include "std_msgs/MsgPointCloudFloat32.h"
 #include "std_msgs/MsgEmpty.h"
 
-class PPILRender :
-  public ros::node
+class PPILRender : public ros::node
 {
 public:
 
@@ -123,25 +122,13 @@ public:
       //      usleep(10);
       //std::cerr<<"i = " << i << std::endl;
       if (i%4 == 0)
-	ilCloud->addPoint(-cloudIn.pts[i].y,
-			  cloudIn.pts[i].z,
-			  cloudIn.pts[i].x,
-			  (int)(cloudIn.pts[i].z * 32.0)+64,(int)(cloudIn.chan[0].vals[i]/16.0),128);
+	    ilCloud->addPoint(-cloudIn.pts[i].y, cloudIn.pts[i].z, cloudIn.pts[i].x, (int)(cloudIn.pts[i].z * 32.0)+64,(int)(cloudIn.chan[0].vals[i]/16.0),128);
       else if ((i + 1)%4 == 0)
-	ilCloud1->addPoint(-cloudIn.pts[i].y,
-			   cloudIn.pts[i].z,
-			   cloudIn.pts[i].x,
-			   (int)(cloudIn.pts[i].z * 32.0)+64,(int)(cloudIn.chan[0].vals[i]/16.0),128);
+	    ilCloud1->addPoint(-cloudIn.pts[i].y, cloudIn.pts[i].z, cloudIn.pts[i].x, (int)(cloudIn.pts[i].z * 32.0)+64,(int)(cloudIn.chan[0].vals[i]/16.0),128);
       else if ((i + 2)%4 == 0)
-	ilCloud2->addPoint(-cloudIn.pts[i].y,
-			   cloudIn.pts[i].z,
-			   cloudIn.pts[i].x,
-			   (int)(cloudIn.pts[i].z * 32.0)+64,(int)(cloudIn.chan[0].vals[i]/16.0),128);
+	    ilCloud2->addPoint(-cloudIn.pts[i].y, cloudIn.pts[i].z, cloudIn.pts[i].x, (int)(cloudIn.pts[i].z * 32.0)+64,(int)(cloudIn.chan[0].vals[i]/16.0),128);
       else 
-	ilCloud3->addPoint(-cloudIn.pts[i].y,
-			   cloudIn.pts[i].z,
-			   cloudIn.pts[i].x,
-			   (int)(cloudIn.pts[i].z * 32.0)+64,(int)(cloudIn.chan[0].vals[i]/16.0),128);
+	    ilCloud3->addPoint(-cloudIn.pts[i].y, cloudIn.pts[i].z, cloudIn.pts[i].x, (int)(cloudIn.pts[i].z * 32.0)+64,(int)(cloudIn.chan[0].vals[i]/16.0),128);
     }
     pLocalRenderer->unlock();
   };
