@@ -17,7 +17,7 @@ LDFLAGS =  $(shell rospack export/cpp/lflags irrlicht_viewer)
 
 CUSTOM_NODES = $(shell ls CustomNodes/*.cc)
 
-ILRENDER_LIB = libilrender.a
+ILRENDER_LIB = libirrlicht_viewer.a
 
 # Generic Targets
 %.o: %.cc
@@ -26,8 +26,8 @@ ILRENDER_LIB = libilrender.a
 # Library Targets
 
 
-$(ILRENDER_LIB):  $(call objects,$(CUSTOM_NODES))
-	ar -rcs $(ILRENDER_LIB) $(call objects,$(CUSTOM_NODES))
+$(ILRENDER_LIB):  $(call objects,$(CUSTOM_NODES)) ILRender.o ILClient.o
+	ar -rcs $(ILRENDER_LIB) $^
 
 #g++ $(CPPFLAGS) -o $@  $(call objects,$(CUSTOM_NODES))
 
