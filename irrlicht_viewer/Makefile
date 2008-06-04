@@ -35,7 +35,7 @@ $(ILRENDER_LIB):  $(call objects,$(CUSTOM_NODES)) ILRender.o ILClient.o
 test: ILRenderTest.cc ILRender.o ILClient.o $(ILRENDER_LIB) 
 	$(CPP) $(CPPFLAGS) -o $@ $^  $(LDFLAGS)
 
-viewer: viewer.cc ILRender.o ILClient.o $(ILRENDER_LIB) 
+viewer: viewer.cc $(ILRENDER_LIB) 
 	$(CPP) $(CPPFLAGS) -o $@ $^  $(LDFLAGS)
 
 build_lib: $(ILRENDER_LIB)
@@ -48,3 +48,5 @@ clean:
 	cd CustomNodes && rm -rf *.o
 
 
+clouder: cloudGenerator.cc $(ILRENDER_LIB) 
+	$(CPP) $(CPPFLAGS) -o $@ $^  $(LDFLAGS)
