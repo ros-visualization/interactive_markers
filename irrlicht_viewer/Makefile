@@ -3,7 +3,7 @@
 CPP = g++
 
 # Default Target
-all: build_lib viewer
+all: build_lib viewer clouder
 
 headers = $(filter %.hh %.h, $(1))
 noheaders = $(filter-out %.hh %.h, $(1))
@@ -44,7 +44,7 @@ build_lib: $(ILRENDER_LIB)
 
 clean:
 	rm -rf *.o *.a
-	rm -rf test test2
+	rm -rf test viewer clouder
 	cd CustomNodes && rm -rf *.o
 
 
