@@ -148,7 +148,10 @@ public:
     }
 
     if (c == SDLK_RETURN) {
-      save();
+      if (mod == 1)
+	save_VRML();
+      else
+	save_dat();
     }
 
     cloud_mutex.lock();
@@ -246,7 +249,7 @@ public:
     request_render();
   }
 
-  void save() {
+  void save_VRML() {
     
     printf("Trying to save..\n");
 
@@ -334,6 +337,44 @@ public:
 
   }
 
+
+  void save_dat() {
+    
+    printf("Trying to save..\n");
+
+    if (!made_dir) {
+      if (mkdir(dir_name, 0755)) {
+	printf("Failed to make directory: %s\n", dir_name);
+	return;
+      } else {
+	made_dir = true;
+      }
+    }
+
+    std::ostringstream oss;
+    oss << dir_name << "/Cloud" << cloud_cnt++ << ".dat";
+    ofstream out(oss.str().c_str());
+    
+    out.setf(ios::fixed, ios::floatfield);
+    out.setf(ios::showpoint);
+    out.precision(5);
+
+    out << "#Point Cloud" << endl;
+    out << "#Format: X [meters], Y [meters], Z [meters], Intensity" << endl;
+    out << "#Points: " << buf[buf_use_ind].size() << endl;
+
+    for (int i = 0; i < buf[buf_use_ind].size(); i++) {
+      out << buf[buf_use_ind][i].x << " " 
+	  << buf[buf_use_ind][i].y << " "
+	  << buf[buf_use_ind][i].z << " " 
+	  << buf[buf_use_ind][i].i << endl;
+    }
+
+    out.close();
+
+  }
+
+    
 };
 
 
