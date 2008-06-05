@@ -57,7 +57,7 @@ public:
   ILGrid *ilGrid;
   
   // Constructor
-  PPILRender() : ros::node("ILRender"), localClient() {
+  PPILRender() : ros::node("ILRender", ros::node::ANONYMOUS_NAME), localClient() {
 
     pLocalRenderer = ILClient::getSingleton();
 
