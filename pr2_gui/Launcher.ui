@@ -253,9 +253,6 @@ Stop</string>
         <property name="enabled">
             <bool>false</bool>
         </property>
-        <property name="iconSet">
-            <iconset>filenew</iconset>
-        </property>
         <property name="text">
             <string>New</string>
         </property>
@@ -273,9 +270,6 @@ Stop</string>
         <property name="enabled">
             <bool>false</bool>
         </property>
-        <property name="iconSet">
-            <iconset>fileopen</iconset>
-        </property>
         <property name="text">
             <string>Open</string>
         </property>
@@ -292,9 +286,6 @@ Stop</string>
         </property>
         <property name="enabled">
             <bool>false</bool>
-        </property>
-        <property name="iconSet">
-            <iconset>filesave</iconset>
         </property>
         <property name="text">
             <string>Save</string>
@@ -329,9 +320,6 @@ Stop</string>
         </property>
         <property name="enabled">
             <bool>false</bool>
-        </property>
-        <property name="iconSet">
-            <iconset>print</iconset>
         </property>
         <property name="text">
             <string>Print</string>
@@ -1126,14 +1114,14 @@ Stop</string>
     <include location="local" impldecl="in implementation">Launcher.ui.h</include>
 </includes>
 <variables>
-    <variable access="private">Topdown *Topdown_Window;</variable>
-    <variable access="private">PTZ *PTZR_Window;</variable>
-    <variable access="private">PTZ *PTZL_Window;</variable>
-    <variable access="private">Visualization *Vis_Window;</variable>
-    <variable access="private">Stereo *Stereo_Window;</variable>
-    <variable access="private">Wrist *WristL_Window;</variable>
+    <variable access="private">Status *Status_Window;</variable>
     <variable access="private">Wrist *WristR_Window;</variable>
-    <variable>Status *Status_Window;</variable>
+    <variable access="private">Wrist *WristL_Window;</variable>
+    <variable access="private">Stereo *Stereo_Window;</variable>
+    <variable access="private">Visualization *Vis_Window;</variable>
+    <variable access="private">PTZ *PTZL_Window;</variable>
+    <variable access="private">PTZ *PTZR_Window;</variable>
+    <variable access="private">Topdown *Topdown_Window;</variable>
 </variables>
 <slots>
     <slot>death()</slot>

@@ -14,39 +14,37 @@ void Visualization::death()
 {
     destroy();
 }
-
+    
 void Visualization::init()
-{  
-    vis3d_window = new Vis3d();
+{
+    vis3d_Window = new Vis3d();
 }
-
 
 void Visualization::startStopHeadPtCld( int state )
 {
     if(state == QButton::On)
     {
 	emit ConsoleOut("Enabling Head Laser Cloud");
-	Vis3d->enableHead();
+	vis3d_Window->enableHead();
     }
     else
     {
 	emit ConsoleOut("Disabling Head Laser Cloud");
-	Vis3d->disableHead();
+	vis3d_Window->disableHead();
     }
 }
-
 
 void Visualization::startStopFloorPtCld( int state )
 {
       if(state == QButton::On)
     {
 	emit ConsoleOut("Enabling Floor Laser Cloud");
-	Vis3d->enableFloor();
+	vis3d_Window->enableFloor();
     }
     else
     {
 	emit ConsoleOut("Disabling Floor Laser Cloud");
-	Vis3d->disableFloor();
+	vis3d_Window->disableFloor();
     }
 }
 
@@ -56,13 +54,13 @@ void Visualization::startStopStereoPtCld( int state )
      if(state == QButton::On)
     {
 	emit ConsoleOut("Enabling Stereo Laser Cloud");
-	Vis3d->enableStereo();
+	vis3d_Window->enableStereo();
     }
     else
     {
 	emit ConsoleOut("Disabling Stereo Laser Cloud");
-	Vis3d->disableStereo();
+	vis3d_Window->disableStereo();
     }
 }
 
-void ConsoleOut(QString line){}
+

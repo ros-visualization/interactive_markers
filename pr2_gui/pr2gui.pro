@@ -3,6 +3,8 @@ LANGUAGE	= C++
 
 CONFIG	+= qt warn_on release
 
+LIBS	+= $(shell rospack export/cpp/lflags pr2_gui)
+
 SOURCES	+= main.cpp
 
 FORMS	= Launcher.ui \
@@ -93,6 +95,12 @@ IMAGES	= images/filenew \
 	images/editcopy_7 \
 	images/editpaste_7 \
 	images/searchfind_7
+
+CFLAGS += $(shell rospack export/cpp/cflags pr2gui)
+
+
+
+
 
 unix {
   UI_DIR = .ui

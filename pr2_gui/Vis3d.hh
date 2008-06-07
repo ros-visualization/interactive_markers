@@ -28,7 +28,7 @@
 
 #ifndef __PP_IL_RENDER_HH
 #define __PP_IL_RENDER_HH
-#define cloudArrayLength = 400
+#define cloudArrayLength 400
 #include "rosthread/member_thread.h"
 #include <irrlicht.h>
 #include "ILClient.hh"
@@ -40,35 +40,46 @@
 #include "std_msgs/MsgPointCloudFloat32.h"
 #include "std_msgs/MsgEmpty.h"
 
+using namespace irr;
+using namespace core;
+using namespace scene;
+using namespace video;
+using namespace io;
+using namespace gui;
+
 class Vis3d : public ros::node
 {
 public:
 
-    MsgEmpty shutterHead;
-    MsgEmpty shutterFloor;
-    MsgEmpty shutterStereo;
-    MsgPointCloudFloat32 ptCldHead;
-    MsgPointCloudFloat32 ptCldFloor;
-    MsgPointCloudFloat32 ptCldStereo;
+MsgEmpty shutHead;
+MsgEmpty shutFloor;
+MsgEmpty shutStereo;
+MsgPointCloudFloat32 ptCldHead;
+MsgPointCloudFloat32 ptCldFloor;
+MsgPointCloudFloat32 ptCldStereo;
 
 int headVertScanCount;
 ILClient localClient;
 ILRender *pLocalRenderer;
 ILPointCloud *ilHeadCloud[cloudArrayLength];
-ILPointCould *ilFloorCloud;
+ILPointCloud *ilFloorCloud;
 ILPointCloud *ilStereoCloud;
 ILGrid *ilGrid;
+IAnimatedMesh *base;
+IAnimatedMeshSceneNode *baseNode;
 
 Vis3d() : ros::node("vis3d"),localClient()
 {
+    std::cerr<<"COnstructing Vis3D" << std::endl;
     headVertScanCount = 0;
     pLocalRenderer = ILClient::getSingleton();
     pLocalRenderer->lock();
-    ilFloorCloud[i] = new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),667);
-    ilStereoCloud[i] = new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),666);
+    ilFloorCloud = new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),667);
+    ilStereoCloud = new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),666);
+    ilGrid = new ILGrid(pLocalRenderer->manager()->getRootSceneNode(), pLocalRenderer->manager(), 668);
     for(int i = 0; i < cloudArrayLength; i++)
     {
-        ilHeadCloud[i] = new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),668 + i);
+        ilHeadCloud[i] = new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),669 + i);
     }
     pLocalRenderer->unlock();
     pLocalRenderer->addNode(ilFloorCloud);
@@ -78,12 +89,14 @@ Vis3d() : ros::node("vis3d"),localClient()
         pLocalRenderer->addNode(ilHeadCloud[i]);
     }
     ilGrid->makegrid(100,1.0f,50,50,50);
-    pLocalRenderer->addnode(ilGrid);
+    pLocalRenderer->addNode(ilGrid);
+    //take me out
+    enableBody();
 }
 
 ~Vis3d()
 {
-    for(int i = 0; i < cloudArrayLength; i++_
+    for(int i = 0; i < cloudArrayLength; i++)
     {
         delete ilHeadCloud[i];
     }
@@ -100,19 +113,32 @@ bool isEnabled()
 void enableHead()
 {
     subscribe("cloud", ptCldHead, &Vis3d::addHeadCloud,this);
-    subscribe("shutter", shutterHead, &Vis3d::shutterHead,this);
+    subscribe("shutter", shutHead, &Vis3d::shutterHead,this);
+    for(int i = 0; i < cloudArrayLength; i++)
+    {
+        pLocalRenderer->enable(ilHeadCloud[i]);
+    }   
+}
+
+void enableBody()
+{
+    base = pLocalRenderer->manager()->getMesh("pr2model/entirebase.x");
+    baseNode = pLocalRenderer->manager()->addAnimatedMeshSceneNode(base);
+    baseNode->setMaterialFlag(EMF_LIGHTING, false);
 }
 
 void enableFloor()
 {
-    subscribe("cloudFloor", ptCldFloor, &Vid3d::addFloorCloud,this);
-    subscribe("shutterFloor", shutterFloor, &Vis3d::shutterFloor,this);
+    subscribe("cloudFloor", ptCldFloor, &Vis3d::addFloorCloud,this);
+    subscribe("shutterFloor", shutFloor, &Vis3d::shutterFloor,this);
+    pLocalRenderer->enable(ilFloorCloud);
 }
 
 void enableStereo()
 {
-    subscribe("cloudStereo", ptCldStereo, &Vid3d::addStereoCloud,this);
-    subscribe("shutterStereo", shutterStereo, &Vis3d::shutterStereo,this);
+    subscribe("cloudStereo", ptCldStereo, &Vis3d::addStereoCloud,this);
+    subscribe("shutterStereo", shutStereo, &Vis3d::shutterStereo,this);
+    pLocalRenderer->enable(ilStereoCloud);
 }
 
 void disableHead()
@@ -120,6 +146,10 @@ void disableHead()
     unsubscribe("cloud");
     unsubscribe("shutter");
     shutterHead();
+    for(int i = 0; i < cloudArrayLength; i++)
+    {
+        pLocalRenderer->disable(ilHeadCloud[i]);
+    }   
 }
 
 void disableFloor()
@@ -127,6 +157,7 @@ void disableFloor()
     unsubscribe("cloudFloor");
     unsubscribe("shutterFloor");
     shutterFloor();
+    pLocalRenderer->disable(ilFloorCloud);
 }
 
 void disableStereo()
@@ -134,6 +165,7 @@ void disableStereo()
     unsubscribe("cloudStereo");
     unsubscribe("shutterStereo");
     shutterStereo();
+    pLocalRenderer->disable(ilStereoCloud);
 }
 
 void shutterHead()
@@ -170,14 +202,14 @@ void addHeadCloud()
         {
             for(int i = 0; i < 65535; i++)
             {
-                ilHeadCloud[headVertScanCount]->addPoint(-ptCldHead.pts[i].y, ptCldHead.pts[i].z, ptCldHead.pts[i].x, (int)(ptCldHead.chan[0].vals[i]/16.0),(int)(ptCldHead.chan[0].vals[i]/16.0),(int)(ptCldHead.chan[0].vals[i]/16.0));
+                ilHeadCloud[headVertScanCount]->addPoint(-ptCldHead.pts[i].y, ptCldHead.pts[i].z, ptCldHead.pts[i].x, 255 ,(int)(ptCldHead.chan[0].vals[i]/16.0),(int)(ptCldHead.chan[0].vals[i]/16.0));
             }
         }
         else
         {
             for(size_t i = 0; i < ptCldHead.get_pts_size(); i++)
             {
-                ilHeadCloud[headVertScanCount]->addPoint(-ptCldHead.pts[i].y, ptCldHead.pts[i].z, ptCldHead.pts[i].x, (int)(ptCldHead.chan[0].vals[i]/16.0),(int)(ptCldHead.chan[0].vals[i]/16.0),(int)(ptCldHead.chan[0].vals[i]/16.0));
+                ilHeadCloud[headVertScanCount]->addPoint(-ptCldHead.pts[i].y, ptCldHead.pts[i].z, ptCldHead.pts[i].x, 255,(int)(ptCldHead.chan[0].vals[i]/16.0),(int)(ptCldHead.chan[0].vals[i]/16.0));
             }
         }
         headVertScanCount++;
@@ -192,14 +224,14 @@ void addFloorCloud()
     {
         for(int i = 0; i < 65535; i++)
         {
-            ilFloorCloud->addPoint(-ptCldFloor.pts[i].y, ptCldFloor.pts[i].z, ptCldFloor.pts[i].x, (int)(ptCldFloor.chan[0].vals[i]/16.0),(int)(ptCldFloor.chan[0].vals[i]/16.0),(int)(ptCldFloor.chan[0].vals[i]/16.0));
+            ilFloorCloud->addPoint(-ptCldFloor.pts[i].y, ptCldFloor.pts[i].z, ptCldFloor.pts[i].x, (int)(ptCldFloor.chan[0].vals[i]/16.0),255,(int)(ptCldFloor.chan[0].vals[i]/16.0));
         }
     }
     else
     {
         for(size_t i = 0; i < ptCldFloor.get_pts_size(); i++)
         {
-            ilFloorCloud->addPoint(-ptCldFloor.pts[i].y, ptCldFloor.pts[i].z, ptCldFloor.pts[i].x, (int)(ptCldFloor.chan[0].vals[i]/16.0),(int)(ptCldFloor.chan[0].vals[i]/16.0),(int)(ptCldFloor.chan[0].vals[i]/16.0));
+            ilFloorCloud->addPoint(-ptCldFloor.pts[i].y, ptCldFloor.pts[i].z, ptCldFloor.pts[i].x, (int)(ptCldFloor.chan[0].vals[i]/16.0),255,(int)(ptCldFloor.chan[0].vals[i]/16.0));
         }
     }
     pLocalRenderer->unlock();
@@ -212,19 +244,19 @@ void addStereoCloud()
     {
         for(int i = 0; i < 65535; i++)
         {
-            ilStereoCloud->addPoint(-ptCldStereo.pts[i].y, ptCldStereo.pts[i].z, ptCldStereo.pts[i].x, (int)(ptCldStereo.chan[0].vals[i]/16.0),(int)(ptCldStereo.chan[0].vals[i]/16.0),(int)(ptCldStereo.chan[0].vals[i]/16.0));
+            ilStereoCloud->addPoint(-ptCldStereo.pts[i].y, ptCldStereo.pts[i].z, ptCldStereo.pts[i].x, (int)(ptCldStereo.chan[0].vals[i]/16.0),(int)(ptCldStereo.chan[0].vals[i]/16.0),255);
         }
     }
     else
     {
         for(size_t i = 0; i < ptCldStereo.get_pts_size(); i++)
         {
-            ilStereoCloud->addPoint(-ptCldStereo.pts[i].y, ptCldStereo.pts[i].z, ptCldStereo.pts[i].x, (int)(ptCldStereo.chan[0].vals[i]/16.0),(int)(ptCldStereo.chan[0].vals[i]/16.0),(int)(ptCldStereo.chan[0].vals[i]/16.0));
+            ilStereoCloud->addPoint(-ptCldStereo.pts[i].y, ptCldStereo.pts[i].z, ptCldStereo.pts[i].x, (int)(ptCldStereo.chan[0].vals[i]/16.0),(int)(ptCldStereo.chan[0].vals[i]/16.0),255);
         }
     }
     pLocalRenderer->unlock();
 }
-}
+};
     
     
 #endif // ifndef __PP_IL_RENDER_HH

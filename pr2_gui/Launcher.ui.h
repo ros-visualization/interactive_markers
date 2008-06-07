@@ -41,7 +41,6 @@ void Launcher::destroy()
 	Topdown_Window->death();
     if(Status_Window)
 	Status_Window->death();
-    ros::fini();
     this->close();
 }
 
@@ -80,7 +79,7 @@ void Launcher::startStop_Visualization( int state )
 	if(! Vis_Window)
 	{
 	    Vis_Window = new Visualization(this);
-	    connect(Vis_Window, SIGNAL(ConsoleOut(QString)), this, SLOT(ConsoleOut(QString)));
+	    connect(Vis_Window,SIGNAL(ConsoleOut(QString)),this,SLOT(consoleOut(QString)));
 	}
 	else
 	{

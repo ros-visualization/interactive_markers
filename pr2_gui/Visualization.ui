@@ -26,54 +26,35 @@
             <property name="title">
                 <string>Controls</string>
             </property>
-            <widget class="QCheckBox">
+            <grid>
                 <property name="name">
-                    <cstring>StereoPtCld_CB</cstring>
+                    <cstring>unnamed</cstring>
                 </property>
-                <property name="geometry">
-                    <rect>
-                        <x>19</x>
-                        <y>28</y>
-                        <width>111</width>
-                        <height>31</height>
-                    </rect>
-                </property>
-                <property name="text">
-                    <string>Stereo Cloud</string>
-                </property>
-            </widget>
-            <widget class="QCheckBox">
-                <property name="name">
-                    <cstring>FloorPtCld_CB</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>9</x>
-                        <y>88</y>
-                        <width>121</width>
-                        <height>31</height>
-                    </rect>
-                </property>
-                <property name="text">
-                    <string>Floor Laser Cloud</string>
-                </property>
-            </widget>
-            <widget class="QCheckBox">
-                <property name="name">
-                    <cstring>HeadPtCld_CB</cstring>
-                </property>
-                <property name="geometry">
-                    <rect>
-                        <x>9</x>
-                        <y>148</y>
-                        <width>131</width>
-                        <height>20</height>
-                    </rect>
-                </property>
-                <property name="text">
-                    <string>Head Laser Cloud</string>
-                </property>
-            </widget>
+                <widget class="QCheckBox" row="0" column="0">
+                    <property name="name">
+                        <cstring>StereoPtCld_CB</cstring>
+                    </property>
+                    <property name="text">
+                        <string>Stereo Cloud</string>
+                    </property>
+                </widget>
+                <widget class="QCheckBox" row="2" column="0">
+                    <property name="name">
+                        <cstring>HeadPtCld_CB</cstring>
+                    </property>
+                    <property name="text">
+                        <string>Head Laser Cloud</string>
+                    </property>
+                </widget>
+                <widget class="QCheckBox" row="1" column="0">
+                    <property name="name">
+                        <cstring>FloorPtCld_CB</cstring>
+                    </property>
+                    <property name="text">
+                        <string>Floor Laser Cloud</string>
+                    </property>
+                </widget>
+            </grid>
         </widget>
     </grid>
 </widget>
@@ -106,6 +87,9 @@
 <variables>
     <variable access="private">Vis3d *vis3d_Window;</variable>
 </variables>
+<signals>
+    <signal>ConsoleOut(QString)</signal>
+</signals>
 <slots>
     <slot>death()</slot>
     <slot>startStopHeadPtCld( int state )</slot>
