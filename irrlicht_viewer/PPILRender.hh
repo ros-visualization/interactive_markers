@@ -41,9 +41,10 @@
 #include "std_msgs/MsgPointCloudFloat32.h"
 #include "std_msgs/MsgEmpty.h"
 
-class PPILRender : public ros::node
+class PPILRender 
 {
 public:
+
 
   MsgPointCloudFloat32 cloudIn;
   MsgEmpty shutter;
@@ -55,10 +56,15 @@ public:
   ILPointCloud *ilCloud2;
   ILPointCloud *ilCloud3;
   ILGrid *ilGrid;
+
+  ros::node & myNode;
   
   // Constructor
-  PPILRender() : ros::node("ILRender", ros::node::ANONYMOUS_NAME), localClient() {
+  PPILRender(ros::node & aNode) : localClient(), 
+				  myNode(aNode)
+  {
 
+    
     pLocalRenderer = ILClient::getSingleton();
 
     pLocalRenderer->lock();
@@ -82,8 +88,8 @@ public:
     pLocalRenderer->addNode(ilGrid);
     pLocalRenderer->enable(ilGrid);
 
-    subscribe("cloud", cloudIn, &PPILRender::callback, this);
-    subscribe("shutter", shutter, &PPILRender::clear, this);
+    myNode.subscribe("cloud", cloudIn, &PPILRender::callback, this);
+    myNode.subscribe("shutter", shutter, &PPILRender::clear, this);
 
 
   };

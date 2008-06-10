@@ -4,9 +4,11 @@ int main(int argc, char ** argv)
 {
   ros::init(argc, argv);
 
-  PPILRender* myRenderer = new PPILRender();
+  ros::node myNode("DemoRenderer",ros::node::ANONYMOUS_NAME);
 
-  while(myRenderer->isEnabled() && myRenderer->ok())
+  PPILRender* myRenderer = new PPILRender(myNode);
+
+  while(myRenderer->isEnabled() && myNode.ok())
     {
       sleep(1);
     }
