@@ -11,6 +11,8 @@ A flexible visualization and teleoperation GUI for the PR2.
 <depend package="rosthread"/>
 <depend package="roscpp"/>
 <depend package="std_msgs"/>
+<depend package="image_utils"/>
+<depend package="opencv"/>
 <export> 
 </export>
 </package>

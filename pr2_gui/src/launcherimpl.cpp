@@ -1,9 +1,10 @@
 #include "launcherimpl.h"
 //#include <iostream>
 //
-ros::node *myNode;
+
 LauncherImpl::LauncherImpl( QWidget * parent, Qt::WFlags f) : QMainWindow(parent, f)
 {
+	//Initial setup
 	setupUi(this);
 	Visualization_DW->setVisible(false);
 	PTZL_DW->setVisible(false);
@@ -13,7 +14,7 @@ LauncherImpl::LauncherImpl( QWidget * parent, Qt::WFlags f) : QMainWindow(parent
 	Stereo_DW->setVisible(false);
 	Status_DW->setVisible(false);
 	Topdown_DW->setVisible(false);
-	
+	//Docked window connections
 	QObject::connect(Visualization_CB, SIGNAL(toggled(bool)),this, SLOT(startStop_Visualization(bool)));
 	QObject::connect(PTZL_CB, SIGNAL(toggled(bool)),this, SLOT(startStop_PTZL(bool)));
 	QObject::connect(PTZR_CB, SIGNAL(toggled(bool)),this, SLOT(startStop_PTZR(bool)));
@@ -23,9 +24,9 @@ LauncherImpl::LauncherImpl( QWidget * parent, Qt::WFlags f) : QMainWindow(parent
 	QObject::connect(Status_CB, SIGNAL(toggled(bool)),this, SLOT(startStop_Status(bool)));
 	QObject::connect(Topdown_CB, SIGNAL(toggled(bool)),this, SLOT(startStop_Topdown(bool)));
 	
+	
 	myNode = new ros::node("guiNode");
-	//subscribe("roserr", 
-	std::cout << "constructed\n";
+	//std::cout << "constructed\n";
 }
 
 void LauncherImpl::consoleOut(QString line)
@@ -38,7 +39,11 @@ void LauncherImpl::startStop_Visualization( bool checked )
     if(checked)
     {
 		consoleOut("Opening Visualizer");
-		std::cout << "Opening Visualizer";
+		std::cout << "Opening Visualizer\n";
+		HeadLaser_CB->setChecked(false);
+		FloorLaser_CB->setChecked(false);
+		StereoCloud_CB->setChecked(false);
+		Model_CB->setChecked(false);
 		Visualization_DW->setVisible(true);
 		QObject::connect(Visualization_DW, SIGNAL(visibilityChanged(bool)),this, SLOT(visualizationClosing(bool)));
 		QObject::connect(HeadLaser_CB, SIGNAL(toggled(bool)),this,SLOT(startStopHeadPtCld(bool)));
@@ -50,9 +55,14 @@ void LauncherImpl::startStop_Visualization( bool checked )
     else
     {
 		consoleOut("Closing Visualizer");
-		Visualization_DW->setVisible(false);
-		std::cout << "almost closed\n";
 		delete vis3d_Window;
+		std::cout << "almost closed\n";
+		Visualization_DW->setVisible(false);
+		QObject::disconnect(Visualization_DW, SIGNAL(visibilityChanged(bool)),this, SLOT(visualizationClosing(bool)));
+		QObject::disconnect(HeadLaser_CB, SIGNAL(toggled(bool)),this,SLOT(startStopHeadPtCld(bool)));
+		QObject::disconnect(FloorLaser_CB, SIGNAL(toggled(bool)),this,SLOT(startStopFloorPtCld(bool)));
+		QObject::disconnect(StereoCloud_CB, SIGNAL(toggled(bool)),this,SLOT(startStopStereoPtCld(bool)));
+		QObject::disconnect(Model_CB, SIGNAL(toggled(bool)),this,SLOT(startStopModel(bool)));
 		std::cout << "closed\n";
     }
 }
@@ -64,11 +74,15 @@ void LauncherImpl::startStop_PTZL( bool checked)
 		consoleOut("Opening Left Pan-Tilt-Zoom");
 		PTZL_DW->setVisible(true);
 		QObject::connect(PTZL_DW, SIGNAL(visibilityChanged(bool)),this, SLOT(PTZLClosing(bool)));
+		cvNamedWindow("Left PTZ", CV_WINDOW_AUTOSIZE);
+		myNode->subscribe("PTZLImage", PTZLImage, &LauncherImpl::incomingPTZLImage);
 	}
 	else
 	{
 		consoleOut("Closing Left Pan-Tilt-Zoom");
 		PTZL_DW->setVisible(false);
+		cvDestroyWindow("Left PTZ");
+		myNode->unsubscribe("PTZLImage");
 	}
 }
 
@@ -264,6 +278,19 @@ void LauncherImpl::startStopModel( bool checked )
     {
 		consoleOut("Disabling 3D Model");
 		vis3d_Window->disableModel();
+    }
+}
+
+void LauncherImpl::incomingPTZLImage()
+{
+	IplImage *cv_image;
+	cv_bridge = new CvBridge<std_msgs::Image>(&PTZLImage);
+	//cv_bridge(&PTZLImage);
+    if (cv_bridge->to_cv(&cv_image))
+    {
+      cvShowImage("Left PTZ", cv_image);
+      cvWaitKey(3);
+      cvReleaseImage(&cv_image);
     }
 }
 //

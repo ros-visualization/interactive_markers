@@ -29,16 +29,16 @@
 #ifndef __PP_IL_RENDER_HH
 #define __PP_IL_RENDER_HH
 #define cloudArrayLength 400
-#include "rosthread/member_thread.h"
+#include <rosthread/member_thread.h>
 #include <irrlicht.h>
 #include "ILClient.hh"
 #include "ILRender.hh"
 #include "CustomNodes/ILPointCloud.hh"
 #include "CustomNodes/ILGrid.hh"
 
-#include "ros/node.h"
-#include "std_msgs/MsgPointCloudFloat32.h"
-#include "std_msgs/MsgEmpty.h"
+#include <ros/node.h>
+#include <std_msgs/PointCloudFloat32.h>
+#include <std_msgs/Empty.h>
 
 using namespace irr;
 using namespace core;
@@ -46,20 +46,21 @@ using namespace scene;
 using namespace video;
 using namespace io;
 using namespace gui;
+using namespace std_msgs;
 
 class Vis3d
 {
 	public:
 	ros::node *myNode;
-	MsgEmpty shutHead;
-	MsgEmpty shutFloor;
-	MsgEmpty shutStereo;
-	MsgPointCloudFloat32 ptCldHead;
-	MsgPointCloudFloat32 ptCldFloor;
-	MsgPointCloudFloat32 ptCldStereo;
+	std_msgs::Empty shutHead;
+	std_msgs::Empty shutFloor;
+	std_msgs::Empty shutStereo;
+	std_msgs::PointCloudFloat32 ptCldHead;
+	std_msgs::PointCloudFloat32 ptCldFloor;
+	std_msgs::PointCloudFloat32 ptCldStereo;
 
 	int headVertScanCount;
-	ILClient localClient;
+	ILClient *localClient;
 	ILRender *pLocalRenderer;
 	ILPointCloud *ilHeadCloud[cloudArrayLength];
 	ILPointCloud *ilFloorCloud;
@@ -67,54 +68,115 @@ class Vis3d
 	ILGrid *ilGrid;
 	IAnimatedMesh *base;
 	IAnimatedMeshSceneNode *baseNode;
+	IAnimatedMesh *body;
+	IAnimatedMeshSceneNode *bodyNode;
+	IAnimatedMesh *wheel;
+	IAnimatedMeshSceneNode *wheelFLNode;
+	//IAnimatedMesh *wheelRL;
+	IAnimatedMeshSceneNode *wheelRLNode;
+	//IAnimatedMesh *wheelFR;
+	IAnimatedMeshSceneNode *wheelFRNode;
+	//IAnimatedMesh *wheelRR;
+	IAnimatedMeshSceneNode *wheelRRNode;
+	
 
-	Vis3d(ros::node *aNode) : localClient()
+	Vis3d(ros::node *aNode) : localClient(NULL)
 	{
+		for(int i = 0; i < cloudArrayLength; i++)
+		{
+			ilHeadCloud[i] = NULL;
+			//delete ilHeadCloud[i];
+		}
+		ilFloorCloud = NULL;
+		ilStereoCloud = NULL;
+		ilGrid = NULL;
+		
+		base = NULL;
+		baseNode = NULL;
+		body = NULL;
+		bodyNode = NULL;
+		wheel = NULL;
+		wheelFLNode = NULL;
+		wheelRLNode = NULL;
+		wheelFRNode = NULL;
+		wheelRRNode = NULL;
+		
+		if (localClient)
+		{
+		      printf("deleting local client");
+		      delete localClient;
+		}
+		
+		for(int i = 0; i < cloudArrayLength; i++)
+	    {
+		    if(ilHeadCloud[i])
+			    delete ilHeadCloud[i];
+	    }
+	    if(ilFloorCloud)
+		    delete ilFloorCloud;
+	    if(ilStereoCloud)
+		    delete ilStereoCloud;
+	    if(ilGrid)
+		    delete ilGrid;
+		
 		myNode = aNode;
-	    std::cerr<<"Constructing Vis3D" << std::endl;
-	    headVertScanCount = 0;
-	    pLocalRenderer = ILClient::getSingleton();
-	    std::cerr<<"Got singleton" <<std::endl;
-	    pLocalRenderer->lock();
-	    ilFloorCloud = new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),667);
-	    ilStereoCloud = new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),666);
-	    ilGrid = new ILGrid(pLocalRenderer->manager()->getRootSceneNode(), pLocalRenderer->manager(), 668);
-	    for(int i = 0; i < cloudArrayLength; i++)
-	    {
-		ilHeadCloud[i] = new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),669 + i);
-	    }
-	    pLocalRenderer->unlock();
-	    pLocalRenderer->addNode(ilFloorCloud);
-	    pLocalRenderer->addNode(ilStereoCloud);
-	    for(int i = 0; i < cloudArrayLength; i++)
-	    {
-		pLocalRenderer->addNode(ilHeadCloud[i]);
-	    }
-	    ilGrid->makegrid(100,1.0f,50,50,50);
-	    pLocalRenderer->addNode(ilGrid);
-	    std::cerr<<"Done Constructing Vis3D"<<std::endl;
-	    //take me out
-	    //enableBody();
+
+		printf("Creating new client\n");
+
+		localClient = new ILClient();
+
+		printf("Accessing Renderer\n");
+
+		pLocalRenderer = ILClient::getSingleton();
+
+		printf("Getting lock\n");
+
+		pLocalRenderer->lock();
+
+		headVertScanCount = 0;
+		ilFloorCloud = new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),667);
+		ilStereoCloud = new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),666);
+		ilGrid = new ILGrid(pLocalRenderer->manager()->getRootSceneNode(), pLocalRenderer->manager(), 668);
+		for(int i = 0; i < cloudArrayLength; i++)
+		{
+			ilHeadCloud[i] = new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),669 + i);
+		}
+		pLocalRenderer->unlock();
+		pLocalRenderer->addNode(ilFloorCloud);
+		pLocalRenderer->addNode(ilStereoCloud);
+		for(int i = 0; i < cloudArrayLength; i++)
+		{
+			pLocalRenderer->addNode(ilHeadCloud[i]);
+		}
+		ilGrid->makegrid(100,1.0f,50,50,50);
+		pLocalRenderer->addNode(ilGrid);
+		std::cerr<<"Done Constructing Vis3D"<<std::endl;
+		//take me out
+		//enableBody();
 	}
 
 	~Vis3d()
 	{
 	    std::cout << "destroying Vis3D\n";
-	    pLocalRenderer->manager()->clear();
-	    //delete pLocalRenderer->manager();
+		//disableModel();
+		disableHead();
+		disableStereo();
+		disableFloor();
+		delete localClient;
 	    for(int i = 0; i < cloudArrayLength; i++)
 	    {
-		delete ilHeadCloud[i];
+		    //if(ilHeadCloud[i])
+			delete ilHeadCloud[i];
 	    }
-	    delete ilFloorCloud;
-	    delete ilStereoCloud;
-	    delete ilGrid;
-	    delete base;
-	    delete baseNode;
-	    //delete localClient;
-	    //delete pLocalRenderer;
+	    //if(ilFloorCloud)
+		delete ilFloorCloud;
+	    //if(ilStereoCloud)
+		delete ilStereoCloud;
+	    //if(ilGrid)
+		delete ilGrid;
+		
+		
 	    std::cout << "destroyed Vis3D\n";
-	    //ros::fini();
 	}
 
 	bool isEnabled()
@@ -134,14 +196,47 @@ class Vis3d
 
 	void enableModel()
 	{
-	    base = pLocalRenderer->manager()->getMesh("../pr2_models/base.3DS");
+	    base = pLocalRenderer->manager()->getMesh("../pr2_models/base1000.3DS");
 	    baseNode = pLocalRenderer->manager()->addAnimatedMeshSceneNode(base);
 	    baseNode->setMaterialFlag(EMF_LIGHTING, false);
+		baseNode->setMaterialFlag(EMF_WIREFRAME,true);
+		
+		body = pLocalRenderer->manager()->getMesh("../pr2_models/body1000.3DS");
+	    bodyNode = pLocalRenderer->manager()->addAnimatedMeshSceneNode(body);
+	    bodyNode->setMaterialFlag(EMF_LIGHTING, false);
+		bodyNode->setMaterialFlag(EMF_WIREFRAME,true);
+		
+		wheel = pLocalRenderer->manager()->getMesh("../pr2_models/caster1000.3DS");
+	    wheelFLNode = pLocalRenderer->manager()->addAnimatedMeshSceneNode(wheel);
+	    wheelFLNode->setMaterialFlag(EMF_LIGHTING, false);
+		wheelFLNode->setMaterialFlag(EMF_WIREFRAME,true);
+		
+		//wheelRL = pLocalRenderer->manager()->getMesh("../pr2_models/caster1000.3DS");
+	    wheelRLNode = pLocalRenderer->manager()->addAnimatedMeshSceneNode(wheel);
+	    wheelRLNode->setMaterialFlag(EMF_LIGHTING, false);
+		wheelRLNode->setMaterialFlag(EMF_WIREFRAME,true);
+		
+		//wheelFR = pLocalRenderer->manager()->getMesh("../pr2_models/caster1000.3DS");
+	    wheelFRNode = pLocalRenderer->manager()->addAnimatedMeshSceneNode(wheel);
+	    wheelFRNode->setMaterialFlag(EMF_LIGHTING, false);
+		wheelFRNode->setMaterialFlag(EMF_WIREFRAME,true);
+		
+		//wheelRR = pLocalRenderer->manager()->getMesh("../pr2_models/caster1000.3DS");
+	    wheelRRNode = pLocalRenderer->manager()->addAnimatedMeshSceneNode(wheel);
+	    wheelRRNode->setMaterialFlag(EMF_LIGHTING, false);
+		wheelRRNode->setMaterialFlag(EMF_WIREFRAME,true);
 	}
 
 	void disableModel()
 	{
+		pLocalRenderer->lock();
 	    baseNode->remove();
+		bodyNode->remove();
+		wheelFLNode->remove();
+		wheelRLNode->remove();
+		wheelFRNode->remove();
+		wheelRRNode->remove();
+		pLocalRenderer->unlock();
 	}
 
 	void enableFloor()
@@ -163,10 +258,14 @@ class Vis3d
 	    myNode->unsubscribe("cloud");
 	    myNode->unsubscribe("shutter");
 	    shutterHead();
+		pLocalRenderer->lock();
 	    for(int i = 0; i < cloudArrayLength; i++)
 	    {
+		    
 		pLocalRenderer->disable(ilHeadCloud[i]);
-	    }   
+		    
+	    }  
+		pLocalRenderer->unlock();	    
 	}
 
 	void disableFloor()
@@ -174,7 +273,9 @@ class Vis3d
 	    myNode->unsubscribe("cloudFloor");
 	    myNode->unsubscribe("shutterFloor");
 	    shutterFloor();
+		pLocalRenderer->lock();
 	    pLocalRenderer->disable(ilFloorCloud);
+		pLocalRenderer->unlock();
 	}
 
 	void disableStereo()
@@ -182,7 +283,9 @@ class Vis3d
 	    myNode->unsubscribe("cloudStereo");
 	    myNode->unsubscribe("shutterStereo");
 	    shutterStereo();
+		pLocalRenderer->lock();
 	    pLocalRenderer->disable(ilStereoCloud);
+		pLocalRenderer->unlock();
 	}
 
 	void shutterHead()

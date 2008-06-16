@@ -1,21 +1,34 @@
 #ifndef LAUNCHERIMPL_H
 #define LAUNCHERIMPL_H
-//
+
+//Other stuff
+#include <cstdio>
+#include <vector>
+#include "image_utils/cv_bridge.h"
+#include "opencv/cxcore.h"
+#include "opencv/cv.h"
+#include "opencv/highgui.h"
+//GUI stuff
 #include <QMainWindow>
 #include "ui_launcher.h"
 #include "Vis3d.hh"
+
 //ros stuff
 #include "ros/node.h"
+#include "std_msgs/Image.h"
 
-//
+
 class LauncherImpl : public QMainWindow, public Ui::Launcher
 {
 Q_OBJECT
 public:
-	
+	ros::node *myNode;
+	std_msgs::Image PTZLImage;
+	CvBridge<std_msgs::Image> *cv_bridge;
 	LauncherImpl( QWidget * parent = 0, Qt::WFlags f = 0 );
 	void consoleOut(QString line);
 	Vis3d *vis3d_Window;
+	void incomingPTZLImage();
 	
 private slots:
 	void startStop_Visualization( bool checked );
