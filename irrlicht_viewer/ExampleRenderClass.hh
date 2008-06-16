@@ -1,5 +1,5 @@
-#ifndef __PP_IL_RENDER_HH
-#define __PP_IL_RENDER_HH
+#ifndef __EXAMPLE_RENDER_HH
+#define __EXAMPLE_RENDER_HH
 ///////////////////////////////////////////////////////////////////////////////
 // 
 // Copyright (C) 2008, Willow Garage Inc.
@@ -41,7 +41,7 @@
 #include "std_msgs/MsgPointCloudFloat32.h"
 #include "std_msgs/MsgEmpty.h"
 
-class PPILRender 
+class ExampleRender 
 {
 public:
 
@@ -60,7 +60,7 @@ public:
   ros::node & myNode;
   
   // Constructor
-  PPILRender(ros::node & aNode) : localClient(), 
+  ExampleRender(ros::node & aNode) : localClient(), 
 				  myNode(aNode)
   {
 
@@ -88,13 +88,13 @@ public:
     pLocalRenderer->addNode(ilGrid);
     pLocalRenderer->enable(ilGrid);
 
-    myNode.subscribe("cloud", cloudIn, &PPILRender::callback, this);
-    myNode.subscribe("shutter", shutter, &PPILRender::clear, this);
+    myNode.subscribe("cloud", cloudIn, &ExampleRender::callback, this);
+    myNode.subscribe("shutter", shutter, &ExampleRender::clear, this);
 
 
   };
   
-  ~PPILRender() {
+  ~ExampleRender() {
     delete ilCloud;
     delete ilGrid;
   };
@@ -141,4 +141,4 @@ public:
     
 };
 
-#endif // ifndef __PP_IL_RENDER_HH
+#endif // ifndef __EXAMPLE_RENDER_HH

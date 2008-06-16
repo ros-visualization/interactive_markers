@@ -1,4 +1,4 @@
-#include "PPILRender.hh"
+#include "ExampleRenderClass.hh"
 
 int main(int argc, char ** argv)
 {
@@ -6,7 +6,7 @@ int main(int argc, char ** argv)
 
   ros::node myNode("DemoRenderer",ros::node::ANONYMOUS_NAME);
 
-  PPILRender* myRenderer = new PPILRender(myNode);
+  ExampleRender* myRenderer = new ExampleRender(myNode);
 
   while(myRenderer->isEnabled() && myNode.ok())
     {
