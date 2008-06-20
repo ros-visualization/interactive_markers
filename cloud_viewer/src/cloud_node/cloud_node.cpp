@@ -33,8 +33,8 @@
 *********************************************************************/
 
 #include "ros/node.h"
-#include "std_msgs/MsgPointCloudFloat32.h"
-#include "std_msgs/MsgEmpty.h"
+#include "std_msgs/PointCloudFloat32.h"
+#include "std_msgs/Empty.h"
 #include "cloud_viewer/cloud_viewer.h"
 #include <SDL/SDL.h>
 #include "math.h"
@@ -59,8 +59,8 @@ public:
 class Cloud_Node : public ros::node, public ros::SDLGL
 {
 public:
-  MsgPointCloudFloat32 cloud;
-  MsgEmpty shutter;
+  std_msgs::PointCloudFloat32 cloud;
+  std_msgs::Empty shutter;
   CloudViewer cloud_viewer;
 
   int level;
