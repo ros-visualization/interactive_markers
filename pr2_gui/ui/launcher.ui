@@ -349,6 +349,13 @@
           </property>
          </widget>
         </item>
+        <item row="4" column="0" >
+         <widget class="QCheckBox" name="UCS_CB" >
+          <property name="text" >
+           <string>UCS</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </widget>
      </item>

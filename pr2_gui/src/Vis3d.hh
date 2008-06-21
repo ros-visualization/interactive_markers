@@ -36,6 +36,7 @@
 #include "CustomNodes/ILPointCloud.hh"
 #include "CustomNodes/ILGrid.hh"
 #include "ILModel.cpp"
+#include "ILUCS.cpp"
 
 #include <ros/node.h>
 #include <std_msgs/PointCloudFloat32.h>
@@ -62,6 +63,8 @@ public:
 	ILPointCloud *ilStereoCloud;
 	ILGrid *ilGrid;
 	ILModel *model[modelPartsCount];
+	ILUCS *ilucs;
+	
 	irr::scene::ICameraSceneNode *cameras[viewCount];
 	
 
@@ -72,7 +75,7 @@ public:
 		{
 			model[i] = 0;
 		}
-		
+		ilucs = 0;
 		myNode = aNode;
 		localClient = new ILClient();
 		pLocalRenderer = ILClient::getSingleton();
@@ -117,7 +120,7 @@ public:
                  keyMap[7].KeyCode = irr::KEY_KEY_D;
 		}
 		cameras[Maya] = pLocalRenderer->manager()->addCameraSceneNodeMaya(NULL,-150.0f,200.0f,150.0f,Maya);
-		cameras[FPS] = pLocalRenderer->manager()->addCameraSceneNodeFPS(NULL,100,500,FPS,keyMap,8);
+		cameras[FPS] = pLocalRenderer->manager()->addCameraSceneNodeFPS(NULL,100,5,FPS,keyMap,8);
 		cameras[TFL] = pLocalRenderer->manager()->addCameraSceneNode(NULL,irr::core::vector3df(3,3,3),irr::core::vector3df(0,0,1.5),TFL);
 		cameras[TFR] = pLocalRenderer->manager()->addCameraSceneNode(NULL,irr::core::vector3df(3,-3,3),irr::core::vector3df(0,0,1.5),TFR);
 		cameras[TRL] = pLocalRenderer->manager()->addCameraSceneNode(NULL,irr::core::vector3df(-3,3,3),irr::core::vector3df(0,0,1.5),TRL);
@@ -166,6 +169,14 @@ public:
 	void changeView(int id)
 	{
 		pLocalRenderer->manager()->setActiveCamera(cameras[id]);
+	}
+	
+	void enableUCS()
+	{
+		pLocalRenderer->lock();
+		if(!ilucs)
+  			ilucs = new ILUCS(pLocalRenderer->manager(),true);
+  		pLocalRenderer->unlock();
 	}
 
 	void enableHead()
@@ -238,6 +249,18 @@ public:
 		pLocalRenderer->unlock();
 	}
 
+	
+	void disableUCS()
+	{
+		pLocalRenderer->lock();
+		if(ilucs)
+		{
+			delete ilucs;
+			ilucs = 0;
+		}
+		pLocalRenderer->unlock();
+	}
+	
 	void enableFloor()
 	{
 	    myNode->subscribe("cloudFloor", ptCldFloor, &Vis3d::addFloorCloud,this);
@@ -375,6 +398,7 @@ public:
 	    }
 	    pLocalRenderer->unlock();
 	}
+
 };
     
     

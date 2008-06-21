@@ -73,6 +73,7 @@ void LauncherImpl::startStop_Visualization( bool checked )
 		QObject::connect(FloorLaser_CB, SIGNAL(toggled(bool)),this,SLOT(startStopFloorPtCld(bool)));
 		QObject::connect(StereoCloud_CB, SIGNAL(toggled(bool)),this,SLOT(startStopStereoPtCld(bool)));
 		QObject::connect(Model_CB, SIGNAL(toggled(bool)),this,SLOT(startStopModel(bool)));
+		QObject::connect(UCS_CB, SIGNAL(toggled(bool)),this,SLOT(startStopUCS(bool)));
 		vis3d_Window = new Vis3d(myNode);
     }
     else
@@ -87,6 +88,7 @@ void LauncherImpl::startStop_Visualization( bool checked )
 		QObject::disconnect(FloorLaser_CB, SIGNAL(toggled(bool)),this,SLOT(startStopFloorPtCld(bool)));
 		QObject::disconnect(StereoCloud_CB, SIGNAL(toggled(bool)),this,SLOT(startStopStereoPtCld(bool)));
 		QObject::disconnect(Model_CB, SIGNAL(toggled(bool)),this,SLOT(startStopModel(bool)));
+		QObject::disconnect(UCS_CB, SIGNAL(toggled(bool)),this,SLOT(startStopUCS(bool)));
 		std::cout << "closed\n";
     }
 }
@@ -313,6 +315,20 @@ void LauncherImpl::startStopModel( bool checked )
 		consoleOut("Disabling 3D Model");
 		vis3d_Window->disableModel();
     }
+}
+
+void LauncherImpl::startStopUCS( bool checked )
+{
+	if(checked)
+	{
+		consoleOut("Enabling UCS");
+		vis3d_Window->enableUCS();
+	}
+	else
+	{
+		consoleOut("Disabling UCS");
+		vis3d_Window->disableUCS();
+	}
 }
 
 void LauncherImpl::incomingPTZLImage()

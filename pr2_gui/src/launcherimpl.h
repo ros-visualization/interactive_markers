@@ -62,6 +62,7 @@ private slots:
 	void startStopFloorPtCld( bool checked );
 	void startStopStereoPtCld( bool checked );
 	void startStopModel( bool checked );
+	void startStopUCS( bool checked );
 	
 	void incomingPTZLImage();
 	void incomingPTZRImage();
