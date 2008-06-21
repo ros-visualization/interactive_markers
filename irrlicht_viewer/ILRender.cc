@@ -54,20 +54,40 @@ void ILRender::init(core::dimension2d<s32> resolution, video::E_DRIVER_TYPE driv
   lock();
   if(!m_enabled) {
     // Start render thread
-    m_enabled = true;
+		m_enabled = true;
     m_pRenderThread = startMemberFunctionThread(this, &ILRender::renderLoop);
   }
   unlock();
 }
 
 void ILRender::cleanup() {
+	//std::cout << "Cleaning ILRender" << std::endl;
   lock();
   if(m_enabled && m_pRenderThread != NULL) {
-    m_enabled = false;
-    pthread_join(*m_pRenderThread, 0L);
-    m_pRenderThread = NULL;
-    m_pDevice->drop();
+	  //std::cout << "m_pRenderThread != NULL" << std::endl;
+    
+	m_pDevice->closeDevice();//m_enabled = false;
+	//  pthread_cancel(*m_pRenderThread);
+  //int retV = 
+	  pthread_join(*m_pRenderThread, 0L);
+	  //std::cout << "pthread return value:: " << retV << std::endl;
+  m_pRenderThread = NULL;
+	  //m_pDevice->drop();
+	  //delete m_pDevice;
+	  //std::cerr << m_pDevice->getReferenceCount() << std::endl;
+	  //delete m_pDevice;
+	  if(m_pDevice->drop()){
+		std::cout << "dropped\n";
+		  //std::cerr << m_pDevice->getReferenceCount() << std::endl;
+		  //delete m_pDevice;
+	  }
   }
+  else
+  {
+	std::cout << "m_pRenderThread != NULL or m_enabled == 0" << std::endl;
+	
+  }	
+  
   unlock();
 }
 
@@ -75,12 +95,15 @@ void ILRender::cleanup() {
 void ILRender::lock() {
   if(pthread_mutex_lock(&m_renderMutex) == -1) {
     //TODO: throw exception here
+	  std::cerr << "ILRender did not lock\n";
+	  
   }
 }
 
 void ILRender::unlock() {
   if(pthread_mutex_unlock(&m_renderMutex) == -1) {
     //TODO: throw exception here
+	  std::cerr << "ILRender did not unlock\n";
   }
 }
 
@@ -96,12 +119,15 @@ void ILRender::addNode(scene::ISceneNode *pNode) {
     // Lock mutex before insertion
     int ret = pthread_mutex_lock(&(tempinfo->lock));
     if(ret != 0) {
+	    std::cerr << "error adding node\n";
       //TODO: throw exception here
     }
     // Insert
     m_nodes.insert(std::make_pair(pNode,tempinfo));
     // Unlock mutex
     unlock(pNode);
+    //memory leak, deleting tempinfo
+    //delete tempinfo;
   }
 
   unlock();
@@ -156,16 +182,20 @@ void ILRender::unlock(scene::ISceneNode *pNode) {
   }
 }
 
+
+
 // Render Loop
 void ILRender::renderLoop() {
 
   std::cerr<<"RENDERLOOP!"<<std::endl;
 
   lock();
+	//CHANGE TO SOFTWARE TO WORK!!!!!!!
   m_pDevice = createDevice(video::EDT_OPENGL, core::dimension2d<s32>(640, 480));
 
   if (m_pDevice == 0) {
     // TODO: REPLACE THIS WITH AN EXCEPTION
+	  std::cerr <<"failed creating device!\n";
     exit(-1);
   }
 
@@ -202,13 +232,13 @@ void ILRender::renderLoop() {
   m_initialized = true;
   unlock();
 
-  std::cerr<<"ILRENDER INITIALIZED!"<<std::endl;
+  std::cout<<"ILRENDER INITIALIZED!"<<std::endl;
 
   while(m_enabled) {
     if(m_pDevice->run()) {
       lock();
-      
       // Draw Scene
+	    //printf("%s\n", __func__);
       m_pDriver->beginScene(true, true, video::SColor(255,0,0,0));
       m_pManager->drawAll();
       m_pDriver->endScene();
@@ -216,11 +246,14 @@ void ILRender::renderLoop() {
       unlock();
     } else {
       m_enabled = false;
+	    std::cout << "no longer running\n";
     }
     usleep(10000);
   }
-
+  std::cout << "exiting thread.\n";
+    //m_pDevice->drop();
   pthread_exit(NULL);
+
 }
 
 // Accessors

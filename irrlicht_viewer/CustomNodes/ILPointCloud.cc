@@ -78,7 +78,7 @@ void ILPointCloud::addPoint(const double x, const double y, const double z, cons
     m_points = (video::S3DVertex*)realloc(m_points,m_numAllocPoints*sizeof(video::S3DVertex));
   }
 
-  m_points[m_numPoints].Pos.set(x,y,z);
+  m_points[m_numPoints].Pos.set(-y,z,x);
   m_points[m_numPoints].Color.set(255,r,g,b);
 
   m_numPoints++;
@@ -92,7 +92,7 @@ void ILPointCloud::addPoints(double *rgX, double *rgY, double *rgZ, int *rgR, in
   }
 
   for(int i=0; i<numPoints; i++) {
-    m_points[m_numPoints + i].Pos.set(rgX[i],rgY[i],rgZ[i]);
+    m_points[m_numPoints + i].Pos.set(-rgY[i],rgZ[i],rgX[i]);
     m_points[m_numPoints + i].Color.set(255,rgR[i],rgG[i],rgB[i]);
   }
   
