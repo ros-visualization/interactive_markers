@@ -38,16 +38,21 @@
 #include "CustomNodes/ILGrid.hh"
 
 #include "ros/node.h"
-#include "std_msgs/MsgPointCloudFloat32.h"
-#include "std_msgs/MsgEmpty.h"
+#include "std_msgs/PointCloudFloat32.h"
+#include "std_msgs/Empty.h"
+
+/*! \brief An Example of how to interface with the Irrlicht Renderer 
+ * The Example Render Class provides an example of how to interact with 
+ * the Irrlicht Renderer and a ros node.  
+ */
 
 class ExampleRender 
 {
 public:
 
 
-  MsgPointCloudFloat32 cloudIn;
-  MsgEmpty shutter;
+  std_msgs::PointCloudFloat32 cloudIn;
+  std_msgs::Empty shutter;
 
   ILClient localClient;
   ILRender *pLocalRenderer;
@@ -75,6 +80,7 @@ public:
     ilGrid = new ILGrid(pLocalRenderer->manager()->getRootSceneNode(), pLocalRenderer->manager(), 667);
     pLocalRenderer->unlock();
 
+    // Should these be locked? 
     pLocalRenderer->addNode(ilCloud);
     pLocalRenderer->enable(ilCloud);
     pLocalRenderer->addNode(ilCloud1);
@@ -88,6 +94,7 @@ public:
     pLocalRenderer->addNode(ilGrid);
     pLocalRenderer->enable(ilGrid);
 
+    /* Subscribe to the point cloud and shutter message */
     myNode.subscribe("cloud", cloudIn, &ExampleRender::callback, this);
     myNode.subscribe("shutter", shutter, &ExampleRender::clear, this);
 
@@ -96,11 +103,14 @@ public:
   
   ~ExampleRender() {
     delete ilCloud;
+    delete ilCloud1;
+    delete ilCloud2;
+    delete ilCloud3;
     delete ilGrid;
   };
 
   bool isEnabled(){return pLocalRenderer->isEnabled();};
-
+  /*! \brief The method to clear all points from the point clouds */
   void clear()
   {
     std::cerr<< "Shutter"<<std::endl;
@@ -112,6 +122,7 @@ public:
     pLocalRenderer->unlock();
   }
 
+  /*! \brief The callback used when point clouds are recieved. */
   void callback() {
     //std::cerr<<"recieved cloud"<<std::endl;
     // Process data (this takes about 2500 usec for a 10Hz velodyne cycle)
@@ -128,13 +139,13 @@ public:
       //      usleep(10);
       //std::cerr<<"i = " << i << std::endl;
       if (i%4 == 0)
-	    ilCloud->addPoint(-cloudIn.pts[i].y, cloudIn.pts[i].z, cloudIn.pts[i].x, (int)(cloudIn.pts[i].z * 32.0)+64,(int)(cloudIn.chan[0].vals[i]/16.0),128);
+	    ilCloud->addPoint(cloudIn.pts[i].x, cloudIn.pts[i].y, cloudIn.pts[i].z, (int)(cloudIn.pts[i].z * 32.0)+64,(int)(cloudIn.chan[0].vals[i]/16.0),128);
       else if ((i + 1)%4 == 0)
-	    ilCloud1->addPoint(-cloudIn.pts[i].y, cloudIn.pts[i].z, cloudIn.pts[i].x, (int)(cloudIn.pts[i].z * 32.0)+64,(int)(cloudIn.chan[0].vals[i]/16.0),128);
+	    ilCloud1->addPoint(cloudIn.pts[i].x, cloudIn.pts[i].y, cloudIn.pts[i].z, (int)(cloudIn.pts[i].z * 32.0)+64,(int)(cloudIn.chan[0].vals[i]/16.0),128);
       else if ((i + 2)%4 == 0)
-	    ilCloud2->addPoint(-cloudIn.pts[i].y, cloudIn.pts[i].z, cloudIn.pts[i].x, (int)(cloudIn.pts[i].z * 32.0)+64,(int)(cloudIn.chan[0].vals[i]/16.0),128);
+	    ilCloud2->addPoint(cloudIn.pts[i].x, cloudIn.pts[i].y, cloudIn.pts[i].z, (int)(cloudIn.pts[i].z * 32.0)+64,(int)(cloudIn.chan[0].vals[i]/16.0),128);
       else 
-	    ilCloud3->addPoint(-cloudIn.pts[i].y, cloudIn.pts[i].z, cloudIn.pts[i].x, (int)(cloudIn.pts[i].z * 32.0)+64,(int)(cloudIn.chan[0].vals[i]/16.0),128);
+	    ilCloud3->addPoint(cloudIn.pts[i].x, cloudIn.pts[i].y, cloudIn.pts[i].z, (int)(cloudIn.pts[i].z * 32.0)+64,(int)(cloudIn.chan[0].vals[i]/16.0),128);
     }
     pLocalRenderer->unlock();
   };

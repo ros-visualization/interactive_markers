@@ -64,23 +64,11 @@ void ILRender::cleanup() {
 	//std::cout << "Cleaning ILRender" << std::endl;
   lock();
   if(m_enabled && m_pRenderThread != NULL) {
-	  //std::cout << "m_pRenderThread != NULL" << std::endl;
-    
-	m_pDevice->closeDevice();//m_enabled = false;
-	//  pthread_cancel(*m_pRenderThread);
-  //int retV = 
-	  pthread_join(*m_pRenderThread, 0L);
-	  //std::cout << "pthread return value:: " << retV << std::endl;
-  m_pRenderThread = NULL;
-	  //m_pDevice->drop();
-	  //delete m_pDevice;
-	  //std::cerr << m_pDevice->getReferenceCount() << std::endl;
-	  //delete m_pDevice;
-	  if(m_pDevice->drop()){
-		std::cout << "dropped\n";
-		  //std::cerr << m_pDevice->getReferenceCount() << std::endl;
-		  //delete m_pDevice;
-	  }
+    m_enabled = false;
+    m_pDevice->closeDevice();
+    pthread_join(*m_pRenderThread, 0L);
+    m_pRenderThread = NULL;
+    m_pDevice->drop(); 
   }
   else
   {

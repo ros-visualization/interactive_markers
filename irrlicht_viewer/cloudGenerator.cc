@@ -1,7 +1,7 @@
 #include <ros/node.h>
 #include <rostime/clock.h>
-#include <std_msgs/MsgPointCloudFloat32.h>
-#include <std_msgs/MsgEmpty.h>
+#include <std_msgs/PointCloudFloat32.h>
+#include <std_msgs/Empty.h>
 
 #include <math.h>
 
@@ -13,8 +13,8 @@ public:
   
   cloudGenerator(): ros::node("CloudGenerator")
   { 
-    advertise<MsgPointCloudFloat32>("cloud");
-    advertise<MsgEmpty>("shutter");
+    advertise<std_msgs::PointCloudFloat32>("cloud");
+    advertise<std_msgs::Empty>("shutter");
   };
   //  ~cloudGenerator(){return;};
   
@@ -38,15 +38,15 @@ public:
 
   void sendShutter()
   {
-    MsgEmpty shutter;
+    std_msgs::Empty shutter;
     publish("shutter",shutter);
   };
   
 
   
 private:
-  MsgPointCloudFloat32 cloud;
-  MsgEmpty shutter;
+  std_msgs::PointCloudFloat32 cloud;
+  std_msgs::Empty shutter;
   
   ros::time::clock myClock;
   
