@@ -5,8 +5,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1084</width>
-    <height>643</height>
+    <width>1043</width>
+    <height>647</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -267,7 +267,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1084</width>
+     <width>1043</width>
      <height>30</height>
     </rect>
    </property>
@@ -316,31 +316,139 @@
    <widget class="QWidget" name="dockWidgetContents" >
     <layout class="QGridLayout" >
      <item row="0" column="0" >
-      <widget class="QCheckBox" name="HeadLaser_CB" >
-       <property name="text" >
-        <string>Head Laser</string>
+      <widget class="QGroupBox" name="Models_GB" >
+       <property name="title" >
+        <string>Models</string>
        </property>
+       <layout class="QGridLayout" >
+        <item row="0" column="0" >
+         <widget class="QCheckBox" name="HeadLaser_CB" >
+          <property name="text" >
+           <string>Head Laser</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0" >
+         <widget class="QCheckBox" name="FloorLaser_CB" >
+          <property name="text" >
+           <string>Floor Laser</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0" >
+         <widget class="QCheckBox" name="StereoCloud_CB" >
+          <property name="text" >
+           <string>Stereo</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0" >
+         <widget class="QCheckBox" name="Model_CB" >
+          <property name="text" >
+           <string>Model</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </item>
-     <item row="1" column="0" >
-      <widget class="QCheckBox" name="FloorLaser_CB" >
-       <property name="text" >
-        <string>Floor Laser</string>
+     <item row="0" column="1" >
+      <widget class="QGroupBox" name="Views_GB" >
+       <property name="title" >
+        <string>Views</string>
        </property>
-      </widget>
-     </item>
-     <item row="2" column="0" >
-      <widget class="QCheckBox" name="StereoCloud_CB" >
-       <property name="text" >
-        <string>Stereo</string>
+       <property name="flat" >
+        <bool>false</bool>
        </property>
-      </widget>
-     </item>
-     <item row="3" column="0" >
-      <widget class="QCheckBox" name="Model_CB" >
-       <property name="text" >
-        <string>Model</string>
-       </property>
+       <layout class="QGridLayout" >
+        <item row="1" column="0" >
+         <widget class="QRadioButton" name="ViewTFL_RB" >
+          <property name="text" >
+           <string>Front Left</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1" >
+         <widget class="QRadioButton" name="ViewTFR_RB" >
+          <property name="text" >
+           <string>Front Right</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0" >
+         <widget class="QRadioButton" name="ViewTRL_RB" >
+          <property name="text" >
+           <string>Rear Left</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1" >
+         <widget class="QRadioButton" name="ViewTRR_RB" >
+          <property name="text" >
+           <string>Rear Right</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0" >
+         <widget class="QRadioButton" name="ViewT_RB" >
+          <property name="text" >
+           <string>Top</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1" >
+         <widget class="QRadioButton" name="ViewF_RB" >
+          <property name="text" >
+           <string>Front</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0" >
+         <widget class="QRadioButton" name="ViewB_RB" >
+          <property name="text" >
+           <string>Bottom</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="1" >
+         <widget class="QRadioButton" name="ViewR_RB" >
+          <property name="text" >
+           <string>Rear</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="0" >
+         <widget class="QRadioButton" name="ViewS_RB" >
+          <property name="text" >
+           <string>Left</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="1" >
+         <widget class="QRadioButton" name="ViewD_RB" >
+          <property name="text" >
+           <string>Right</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0" >
+         <widget class="QRadioButton" name="ViewMaya_RB" >
+          <property name="text" >
+           <string>Mouse</string>
+          </property>
+          <property name="checked" >
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1" >
+         <widget class="QRadioButton" name="ViewFPS_RB" >
+          <property name="text" >
+           <string>FPS</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </item>
     </layout>
@@ -365,7 +473,20 @@
    <attribute name="dockWidgetArea" >
     <number>1</number>
    </attribute>
-   <widget class="QWidget" name="dockWidgetContents_3" />
+   <widget class="QWidget" name="dockWidgetContents_3" >
+    <layout class="QGridLayout" >
+     <item row="0" column="0" >
+      <widget class="QLabel" name="PTZL_IL" >
+       <property name="text" >
+        <string>No Image</string>
+       </property>
+       <property name="textInteractionFlags" >
+        <set>Qt::NoTextInteraction</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
   </widget>
   <widget class="QDockWidget" name="PTZR_DW" >
    <property name="sizePolicy" >
@@ -389,7 +510,17 @@
    <attribute name="dockWidgetArea" >
     <number>2</number>
    </attribute>
-   <widget class="QWidget" name="dockWidgetContents_4" />
+   <widget class="QWidget" name="dockWidgetContents_4" >
+    <layout class="QGridLayout" >
+     <item row="0" column="0" >
+      <widget class="QLabel" name="PTZR_IL" >
+       <property name="text" >
+        <string>No Image</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
   </widget>
   <widget class="QDockWidget" name="WristR_DW" >
    <property name="sizePolicy" >
@@ -410,7 +541,17 @@
    <attribute name="dockWidgetArea" >
     <number>2</number>
    </attribute>
-   <widget class="QWidget" name="dockWidgetContents_5" />
+   <widget class="QWidget" name="dockWidgetContents_5" >
+    <layout class="QGridLayout" >
+     <item row="0" column="0" >
+      <widget class="QLabel" name="WristR_IL" >
+       <property name="text" >
+        <string>No Image</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
   </widget>
   <widget class="QDockWidget" name="WristL_DW" >
    <property name="sizePolicy" >
@@ -431,7 +572,17 @@
    <attribute name="dockWidgetArea" >
     <number>1</number>
    </attribute>
-   <widget class="QWidget" name="dockWidgetContents_6" />
+   <widget class="QWidget" name="dockWidgetContents_6" >
+    <layout class="QGridLayout" >
+     <item row="0" column="0" >
+      <widget class="QLabel" name="WristL_IL" >
+       <property name="text" >
+        <string>No Image</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
   </widget>
   <widget class="QDockWidget" name="Topdown_DW" >
    <property name="sizePolicy" >

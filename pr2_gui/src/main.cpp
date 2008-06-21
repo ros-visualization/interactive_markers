@@ -5,8 +5,8 @@ int main(int argc, char ** argv)
 {
 	ros::init(argc,argv);
 	QApplication app( argc, argv );
-	LauncherImpl win;
-	win.show(); 
+	LauncherImpl *win = new LauncherImpl();
+	win->show(); 
 	app.connect( &app, SIGNAL( lastWindowClosed() ), &app, SLOT( quit() ) );
 	int ret = app.exec();
 	std::cout << "fini in main\n";
