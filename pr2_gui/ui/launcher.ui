@@ -6,8 +6,14 @@
     <x>0</x>
     <y>0</y>
     <width>1043</width>
-    <height>647</height>
+    <height>672</height>
    </rect>
+  </property>
+  <property name="sizePolicy" >
+   <sizepolicy vsizetype="Preferred" hsizetype="Preferred" >
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle" >
    <string>Launcher</string>
@@ -356,6 +362,16 @@
           </property>
          </widget>
         </item>
+        <item row="5" column="0" >
+         <widget class="QCheckBox" name="Grid_CB" >
+          <property name="text" >
+           <string>Grid</string>
+          </property>
+          <property name="checked" >
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
        </layout>
       </widget>
      </item>
@@ -482,13 +498,67 @@
    </attribute>
    <widget class="QWidget" name="dockWidgetContents_3" >
     <layout class="QGridLayout" >
-     <item row="0" column="0" >
+     <item row="0" column="1" >
       <widget class="QLabel" name="PTZL_IL" >
        <property name="text" >
         <string>No Image</string>
        </property>
        <property name="textInteractionFlags" >
         <set>Qt::NoTextInteraction</set>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1" >
+      <widget class="QSlider" name="panPTZL_S" >
+       <property name="toolTip" >
+        <string>Pan</string>
+       </property>
+       <property name="minimum" >
+        <number>-169</number>
+       </property>
+       <property name="maximum" >
+        <number>169</number>
+       </property>
+       <property name="orientation" >
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2" >
+      <widget class="QSlider" name="tiltPTZL_S" >
+       <property name="toolTip" >
+        <string>Tilt</string>
+       </property>
+       <property name="minimum" >
+        <number>-10</number>
+       </property>
+       <property name="maximum" >
+        <number>90</number>
+       </property>
+       <property name="sliderPosition" >
+        <number>-10</number>
+       </property>
+       <property name="orientation" >
+        <enum>Qt::Vertical</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0" >
+      <widget class="QSlider" name="zoomPTZL_S" >
+       <property name="toolTip" >
+        <string>Zoom</string>
+       </property>
+       <property name="maximum" >
+        <number>10000</number>
+       </property>
+       <property name="singleStep" >
+        <number>100</number>
+       </property>
+       <property name="pageStep" >
+        <number>1000</number>
+       </property>
+       <property name="orientation" >
+        <enum>Qt::Vertical</enum>
        </property>
       </widget>
      </item>

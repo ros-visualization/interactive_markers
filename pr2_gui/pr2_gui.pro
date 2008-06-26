@@ -1,14 +1,14 @@
 TEMPLATE = app
 
-QMAKE_LIBS = $$quote($$quote($$quote($(shell rospack export/cpp/lflags pr2_gui))))
+QMAKE_LIBS = $$quote($$quote($$quote($$quote($(shell rospack export/cpp/lflags pr2_gui)))))
 
-QMAKE_CXXFLAGS_RELEASE = $$quote($$quote($$quote($(shell rospack export/cpp/cflags pr2_gui))))
+QMAKE_CXXFLAGS_RELEASE = $$quote($$quote($$quote($$quote($(shell rospack export/cpp/cflags pr2_gui)))))
 
-QMAKE_CXXFLAGS_DEBUG = $$quote($$quote($$quote($(shell rospack export/cpp/cflags pr2_gui))))
+QMAKE_CXXFLAGS_DEBUG = $$quote($$quote($$quote($$quote($(shell rospack export/cpp/cflags pr2_gui)))))
 
-QMAKE_CFLAGS_RELEASE = $$quote($$quote($$quote($(shell rospack export/cpp/cflags pr2_gui))))
+QMAKE_CFLAGS_RELEASE = $$quote($$quote($$quote($$quote($(shell rospack export/cpp/cflags pr2_gui)))))
 
-QMAKE_CFLAGS_DEBUG = $$quote($$quote($$quote($(shell rospack export/cpp/cflags pr2_gui))))
+QMAKE_CFLAGS_DEBUG = $$quote($$quote($$quote($$quote($(shell rospack export/cpp/cflags pr2_gui)))))
 
 QT = gui \
 	core
@@ -35,4 +35,5 @@ SOURCES = src/launcherimpl.cpp \
 	src/Vis3d.hh \
 	src/ILModel.cpp \
 	../irrlicht_viewer/ILRender.cc \
-	../irrlicht_viewer/ILClient.cc
+	../irrlicht_viewer/ILClient.cc \
+	src/ILUCS.cpp

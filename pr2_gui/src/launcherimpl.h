@@ -4,7 +4,7 @@
 //Other stuff
 #include <cstdio>
 //#include <vector>
-#include "image_utils/image_codec.h"
+//#include "image_utils/image_codec.h"
 //#include "opencv/cxcore.h"
 //#include "opencv/cv.h"
 //#include "opencv/highgui.h"
@@ -16,6 +16,7 @@
 //ros stuff
 #include "ros/node.h"
 #include "std_msgs/Image.h"
+#include "std_msgs/PTZActuatorCmd.h"
 
 
 class LauncherImpl : public QMainWindow, public Ui::Launcher
@@ -25,9 +26,9 @@ public:
 	ros::node *myNode;
 	std_msgs::Image PTZLImage;
 	std_msgs::Image PTZRImage;
-	std_msgs::Image wristLImage;
-	std_msgs::Image wristRImage;
-	ImageCodec<std_msgs::Image> *codec;
+	std_msgs::Image WristLImage;
+	std_msgs::Image WristRImage;
+	std_msgs::PTZActuatorCmd ptz_cmd;
 	QButtonGroup *viewGroup;
 	LauncherImpl( QWidget * parent = 0, Qt::WFlags f = 0 );
 	void consoleOut(QString line);
@@ -36,6 +37,11 @@ public:
 	void incomingPTZRImageConn();
 	void incomingWristLImageConn();
 	void incomingWristRImageConn();
+	
+	uint8_t *PTZLImageData;
+	uint8_t *PTZRImageData;
+	uint8_t *WristLImageData;
+	uint8_t *WristRImageData;
 	
 	enum viewEnum{Maya,FPS,TFL,TFR,TRL,TRR,Top,Bottom,Front,Rear,Left,Right};
 	
@@ -63,19 +69,22 @@ private slots:
 	void startStopStereoPtCld( bool checked );
 	void startStopModel( bool checked );
 	void startStopUCS( bool checked );
+	void startStopGrid( bool checked );
 	
-	void incomingPTZLImage();
-	void incomingPTZRImage();
-	void incomingWristLImage();
-	void incomingWristRImage();
+	void incomingPTZLImage(QPixmap *im, uint8_t **data, uint len);
+	void incomingPTZRImage(QPixmap *im, uint8_t **data, uint len);
+	void incomingWristLImage(QPixmap *im, uint8_t **data, uint len);
+	void incomingWristRImage(QPixmap *im, uint8_t **data, uint len);
 
 	void viewChanged(int id);
 	
+	void PTZL_ptzChanged(int unused);
+	
 signals:
-	incomingPTZLImageSig();
-	incomingPTZRImageSig();
-	incomingWristLImageSig();
-	incomingWristRImageSig();
+	void incomingPTZLImageSig(QPixmap *im, uint8_t **data, uint len);
+	void incomingPTZRImageSig(QPixmap *im, uint8_t **data, uint len);
+	void incomingWristLImageSig(QPixmap *im, uint8_t **data, uint len);
+	void incomingWristRImageSig(QPixmap *im, uint8_t **data, uint len);
 };
 #endif
 

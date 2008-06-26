@@ -74,6 +74,7 @@ void LauncherImpl::startStop_Visualization( bool checked )
 		QObject::connect(StereoCloud_CB, SIGNAL(toggled(bool)),this,SLOT(startStopStereoPtCld(bool)));
 		QObject::connect(Model_CB, SIGNAL(toggled(bool)),this,SLOT(startStopModel(bool)));
 		QObject::connect(UCS_CB, SIGNAL(toggled(bool)),this,SLOT(startStopUCS(bool)));
+		QObject::connect(Grid_CB, SIGNAL(toggled(bool)),this,SLOT(startStopGrid(bool)));
 		vis3d_Window = new Vis3d(myNode);
     }
     else
@@ -89,6 +90,7 @@ void LauncherImpl::startStop_Visualization( bool checked )
 		QObject::disconnect(StereoCloud_CB, SIGNAL(toggled(bool)),this,SLOT(startStopStereoPtCld(bool)));
 		QObject::disconnect(Model_CB, SIGNAL(toggled(bool)),this,SLOT(startStopModel(bool)));
 		QObject::disconnect(UCS_CB, SIGNAL(toggled(bool)),this,SLOT(startStopUCS(bool)));
+		QObject::disconnect(Grid_CB, SIGNAL(toggled(bool)),this,SLOT(startStopGrid(bool)));
 		std::cout << "closed\n";
     }
 }
@@ -99,8 +101,12 @@ void LauncherImpl::startStop_PTZL( bool checked)
 	{
 		consoleOut("Opening Left Pan-Tilt-Zoom");
 		PTZL_DW->setVisible(true);
-		QObject::connect(this, SIGNAL(incomingPTZLImageSig()),this, SLOT(incomingPTZLImage()),Qt::QueuedConnection);
+		QObject::connect(this, SIGNAL(incomingPTZLImageSig(QPixmap*, uint8_t**, uint)),this, SLOT(incomingPTZLImage(QPixmap*, uint8_t**, uint)),Qt::QueuedConnection);
+		QObject::connect(panPTZL_S, SIGNAL(valueChanged(int)),this,SLOT(PTZL_ptzChanged(int)));
+		QObject::connect(tiltPTZL_S, SIGNAL(valueChanged(int)),this,SLOT(PTZL_ptzChanged(int)));
+		QObject::connect(zoomPTZL_S, SIGNAL(valueChanged(int)),this,SLOT(PTZL_ptzChanged(int)));
 		myNode->subscribe("PTZL_image", PTZLImage, &LauncherImpl::incomingPTZLImageConn,this);
+		myNode->advertise<std_msgs::PTZActuatorCmd>("PTZL_cmd");
 	}
 	else
 	{
@@ -108,7 +114,7 @@ void LauncherImpl::startStop_PTZL( bool checked)
 		PTZL_DW->setVisible(false);
 		myNode->unsubscribe("PTZL_image");
 		//QObject::disconnect(PTZL_DW, SIGNAL(visibilityChanged(bool)),this, SLOT(PTZLClosing(bool)));
-		QObject::disconnect(this, SIGNAL(incomingPTZLImageSig()),this, SLOT(incomingPTZLImage()));
+		QObject::disconnect(this, SIGNAL(incomingPTZLImageSig(QPixmap*, uint8_t**, uint)),this, SLOT(incomingPTZLImage(QPixmap*, uint8_t**, uint)));
 	}
 }
 
@@ -118,7 +124,7 @@ void LauncherImpl::startStop_PTZR( bool checked)
 	{
 		consoleOut("Opening Right Pan-Tilt-Zoom");
 		PTZR_DW->setVisible(true);
-		QObject::connect(this, SIGNAL(incomingPTZRImageSig()),this, SLOT(incomingPTZRImage()),Qt::QueuedConnection);
+		QObject::connect(this, SIGNAL(incomingPTZRImageSig(QPixmap*, uint8_t**, uint)),this, SLOT(incomingPTZRImage(QPixmap*, uint8_t**, uint)),Qt::QueuedConnection);
 		myNode->subscribe("PTZR_image", PTZRImage, &LauncherImpl::incomingPTZRImageConn,this);
 	}
 	else
@@ -127,7 +133,7 @@ void LauncherImpl::startStop_PTZR( bool checked)
 		PTZR_DW->setVisible(false);
 		myNode->unsubscribe("PTZR_image");
 		//QObject::disconnect(PTZR_DW, SIGNAL(visibilityChanged(bool)),this, SLOT(PTZRClosing(bool)));
-		QObject::disconnect(this, SIGNAL(incomingPTZRImageSig()),this, SLOT(incomingPTZRImage()));
+		QObject::disconnect(this, SIGNAL(incomingPTZRImageSig(QPixmap*, uint8_t**, uint)),this, SLOT(incomingPTZRImage(QPixmap*, uint8_t**, uint)));
 	}
 }
 
@@ -137,8 +143,8 @@ void LauncherImpl::startStop_WristL( bool checked)
 	{
 		consoleOut("Opening Left Wrist");
 		WristL_DW->setVisible(true);
-		QObject::connect(this, SIGNAL(incomingWristLImageSig()),this, SLOT(incomingWristLImage()),Qt::QueuedConnection);
-		myNode->subscribe("WristL_image", wristLImage, &LauncherImpl::incomingWristLImageConn,this);
+		QObject::connect(this, SIGNAL(incomingWristLImageSig(QPixmap*, uint8_t**, uint)),this, SLOT(incomingWristLImage(QPixmap*, uint8_t**, uint)),Qt::QueuedConnection);
+		myNode->subscribe("WristL_image", WristLImage, &LauncherImpl::incomingWristLImageConn,this);
 	}
 	else
 	{
@@ -146,7 +152,7 @@ void LauncherImpl::startStop_WristL( bool checked)
 		WristL_DW->setVisible(false);
 		myNode->unsubscribe("WristL_image");
 		//QObject::disconnect(WristL_DW, SIGNAL(visibilityChanged(bool)),this, SLOT(WristLClosing(bool)));
-		QObject::disconnect(this, SIGNAL(incomingWristLImageSig()),this, SLOT(incomingWristLImage()));
+		QObject::disconnect(this, SIGNAL(incomingWristLImageSig(QPixmap*, uint8_t**, uint)),this, SLOT(incomingWristLImage(QPixmap*, uint8_t**, uint)));
 	}
 }
 
@@ -156,15 +162,15 @@ void LauncherImpl::startStop_WristR( bool checked)
 	{
 		consoleOut("Opening Right Wrist");
 		WristR_DW->setVisible(true);
-		QObject::connect(this, SIGNAL(incomingWristRImageSig()),this, SLOT(incomingWristRImage()),Qt::QueuedConnection);
-		myNode->subscribe("WristR_image", wristRImage, &LauncherImpl::incomingWristRImageConn,this);
+		QObject::connect(this, SIGNAL(incomingWristRImageSig(QPixmap*, uint8_t**, uint)),this, SLOT(incomingWristRImage(QPixmap*, uint8_t**, uint)),Qt::QueuedConnection);
+		myNode->subscribe("WristR_image", WristRImage, &LauncherImpl::incomingWristRImageConn,this);
 	}
 	else
 	{
 		consoleOut("Closing Right Wrist");
 		WristR_DW->setVisible(false);
 		//QObject::disconnect(WristR_DW, SIGNAL(visibilityChanged(bool)),this, SLOT(WristRClosing(bool)));
-		QObject::disconnect(this, SIGNAL(incomingWristRImageSig()),this, SLOT(incomingWristRImage()));
+		QObject::disconnect(this, SIGNAL(incomingWristRImageSig(QPixmap*, uint8_t**, uint)),this, SLOT(incomingWristRImage(QPixmap*, uint8_t**, uint)));
 	}
 }
 
@@ -331,10 +337,24 @@ void LauncherImpl::startStopUCS( bool checked )
 	}
 }
 
-void LauncherImpl::incomingPTZLImage()
+void LauncherImpl::startStopGrid( bool checked )
 {
-  QPixmap *im = new QPixmap();
-  if(im->loadFromData(PTZLImage.data,PTZLImage.get_data_size()))
+	if(checked)
+	{
+		consoleOut("Enabling Grid");
+		vis3d_Window->enableGrid();
+	}
+	else
+	{
+		consoleOut("Disabling Grid");
+		vis3d_Window->disableGrid();
+	}
+}
+
+//main thread equivalent of the below callback
+void LauncherImpl::incomingPTZLImage(QPixmap *im, uint8_t **data, uint len)
+{
+  if(im->loadFromData(*data,len,"jpeg"))
   {
   	PTZL_IL->setPixmap(*im);
   }
@@ -343,17 +363,26 @@ void LauncherImpl::incomingPTZLImage()
   	consoleOut("Can't load left PTZ image");
   }
   delete im;
+  delete *data;
+  *data = NULL;
 }
 
+//ros callback
 void LauncherImpl::incomingPTZLImageConn()
 {
-	emit incomingPTZLImageSig();
+	if(!PTZLImageData)
+	{
+		QPixmap *im = new QPixmap();
+		const uint32_t count = PTZLImage.get_data_size();
+		PTZLImageData = new uint8_t[count];
+		memcpy(PTZLImageData, PTZLImage.data, sizeof(uint8_t) * count);
+		emit incomingPTZLImageSig(im, &PTZLImageData, PTZLImage.get_data_size());
+	}
 }
 
-void LauncherImpl::incomingPTZRImage()
+void LauncherImpl::incomingPTZRImage(QPixmap *im, uint8_t **data, uint len)
 {
-  QPixmap *im = new QPixmap();
-  if(im->loadFromData(PTZRImage.data,PTZRImage.get_data_size()))
+  if(im->loadFromData(*data,len,"jpeg"))
   {
   	PTZR_IL->setPixmap(*im);
   }
@@ -362,17 +391,25 @@ void LauncherImpl::incomingPTZRImage()
   	consoleOut("Can't load right PTZ image");
   }
   delete im;
+  delete *data;
+  *data = NULL;
 }
 
 void LauncherImpl::incomingPTZRImageConn()
 {
-	emit incomingPTZRImageSig();
+	if(!PTZRImageData)
+	{
+		QPixmap *im = new QPixmap();
+		const uint32_t count = PTZRImage.get_data_size();
+		PTZRImageData = new uint8_t[count];
+		memcpy(PTZRImageData, PTZRImage.data, sizeof(uint8_t) * count);
+		emit incomingPTZRImageSig(im, &PTZRImageData, PTZRImage.get_data_size());
+	}
 }
 
-void LauncherImpl::incomingWristLImage()
+void LauncherImpl::incomingWristLImage(QPixmap *im, uint8_t **data, uint len)
 {
-  QPixmap *im = new QPixmap();
-  if(im->loadFromData(wristLImage.data,wristLImage.get_data_size()))
+  if(im->loadFromData(*data,len,"jpeg"))
   {
   	WristL_IL->setPixmap(*im);
   }
@@ -381,17 +418,25 @@ void LauncherImpl::incomingWristLImage()
   	consoleOut("Can't load left wrist image");
   }
   delete im;
+  delete *data;
+  *data = NULL;
 }
 
 void LauncherImpl::incomingWristLImageConn()
 {
-	emit incomingWristLImageSig();
+	if(!WristLImageData)
+	{
+		QPixmap *im = new QPixmap();
+		const uint32_t count = WristLImage.get_data_size();
+		WristLImageData = new uint8_t[count];
+		memcpy(WristLImageData, WristLImage.data, sizeof(uint8_t) * count);
+		emit incomingWristLImageSig(im, &WristLImageData, WristLImage.get_data_size());
+	}
 }
 
-void LauncherImpl::incomingWristRImage()
+void LauncherImpl::incomingWristRImage(QPixmap *im, uint8_t **data, uint len)
 {
-  QPixmap *im = new QPixmap();
-  if(im->loadFromData(wristRImage.data,wristRImage.get_data_size()))
+  if(im->loadFromData(*data,len,"jpeg"))
   {
   	WristR_IL->setPixmap(*im);
   }
@@ -400,11 +445,20 @@ void LauncherImpl::incomingWristRImage()
   	consoleOut("Can't load right wrist image");
   }
   delete im;
+  delete *data;
+  *data = NULL;
 }
 
 void LauncherImpl::incomingWristRImageConn()
 {
-	emit incomingWristRImageSig();
+	if(!WristRImageData)
+	{
+		QPixmap *im = new QPixmap();
+		const uint32_t count = WristRImage.get_data_size();
+		WristRImageData = new uint8_t[count];
+		memcpy(WristRImageData, WristRImage.data, sizeof(uint8_t) * count);
+		emit incomingWristRImageSig(im, &WristRImageData, WristRImage.get_data_size());
+	}
 }
 
 void LauncherImpl::viewChanged(int id)
@@ -419,4 +473,16 @@ void LauncherImpl::viewChanged(int id)
 		consoleOut("Cannot change view.  3D window does not exist.");
 	}
 }
+
+void LauncherImpl::PTZL_ptzChanged(int unused)
+{
+	ptz_cmd.pan.valid = 1;
+	ptz_cmd.pan.cmd = panPTZL_S->value();
+	ptz_cmd.tilt.valid = 1;
+	ptz_cmd.tilt.cmd = tiltPTZL_S->value();
+	ptz_cmd.zoom.valid = 1;
+	ptz_cmd.zoom.cmd = zoomPTZL_S->value();
+	myNode->publish("PTZL_cmd",ptz_cmd);
+}
+	
 //
