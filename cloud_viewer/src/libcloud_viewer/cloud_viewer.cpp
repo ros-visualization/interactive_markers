@@ -155,3 +155,23 @@ void CloudViewer::keypress(char c)
     case 'h': hide_axes = !hide_axes; break;
 	}
 }
+
+bool CloudViewer::write_file(const std::string &filename)
+{
+  FILE *f = fopen(filename.c_str(), "w");
+  if (!f)
+    return false;
+  for (size_t i = 0; i < points.size(); i++)
+  {
+    fprintf(f, "%f %f %f %f %f %f\n", 
+            points[i].x,
+            points[i].y,
+            points[i].z,
+            points[i].r / 255.0,
+            points[i].g / 255.0,
+            points[i].b / 255.0);
+  }
+  fclose(f);
+  return true;
+}
+

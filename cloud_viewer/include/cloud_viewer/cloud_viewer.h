@@ -2,6 +2,7 @@
 #define CLOUD_VIEWER_H
 
 #include <vector>
+#include <string>
 
 class CloudViewerPoint
 {
@@ -27,6 +28,7 @@ public:
 	void keypress(char c);
   void set_look_tgt(double x, double y, double z) 
   { look_tgt_x = x; look_tgt_y = y; look_tgt_z = z; }
+  bool write_file(const std::string &filename);
 
 private:
 	std::vector<CloudViewerPoint> points;
