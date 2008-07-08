@@ -79,6 +79,7 @@ private slots:
 	void viewChanged(int id);
 	
 	void PTZL_ptzChanged(int unused);
+	void PTZR_ptzChanged(int unused);
 	
 signals:
 	void incomingPTZLImageSig(QPixmap *im, uint8_t **data, uint len);

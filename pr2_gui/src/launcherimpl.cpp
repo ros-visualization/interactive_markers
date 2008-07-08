@@ -15,6 +15,11 @@ LauncherImpl::LauncherImpl( QWidget * parent, Qt::WFlags f) : QMainWindow(parent
 	Stereo_DW->setVisible(false);
 	Status_DW->setVisible(false);
 	Topdown_DW->setVisible(false);
+	
+	PTZLImageData = NULL;
+	PTZRImageData = NULL;
+	WristLImageData = NULL;
+	WristRImageData = NULL;
 
 	viewGroup = new QButtonGroup(Views_GB);
 	viewGroup->addButton(ViewMaya_RB, Maya);
@@ -125,7 +130,11 @@ void LauncherImpl::startStop_PTZR( bool checked)
 		consoleOut("Opening Right Pan-Tilt-Zoom");
 		PTZR_DW->setVisible(true);
 		QObject::connect(this, SIGNAL(incomingPTZRImageSig(QPixmap*, uint8_t**, uint)),this, SLOT(incomingPTZRImage(QPixmap*, uint8_t**, uint)),Qt::QueuedConnection);
+		QObject::connect(panPTZR_S, SIGNAL(valueChanged(int)),this,SLOT(PTZR_ptzChanged(int)));
+		QObject::connect(tiltPTZR_S, SIGNAL(valueChanged(int)),this,SLOT(PTZR_ptzChanged(int)));
+		QObject::connect(zoomPTZR_S, SIGNAL(valueChanged(int)),this,SLOT(PTZR_ptzChanged(int)));
 		myNode->subscribe("PTZR_image", PTZRImage, &LauncherImpl::incomingPTZRImageConn,this);
+		myNode->advertise<std_msgs::PTZActuatorCmd>("PTZR_cmd");
 	}
 	else
 	{
@@ -311,10 +320,12 @@ void LauncherImpl::startStopStereoPtCld( bool checked )
 
 void LauncherImpl::startStopModel( bool checked )
 {
+	std::cout << "callback\n";
     if(checked)
     {
 		consoleOut("Enabling 3D Model");
 		vis3d_Window->enableModel();
+		std::cout << "model enabled\n";
     }
     else
     {
@@ -483,6 +494,17 @@ void LauncherImpl::PTZL_ptzChanged(int unused)
 	ptz_cmd.zoom.valid = 1;
 	ptz_cmd.zoom.cmd = zoomPTZL_S->value();
 	myNode->publish("PTZL_cmd",ptz_cmd);
+}
+
+void LauncherImpl::PTZR_ptzChanged(int unused)
+{
+	ptz_cmd.pan.valid = 1;
+	ptz_cmd.pan.cmd = panPTZR_S->value();
+	ptz_cmd.tilt.valid = 1;
+	ptz_cmd.tilt.cmd = tiltPTZR_S->value();
+	ptz_cmd.zoom.valid = 1;
+	ptz_cmd.zoom.cmd = zoomPTZR_S->value();
+	myNode->publish("PTZR_cmd",ptz_cmd);
 }
 	
 //

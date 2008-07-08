@@ -589,10 +589,55 @@
    </attribute>
    <widget class="QWidget" name="dockWidgetContents_4" >
     <layout class="QGridLayout" >
-     <item row="0" column="0" >
+     <item row="0" column="1" >
       <widget class="QLabel" name="PTZR_IL" >
        <property name="text" >
         <string>No Image</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1" >
+      <widget class="QSlider" name="panPTZR_S" >
+       <property name="minimum" >
+        <number>-169</number>
+       </property>
+       <property name="maximum" >
+        <number>169</number>
+       </property>
+       <property name="orientation" >
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0" >
+      <widget class="QSlider" name="zoomPTZR_S" >
+       <property name="maximum" >
+        <number>10000</number>
+       </property>
+       <property name="singleStep" >
+        <number>100</number>
+       </property>
+       <property name="pageStep" >
+        <number>1000</number>
+       </property>
+       <property name="orientation" >
+        <enum>Qt::Vertical</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2" >
+      <widget class="QSlider" name="tiltPTZR_S" >
+       <property name="minimum" >
+        <number>-10</number>
+       </property>
+       <property name="maximum" >
+        <number>90</number>
+       </property>
+       <property name="value" >
+        <number>-10</number>
+       </property>
+       <property name="orientation" >
+        <enum>Qt::Vertical</enum>
        </property>
       </widget>
      </item>
@@ -625,6 +670,9 @@
        <property name="text" >
         <string>No Image</string>
        </property>
+       <property name="alignment" >
+        <set>Qt::AlignCenter</set>
+       </property>
       </widget>
      </item>
     </layout>
@@ -655,6 +703,9 @@
       <widget class="QLabel" name="WristL_IL" >
        <property name="text" >
         <string>No Image</string>
+       </property>
+       <property name="alignment" >
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>

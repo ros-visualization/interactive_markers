@@ -63,10 +63,9 @@ Subscribes to (name/type):
 #include "ILUCS.cpp"
 
 #include <ros/node.h>
+#include <rosTF/rosTF.h>
 #include <std_msgs/PointCloudFloat32.h>
 #include <std_msgs/Empty.h>
-
-
 #include <pr2Core/pr2Core.h> /* Contains enumeration definitions for PR2 bodies and joints, must also include ros package pr2Core in manifest.xml */
 
 //using namespace PR2;
@@ -74,38 +73,45 @@ Subscribes to (name/type):
 class Vis3d
 {
 public:
-	enum modelParts{base,body,wheelFL,wheelRL,wheelFR,wheelRR,modelPartsCount};
+	//enum modelParts{base,body,wheelFL,wheelRL,wheelFR,wheelRR,modelPartsCount}; //use Chitta's from pr2Core!
 	enum viewEnum{Maya,FPS,TFL,TFR,TRL,TRR,Top,Bottom,Front,Rear,Left,Right,viewCount};
+//ros declarations
 	ros::node *myNode;
+	rosTFClient::rosTFClient *tfClient;
 	std_msgs::Empty shutHead;
 	std_msgs::Empty shutFloor;
 	std_msgs::Empty shutStereo;
 	std_msgs::PointCloudFloat32 ptCldHead;
 	std_msgs::PointCloudFloat32 ptCldFloor;
 	std_msgs::PointCloudFloat32 ptCldStereo;
-
-	int headVertScanCount;
+//irrlicht declarations
 	ILClient *localClient;
 	ILRender *pLocalRenderer;
 	ILPointCloud *ilHeadCloud[cloudArrayLength];
 	ILPointCloud *ilFloorCloud;
 	ILPointCloud *ilStereoCloud;
 	ILGrid *ilGrid;
-	ILModel *model[modelPartsCount];
+	ILModel *model[PR2::MAX_JOINTS]; //use Chitta's from pr2Core!!!
 	ILUCS *ilucs;
-	
-	irr::scene::ILightSceneNode *light[3];
+	irr::scene::ILightSceneNode *light[2];
 	irr::scene::ICameraSceneNode *cameras[viewCount];
 	
-
-	Vis3d(ros::node *aNode) //: localClient(NULL)
+	int headVertScanCount;
+	
+///Vis3d constructor
+/**Initializes all Irrlicht models, cameras, and lights */
+	Vis3d(ros::node *aNode)
 	{
+		myNode = aNode;
+	std::cout << "initializing\n";
+		//tfClient = new rosTFClient::rosTFClient(*myNode,true,libTF::TransformReference::DEFAULT_CACHE_TIME,libTF::TransformReference::DEFAULT_MAX_EXTRAPOLATION_DISTANCE);
+		std::cout << "init\n";
 		headVertScanCount = 0;
-		for(int i = 0; i < modelPartsCount; i++)
+		for(int i = 0; i < PR2::MAX_JOINTS; i++)
 		{
 			model[i] = 0;
 		}
-		myNode = aNode;
+		
 		localClient = new ILClient();
 		pLocalRenderer = ILClient::getSingleton();
 		pLocalRenderer->lock();
@@ -163,21 +169,16 @@ public:
 		cameras[Right] = pLocalRenderer->manager()->addCameraSceneNode(NULL,irr::core::vector3df(3,1,0),irr::core::vector3df(0,1,0),Right);
 		pLocalRenderer->manager()->setActiveCamera(cameras[Maya]);
 		
-		//light[0] = pLocalRenderer->manager()->addLightSceneNode(NULL,irr::core::vector3df(50,50,50),irr::video::SColorf(1.0f,1.0f,1.0f,1.0f));
-		//light[1] = pLocalRenderer->manager()->addLightSceneNode(NULL,irr::core::vector3df(-50,-50,-50),irr::video::SColorf(.5f,.5f,.5f,1.0f));
-		
-		std::cerr<<"Done Constructing Vis3D"<<std::endl;
+		light[0] = pLocalRenderer->manager()->addLightSceneNode(NULL,irr::core::vector3df(50,50,50),irr::video::SColorf(.9f,.9f,.9f,1.0f));
+		light[1] = pLocalRenderer->manager()->addLightSceneNode(NULL,irr::core::vector3df(-50,-50,-50),irr::video::SColorf(.5f,.5f,.5f,1.0f));
 	}
 
+///Vis3d destructor
+/**Disables all drawings, then deletes (hopefully) all models*/
 	~Vis3d()
 	{
-	    std::cout << "destroying Vis3D\n";
-		if(model[0])
-			disableModel();
-		disableHead();
-		disableStereo();
-		disableFloor();
-		delete localClient;
+		disable();
+		//delete localClient;
 	    for(int i = 0; i < cloudArrayLength; i++)
 	    {
 		    //if(ilHeadCloud[i])
@@ -189,16 +190,31 @@ public:
 		delete ilStereoCloud;
 	    //if(ilGrid)
 		delete ilGrid;
-		
-		
-	    std::cout << "destroyed Vis3D\n";
+		delete ilucs;
+		//delete tfClient;
 	}
-
+	
+///Vis3d disabler
+/**Disables all drawings, but does not delete them.  This allows for future use of the window*/
+	void disable()
+	{
+		disableUCS();
+		if(model[0])
+			disableModel();
+		disableHead();
+		disableStereo();
+		disableFloor();		
+	}
+	
+///Checks if the renderer is enabled
+/**Almost always true*/
 	bool isEnabled()
 	{
 	    return pLocalRenderer->isEnabled();
 	}
 	
+///Switches to a new camera
+/**If the camera is not stationary, it takes the location and focus point from the previous camera*/
 	void changeView(int id)
 	{
 		irr::core::vector3df pos = pLocalRenderer->manager()->getActiveCamera()->getPosition();
@@ -214,7 +230,8 @@ public:
 		}
 		pLocalRenderer->manager()->setActiveCamera(cameras[id]);
 	}
-
+	
+///Enables (draws) the head Hokuyo point cloud data
 	void enableHead()
 	{
 	    myNode->subscribe("cloud", ptCldHead, &Vis3d::addHeadCloud,this);
@@ -225,33 +242,50 @@ public:
 			ilHeadCloud[i]->setVisible(true);
 	    }   
 	}
-
+	
+///Enables (draws) the models of the robot
 	void enableModel()
 	{
-	
-		static char *modelPaths[] = {"../pr2_models/base1000.3DS","../pr2_models/body1000.3DS","../pr2_models/caster1000r2.3DS","../pr2_models/caster1000r2.3DS","../pr2_models/caster1000r2.3DS","../pr2_models/caster1000r2.3DS"};
+		//TiXmlDocument robodesc( descPath );
+		//robodesc.LoadFile();
+		//static const char *modelPaths[] = {"../pr2_models/base1000.3DS","../pr2_models/body1000.3DS","../pr2_models/caster1000r2.3DS","../pr2_models/caster1000r2.3DS","../pr2_models/caster1000r2.3DS","../pr2_models/caster1000r2.3DS"};
+		static const char *modelPaths[] = {"../pr2_models/caster1000r2.3DS","","","../pr2_models/caster1000r2.3DS","","","../pr2_models/caster1000r2.3DS","","","../pr2_models/caster1000r2.3DS","","","../pr2_models/body1000.3DS","../pr2_models/sh-pan1000.3DS","../pr2_models/sh-pitch1000.3DS","../pr2_models/sh-roll1000.3DS","","","","","../pr2_models/sh-pan1000.3DS","../pr2_models/sh-pitch1000.3DS","../pr2_models/sh-roll1000.3DS","","","","","","","../pr2_models/head-pan1000.3DS","../pr2_models/head-tilt1000.3DS","","","","","","../pr2_models/base1000.3DS","",""};
+		//std::cout << PR2::MAX_JOINTS << std::endl;
 		pLocalRenderer->lock();
 		//int i = 2;
-		for(int i = 0; i < modelPartsCount; i++)
+		//for(int i = 0; i < modelPartsCount; i++)
+		for(int i = 0; i < PR2::MAX_JOINTS; i++)
 		{
 			//delete model[i];
-			model[i] = new ILModel(pLocalRenderer->manager(), modelPaths[i], true);
-			model[i]->getNode()->setMaterialFlag(irr::video::EMF_LIGHTING,false);
-			model[i]->getNode()->setMaterialFlag(irr::video::EMF_WIREFRAME,true);
+			/*libTF::TFPose aPose;
+			aPose.x = 0;
+			aPose.y = 0;
+			aPose.z = 0;
+			aPose.roll = 0;
+			aPose.pitch = 0;
+			aPose.yaw = 0;
+			aPose.time = 0;
+			aPose.frame = i;*/
+			//libTF::TFPose inBaseFrame = tfClient->transformPose(PR2::PR2_WORLD, aPose);
+			model[i] = new ILModel(pLocalRenderer->manager(), (irr::c8*)modelPaths[i], true);
+			//model[i]->getNode()->setMaterialFlag(irr::video::EMF_LIGHTING,false);
+			//model[i]->getNode()->setMaterialFlag(irr::video::EMF_WIREFRAME,true);
 		}
 		pLocalRenderer->unlock();
 	}
-
+	
+///Enables (draws) the universal coordinate system
+/**Red = x, green = y, blue = z*/
 	void enableUCS()
 	{
 		pLocalRenderer->lock();
 		/*if(!ilucs)
   			ilucs = new ILUCS(pLocalRenderer->manager(),true);*/
   		ilucs->setVisible(true);
-  		std::cout<<"Enabling UCS\n";
   		pLocalRenderer->unlock();
 	}
 	
+///Enables (draws) the grid which represents a flat floor
 	void enableGrid()
 	{
 		pLocalRenderer->lock();
@@ -261,6 +295,8 @@ public:
 		pLocalRenderer->unlock();
 	}
 	
+///Enables (draws) the lower Hokuyo's point cloud
+/**Data type should be changed from a point cloud to a ???*/
 	void enableFloor()
 	{
 	    myNode->subscribe("cloudFloor", ptCldFloor, &Vis3d::addFloorCloud,this);
@@ -268,7 +304,9 @@ public:
 	    pLocalRenderer->enable(ilFloorCloud);
 	    ilFloorCloud->setVisible(true);
 	}
-
+	
+///Enables (draws) the stereo vision's point cloud
+/**Data type should be changed from a point cloud to a ???*/
 	void enableStereo()
 	{
 	    myNode->subscribe("cloudStereo", ptCldStereo, &Vis3d::addStereoCloud,this);
@@ -276,7 +314,8 @@ public:
 	    pLocalRenderer->enable(ilStereoCloud);
 	    ilStereoCloud->setVisible(true);
 	}
-
+	
+///Disables the head Hokuyo laser data
 	void disableHead()
 	{
 	    myNode->unsubscribe("cloud");
@@ -291,7 +330,8 @@ public:
 	    }  
 		pLocalRenderer->unlock();	    
 	}
-
+	
+///Disables the lower Hokuyo's laser data
 	void disableFloor()
 	{
 	    myNode->unsubscribe("cloudFloor");
@@ -302,7 +342,8 @@ public:
 	    ilFloorCloud->setVisible(false);
 		pLocalRenderer->unlock();
 	}
-
+	
+///Disables the stereo vision's data
 	void disableStereo()
 	{
 	    myNode->unsubscribe("cloudStereo");
@@ -314,6 +355,7 @@ public:
 		pLocalRenderer->unlock();
 	}
 	
+///Disables the Universal Coordinate System markers
 	void disableUCS()
 	{
 		pLocalRenderer->lock();
@@ -323,10 +365,10 @@ public:
 			ilucs = 0;
 		}*/
 		ilucs->setVisible(false);
-		std::cout<<"Disabling UCS\n";
 		pLocalRenderer->unlock();
 	}
 	
+///Disables the floor grid
 	void disableGrid()
 	{
 		pLocalRenderer->lock();
@@ -336,17 +378,20 @@ public:
 		pLocalRenderer->unlock();
 	}
 	
+///Disables all robot models
 	void disableModel()
 	{
+		std::cout << "killing model\n";
 		pLocalRenderer->lock();
-		for(int i = 0; i < modelPartsCount; i++)
+		for(int i = 0; i < PR2::MAX_JOINTS; i++)
 		{
 			delete model[i];
 			model[i] = 0;
 		}
 		pLocalRenderer->unlock();
 	}
-
+	
+///(callback)Clears data in the head based Hokuyo point cloud
 	void shutterHead()
 	{
 	    pLocalRenderer->lock();
@@ -357,21 +402,24 @@ public:
 	    pLocalRenderer->unlock();
 	    headVertScanCount = 0;
 	}
-
+	
+///(callback)Clears data in the lower Hokuyo point cloud
 	void shutterFloor()
 	{
 	    pLocalRenderer->lock();
 	    ilFloorCloud->resetCount();
 	    pLocalRenderer->unlock();
 	}
-
+	
+///(callback)Clears data in the stereo vision's point cloud
 	void shutterStereo()
 	{
 	    pLocalRenderer->lock();
 	    ilStereoCloud->resetCount();
 	    pLocalRenderer->unlock();
 	}
-
+	
+///(callback)Adds a point cloud to the head based Hokuyo's point cloud
 	void addHeadCloud()
 	{
 	    pLocalRenderer->lock();
@@ -395,7 +443,8 @@ public:
 	    }
 	    pLocalRenderer->unlock();
 	}
-
+	
+///(callback)Adds a point cloud to the lower Hokuyo's point cloud
 	void addFloorCloud()
 	{
 	    pLocalRenderer->lock();
@@ -415,7 +464,8 @@ public:
 	    }
 	    pLocalRenderer->unlock();
 	}
-
+	
+///(callback)Adds a point cloud to the stereo vision's point cloud
 	void addStereoCloud()
 	{
 	    pLocalRenderer->lock();

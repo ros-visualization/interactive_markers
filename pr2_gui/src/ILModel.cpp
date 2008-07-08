@@ -24,40 +24,58 @@ ILModel()
 
 ILModel(irr::scene::ISceneManager *mngr, irr::c8 *fName)
 {
-	manager = mngr;
-	mesh = mngr->getMesh(fName);
+	mesh = 0;
 	node = 0;
+	manager = 0;
 	defaultXRotation = 0.0f;
 	defaultYRotation = 0.0f;
 	defaultZRotation = -90.0f;
+	manager = mngr;
+	if(fName[0] != '\0')
+	{
+		mesh = mngr->getMesh(fName);
+	}
 }
 
 ILModel(irr::scene::ISceneManager *mngr, irr::c8 *fName, bool displayNow)
 {
-	manager = mngr;
-	mesh = mngr->getMesh(fName);
+	mesh = 0;
 	node = 0;
+	manager = 0;
 	defaultXRotation = 0.0f;
 	defaultYRotation = 0.0f;
 	defaultZRotation = -90.0f;
-	if(displayNow)
+	manager = mngr;
+	if(fName[0] != '\0')
 	{
-		node = manager->addAnimatedMeshSceneNode(mesh);
-		rotateTo(irr::core::vector3d<irr::f32>(0.0f,0.0f,0.0f));
+		mesh = mngr->getMesh(fName);
+		if(mesh!=NULL && displayNow)
+		{
+			node = manager->addAnimatedMeshSceneNode(mesh);
+			rotateTo(irr::core::vector3d<irr::f32>(0.0f,0.0f,0.0f));
+		}
 	}
 }
 
 ILModel(irr::scene::ISceneManager *mngr, irr::c8 *fName, irr::core::vector3d<irr::f32> position, irr::core::vector3d<irr::f32> rotation)
 {
-	manager = mngr;
-	mesh = mngr->getMesh(fName);
+	mesh = 0;
 	node = 0;
+	manager = 0;
 	defaultXRotation = 0.0f;
 	defaultYRotation = 0.0f;
 	defaultZRotation = -90.0f;
-	node = manager->addAnimatedMeshSceneNode(mesh);
-	node->setPosition(rightToLeft(position));
-	rotateTo(rotation);
+	manager = mngr;
+	if(fName[0] != '\0')
+	{
+		mesh = mngr->getMesh(fName);
+		if(mesh!=NULL)
+		{
+			node = manager->addAnimatedMeshSceneNode(mesh);
+			node->setPosition(rightToLeft(position));
+			rotateTo(rotation);
+		}
+	}
 }
 
 ~ILModel()
@@ -65,7 +83,7 @@ ILModel(irr::scene::ISceneManager *mngr, irr::c8 *fName, irr::core::vector3d<irr
 	kill();
 }
 	
-//you may want to lock the rendere before using and unlock after using me
+//you may want to lock the renderer before using and unlock after using me
 void draw()
 {
 	if(!node)
@@ -95,9 +113,12 @@ void rotateTo(irr::core::vector3d<irr::f32> rotation)
 //lock renderer before using and unlock after using
 void kill()
 {
+	//std::cout << "trying to remove\n";
 	if(node)
 	{
+		//std::cout << "removing model\n";
 		node->remove();
+		//std::cout << "removed model\n";
 	}
 }
 

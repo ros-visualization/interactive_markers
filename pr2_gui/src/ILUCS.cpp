@@ -16,8 +16,10 @@ public:
 	
 	ILUCS(irr::scene::ISceneNode* parent, irr::scene::ISceneManager* mgr, bool leftH) 
 	{
+		x = NULL;
+		y = NULL;
+		z = NULL;
 		SceneManager = mgr;
-		std::cout << "constructing\n";
 		leftHanded = leftH;
 		m_material.Lighting = false;
 		m_material.Wireframe = false;
@@ -62,11 +64,14 @@ public:
 				y->setRotation(irr::core::vector3d<irr::f32>(0,-90,0));
 			}
 		}
-		else
+		else if(x != NULL)
 		{
 			x->remove();
 			y->remove();
 			z->remove();
+			x = NULL;
+			y = NULL;
+			z = NULL;
 		}
 	}
 

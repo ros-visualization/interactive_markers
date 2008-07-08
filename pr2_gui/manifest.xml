@@ -7,11 +7,13 @@ A flexible visualization and teleoperation GUI for the PR2.
 <author>Matthew Piccoli</author>
 <license>BSD</license>
 <url>http://pr.willowgarage.com/wiki/ROS</url>
+<depend package="image_utils"/>
 <depend package="rosthread"/>
 <depend package="roscpp"/>
 <depend package="std_msgs"/>
 <depend package="irrlicht_viewer"/>
 <depend package="pr2Core"/>
+<depend package="rosTF"/>
 <export> 
 </export>
 </package>
