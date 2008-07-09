@@ -1,0 +1,3 @@
+This package depends on wxWidgets 2.8, which you must already have installed.
+On Ubuntu, install the libwxgtk2.8-dev.  On other systems, install the
+appropriate package.
