@@ -77,7 +77,7 @@ public:
 	enum viewEnum{Maya,FPS,TFL,TFR,TRL,TRR,Top,Bottom,Front,Rear,Left,Right,viewCount};
 //ros declarations
 	ros::node *myNode;
-	rosTFClient::rosTFClient *tfClient;
+	rosTFClient::rosTFClient tfClient;
 	std_msgs::Empty shutHead;
 	std_msgs::Empty shutFloor;
 	std_msgs::Empty shutStereo;
@@ -100,7 +100,8 @@ public:
 	
 ///Vis3d constructor
 /**Initializes all Irrlicht models, cameras, and lights */
-	Vis3d(ros::node *aNode)
+	Vis3d(ros::node *aNode) :
+	tfClient(*aNode)//, true, 1* 1000000000ULL, 0ULL)
 	{
 		myNode = aNode;
 	std::cout << "initializing\n";
@@ -249,15 +250,18 @@ public:
 		//TiXmlDocument robodesc( descPath );
 		//robodesc.LoadFile();
 		//static const char *modelPaths[] = {"../pr2_models/base1000.3DS","../pr2_models/body1000.3DS","../pr2_models/caster1000r2.3DS","../pr2_models/caster1000r2.3DS","../pr2_models/caster1000r2.3DS","../pr2_models/caster1000r2.3DS"};
-		static const char *modelPaths[] = {"../pr2_models/caster1000r2.3DS","","","../pr2_models/caster1000r2.3DS","","","../pr2_models/caster1000r2.3DS","","","../pr2_models/caster1000r2.3DS","","","../pr2_models/body1000.3DS","../pr2_models/sh-pan1000.3DS","../pr2_models/sh-pitch1000.3DS","../pr2_models/sh-roll1000.3DS","","","","","../pr2_models/sh-pan1000.3DS","../pr2_models/sh-pitch1000.3DS","../pr2_models/sh-roll1000.3DS","","","","","","","../pr2_models/head-pan1000.3DS","../pr2_models/head-tilt1000.3DS","","","","","","../pr2_models/base1000.3DS","",""};
+		//static const char *modelPaths[] = {"pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","","","pr2_models/body1000.3DS","pr2_models/sh-pan1000.3DS","pr2_models/sh-pitch1000.3DS","pr2_models/sh-roll1000.3DS","","","","","pr2_models/sh-pan1000.3DS","pr2_models/sh-pitch1000.3DS","pr2_models/sh-roll1000.3DS","","","","","","","pr2_models/head-pan1000.3DS","pr2_models/head-tilt1000.3DS","","","","","","pr2_models/base1000.3DS","",""};
+		static const char *modelPaths[] = {"","","pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","pr2_models/base1000.3DS","pr2_models/body1000.3DS","pr2_models/sh-pan1000.3DS","pr2_models/sh-pitch1000.3DS","pr2_models/sh-roll1000.3DS","","","","","","","pr2_models/sh-pan1000.3DS","pr2_models/sh-pitch1000.3DS","pr2_models/sh-roll1000.3DS","","","","","","","pr2_models/head-pan1000.3DS","pr2_models/head-tilt1000.3DS","","",""};
 		//std::cout << PR2::MAX_JOINTS << std::endl;
 		pLocalRenderer->lock();
 		//int i = 2;
 		//for(int i = 0; i < modelPartsCount; i++)
-		for(int i = 0; i < PR2::MAX_JOINTS; i++)
+		for(int i = 0; i < PR2::MAX_FRAMEIDS-PR2::FRAMEID_CASTER_FL_WHEEL_L; i++)
+		//for(int i = (int) PR2::CASTER_FL_STEER; i <= (int) PR2::CASTER_RR_DRIVE_R; i++)
 		{
+			if (i != 21 && i != 22 && i != 30 && i != 31 && i < 31){
 			//delete model[i];
-			/*libTF::TFPose aPose;
+			libTF::TFPose aPose;
 			aPose.x = 0;
 			aPose.y = 0;
 			aPose.z = 0;
@@ -265,11 +269,15 @@ public:
 			aPose.pitch = 0;
 			aPose.yaw = 0;
 			aPose.time = 0;
-			aPose.frame = i;*/
-			//libTF::TFPose inBaseFrame = tfClient->transformPose(PR2::PR2_WORLD, aPose);
-			model[i] = new ILModel(pLocalRenderer->manager(), (irr::c8*)modelPaths[i], true);
+			aPose.frame = PR2::FRAMEID_CASTER_FL_WHEEL_L + i;
+			std::cout << "Frame IDS: " << aPose.frame << ", " << PR2::FRAMEID_BASE << std::endl;
+			libTF::TFPose inBaseFrame = this->tfClient.transformPose(PR2::FRAMEID_BASE, aPose);
+			std::cout << "Coordinates for : " << i << "; "<<inBaseFrame.x << ", " <<  inBaseFrame.y << ", " << inBaseFrame.z << std::endl;
+			//model[i] = new ILModel(pLocalRenderer->manager(), (irr::c8*)modelPaths[i], true);
+			model[i] = new ILModel(pLocalRenderer->manager(), (irr::c8*)modelPaths[i], irr::core::vector3d<irr::f32>((float)inBaseFrame.x,(float)inBaseFrame.y, (float)inBaseFrame.z), irr::core::vector3d<irr::f32>((float)inBaseFrame.roll,(float)inBaseFrame.pitch, (float)inBaseFrame.yaw));
 			//model[i]->getNode()->setMaterialFlag(irr::video::EMF_LIGHTING,false);
 			//model[i]->getNode()->setMaterialFlag(irr::video::EMF_WIREFRAME,true);
+			}
 		}
 		pLocalRenderer->unlock();
 	}

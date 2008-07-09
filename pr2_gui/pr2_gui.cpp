@@ -115,6 +115,7 @@ launcher::launcher( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	
 	panPTZL_S = new wxSlider( this, wxID_ANY, 0, -169, 169, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL );
 	panPTZL_S->Enable( false );
+	panPTZL_S->SetToolTip( wxT("Pan") );
 	
 	fgSizer10->Add( panPTZL_S, 1, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL, 5 );
 	
@@ -127,6 +128,7 @@ launcher::launcher( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	
 	zoomPTZL_S = new wxSlider( this, wxID_ANY, 0, 0, 10000, wxDefaultPosition, wxDefaultSize, wxSL_INVERSE|wxSL_VERTICAL );
 	zoomPTZL_S->Enable( false );
+	zoomPTZL_S->SetToolTip( wxT("Zoom") );
 	
 	fgSizer9->Add( zoomPTZL_S, 1, wxALL|wxEXPAND, 5 );
 	
@@ -135,6 +137,7 @@ launcher::launcher( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	
 	tiltPTZL_S = new wxSlider( this, wxID_ANY, 40, -10, 90, wxDefaultPosition, wxDefaultSize, wxSL_INVERSE|wxSL_VERTICAL );
 	tiltPTZL_S->Enable( false );
+	tiltPTZL_S->SetToolTip( wxT("Tilt") );
 	
 	fgSizer9->Add( tiltPTZL_S, 1, wxALL|wxEXPAND|wxALIGN_RIGHT, 5 );
 	
@@ -262,6 +265,7 @@ launcher::launcher( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	
 	panPTZR_S = new wxSlider( this, wxID_ANY, 0, -169, 169, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL );
 	panPTZR_S->Enable( false );
+	panPTZR_S->SetToolTip( wxT("Pan") );
 	
 	fgSizer101->Add( panPTZR_S, 1, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL, 5 );
 	
@@ -274,6 +278,7 @@ launcher::launcher( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	
 	zoomPTZR_S = new wxSlider( this, wxID_ANY, 0, 0, 10000, wxDefaultPosition, wxDefaultSize, wxSL_INVERSE|wxSL_VERTICAL );
 	zoomPTZR_S->Enable( false );
+	zoomPTZR_S->SetToolTip( wxT("Zoom") );
 	
 	fgSizer91->Add( zoomPTZR_S, 1, wxALL|wxEXPAND, 5 );
 	
@@ -282,6 +287,7 @@ launcher::launcher( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	
 	tiltPTZR_S = new wxSlider( this, wxID_ANY, 40, -10, 90, wxDefaultPosition, wxDefaultSize, wxSL_INVERSE|wxSL_VERTICAL );
 	tiltPTZR_S->Enable( false );
+	tiltPTZR_S->SetToolTip( wxT("Tilt") );
 	
 	fgSizer91->Add( tiltPTZR_S, 1, wxALL|wxEXPAND|wxALIGN_RIGHT, 5 );
 	

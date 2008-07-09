@@ -6,14 +6,15 @@ launcher( parent )
 {
 
 	wxInitAllImageHandlers();
-	/*LeftDock_FGS->Hide(Visualization_SBS,true);
+	LeftDock_FGS->Hide(Visualization_SBS,true);
 	LeftDock_FGS->Hide(PTZL_SBS,true);
 	LeftDock_FGS->Hide(WristL_SBS,true);
 	RightDock_FGS->Hide(Topdown_SBS,true);
 	RightDock_FGS->Hide(PTZR_SBS,true);
 	RightDock_FGS->Hide(WristR_SBS,true);
-	RightDock_FGS->Layout();
-	Window_FGS->Layout();*/
+	Layout();
+	Fit();
+	
 	
 	PTZL_GET_NEW_IMAGE = true;
 	PTZR_GET_NEW_IMAGE = true;
@@ -21,6 +22,10 @@ launcher( parent )
 	WristL_GET_NEW_IMAGE = true;
 	vis3d_Window = NULL;
 	myNode = new ros::node("guiNode");
+	this->Connect(PTZL_B->GetId(), wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(LauncherImpl::PTZLDrawPic));
+	this->Connect(PTZR_B->GetId(), wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(LauncherImpl::PTZRDrawPic));
+	this->Connect(WristL_B->GetId(), wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(LauncherImpl::WristLDrawPic));
+	this->Connect(WristR_B->GetId(), wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(LauncherImpl::WristRDrawPic));
 }
 
 void LauncherImpl::consoleOut(wxString Line)
@@ -137,7 +142,9 @@ void LauncherImpl::startStop_Visualization( wxCommandEvent& event )
 		Model_CB->SetValue(false);
 		UCS_CB->SetValue(false);
 		Grid_CB->SetValue(true);
-		//LeftDock_FGS->Show(Visualization_SBS,true);
+		LeftDock_FGS->Show(Visualization_SBS,true);
+		Layout();
+		Fit();
 		//LeftDock_FGS->Layout();
 		//Window_FGS->Layout();
 		HeadLaser_CB->Enable(true);
@@ -155,7 +162,9 @@ void LauncherImpl::startStop_Visualization( wxCommandEvent& event )
 		consoleOut(wxT("Closing Visualizer\n"));
 		//delete vis3d_Window;
 		//vis3d_Window = 0;
-		//LeftDock_FGS->Hide(Visualization_SBS,true);
+		LeftDock_FGS->Hide(Visualization_SBS,true);
+		Layout();
+		Fit();
 		//LeftDock_FGS->Layout();
 		//Window_FGS->Layout();
 		HeadLaser_CB->Enable(false);
@@ -174,14 +183,18 @@ void LauncherImpl::startStop_Topdown( wxCommandEvent& event )
 	if(Topdown_CB->IsChecked())
 	{
 		consoleOut(wxT("Opening Topdown\n"));
-		//RightDock_FGS->Show(Topdown_SBS,true);
+		RightDock_FGS->Show(Topdown_SBS,true);
+		Layout();
+		Fit();
 		//Window_FGS->Layout();
 		PLACEHOLDER_B->Enable(true);
 	}
 	else
 	{
 		consoleOut(wxT("Closing Topdown\n"));
-		//RightDock_FGS->Hide(Topdown_SBS,true);
+		RightDock_FGS->Hide(Topdown_SBS,true);
+		Layout();
+		Fit();
 		//Window_FGS->Layout();
 		PLACEHOLDER_B->Enable(false);
 	}
@@ -192,26 +205,45 @@ void LauncherImpl::startStop_PTZL( wxCommandEvent& event )
 	if(PTZL_CB->IsChecked())
 	{
 		consoleOut(wxT("Opening Left Pan-Tilt-Zoom\n"));
-		//RightDock_FGS->Show(PTZR_SBS,true);
+		LeftDock_FGS->Show(PTZL_SBS,true);
+		Layout();
+		Fit();
 		panPTZL_S->Enable(true);
 		tiltPTZL_S->Enable(true);
 		zoomPTZL_S->Enable(true);
 		PTZL_B->Enable(true);
-		this->Connect(PTZL_B->GetId(), wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(LauncherImpl::PTZLDrawPic));
 		myNode->subscribe("PTZL_image", PTZLImage, &LauncherImpl::incomingPTZLImageConn,this);
+		myNode->subscribe("PTZL_state", PTZL_state, &LauncherImpl::incomingPTZLState,this);
 		myNode->advertise<std_msgs::PTZActuatorCmd>("PTZL_cmd");
+		
 		//*PTZR_bmp = NULL;
 	}
 	else
 	{
 		consoleOut(wxT("Closing Left Pan-Tilt-Zoom\n"));
-		//RightDock_FGS->Hide(PTZR_SBS,true);
+		LeftDock_FGS->Hide(PTZL_SBS,true);
+		myNode->unsubscribe("PTZL_image");
 		panPTZL_S->Enable(false);
 		tiltPTZL_S->Enable(false);
 		zoomPTZL_S->Enable(false);
 		PTZL_B->Enable(false);
-		myNode->unsubscribe("PTZL_image");
+		wxSize size(0,0);
+		PTZL_B->SetMinSize(size);
+		Layout();
+		Fit();
+		PTZL_bmp == NULL;
 	}
+}
+
+void LauncherImpl::incomingPTZLState()
+{
+	//std::cout << "receiving position L\n";
+	if(PTZL_state.zoom.pos_valid)
+		zoomPTZL_S->SetValue(round(PTZL_state.zoom.pos));
+	if(PTZL_state.tilt.pos_valid)
+		tiltPTZL_S->SetValue(round(PTZL_state.tilt.pos));
+	if(PTZL_state.pan.pos_valid)
+		panPTZL_S->SetValue(round(PTZL_state.pan.pos));
 }
 
 void LauncherImpl::incomingPTZLImageConn()
@@ -258,26 +290,45 @@ void LauncherImpl::startStop_PTZR( wxCommandEvent& event )
 	if(PTZR_CB->IsChecked())
 	{
 		consoleOut(wxT("Opening Right Pan-Tilt-Zoom\n"));
-		//RightDock_FGS->Show(PTZR_SBS,true);
+		RightDock_FGS->Show(PTZR_SBS,true);
+		Layout();
+		Fit();
 		panPTZR_S->Enable(true);
 		tiltPTZR_S->Enable(true);
 		zoomPTZR_S->Enable(true);
 		PTZR_B->Enable(true);
-		this->Connect(PTZR_B->GetId(), wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(LauncherImpl::PTZRDrawPic));
 		myNode->subscribe("PTZR_image", PTZRImage, &LauncherImpl::incomingPTZRImageConn,this);
+		myNode->subscribe("PTZR_state", PTZR_state, &LauncherImpl::incomingPTZRState,this);
 		myNode->advertise<std_msgs::PTZActuatorCmd>("PTZR_cmd");
 		//*PTZR_bmp = NULL;
 	}
 	else
 	{
 		consoleOut(wxT("Closing Right Pan-Tilt-Zoom\n"));
-		//RightDock_FGS->Hide(PTZR_SBS,true);
+		RightDock_FGS->Hide(PTZR_SBS,true);
+		myNode->unsubscribe("PTZR_image");
 		panPTZR_S->Enable(false);
 		tiltPTZR_S->Enable(false);
 		zoomPTZR_S->Enable(false);
 		PTZR_B->Enable(false);
-		myNode->unsubscribe("PTZR_image");
+		wxSize size(0,0);
+		PTZR_B->SetMinSize(size);
+		Layout();
+		Fit();
+		PTZR_bmp = NULL;
 	}
+}
+
+void LauncherImpl::incomingPTZRState()
+{
+	//std::cout << "receiving position R\n";
+	if(PTZR_state.zoom.pos_valid)
+		zoomPTZR_S->SetValue(round(PTZR_state.zoom.pos));
+	if(PTZR_state.tilt.pos_valid)
+		tiltPTZR_S->SetValue(round(PTZR_state.tilt.pos));
+	if(PTZR_state.pan.pos_valid)
+		panPTZR_S->SetValue(round(PTZR_state.pan.pos));
+	//std::cout << "getting pos " << PTZR_state.pan.pos << " " << PTZR_state.tilt.pos << " " << PTZR_state.zoom.pos << endl;
 }
 
 void LauncherImpl::incomingPTZRImageConn()
@@ -324,16 +375,22 @@ void LauncherImpl::startStop_WristL( wxCommandEvent& event )
 	if(WristL_CB->IsChecked())
 	{
 		consoleOut(wxT("Opening Left Wrist\n"));
-		//RightDock_FGS->Show(PTZR_SBS,true);
-		this->Connect(WristL_B->GetId(), wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(LauncherImpl::WristLDrawPic));
+		LeftDock_FGS->Show(WristL_SBS,true);
+		Layout();
+		Fit();
 		myNode->subscribe("WristL_image", WristLImage, &LauncherImpl::incomingWristLImageConn,this);
 		//*WristL_bmp = NULL;
 	}
 	else
 	{
 		consoleOut(wxT("Closing Left Wrist\n"));
-		//RightDock_FGS->Hide(PTZR_SBS,true);
+		LeftDock_FGS->Hide(WristL_SBS,true);
 		myNode->unsubscribe("WristL_image");
+		wxSize size(0,0);
+		WristL_B->SetMinSize(size);
+		Layout();
+		Fit();
+		WristL_bmp = NULL;
 	}
 }
 
@@ -382,16 +439,22 @@ void LauncherImpl::startStop_WristR( wxCommandEvent& event )
 	if(WristR_CB->IsChecked())
 	{
 		consoleOut(wxT("Opening Right Wrist\n"));
-		//RightDock_FGS->Show(PTZR_SBS,true);
-		this->Connect(WristR_B->GetId(), wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(LauncherImpl::WristRDrawPic));
+		RightDock_FGS->Show(WristR_SBS,true);
+		Layout();
+		Fit();
 		myNode->subscribe("WristR_image", WristRImage, &LauncherImpl::incomingWristRImageConn,this);
 		//*WristR_bmp = NULL;
 	}
 	else
 	{
 		consoleOut(wxT("Closing Right Wrist\n"));
-		//RightDock_FGS->Hide(PTZR_SBS,true);
+		RightDock_FGS->Hide(WristR_SBS,true);
 		myNode->unsubscribe("WristR_image");
+		wxSize size(0,0);
+		WristR_B->SetMinSize(size);
+		Layout();
+		Fit();
+		WristR_bmp = NULL;
 	}
 }
 
@@ -453,6 +516,7 @@ void LauncherImpl::PTZR_ptzChanged(wxScrollEvent& event)
 	ptz_cmd.tilt.cmd = tiltPTZR_S->GetValue();
 	ptz_cmd.zoom.valid = 1;
 	ptz_cmd.zoom.cmd = zoomPTZR_S->GetValue();
+	//std::cout << "sending pos " << ptz_cmd.pan.cmd << " " << ptz_cmd.tilt.cmd << " " << ptz_cmd.zoom.cmd << endl;
 	myNode->publish("PTZR_cmd",ptz_cmd);
 }
 

@@ -146,6 +146,7 @@ irr::core::vector3d<irr::f32> leftToRight(irr::core::vector3d<irr::f32> left)
 irr::core::vector3d<irr::f32> rightToLeft(irr::core::vector3d<irr::f32> right)
 {
 	irr::core::vector3d<irr::f32> left(-right.Y,right.Z,right.X);
+	std::cout << left.X << " " << left.Y << " " << left.Z << std::endl;
 	return left;
 }
 };
