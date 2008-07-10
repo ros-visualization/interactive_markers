@@ -1,0 +1,14 @@
+<package>
+<description brief="Ros topic visualizer">
+
+</description>
+<author>Jeremy Leibs</author>
+<license>BSD</license>
+<url>http://pr.willowgarage.com</url>
+<depend package="roscpp"/>
+<depend package="std_msgs"/>
+<export>
+  <cpp cflags="-I${prefix}/src/" lflags="-L${prefix}/lib -lwxtopicdisplay"/>
+</export>
+</package>
+
