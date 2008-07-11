@@ -30,9 +30,10 @@ launcher::launcher( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	Visualization_SBS = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Visualization") ), wxHORIZONTAL );
 	
 	wxFlexGridSizer* Visualization_FGS;
-	Visualization_FGS = new wxFlexGridSizer( 1, 2, 0, 0 );
+	Visualization_FGS = new wxFlexGridSizer( 1, 3, 0, 0 );
 	Visualization_FGS->AddGrowableCol( 0 );
 	Visualization_FGS->AddGrowableCol( 1 );
+	Visualization_FGS->AddGrowableCol( 2 );
 	Visualization_FGS->AddGrowableRow( 0 );
 	Visualization_FGS->SetFlexibleDirection( wxBOTH );
 	Visualization_FGS->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
@@ -99,6 +100,12 @@ launcher::launcher( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	Views_RB->Enable( false );
 	
 	Visualization_FGS->Add( Views_RB, 1, wxEXPAND|wxALL, 5 );
+	
+	wxString HeadLaser_RBChoices[] = { wxT("Wipe"), wxT("Replace"), wxT("At Once") };
+	int HeadLaser_RBNChoices = sizeof( HeadLaser_RBChoices ) / sizeof( wxString );
+	HeadLaser_RB = new wxRadioBox( this, wxID_ANY, wxT("Head Laser"), wxDefaultPosition, wxDefaultSize, HeadLaser_RBNChoices, HeadLaser_RBChoices, 1, wxRA_SPECIFY_COLS );
+	HeadLaser_RB->SetSelection( 0 );
+	Visualization_FGS->Add( HeadLaser_RB, 1, wxALL|wxEXPAND, 5 );
 	
 	Visualization_SBS->Add( Visualization_FGS, 1, wxEXPAND, 5 );
 	
@@ -326,6 +333,7 @@ launcher::launcher( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	UCS_CB->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( launcher::startStopUCS ), NULL, this );
 	Grid_CB->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( launcher::startStopGrid ), NULL, this );
 	Views_RB->Connect( wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler( launcher::viewChanged ), NULL, this );
+	HeadLaser_RB->Connect( wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler( launcher::HeadLaserChanged ), NULL, this );
 	panPTZL_S->Connect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( launcher::PTZL_ptzChanged ), NULL, this );
 	zoomPTZL_S->Connect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( launcher::PTZL_ptzChanged ), NULL, this );
 	tiltPTZL_S->Connect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( launcher::PTZL_ptzChanged ), NULL, this );
@@ -351,6 +359,7 @@ launcher::~launcher()
 	UCS_CB->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( launcher::startStopUCS ), NULL, this );
 	Grid_CB->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( launcher::startStopGrid ), NULL, this );
 	Views_RB->Disconnect( wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler( launcher::viewChanged ), NULL, this );
+	HeadLaser_RB->Disconnect( wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler( launcher::HeadLaserChanged ), NULL, this );
 	panPTZL_S->Disconnect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( launcher::PTZL_ptzChanged ), NULL, this );
 	zoomPTZL_S->Disconnect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( launcher::PTZL_ptzChanged ), NULL, this );
 	tiltPTZL_S->Disconnect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( launcher::PTZL_ptzChanged ), NULL, this );

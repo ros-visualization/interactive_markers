@@ -106,7 +106,9 @@ void rotateTo(irr::core::vector3d<irr::f32> rotation)
 	if(node)
 	{
 		//do I want this from left to right too???  Assuming yes.
-		node->setRotation(rightToLeft(rotation) + rightToLeft(irr::core::vector3d<irr::f32>(defaultXRotation,defaultYRotation,defaultZRotation)));
+		node->setRotation(rightToLeft(irr::core::vector3d<irr::f32>(rotation.X *180 / 3.14159,rotation.Y *180 / 3.14159,rotation.Z *180 / 3.14159)) + rightToLeft(irr::core::vector3d<irr::f32>(defaultXRotation,defaultYRotation,defaultZRotation)));
+		//node->setRotation(rightToLeft(rotation) + rightToLeft(irr::core::vector3d<irr::f32>(defaultXRotation,defaultYRotation,defaultZRotation)));
+		//node->setRotation(rotation);
 	}
 }
 
@@ -146,7 +148,7 @@ irr::core::vector3d<irr::f32> leftToRight(irr::core::vector3d<irr::f32> left)
 irr::core::vector3d<irr::f32> rightToLeft(irr::core::vector3d<irr::f32> right)
 {
 	irr::core::vector3d<irr::f32> left(-right.Y,right.Z,right.X);
-	std::cout << left.X << " " << left.Y << " " << left.Z << std::endl;
+	//std::cout << left.X << " " << left.Y << " " << left.Z << std::endl;
 	return left;
 }
 };

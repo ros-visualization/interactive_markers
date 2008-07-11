@@ -53,6 +53,7 @@ Subscribes to (name/type):
 #ifndef __PP_IL_RENDER_HH
 #define __PP_IL_RENDER_HH
 #define cloudArrayLength 400
+#define intensityRange 16.0
 #include <rosthread/member_thread.h>
 //#include <irrlicht.h>
 #include "ILClient.hh"
@@ -75,6 +76,7 @@ class Vis3d
 public:
 	//enum modelParts{base,body,wheelFL,wheelRL,wheelFR,wheelRR,modelPartsCount}; //use Chitta's from pr2Core!
 	enum viewEnum{Maya,FPS,TFL,TFR,TRL,TRR,Top,Bottom,Front,Rear,Left,Right,viewCount};
+	enum scanType{Wipe, Replace, AtOnce};
 //ros declarations
 	ros::node *myNode;
 	rosTFClient::rosTFClient tfClient;
@@ -96,6 +98,8 @@ public:
 	irr::scene::ILightSceneNode *light[2];
 	irr::scene::ICameraSceneNode *cameras[viewCount];
 	
+	int scanT;
+	int scanDir;
 	int headVertScanCount;
 	
 ///Vis3d constructor
@@ -108,6 +112,8 @@ public:
 		//tfClient = new rosTFClient::rosTFClient(*myNode,true,libTF::TransformReference::DEFAULT_CACHE_TIME,libTF::TransformReference::DEFAULT_MAX_EXTRAPOLATION_DISTANCE);
 		std::cout << "init\n";
 		headVertScanCount = 0;
+		scanDir = -1;
+		scanT = Wipe;
 		for(int i = 0; i < PR2::MAX_JOINTS; i++)
 		{
 			model[i] = 0;
@@ -132,7 +138,7 @@ public:
 		{
 			pLocalRenderer->addNode(ilHeadCloud[i]);
 		}
-		ilGrid->makegrid(100,1.0f,50,50,50);
+		ilGrid->makegrid(100,.1f,50,50,50);
 		pLocalRenderer->addNode(ilGrid);
 		irr::SKeyMap keyMap[8];
 		{
@@ -172,6 +178,7 @@ public:
 		
 		light[0] = pLocalRenderer->manager()->addLightSceneNode(NULL,irr::core::vector3df(50,50,50),irr::video::SColorf(.9f,.9f,.9f,1.0f));
 		light[1] = pLocalRenderer->manager()->addLightSceneNode(NULL,irr::core::vector3df(-50,-50,-50),irr::video::SColorf(.5f,.5f,.5f,1.0f));
+		
 	}
 
 ///Vis3d destructor
@@ -230,13 +237,16 @@ public:
 				
 		}
 		pLocalRenderer->manager()->setActiveCamera(cameras[id]);
+		irr::core::rect<irr::s32> viewPort = pLocalRenderer->driver()->getViewPort();
+		pLocalRenderer->manager()->getActiveCamera()->setAspectRatio(((float)viewPort.getWidth())/((float)viewPort.getHeight()));
 	}
 	
 ///Enables (draws) the head Hokuyo point cloud data
 	void enableHead()
 	{
-	    myNode->subscribe("cloud", ptCldHead, &Vis3d::addHeadCloud,this);
-	    myNode->subscribe("shutter", shutHead, &Vis3d::shutterHead,this);
+		scanDir = 1;
+		headVertScanCount = 0;
+	    changeHeadLaser(scanT);
 	    for(int i = 0; i < cloudArrayLength; i++)
 	    {
 			pLocalRenderer->enable(ilHeadCloud[i]);
@@ -251,7 +261,7 @@ public:
 		//robodesc.LoadFile();
 		//static const char *modelPaths[] = {"../pr2_models/base1000.3DS","../pr2_models/body1000.3DS","../pr2_models/caster1000r2.3DS","../pr2_models/caster1000r2.3DS","../pr2_models/caster1000r2.3DS","../pr2_models/caster1000r2.3DS"};
 		//static const char *modelPaths[] = {"pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","","","pr2_models/body1000.3DS","pr2_models/sh-pan1000.3DS","pr2_models/sh-pitch1000.3DS","pr2_models/sh-roll1000.3DS","","","","","pr2_models/sh-pan1000.3DS","pr2_models/sh-pitch1000.3DS","pr2_models/sh-roll1000.3DS","","","","","","","pr2_models/head-pan1000.3DS","pr2_models/head-tilt1000.3DS","","","","","","pr2_models/base1000.3DS","",""};
-		static const char *modelPaths[] = {"","","pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","pr2_models/base1000.3DS","pr2_models/body1000.3DS","pr2_models/sh-pan1000.3DS","pr2_models/sh-pitch1000.3DS","pr2_models/sh-roll1000.3DS","","","","","","","pr2_models/sh-pan1000.3DS","pr2_models/sh-pitch1000.3DS","pr2_models/sh-roll1000.3DS","","","","","","","pr2_models/head-pan1000.3DS","pr2_models/head-tilt1000.3DS","","",""};
+		static const char *modelPaths[] = {"","","pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","pr2_models/base1000r.3DS","pr2_models/body1000r.3DS","pr2_models/sh-pan1000.3DS","pr2_models/sh-pitch1000.3DS","pr2_models/sh-roll1000.3DS","","","","","","","pr2_models/sh-pan1000.3DS","pr2_models/sh-pitch1000.3DS","pr2_models/sh-roll1000.3DS","","","","","","","pr2_models/head-pan1000.3DS","pr2_models/head-tilt1000.3DS","","",""};
 		//std::cout << PR2::MAX_JOINTS << std::endl;
 		pLocalRenderer->lock();
 		//int i = 2;
@@ -272,9 +282,9 @@ public:
 			aPose.frame = PR2::FRAMEID_CASTER_FL_WHEEL_L + i;
 			std::cout << "Frame IDS: " << aPose.frame << ", " << PR2::FRAMEID_BASE << std::endl;
 			libTF::TFPose inBaseFrame = this->tfClient.transformPose(PR2::FRAMEID_BASE, aPose);
-			std::cout << "Coordinates for : " << i << "; "<<inBaseFrame.x << ", " <<  inBaseFrame.y << ", " << inBaseFrame.z << std::endl;
+			std::cout << "Coordinates for : " << i << "; "<<inBaseFrame.x << ", " <<  inBaseFrame.y << ", " << inBaseFrame.z << "; "<<inBaseFrame.yaw << ", " <<  inBaseFrame.pitch << ", " << inBaseFrame.roll <<std::endl;
 			//model[i] = new ILModel(pLocalRenderer->manager(), (irr::c8*)modelPaths[i], true);
-			model[i] = new ILModel(pLocalRenderer->manager(), (irr::c8*)modelPaths[i], irr::core::vector3d<irr::f32>((float)inBaseFrame.x,(float)inBaseFrame.y, (float)inBaseFrame.z), irr::core::vector3d<irr::f32>((float)inBaseFrame.roll,(float)inBaseFrame.pitch, (float)inBaseFrame.yaw));
+			model[i] = new ILModel(pLocalRenderer->manager(), (irr::c8*)modelPaths[i], irr::core::vector3d<irr::f32>((float)inBaseFrame.x,(float)inBaseFrame.y, (float)inBaseFrame.z), irr::core::vector3d<irr::f32>((float)inBaseFrame.yaw,(float)(inBaseFrame.pitch), (float)(inBaseFrame.roll)));
 			//model[i]->getNode()->setMaterialFlag(irr::video::EMF_LIGHTING,false);
 			//model[i]->getNode()->setMaterialFlag(irr::video::EMF_WIREFRAME,true);
 			}
@@ -328,6 +338,7 @@ public:
 	{
 	    myNode->unsubscribe("cloud");
 	    myNode->unsubscribe("shutter");
+	    myNode->unsubscribe("cloud_full");
 	    shutterHead();
 		pLocalRenderer->lock();
 	    for(int i = 0; i < cloudArrayLength; i++)
@@ -402,13 +413,24 @@ public:
 ///(callback)Clears data in the head based Hokuyo point cloud
 	void shutterHead()
 	{
+		//std::cout << "shutter\n";
 	    pLocalRenderer->lock();
-	    for(int i = 0; i < cloudArrayLength; i++)
+	    switch(scanT)
 	    {
-		ilHeadCloud[i]->resetCount();
-	    }
+	    	case Wipe:
+	    	case AtOnce:
+				for(int i = 0; i < cloudArrayLength; i++)
+				{
+					ilHeadCloud[i]->resetCount();
+				}
+				headVertScanCount = 0;
+				break;
+			case Replace:
+				scanDir *= -1;
+				headVertScanCount += scanDir;
+				break;
+		}
 	    pLocalRenderer->unlock();
-	    headVertScanCount = 0;
 	}
 	
 ///(callback)Clears data in the lower Hokuyo point cloud
@@ -430,26 +452,45 @@ public:
 ///(callback)Adds a point cloud to the head based Hokuyo's point cloud
 	void addHeadCloud()
 	{
-	    pLocalRenderer->lock();
-	    if(headVertScanCount < cloudArrayLength)
+	    switch(scanT)
 	    {
-		if(ptCldHead.get_pts_size() > 65535)
-		{
-		    for(int i = 0; i < 65535; i++)
-		    {
-			ilHeadCloud[headVertScanCount]->addPoint(ptCldHead.pts[i].x, ptCldHead.pts[i].y, ptCldHead.pts[i].z, 255 ,(int)(ptCldHead.chan[0].vals[i]/16.0),(int)(ptCldHead.chan[0].vals[i]/16.0));
-		    }
+	    	case Wipe:
+	    	pLocalRenderer->lock();
+				if(headVertScanCount < cloudArrayLength)
+				{
+					for(int i = 0; i < min((uint32_t)65535,ptCldHead.get_pts_size()); i++)
+					{
+						ilHeadCloud[headVertScanCount]->addPoint(ptCldHead.pts[i].x, ptCldHead.pts[i].y, ptCldHead.pts[i].z, 255 ,min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255),min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255));
+					}
+					headVertScanCount++;
+				}
+				break;
+			case Replace:
+			pLocalRenderer->lock();
+				if(headVertScanCount < cloudArrayLength && headVertScanCount > -1)
+				{
+					ilHeadCloud[headVertScanCount]->resetCount();
+					for(int i = 0; i < min((uint32_t)65535,ptCldHead.get_pts_size()); i++)
+					{
+						ilHeadCloud[headVertScanCount]->addPoint(ptCldHead.pts[i].x, ptCldHead.pts[i].y, ptCldHead.pts[i].z, 255 ,min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255),min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255));
+					}
+					headVertScanCount += scanDir;
+				}
+				break;
+			case AtOnce:
+				shutterHead();
+				pLocalRenderer->lock();
+				//std::cout << "add head cloud full\n";
+				for(int i = 0; i < min(ptCldHead.get_pts_size(),((uint32_t)cloudArrayLength*65535)); i++)
+				{
+					if(((float)i)/((float)(headVertScanCount + 1)) > 65535)
+						headVertScanCount++;
+					ilHeadCloud[headVertScanCount]->addPoint(ptCldHead.pts[i].x, ptCldHead.pts[i].y, ptCldHead.pts[i].z, 255 ,min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255),min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255));
+				}
+				break;
+			default: break;
 		}
-		else
-		{
-		    for(size_t i = 0; i < ptCldHead.get_pts_size(); i++)
-		    {
-			ilHeadCloud[headVertScanCount]->addPoint(ptCldHead.pts[i].x, ptCldHead.pts[i].y, ptCldHead.pts[i].z, 255,(int)(ptCldHead.chan[0].vals[i]/16.0),(int)(ptCldHead.chan[0].vals[i]/16.0));
-		    }
-		}
-		headVertScanCount++;
-	    }
-	    pLocalRenderer->unlock();
+		pLocalRenderer->unlock();
 	}
 	
 ///(callback)Adds a point cloud to the lower Hokuyo's point cloud
@@ -458,17 +499,17 @@ public:
 	    pLocalRenderer->lock();
 	    if(ptCldFloor.get_pts_size() > 65535)
 	    {
-		for(int i = 0; i < 65535; i++)
-		{
-		    ilFloorCloud->addPoint(ptCldFloor.pts[i].x, ptCldFloor.pts[i].y, ptCldFloor.pts[i].z, (int)(ptCldFloor.chan[0].vals[i]/16.0),255,(int)(ptCldFloor.chan[0].vals[i]/16.0));
+			for(int i = 0; i < 65535; i++)
+			{
+				ilFloorCloud->addPoint(ptCldFloor.pts[i].x, ptCldFloor.pts[i].y, ptCldFloor.pts[i].z, min((int)(ptCldFloor.chan[0].vals[i]/intensityRange),255),255,min((int)(ptCldFloor.chan[0].vals[i]/intensityRange),255));
+			}
 		}
-	    }
-	    else
-	    {
-		for(size_t i = 0; i < ptCldFloor.get_pts_size(); i++)
+		else
 		{
-		    ilFloorCloud->addPoint(ptCldFloor.pts[i].x, ptCldFloor.pts[i].y, ptCldFloor.pts[i].z, (int)(ptCldFloor.chan[0].vals[i]/16.0),255,(int)(ptCldFloor.chan[0].vals[i]/16.0));
-		}
+			for(size_t i = 0; i < ptCldFloor.get_pts_size(); i++)
+			{
+				ilFloorCloud->addPoint(ptCldFloor.pts[i].x, ptCldFloor.pts[i].y, ptCldFloor.pts[i].z, min((int)(ptCldFloor.chan[0].vals[i]/intensityRange),255),255,min((int)(ptCldFloor.chan[0].vals[i]/intensityRange),255));
+			}
 	    }
 	    pLocalRenderer->unlock();
 	}
@@ -479,21 +520,51 @@ public:
 	    pLocalRenderer->lock();
 	    if(ptCldStereo.get_pts_size() > 65535)
 	    {
-		for(int i = 0; i < 65535; i++)
-		{
-		    ilStereoCloud->addPoint(ptCldStereo.pts[i].x, ptCldStereo.pts[i].y, ptCldStereo.pts[i].z, (int)(ptCldStereo.chan[0].vals[i]/16.0),(int)(ptCldStereo.chan[0].vals[i]/16.0),255);
-		}
+			for(int i = 0; i < 65535; i++)
+			{
+				ilStereoCloud->addPoint(ptCldStereo.pts[i].x, ptCldStereo.pts[i].y, ptCldStereo.pts[i].z, min((int)(ptCldStereo.chan[0].vals[i]),255),min((int)(ptCldStereo.chan[0].vals[i]),255),255);
+			}
 	    }
 	    else
 	    {
-		for(size_t i = 0; i < ptCldStereo.get_pts_size(); i++)
-		{
-		    ilStereoCloud->addPoint(ptCldStereo.pts[i].x, ptCldStereo.pts[i].y, ptCldStereo.pts[i].z, (int)(ptCldStereo.chan[0].vals[i]/16.0),(int)(ptCldStereo.chan[0].vals[i]/16.0),255);
-		}
+			for(size_t i = 0; i < ptCldStereo.get_pts_size(); i++)
+			{
+				ilStereoCloud->addPoint(ptCldStereo.pts[i].x, ptCldStereo.pts[i].y, ptCldStereo.pts[i].z, min((int)(ptCldStereo.chan[0].vals[i]),255),min((int)(ptCldStereo.chan[0].vals[i]),255),255);
+			}
 	    }
 	    pLocalRenderer->unlock();
 	}
-
+	
+	template <class T> const T& max ( const T& a, const T& b ) {
+  		return (b<a)?a:b;
+	}
+	
+	template <class T> const T& min ( const T& a, const T& b ) {
+  		return (a<b)?a:b;
+	}
+	
+	void changeHeadLaser(int choice)
+	{
+		//std::cout << "Wipe " << Wipe << " Replace " << Replace << " At Once " << AtOnce  << " Choice " << choice << std::endl;
+		switch(choice)
+		{
+			case AtOnce:
+				//std::cout << "At Once\n";
+				myNode->subscribe("full_cloud", ptCldHead, &Vis3d::addHeadCloud,this);
+				myNode->unsubscribe("cloud");
+	    		myNode->unsubscribe("shutter");
+	    		scanT = choice;
+	    		break;
+			case Wipe:
+			case Replace:
+				//std::cout << "Wipe/Replace\n";
+				myNode->unsubscribe("full_cloud");
+				myNode->subscribe("cloud", ptCldHead, &Vis3d::addHeadCloud,this);
+	    		myNode->subscribe("shutter", shutHead, &Vis3d::shutterHead,this);
+				scanT = choice;
+				break;
+		}
+	}
 };
     
     

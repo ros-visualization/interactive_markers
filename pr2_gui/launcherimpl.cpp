@@ -6,6 +6,7 @@ launcher( parent )
 {
 
 	wxInitAllImageHandlers();
+	LeftDock_FGS->Hide(HeadLaser_RB,true);
 	LeftDock_FGS->Hide(Visualization_SBS,true);
 	LeftDock_FGS->Hide(PTZL_SBS,true);
 	LeftDock_FGS->Hide(WristL_SBS,true);
@@ -39,11 +40,26 @@ void LauncherImpl::startStopHeadPtCld( wxCommandEvent& event )
     {
 		consoleOut(wxT("Enabling Head Laser Cloud\n"));
 		vis3d_Window->enableHead();
+		HeadLaser_RB->Show(true);
+		Layout();
+		Fit();
+		/*if(LeftDock_FGS->Show(HeadLaser_RB,true))
+			std::cout << "found HeadLaser_RB show\n";
+		Layout();
+		Fit();*/
+		//std::cout << "showing HeadLaser_RB\n";
     }
     else
     {
 		consoleOut(wxT("Disabling Head Laser Cloud\n"));
 		vis3d_Window->disableHead();
+		HeadLaser_RB->Show(false);
+		Layout();
+		Fit();
+		/*if(LeftDock_FGS->Show(HeadLaser_RB,true))
+			std::cout << "found HeadLaser_RB hide\n";
+		Layout();
+		Fit();*/
     }
 }
 
@@ -130,6 +146,18 @@ void LauncherImpl::viewChanged( wxCommandEvent& event )
 	}
 }
 
+void LauncherImpl::HeadLaserChanged( wxCommandEvent& event )
+{
+	if(vis3d_Window)
+	{
+		std::cout << "Selection: " << HeadLaser_RB->GetSelection() << std::endl;
+		//vis3d_Window->scanT = HeadLaser_RB->GetSelection();
+		vis3d_Window->changeHeadLaser(HeadLaser_RB->GetSelection());
+	}
+	else
+		consoleOut(wxT("Cannot change shutter type.  3D window does not exist.\n"));
+}
+
 void LauncherImpl::startStop_Visualization( wxCommandEvent& event )
 {
 	if(Visualization_CB->IsChecked())
@@ -143,6 +171,8 @@ void LauncherImpl::startStop_Visualization( wxCommandEvent& event )
 		UCS_CB->SetValue(false);
 		Grid_CB->SetValue(true);
 		LeftDock_FGS->Show(Visualization_SBS,true);
+		//LeftDock_FGS->Hide(HeadLaser_RB,true);
+		HeadLaser_RB->Show(false);
 		Layout();
 		Fit();
 		//LeftDock_FGS->Layout();
@@ -160,8 +190,8 @@ void LauncherImpl::startStop_Visualization( wxCommandEvent& event )
     else
     {
 		consoleOut(wxT("Closing Visualizer\n"));
-		//delete vis3d_Window;
-		//vis3d_Window = 0;
+		delete vis3d_Window;
+		vis3d_Window = 0;
 		LeftDock_FGS->Hide(Visualization_SBS,true);
 		Layout();
 		Fit();

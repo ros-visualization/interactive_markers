@@ -45,6 +45,7 @@ class launcher : public wxFrame
 		wxCheckBox* UCS_CB;
 		wxCheckBox* Grid_CB;
 		wxRadioBox* Views_RB;
+		wxRadioBox* HeadLaser_RB;
 		wxStaticBoxSizer* PTZL_SBS;
 		wxSlider* panPTZL_S;
 		wxSlider* zoomPTZL_S;
@@ -80,6 +81,7 @@ class launcher : public wxFrame
 		virtual void startStopUCS( wxCommandEvent& event ){ event.Skip(); }
 		virtual void startStopGrid( wxCommandEvent& event ){ event.Skip(); }
 		virtual void viewChanged( wxCommandEvent& event ){ event.Skip(); }
+		virtual void HeadLaserChanged( wxCommandEvent& event ){ event.Skip(); }
 		virtual void PTZL_ptzChanged( wxScrollEvent& event ){ event.Skip(); }
 		virtual void startStop_Visualization( wxCommandEvent& event ){ event.Skip(); }
 		virtual void startStopTopdown( wxCommandEvent& event ){ event.Skip(); }

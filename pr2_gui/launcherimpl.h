@@ -31,6 +31,7 @@ protected:
 	void startStopUCS( wxCommandEvent& event );
 	void startStopGrid( wxCommandEvent& event );
 	void viewChanged( wxCommandEvent& event );
+	void HeadLaserChanged( wxCommandEvent& event );
 	void startStop_Visualization( wxCommandEvent& event );
 	void startStop_Topdown( wxCommandEvent& event );
 	void startStop_PTZL( wxCommandEvent& event );
