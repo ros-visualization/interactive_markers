@@ -8,7 +8,7 @@ TopicDisplay::TopicDisplay( wxWindow* parent, ros::node* _node ) : GenTopicDispl
 
     timer->Start(1000);
 
-    wxTreeItemId root_id = topicTree->AddRoot(wxT("/"));
+    rootId  = topicTree->AddRoot(wxT("/"));
 }
 
 
@@ -20,121 +20,104 @@ void TopicDisplay::checkIsTopic ( wxTreeEvent& event )
 
 void TopicDisplay::tick( wxTimerEvent& event )
 {
-  topicList topics;
+  TopicList topics;
 
   rosNode->get_published_topics(&topics);
 
-  wxTreeItemId root_id = topicTree->GetRootItem();
+  // Set all items in cache to tentatively delete
+  for (TopicMap::iterator i = topicCache.begin(); i != topicCache.end(); i++)
+    i->second.save = false;
 
-  bool clean = false;
-  int pass = 0;
-
-  while (!clean || pass < 2)
+  // Loop through all published topics
+  for (TopicList::iterator i = topics.begin(); i != topics.end(); i++)
   {
-    clean = true;
-    wxTreeItemId node = topicTree->GetRootItem();
-    wxTreeItemIdValue cookie;
+    TopicMap::iterator j = topicCache.find(i->first);
+    if (j == topicCache.end())
+    {      
+      // Topic not in cache yet.  Find right place to put it in the tree
+      std::istringstream iss(i->first);
+      std::string token;
 
-    while (node.IsOk()) {
-      printf("Checking: %s\n", (const char*)(topicTree->GetItemText(node)).mb_str(wxConvUTF8));
-      if (topicTree->ItemHasChildren(node))
-        node = topicTree->GetFirstChild(node, cookie);
-      else
+      wxTreeItemId id = topicTree->GetRootItem();
+      
+      while (getline(iss, token, '/'))
       {
-        bool needsDeleting = false;
-
-        treeData* data = (treeData*)topicTree->GetItemData(node);
-
-        if (data == NULL)
-          needsDeleting = true;
-        else
+        if (!token.empty())
         {
-          switch (pass) {
-          case 0:
-            data->save = false;
-            for (topicList::iterator i = topics.begin(); i != topics.end(); i++)
+          wxTreeItemIdValue cookie;
+          wxTreeItemId child = topicTree->GetFirstChild(id,cookie);
+          bool exists = false;
+          do
+            if (topicTree->GetItemText(child) == wxString::FromAscii( token.c_str() ))
             {
-              if ( data->name == i->first )
-              {
-                data->save = true;
-                topics.erase(i);
-                break;
-              }
-            }
-            break;
-          default:
-            if (data->save == false)
-              needsDeleting = true;
-          }
-        }
-          
-        wxTreeItemId tmp = node;
-
-
-        wxTreeItemId n_node = topicTree->GetNextSibling(node);
-        if (n_node.IsOk())
-          node = n_node;
-        else
-        {
-          node = topicTree->GetItemParent(node);
-
-          while (node.IsOk())
-          {
-            wxTreeItemId n_node = topicTree->GetNextSibling(node);
-            if (n_node.IsOk())
-            {
-              node = n_node;
+              exists = true;
               break;
             }
-            else
-              node = topicTree->GetItemParent(node);
-          }
+          while ((child = topicTree->GetNextChild(id,cookie)).IsOk());
+
+          if (exists)
+            id = child;
+          else
+            id = topicTree->AppendItem(id, wxString::FromAscii( token.c_str()  ));        
         }
-   
-        if (needsDeleting && tmp != root_id)
-        {
-          clean = false;
-          topicTree->Delete(tmp);
-        }
+      }
+
+      // Add to Cache
+      TopicMapEntry cacheItem;
+      cacheItem.item = id;
+      cacheItem.save = true;
+      cacheItem.type = i->second;
+      topicCache[i->first] = cacheItem;
+
+      // Put data in tree item and rename
+      TopicNameData* data = new TopicNameData();
+      data->name = i->first;
+      topicTree->SetItemText(id, wxString::FromAscii( token.c_str() ) + wxT(" (") + wxString::FromAscii( i->second.c_str() ) + wxT(")"));
+      topicTree->SetItemData(id, data);
+      topicTree->SetItemBold(id, true);
+    } else {
+      // Topic already in cache -- keep it there.
+      j->second.save = true;
+    }
+  }
+
+  std::vector<TopicMap::iterator> toErase;
+
+  // Tentatively delete all items in cache which should be removed
+  for (TopicMap::iterator i = topicCache.begin(); i != topicCache.end(); i++)
+  {
+    if (i->second.save == false)
+      toErase.push_back(i);
+  }
+
+  wxTreeItemId id;
+  wxTreeItemId parentId;
+
+  // Actually delete all items and purge parents as necessary
+  for (std::vector<TopicMap::iterator>::iterator i = toErase.begin(); i != toErase.end(); i++)
+  {
+    // Delete item
+    id = (*i)->second.item;
+    parentId = topicTree->GetItemParent(id);
+    topicTree->Delete(id);
+
+    // Delete all childless parents
+    while (parentId != rootId)
+    {
+      if (topicTree->HasChildren(parentId))
+        break;
+      else
+      {
+        id = parentId;
+        parentId = topicTree->GetItemParent(id);
+        topicTree->Delete(id);
       }
     }
 
-    pass++;
+    // Erase item from cache
+    topicCache.erase(*i);
   }
 
-  for (topicList::iterator i = topics.begin(); i != topics.end(); i++)
-  {
-    std::istringstream iss(i->first);
-    std::string token;
-
-    wxTreeItemId id = topicTree->GetRootItem();
-
-    while (getline(iss, token, '/'))
-      if (token != std::string(""))
-      {
-        wxTreeItemIdValue cookie;
-        wxTreeItemId child = topicTree->GetFirstChild(id,cookie);
-        bool exists = false;
-        do
-          if (topicTree->GetItemText(child) == wxString::FromAscii( token.c_str()))
-          {
-            exists = true;
-            break;
-          }
-        while ((child = topicTree->GetNextChild(id,cookie)).IsOk());
-
-        if (exists)
-          id = child;
-        else
-          id = topicTree->AppendItem(id, wxString::FromAscii( token.c_str()  ));        
-      }
-
-    treeData* data = new treeData();
-    data->name = i->first;
-    topicTree->SetItemText(id, wxString::FromAscii( token.c_str() ) + wxT(" (") + wxString::FromAscii( i->second.c_str() ) + wxT(")"));
-    topicTree->SetItemData(id, data);
-    topicTree->SetItemBold(id, true);
-  }
-    
+  // Refresh the display
   Refresh();
 }

@@ -41,19 +41,33 @@
 #include "ros/node.h"
 #include "std_msgs/String.h"
 
-typedef std::vector<std::pair<std::string, std::string> > topicList;
 
-class treeData : public wxTreeItemData
+class TopicNameData : public wxTreeItemData
 {
 public:
   std::string name;
-  bool save;
 };
+
+struct TopicMapEntry
+{
+  bool save;
+  wxTreeItemId item;
+  std::string type;
+};
+
+
+typedef std::vector<std::pair<std::string, std::string> > TopicList;
+
+typedef std::map<std::string, TopicMapEntry> TopicMap;
+
 
 class TopicDisplay : public GenTopicDisplay
 {
   wxTimer* timer;
   ros::node* rosNode;
+  TopicMap topicCache;
+
+  wxTreeItemId rootId;
 
 public:
 

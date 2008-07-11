@@ -9,12 +9,22 @@ find_package(wxWidgets REQUIRED)
 include(${wxWidgets_USE_FILE})
 include_directories(${wxWidgets_INCLUDE_DIRS})
 
-set(EXECUTABLE_OUTPUT_PATH ${wx_topic_display_SOURCE_DIR}/bin)
+find_program(WXFORMBUILDER NAMES wxformbuilder)
+
+if(WXFORMBUILDER)
+  add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/src/wx_topic_display/GenTopicDisplay.cpp
+                            ${PROJECT_SOURCE_DIR}/src/wx_topic_display/GenTopicDisplay.h
+                     COMMAND ${WXFORMBUILDER} -g ${wx_topic_display_SOURCE_DIR}/src/wx_topic_display/topic_display.fbp
+                     DEPENDS src/wx_topic_display/topic_display.fbp)
+endif(WXFORMBUILDER)
+
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
 rospack_add_library(wxtopicdisplay src/wx_topic_display/TopicDisplay.cpp
                                    src/wx_topic_display/GenTopicDisplay.cpp)
 
 rospack_add_executable(test src/test/test.cpp
                             src/test/GenTestTopicDisplay.cpp)
+
 target_link_libraries(test wxtopicdisplay ${wxWidgets_LIBRARIES})
 
