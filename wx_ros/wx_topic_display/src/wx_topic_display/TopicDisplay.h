@@ -63,18 +63,22 @@ typedef std::map<std::string, TopicMapEntry> TopicMap;
 
 class TopicDisplay : public GenTopicDisplay
 {
+private:
   wxTimer* timer;
   ros::node* rosNode;
   TopicMap topicCache;
 
   wxTreeItemId rootId;
 
+  virtual void checkIsTopic ( wxTreeEvent& event );
+  virtual void tick(wxTimerEvent& event);
+
 public:
 
   TopicDisplay( wxWindow* parent, ros::node* rosNode );
 
-  virtual void checkIsTopic ( wxTreeEvent& event );
-  virtual void tick(wxTimerEvent& event);
+  std::vector<std::string> getSelectedTopics();
+  
 };
 
 #endif

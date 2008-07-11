@@ -15,7 +15,9 @@ TopicDisplay::TopicDisplay( wxWindow* parent, ros::node* _node ) : GenTopicDispl
 void TopicDisplay::checkIsTopic ( wxTreeEvent& event )
 {
   if (topicTree->GetItemData(event.GetItem()) == NULL)
+  {
     event.Veto();
+  }
 }
 
 void TopicDisplay::tick( wxTimerEvent& event )
@@ -38,14 +40,18 @@ void TopicDisplay::tick( wxTimerEvent& event )
       std::istringstream iss(i->first);
       std::string token;
 
-      wxTreeItemId id = topicTree->GetRootItem();
-      
+      wxTreeItemId id = rootId;
+
       while (getline(iss, token, '/'))
       {
         if (!token.empty())
         {
           wxTreeItemIdValue cookie;
-          wxTreeItemId child = topicTree->GetFirstChild(id,cookie);
+
+          wxTreeItemId child;
+
+          child = topicTree->GetFirstChild(id,cookie);
+
           bool exists = false;
           do
             if (topicTree->GetItemText(child) == wxString::FromAscii( token.c_str() ))
@@ -58,7 +64,7 @@ void TopicDisplay::tick( wxTimerEvent& event )
           if (exists)
             id = child;
           else
-            id = topicTree->AppendItem(id, wxString::FromAscii( token.c_str()  ));        
+            id = topicTree->AppendItem(id, wxString::FromAscii( token.c_str()  ));
         }
       }
 
@@ -120,4 +126,26 @@ void TopicDisplay::tick( wxTimerEvent& event )
 
   // Refresh the display
   Refresh();
+}
+
+
+std::vector<std::string> TopicDisplay::getSelectedTopics() {
+
+  std::vector<std::string> selectVec;
+
+  wxArrayTreeItemIds selections;
+
+  topicTree->GetSelections(selections);
+
+  for (int i = 0; i < selections.GetCount(); i++)
+  {
+    wxTreeItemId id = selections.Item(i);
+    if (topicTree->GetItemData(id) != NULL)
+    {
+      TopicNameData* s = (TopicNameData*)topicTree->GetItemData(id);
+      selectVec.push_back(s->name);
+    }
+  }
+
+  return selectVec;
 }

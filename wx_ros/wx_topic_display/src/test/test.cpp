@@ -11,6 +11,7 @@
 class TestTopicDisplay : public GenTestTopicDisplay
 {
   TopicDisplay* topicDisplay;
+  TopicDisplay* topicDisplay2;
 
   ros::node* node;
 
@@ -22,7 +23,8 @@ public:
 
     node = new ros::node("TestTopicDisplay");
 
-    topicDisplay = new TopicDisplay(this,node);
+    topicDisplay = new TopicDisplay(topicPanel,node);
+    topicDisplay2 = new TopicDisplay(topicPanel2,node);
   }
 
   ~TestTopicDisplay()
@@ -36,6 +38,31 @@ public:
     printf("Shutting down ros...\n");
     ros::fini();
     
+    event.Skip();
+  }
+
+  virtual void printSelections( wxCommandEvent& event )
+  {
+    printf("Panel1: \n");
+
+    std::vector<std::string> selections = topicDisplay->getSelectedTopics();
+
+    for (std::vector<std::string>::iterator i = selections.begin(); i != selections.end(); i++)
+    {
+      printf("%s is selected\n", i->c_str());
+    }
+    printf("\n");
+
+    printf("Panel2: \n");
+
+    selections = topicDisplay2->getSelectedTopics();
+
+    for (std::vector<std::string>::iterator i = selections.begin(); i != selections.end(); i++)
+    {
+      printf("%s is selected\n", i->c_str());
+    }
+    printf("\n");
+
     event.Skip();
   }
 };

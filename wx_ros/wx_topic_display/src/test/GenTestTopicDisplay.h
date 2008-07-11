@@ -8,12 +8,16 @@
 #ifndef __GenTestTopicDisplay__
 #define __GenTestTopicDisplay__
 
-#include <wx/string.h>
-#include <wx/frame.h>
+#include <wx/panel.h>
 #include <wx/gdicmn.h>
 #include <wx/font.h>
 #include <wx/colour.h>
 #include <wx/settings.h>
+#include <wx/string.h>
+#include <wx/button.h>
+#include <wx/sizer.h>
+#include <wx/statbox.h>
+#include <wx/frame.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -26,9 +30,13 @@ class GenTestTopicDisplay : public wxFrame
 	private:
 	
 	protected:
+		wxPanel* topicPanel;
+		wxPanel* topicPanel2;
+		wxButton* m_button1;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void onClose( wxCloseEvent& event ){ event.Skip(); }
+		virtual void printSelections( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:
