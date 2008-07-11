@@ -8,7 +8,7 @@
 <depend package="roscpp"/>
 <depend package="std_msgs"/>
 <export>
-  <cpp cflags="-I${prefix}/src/" lflags="-L${prefix}/lib -lwxtopicdisplay"/>
+  <cpp cflags="-I${prefix}/src/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lwxtopicdisplay"/>
 </export>
 </package>
 
