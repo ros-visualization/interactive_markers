@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.6)
 include(rosbuild)
-rospack(logging)
+rospack(log_gui)
 
 set(wxWidgets_USE_LIBS base core)
 

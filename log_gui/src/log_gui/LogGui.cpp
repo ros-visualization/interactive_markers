@@ -1,3 +1,37 @@
+/*********************************************************************
+* Software License Agreement (BSD License)
+* 
+*  Copyright (c) 2008, Willow Garage, Inc.
+*  All rights reserved.
+* 
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+* 
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Willow Garage nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+* 
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
+
 #include <wx/app.h>
 #include <wx/dir.h>
 
@@ -16,6 +50,8 @@ class LogGui : public GenLogGui
   TopicDisplay* topicDisplay;
 
   ros::node* node;
+
+  std::vector< LogRecorder<>* > bags;
 
 public:
   LogGui(wxWindow* parent) : GenLogGui(parent), node(NULL)
@@ -48,10 +84,10 @@ public:
       logDir->SetValue(dir);
   }
 
+  void dummyCb() {}
+
   virtual void startLogging( wxCommandEvent& event )
   {
-    wxDir dir;
-
     if (!wxDir::Exists(logDir->GetValue()))
     {
       int res = wxMessageBox(wxT("Directory: ") + 
@@ -73,7 +109,6 @@ public:
         event.Skip();
         return;
       }
-
     }
 
     std::vector<std::string> selections = topicDisplay->getSelectedTopics();
@@ -86,10 +121,10 @@ public:
     }
 
     wxDateTime time = wxDateTime::Now();
-    wxString timeStr = time.Format(wxT("%Y-%m-%d-%H-%M-%S"));
+    wxString dirName = logDir->GetValue() + wxT("/") + time.Format(wxT("%Y-%m-%d-%H-%M-%S"));
 
-    if (wxMkDir(timeStr.mb_str(wxConvUTF8), 0755) < 0) {
-      wxMessageBox(wxT("Could not make directory: ") + timeStr);
+    if (wxMkDir(dirName.mb_str(wxConvUTF8), 0755) < 0) {
+      wxMessageBox(wxT("Could not make directory: ") + dirName);
       event.Skip();
       return;
     }
@@ -103,32 +138,46 @@ public:
     for (std::vector<std::string>::iterator i = selections.begin(); i != selections.end(); i++)
     {
       printf("vacuuming up [%s]\n", i->c_str());
-      for (size_t j = 0; j < i->length(); j++)
+
+      std::string sanitizedName = *i;
+
+      for (size_t j = 0; j < sanitizedName.length(); j++)
       {
-        char c = (*)[j]; // sanitize it a bit
+        char c = sanitizedName[j]; // sanitize it a bit
         if (c == '\\' || c == '/' || c == '#' || c == '&' || c == ';')
-          (*i)[j] = '_';
+          sanitizedName[j] = '_';
       }
-      if (!bags[i].open_log(std::string(logdir) + std::string("/") + vac_topics[i] + string(".bag"),
-                            map_name(vac_topics[i]),
-                            start))
-        throw std::runtime_error("couldn't open log file\n");
-      subscribe(vac_topics[i], bags[i], &Vacuum::dummy_cb);
+      
+      LogRecorder<>* bag = new LogRecorder<>;
+
+      sanitizedName = std::string( dirName.mb_str(wxConvUTF8) ) + 
+                      std::string("/") +
+                      sanitizedName +
+                      std::string(".bag");
+
+      if (bag->open_log(sanitizedName,
+                        node->map_name(*i),
+                        start))
+      {
+        node->subscribe(*i, *bag, &LogGui::dummyCb, this);
+        bags.push_back(bag);
+      } else {
+        delete bag;
+      }
     }
-
-    //    printf("Logging to: %s\n", (const char*)logDir->GetPath().mb_str(wxConvUTF8));
-
-
-    {
-      printf("%s is selected\n", i->c_str());
-    }
-    printf("\n");
 
     event.Skip();
   }
 
   virtual void stopLogging( wxCommandEvent& event )
   {
+    for (std::vector<LogRecorder<>*>::iterator i = bags.begin(); i != bags.end(); i++)
+    {
+      node->unsubscribe(**i);
+      delete *i;
+    }
+    bags.clear();
+
     startLogButton->Enable(true);
     stopLogButton->Enable(false);
     statusBar->SetStatusText(wxT(""));
