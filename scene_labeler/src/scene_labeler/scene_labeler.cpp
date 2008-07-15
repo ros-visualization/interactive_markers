@@ -35,10 +35,11 @@ public:
 
 
 int main(int argc, char **argv) {
-  const int SLEEPTIME = 50000;
+  const int SLEEPTIME = 100000;
 
   int x=0;
   ros::init(x, NULL);
+  usleep(500000);
 
   if(argc!=2) {
     cerr << "usage: scene_labeler bagfile" << endl;
@@ -46,25 +47,19 @@ int main(int argc, char **argv) {
   }
 
 
-  //*****   The following snippets were tested with SLEEPTIME = 500000 */
-  //This DOES NOT work without the sleep after publishing.
+  //This does not work.
 //   scene_labeler lab;
-//   lab.read_bag(argv[1]);
-//   usleep(SLEEPTIME);
-//   lab.publish("full_cloud", lab.cloud);
+//   lab.publish("shutter", lab.shutter);
 
-  //This does work.
-  //SLEEPTIME=50000 also works, but SLEEPTIME=5000 does not.
-  scene_labeler lab;
-  lab.read_bag(argv[1]);
-  usleep(SLEEPTIME);
-  lab.publish("full_cloud", lab.cloud);
-  usleep(SLEEPTIME);
-
-  //This works.
+  //This works with SLEEPTIME = 1000.
 //   scene_labeler lab;
 //   usleep(SLEEPTIME);
 //   lab.publish("shutter", lab.shutter);
+
+  //This works, presumably because read_bag takes time.
+//   scene_labeler lab;
+//   lab.read_bag(argv[1]);
+//   lab.publish("full_cloud", lab.cloud);
 
   //This only sends 2.
 //   scene_labeler lab;
@@ -73,8 +68,7 @@ int main(int argc, char **argv) {
 //     lab.publish("shutter", lab.shutter);
 //   }
 
-  //This sends all 10.
-  //At SLEEPTIME=500, this gets flaky.  SLEEPTIME=5000 drops a few occasionally, and SLEEPTIME=50000 works well.
+  //This sends all 10 with SLEEPTIME=1000.
 //   scene_labeler lab;
 //   usleep(SLEEPTIME);
 //   for(int i=0; i<10; i++) {
@@ -82,8 +76,9 @@ int main(int argc, char **argv) {
 //     usleep(SLEEPTIME);
 //   }
   
-  //This sends all 10.
-  //SLEEPTIME=50000 drops a few occasionally.
+  //This sends about half with SLEEPTIME=1000.
+  //Maybe 3/4 with SLEEPTIME=10000.
+  //Works well with SLEEPTIME=100000.
 //   scene_labeler lab;
 //   usleep(SLEEPTIME);
 //   lab.read_bag(argv[1]);
@@ -93,10 +88,7 @@ int main(int argc, char **argv) {
 //   }
   
 
-//This works SOMETIMES.
-//   scene_labeler lab;
-//   lab.publish("shutter", lab.shutter);
-
+  usleep(500000);
   ros::fini();
   return 0;
 }
