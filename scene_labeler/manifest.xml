@@ -1,0 +1,14 @@
+<package>
+<description brief="Tool for labeling PR2 scenes.">
+</description>
+<author>Alex Teichman</author>
+<license>BSD</license>
+<url></url>
+<depend package="roscpp"/>
+<depend package="std_msgs"/>
+<depend package="megamaid"/>
+<export>
+  <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib"/>
+</export>
+</package>
+
