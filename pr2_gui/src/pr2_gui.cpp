@@ -89,6 +89,13 @@ launcher::launcher( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	
 	fgSizer12->Add( Grid_CB, 0, 0, 5 );
 	
+	Objects_CB = new wxCheckBox( this, wxID_ANY, wxT("Objects"), wxDefaultPosition, wxDefaultSize, 0 );
+	Objects_CB->SetValue(true);
+	
+	Objects_CB->Enable( false );
+	
+	fgSizer12->Add( Objects_CB, 0, 0, 5 );
+	
 	Models_SBS->Add( fgSizer12, 1, wxEXPAND, 5 );
 	
 	Visualization_FGS->Add( Models_SBS, 1, wxEXPAND|wxALL, 5 );
@@ -332,6 +339,7 @@ launcher::launcher( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	Model_CB->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( launcher::startStopModel ), NULL, this );
 	UCS_CB->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( launcher::startStopUCS ), NULL, this );
 	Grid_CB->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( launcher::startStopGrid ), NULL, this );
+	Objects_CB->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( launcher::startStopObjects ), NULL, this );
 	Views_RB->Connect( wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler( launcher::viewChanged ), NULL, this );
 	HeadLaser_RB->Connect( wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler( launcher::HeadLaserChanged ), NULL, this );
 	panPTZL_S->Connect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( launcher::PTZL_ptzChanged ), NULL, this );
@@ -358,6 +366,7 @@ launcher::~launcher()
 	Model_CB->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( launcher::startStopModel ), NULL, this );
 	UCS_CB->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( launcher::startStopUCS ), NULL, this );
 	Grid_CB->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( launcher::startStopGrid ), NULL, this );
+	Objects_CB->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( launcher::startStopObjects ), NULL, this );
 	Views_RB->Disconnect( wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler( launcher::viewChanged ), NULL, this );
 	HeadLaser_RB->Disconnect( wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler( launcher::HeadLaserChanged ), NULL, this );
 	panPTZL_S->Disconnect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( launcher::PTZL_ptzChanged ), NULL, this );

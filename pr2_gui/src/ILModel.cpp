@@ -6,75 +6,52 @@
 class ILModel{
 public:
 	irr::scene::IAnimatedMesh *mesh;
-	irr::scene::IAnimatedMeshSceneNode *node;
+	irr::scene::ISceneNode *node;
 	irr::scene::ISceneManager *manager;
+	irr::scene::ISceneNode *parent;
 	float defaultXRotation;
 	float defaultYRotation;
 	float defaultZRotation;
-	
-ILModel()
-{
-	mesh = 0;
-	node = 0;
-	manager = 0;
-	defaultXRotation = 0.0f;
-	defaultYRotation = 0.0f;
-	defaultZRotation = -90.0f;
-}
+	irr::s32 ID;
 
-ILModel(irr::scene::ISceneManager *mngr, irr::c8 *fName)
+ILModel(irr::scene::ISceneManager *mngr, irr::scene::ISceneNode *prnt, irr::c8 *fName, irr::s32 id, float x, float y, float z, float roll, float pitch, float yaw)
 {
+	parent = prnt;
 	mesh = 0;
 	node = 0;
-	manager = 0;
-	defaultXRotation = 0.0f;
+	defaultXRotation = -90.0f;
 	defaultYRotation = 0.0f;
-	defaultZRotation = -90.0f;
+	defaultZRotation = 180.0f;
 	manager = mngr;
-	if(fName[0] != '\0')
-	{
-		mesh = mngr->getMesh(fName);
-	}
-}
-
-ILModel(irr::scene::ISceneManager *mngr, irr::c8 *fName, bool displayNow)
-{
-	mesh = 0;
-	node = 0;
-	manager = 0;
-	defaultXRotation = 0.0f;
-	defaultYRotation = 0.0f;
-	defaultZRotation = -90.0f;
-	manager = mngr;
-	if(fName[0] != '\0')
-	{
-		mesh = mngr->getMesh(fName);
-		if(mesh!=NULL && displayNow)
-		{
-			node = manager->addAnimatedMeshSceneNode(mesh);
-			rotateTo(irr::core::vector3d<irr::f32>(0.0f,0.0f,0.0f));
-		}
-	}
-}
-
-ILModel(irr::scene::ISceneManager *mngr, irr::c8 *fName, irr::core::vector3d<irr::f32> position, irr::core::vector3d<irr::f32> rotation)
-{
-	mesh = 0;
-	node = 0;
-	manager = 0;
-	defaultXRotation = 0.0f;
-	defaultYRotation = 0.0f;
-	defaultZRotation = -90.0f;
-	manager = mngr;
+	ID = id;
 	if(fName[0] != '\0')
 	{
 		mesh = mngr->getMesh(fName);
 		if(mesh!=NULL)
 		{
-			node = manager->addAnimatedMeshSceneNode(mesh);
-			node->setPosition(rightToLeft(position));
-			rotateTo(rotation);
+			node = manager->addAnimatedMeshSceneNode(mesh,parent,ID);
+			setPosition(x,y,z);
+		setRotation(roll,pitch,yaw);
 		}
+	}
+}
+
+ILModel(irr::scene::ISceneManager *mngr, irr::scene::ISceneNode *prnt, irr::scene::ISceneNode *inNode, irr::s32 id, float x, float y, float z, float roll, float pitch, float yaw)
+{
+	parent = prnt;
+	mesh = 0;
+	node = inNode;
+	manager = mngr;
+	defaultXRotation = -90.0f;
+	defaultYRotation = 0.0f;
+	defaultZRotation = 180.0f;
+	ID = id;
+	if(node)
+	{
+		node->setParent(parent);
+		node->setID(id);
+		setPosition(x,y,z);
+		setRotation(roll,pitch,yaw);
 	}
 }
 
@@ -82,33 +59,28 @@ ILModel(irr::scene::ISceneManager *mngr, irr::c8 *fName, irr::core::vector3d<irr
 {
 	kill();
 }
-	
-//you may want to lock the renderer before using and unlock after using me
-void draw()
+
+void setParent(irr::scene::ISceneNode *prnt)
 {
-	if(!node)
-	{
-		node = manager->addAnimatedMeshSceneNode(mesh);
-		rotateTo(irr::core::vector3d<irr::f32>(0.0f,0.0f,0.0f));
-	}
+	parent = prnt;
+	if(node)
+		node->setParent(parent);
 }
 
-void goTo(irr::core::vector3d<irr::f32> position)
+void setPosition(float x, float y, float z)
 {
 	if(node)
 	{
-		node->setPosition(rightToLeft(position));
+		node->setPosition(irr::core::vector3d<irr::f32>(-x,-y,-z));
 	}
 }
 
-void rotateTo(irr::core::vector3d<irr::f32> rotation)
+//Roll, Pitch, Yaw
+void setRotation(float roll, float pitch, float yaw)
 {
 	if(node)
 	{
-		//do I want this from left to right too???  Assuming yes.
-		node->setRotation(rightToLeft(irr::core::vector3d<irr::f32>(rotation.X *180 / 3.14159,rotation.Y *180 / 3.14159,rotation.Z *180 / 3.14159)) + rightToLeft(irr::core::vector3d<irr::f32>(defaultXRotation,defaultYRotation,defaultZRotation)));
-		//node->setRotation(rightToLeft(rotation) + rightToLeft(irr::core::vector3d<irr::f32>(defaultXRotation,defaultYRotation,defaultZRotation)));
-		//node->setRotation(rotation);
+		node->setRotation(irr::core::vector3d<irr::f32>(-roll *180 / 3.14159, -pitch *180 / 3.14159, yaw *180 / 3.14159) + irr::core::vector3d<irr::f32>(defaultXRotation,defaultYRotation,defaultZRotation));
 	}
 }
 
@@ -120,6 +92,7 @@ void kill()
 	{
 		//std::cout << "removing model\n";
 		node->remove();
+		node = NULL;
 		//std::cout << "removed model\n";
 	}
 }
@@ -133,22 +106,29 @@ irr::scene::IAnimatedMesh* getMesh()
 {
 	return mesh;
 }
+
 //use me to know if active as well!
-irr::scene::IAnimatedMeshSceneNode* getNode()
+irr::scene::ISceneNode* getNode()
 {
 	return node;
 }
 
-irr::core::vector3d<irr::f32> leftToRight(irr::core::vector3d<irr::f32> left)
+irr::s32 getID()
 {
-	irr::core::vector3d<irr::f32> right(left.Z,-left.X,left.Y);
-	return right;
+	return ID;
 }
 
-irr::core::vector3d<irr::f32> rightToLeft(irr::core::vector3d<irr::f32> right)
+void setScale(float xScale, float yScale, float zScale)
 {
-	irr::core::vector3d<irr::f32> left(-right.Y,right.Z,right.X);
-	//std::cout << left.X << " " << left.Y << " " << left.Z << std::endl;
-	return left;
+	if(node)
+	{
+		node->setScale(irr::core::vector3d<irr::f32>(xScale,zScale,yScale));//yes, this is supposed to be x z y
+	}
+}
+
+void setVisible(bool visible)
+{
+	if(node)
+		node->setVisible(visible);
 }
 };

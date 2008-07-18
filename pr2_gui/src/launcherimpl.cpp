@@ -1,510 +1,573 @@
 #include "launcherimpl.h"
-//#include <iostream>
-//
 
-LauncherImpl::LauncherImpl( QWidget * parent, Qt::WFlags f) : QMainWindow(parent, f)
+LauncherImpl::LauncherImpl( wxWindow* parent )
+:
+launcher( parent )
 {
-	printf("setting up");
-	//Initial setup
-	setupUi(this);
-	Visualization_DW->setVisible(false);
-	PTZL_DW->setVisible(false);
-	PTZR_DW->setVisible(false);
-	WristL_DW->setVisible(false);
-	WristR_DW->setVisible(false);
-	Stereo_DW->setVisible(false);
-	Status_DW->setVisible(false);
-	Topdown_DW->setVisible(false);
-	
-	PTZLImageData = NULL;
-	PTZRImageData = NULL;
-	WristLImageData = NULL;
-	WristRImageData = NULL;
 
-	viewGroup = new QButtonGroup(Views_GB);
-	viewGroup->addButton(ViewMaya_RB, Maya);
-	viewGroup->addButton(ViewFPS_RB, FPS);
-	viewGroup->addButton(ViewTFL_RB, TFL);
-	viewGroup->addButton(ViewTFR_RB, TFR);
-	viewGroup->addButton(ViewTRL_RB, TRL);
-	viewGroup->addButton(ViewTRR_RB, TRR);
-	viewGroup->addButton(ViewF_RB, Front);
-	viewGroup->addButton(ViewR_RB, Rear);
-	viewGroup->addButton(ViewT_RB, Top);
-	viewGroup->addButton(ViewB_RB, Bottom);
-	viewGroup->addButton(ViewD_RB, Right);
-	viewGroup->addButton(ViewS_RB, Left);
+	wxInitAllImageHandlers();
+	LeftDock_FGS->Hide(HeadLaser_RB,true);
+	LeftDock_FGS->Hide(Visualization_SBS,true);
+	LeftDock_FGS->Hide(PTZL_SBS,true);
+	LeftDock_FGS->Hide(WristL_SBS,true);
+	RightDock_FGS->Hide(Topdown_SBS,true);
+	RightDock_FGS->Hide(PTZR_SBS,true);
+	RightDock_FGS->Hide(WristR_SBS,true);
+	Layout();
+	Fit();
 	
-	//Docked window button connections
-	QObject::connect(Visualization_CB, SIGNAL(toggled(bool)),this, SLOT(startStop_Visualization(bool)));
-	QObject::connect(PTZL_CB, SIGNAL(toggled(bool)),this, SLOT(startStop_PTZL(bool)));
-	QObject::connect(PTZR_CB, SIGNAL(toggled(bool)),this, SLOT(startStop_PTZR(bool)));
-	QObject::connect(WristL_CB, SIGNAL(toggled(bool)),this, SLOT(startStop_WristL(bool)));
-	QObject::connect(WristR_CB, SIGNAL(toggled(bool)),this, SLOT(startStop_WristR(bool)));
-	QObject::connect(Stereo_CB, SIGNAL(toggled(bool)),this, SLOT(startStop_Stereo(bool)));
-	QObject::connect(Status_CB, SIGNAL(toggled(bool)),this, SLOT(startStop_Status(bool)));
-	QObject::connect(Topdown_CB, SIGNAL(toggled(bool)),this, SLOT(startStop_Topdown(bool)));
-	//Docked window opening/closing
-	QObject::connect(PTZL_DW, SIGNAL(visibilityChanged(bool)),this, SLOT(PTZLClosing(bool)));
-	QObject::connect(PTZR_DW, SIGNAL(visibilityChanged(bool)),this, SLOT(PTZRClosing(bool)));
-	QObject::connect(WristL_DW, SIGNAL(visibilityChanged(bool)),this, SLOT(WristLClosing(bool)));
-	QObject::connect(WristR_DW, SIGNAL(visibilityChanged(bool)),this, SLOT(WristRClosing(bool)));
-	//Visualization extras
-	QObject::connect(viewGroup, SIGNAL(buttonClicked(int)),this, SLOT(viewChanged(int)));
-
-	vis3d_Window = 0;
+	
+	PTZL_GET_NEW_IMAGE = true;
+	PTZR_GET_NEW_IMAGE = true;
+	WristR_GET_NEW_IMAGE = true;
+	WristL_GET_NEW_IMAGE = true;
+	vis3d_Window = NULL;
 	myNode = new ros::node("guiNode");
-	printf("set up");
+	this->Connect(PTZL_B->GetId(), wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(LauncherImpl::PTZLDrawPic));
+	this->Connect(PTZR_B->GetId(), wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(LauncherImpl::PTZRDrawPic));
+	this->Connect(WristL_B->GetId(), wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(LauncherImpl::WristLDrawPic));
+	this->Connect(WristR_B->GetId(), wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(LauncherImpl::WristRDrawPic));
 }
 
-void LauncherImpl::consoleOut(QString line)
+void LauncherImpl::consoleOut(wxString Line)
 {
-    Console_TE->append(line);
+    Console_TC->AppendText(Line);
 }
 
-void LauncherImpl::startStop_Visualization( bool checked )
+void LauncherImpl::startStopHeadPtCld( wxCommandEvent& event )
 {
-    if(checked)
+	if(HeadLaser_CB->IsChecked())
     {
-		consoleOut("Opening Visualizer");
-		std::cout << "Opening Visualizer\n";
-		HeadLaser_CB->setChecked(false);
-		FloorLaser_CB->setChecked(false);
-		StereoCloud_CB->setChecked(false);
-		Model_CB->setChecked(false);
-		Visualization_DW->setVisible(true);
-		QObject::connect(Visualization_DW, SIGNAL(visibilityChanged(bool)),this, SLOT(visualizationClosing(bool)));
-		QObject::connect(HeadLaser_CB, SIGNAL(toggled(bool)),this,SLOT(startStopHeadPtCld(bool)));
-		QObject::connect(FloorLaser_CB, SIGNAL(toggled(bool)),this,SLOT(startStopFloorPtCld(bool)));
-		QObject::connect(StereoCloud_CB, SIGNAL(toggled(bool)),this,SLOT(startStopStereoPtCld(bool)));
-		QObject::connect(Model_CB, SIGNAL(toggled(bool)),this,SLOT(startStopModel(bool)));
-		QObject::connect(UCS_CB, SIGNAL(toggled(bool)),this,SLOT(startStopUCS(bool)));
-		QObject::connect(Grid_CB, SIGNAL(toggled(bool)),this,SLOT(startStopGrid(bool)));
-		vis3d_Window = new Vis3d(myNode);
-    }
-    else
-    {
-		consoleOut("Closing Visualizer");
-		delete vis3d_Window;
-		vis3d_Window = 0;
-		std::cout << "almost closed\n";
-		Visualization_DW->setVisible(false);
-		QObject::disconnect(Visualization_DW, SIGNAL(visibilityChanged(bool)),this, SLOT(visualizationClosing(bool)));
-		QObject::disconnect(HeadLaser_CB, SIGNAL(toggled(bool)),this,SLOT(startStopHeadPtCld(bool)));
-		QObject::disconnect(FloorLaser_CB, SIGNAL(toggled(bool)),this,SLOT(startStopFloorPtCld(bool)));
-		QObject::disconnect(StereoCloud_CB, SIGNAL(toggled(bool)),this,SLOT(startStopStereoPtCld(bool)));
-		QObject::disconnect(Model_CB, SIGNAL(toggled(bool)),this,SLOT(startStopModel(bool)));
-		QObject::disconnect(UCS_CB, SIGNAL(toggled(bool)),this,SLOT(startStopUCS(bool)));
-		QObject::disconnect(Grid_CB, SIGNAL(toggled(bool)),this,SLOT(startStopGrid(bool)));
-		std::cout << "closed\n";
-    }
-}
-
-void LauncherImpl::startStop_PTZL( bool checked)
-{
-	if(checked)
-	{
-		consoleOut("Opening Left Pan-Tilt-Zoom");
-		PTZL_DW->setVisible(true);
-		QObject::connect(this, SIGNAL(incomingPTZLImageSig(QPixmap*, uint8_t**, uint)),this, SLOT(incomingPTZLImage(QPixmap*, uint8_t**, uint)),Qt::QueuedConnection);
-		QObject::connect(panPTZL_S, SIGNAL(valueChanged(int)),this,SLOT(PTZL_ptzChanged(int)));
-		QObject::connect(tiltPTZL_S, SIGNAL(valueChanged(int)),this,SLOT(PTZL_ptzChanged(int)));
-		QObject::connect(zoomPTZL_S, SIGNAL(valueChanged(int)),this,SLOT(PTZL_ptzChanged(int)));
-		myNode->subscribe("PTZL_image", PTZLImage, &LauncherImpl::incomingPTZLImageConn,this);
-		myNode->advertise<std_msgs::PTZActuatorCmd>("PTZL_cmd");
-	}
-	else
-	{
-		consoleOut("Closing Left Pan-Tilt-Zoom");
-		PTZL_DW->setVisible(false);
-		myNode->unsubscribe("PTZL_image");
-		//QObject::disconnect(PTZL_DW, SIGNAL(visibilityChanged(bool)),this, SLOT(PTZLClosing(bool)));
-		QObject::disconnect(this, SIGNAL(incomingPTZLImageSig(QPixmap*, uint8_t**, uint)),this, SLOT(incomingPTZLImage(QPixmap*, uint8_t**, uint)));
-	}
-}
-
-void LauncherImpl::startStop_PTZR( bool checked)
-{
-	if(checked)
-	{
-		consoleOut("Opening Right Pan-Tilt-Zoom");
-		PTZR_DW->setVisible(true);
-		QObject::connect(this, SIGNAL(incomingPTZRImageSig(QPixmap*, uint8_t**, uint)),this, SLOT(incomingPTZRImage(QPixmap*, uint8_t**, uint)),Qt::QueuedConnection);
-		QObject::connect(panPTZR_S, SIGNAL(valueChanged(int)),this,SLOT(PTZR_ptzChanged(int)));
-		QObject::connect(tiltPTZR_S, SIGNAL(valueChanged(int)),this,SLOT(PTZR_ptzChanged(int)));
-		QObject::connect(zoomPTZR_S, SIGNAL(valueChanged(int)),this,SLOT(PTZR_ptzChanged(int)));
-		myNode->subscribe("PTZR_image", PTZRImage, &LauncherImpl::incomingPTZRImageConn,this);
-		myNode->advertise<std_msgs::PTZActuatorCmd>("PTZR_cmd");
-	}
-	else
-	{
-		consoleOut("Closing Right Pan-Tilt-Zoom");
-		PTZR_DW->setVisible(false);
-		myNode->unsubscribe("PTZR_image");
-		//QObject::disconnect(PTZR_DW, SIGNAL(visibilityChanged(bool)),this, SLOT(PTZRClosing(bool)));
-		QObject::disconnect(this, SIGNAL(incomingPTZRImageSig(QPixmap*, uint8_t**, uint)),this, SLOT(incomingPTZRImage(QPixmap*, uint8_t**, uint)));
-	}
-}
-
-void LauncherImpl::startStop_WristL( bool checked)
-{
-	if(checked)
-	{
-		consoleOut("Opening Left Wrist");
-		WristL_DW->setVisible(true);
-		QObject::connect(this, SIGNAL(incomingWristLImageSig(QPixmap*, uint8_t**, uint)),this, SLOT(incomingWristLImage(QPixmap*, uint8_t**, uint)),Qt::QueuedConnection);
-		myNode->subscribe("WristL_image", WristLImage, &LauncherImpl::incomingWristLImageConn,this);
-	}
-	else
-	{
-		consoleOut("Closing Left Wrist");
-		WristL_DW->setVisible(false);
-		myNode->unsubscribe("WristL_image");
-		//QObject::disconnect(WristL_DW, SIGNAL(visibilityChanged(bool)),this, SLOT(WristLClosing(bool)));
-		QObject::disconnect(this, SIGNAL(incomingWristLImageSig(QPixmap*, uint8_t**, uint)),this, SLOT(incomingWristLImage(QPixmap*, uint8_t**, uint)));
-	}
-}
-
-void LauncherImpl::startStop_WristR( bool checked)
-{
-	if(checked)
-	{
-		consoleOut("Opening Right Wrist");
-		WristR_DW->setVisible(true);
-		QObject::connect(this, SIGNAL(incomingWristRImageSig(QPixmap*, uint8_t**, uint)),this, SLOT(incomingWristRImage(QPixmap*, uint8_t**, uint)),Qt::QueuedConnection);
-		myNode->subscribe("WristR_image", WristRImage, &LauncherImpl::incomingWristRImageConn,this);
-	}
-	else
-	{
-		consoleOut("Closing Right Wrist");
-		WristR_DW->setVisible(false);
-		//QObject::disconnect(WristR_DW, SIGNAL(visibilityChanged(bool)),this, SLOT(WristRClosing(bool)));
-		QObject::disconnect(this, SIGNAL(incomingWristRImageSig(QPixmap*, uint8_t**, uint)),this, SLOT(incomingWristRImage(QPixmap*, uint8_t**, uint)));
-	}
-}
-
-void LauncherImpl::startStop_Stereo( bool checked)
-{
-	if(checked)
-	{
-		consoleOut("Opening Stereo");
-		Stereo_DW->setVisible(true);
-		QObject::connect(Stereo_DW, SIGNAL(visibilityChanged(bool)),this, SLOT(StereoClosing(bool)));
-	}
-	else
-	{
-		consoleOut("Closing Stereo");
-		Stereo_DW->setVisible(false);
-	}
-}
-
-void LauncherImpl::startStop_Status( bool checked)
-{
-	if(checked)
-	{
-		consoleOut("Opening Status");
-		Status_DW->setVisible(true);
-		QObject::connect(Status_DW, SIGNAL(visibilityChanged(bool)),this, SLOT(StatusClosing(bool)));
-	}
-	else
-	{
-		consoleOut("Closing Status");
-		Status_DW->setVisible(false);
-	}
-}
-
-void LauncherImpl::startStop_Topdown( bool checked)
-{
-	if(checked)
-	{
-		consoleOut("Opening Topdown");
-		Topdown_DW->setVisible(true);
-		QObject::connect(Topdown_DW, SIGNAL(visibilityChanged(bool)),this, SLOT(TopdownClosing(bool)));
-	}
-	else
-	{
-		consoleOut("Closing Topdown");
-		Topdown_DW->setVisible(false);
-	}
-}
-
-void LauncherImpl::visualizationClosing(bool vis)
-{
-	if (!vis)
-		Visualization_CB->setChecked(false);
-}
-
-void LauncherImpl::PTZLClosing(bool vis)
-{
-	if (!vis)
-		PTZL_CB->setChecked(false);
-}
-
-void LauncherImpl::PTZRClosing(bool vis)
-{
-	if (!vis)
-		PTZR_CB->setChecked(false);
-}
-
-void LauncherImpl::WristLClosing(bool vis)
-{
-	if (!vis)
-		WristL_CB->setChecked(false);
-}
-
-void LauncherImpl::WristRClosing(bool vis)
-{
-	if (!vis)
-		WristR_CB->setChecked(false);
-}
-
-void LauncherImpl::StereoClosing(bool vis)
-{
-	if (!vis)
-		Stereo_CB->setChecked(false);
-}
-
-void LauncherImpl::StatusClosing(bool vis)
-{
-	if (!vis)
-		Status_CB->setChecked(false);
-}
-
-void LauncherImpl::TopdownClosing(bool vis)
-{
-	if (!vis)
-		Topdown_CB->setChecked(false);
-}
-
-void LauncherImpl::startStopHeadPtCld( bool checked )
-{
-    if(checked)
-    {
-		consoleOut("Enabling Head Laser Cloud");
+		consoleOut(wxT("Enabling Head Laser Cloud\n"));
 		vis3d_Window->enableHead();
+		HeadLaser_RB->Show(true);
+		Layout();
+		Fit();
+		/*if(LeftDock_FGS->Show(HeadLaser_RB,true))
+			std::cout << "found HeadLaser_RB show\n";
+		Layout();
+		Fit();*/
+		//std::cout << "showing HeadLaser_RB\n";
     }
     else
     {
-		consoleOut("Disabling Head Laser Cloud");
+		consoleOut(wxT("Disabling Head Laser Cloud\n"));
 		vis3d_Window->disableHead();
+		HeadLaser_RB->Show(false);
+		Layout();
+		Fit();
+		/*if(LeftDock_FGS->Show(HeadLaser_RB,true))
+			std::cout << "found HeadLaser_RB hide\n";
+		Layout();
+		Fit();*/
     }
 }
 
-void LauncherImpl::startStopFloorPtCld( bool checked )
+void LauncherImpl::startStopFloorPtCld( wxCommandEvent& event )
 {
-    if(checked)
+	if(FloorLaser_CB->IsChecked())
     {
-		consoleOut("Enabling Floor Laser Cloud");
+		consoleOut(wxT("Enabling Floor Laser Cloud\n"));
 		vis3d_Window->enableFloor();
     }
     else
     {
-		consoleOut("Disabling Floor Laser Cloud");
+		consoleOut(wxT("Disabling Floor Laser Cloud\n"));
 		vis3d_Window->disableFloor();
     }
 }
 
-void LauncherImpl::startStopStereoPtCld( bool checked )
+void LauncherImpl::startStopStereoPtCld( wxCommandEvent& event )
 {
-    if(checked)
+	if(Stereo_CB->IsChecked())
     {
-		consoleOut("Enabling Stereo Laser Cloud");
+		consoleOut(wxT("Enabling Stereo Laser Cloud\n"));
 		vis3d_Window->enableStereo();
     }
     else
     {
-		consoleOut("Disabling Stereo Laser Cloud");
+		consoleOut(wxT("Disabling Stereo Laser Cloud\n"));
 		vis3d_Window->disableStereo();
     }
 }
 
-void LauncherImpl::startStopModel( bool checked )
+void LauncherImpl::startStopModel( wxCommandEvent& event )
 {
-	std::cout << "callback\n";
-    if(checked)
+	if(Model_CB->IsChecked())
     {
-		consoleOut("Enabling 3D Model");
+		consoleOut(wxT("Enabling 3D Model\n"));
 		vis3d_Window->enableModel();
-		std::cout << "model enabled\n";
     }
     else
     {
-		consoleOut("Disabling 3D Model");
+		consoleOut(wxT("Disabling 3D Model\n"));
 		vis3d_Window->disableModel();
     }
 }
 
-void LauncherImpl::startStopUCS( bool checked )
+void LauncherImpl::startStopUCS( wxCommandEvent& event )
 {
-	if(checked)
+	if(UCS_CB->IsChecked())
 	{
-		consoleOut("Enabling UCS");
+		consoleOut(wxT("Enabling UCS\n"));
 		vis3d_Window->enableUCS();
 	}
 	else
 	{
-		consoleOut("Disabling UCS");
+		consoleOut(wxT("Disabling UCS\n"));
 		vis3d_Window->disableUCS();
 	}
 }
 
-void LauncherImpl::startStopGrid( bool checked )
+void LauncherImpl::startStopGrid( wxCommandEvent& event )
 {
-	if(checked)
+	if(Grid_CB->IsChecked())
 	{
-		consoleOut("Enabling Grid");
+		consoleOut(wxT("Enabling Grid\n"));
 		vis3d_Window->enableGrid();
 	}
 	else
 	{
-		consoleOut("Disabling Grid");
+		consoleOut(wxT("Disabling Grid\n"));
 		vis3d_Window->disableGrid();
 	}
 }
 
-//main thread equivalent of the below callback
-void LauncherImpl::incomingPTZLImage(QPixmap *im, uint8_t **data, uint len)
+void LauncherImpl::startStopObjects( wxCommandEvent& event )
 {
-  if(im->loadFromData(*data,len,"jpeg"))
-  {
-  	PTZL_IL->setPixmap(*im);
-  }
-  else
-  {
-  	consoleOut("Can't load left PTZ image");
-  }
-  delete im;
-  delete *data;
-  *data = NULL;
-}
-
-//ros callback
-void LauncherImpl::incomingPTZLImageConn()
-{
-	if(!PTZLImageData)
+	if(Objects_CB->IsChecked())
 	{
-		QPixmap *im = new QPixmap();
-		const uint32_t count = PTZLImage.get_data_size();
-		PTZLImageData = new uint8_t[count];
-		memcpy(PTZLImageData, PTZLImage.data, sizeof(uint8_t) * count);
-		emit incomingPTZLImageSig(im, &PTZLImageData, PTZLImage.get_data_size());
+		consoleOut(wxT("Enabling Objects\n"));
+		vis3d_Window->enableObjects();
+	}
+	else
+	{
+		consoleOut(wxT("Disabling Objects\n"));
+		vis3d_Window->disableObjects();
 	}
 }
 
-void LauncherImpl::incomingPTZRImage(QPixmap *im, uint8_t **data, uint len)
-{
-  if(im->loadFromData(*data,len,"jpeg"))
-  {
-  	PTZR_IL->setPixmap(*im);
-  }
-  else
-  {
-  	consoleOut("Can't load right PTZ image");
-  }
-  delete im;
-  delete *data;
-  *data = NULL;
-}
-
-void LauncherImpl::incomingPTZRImageConn()
-{
-	if(!PTZRImageData)
-	{
-		QPixmap *im = new QPixmap();
-		const uint32_t count = PTZRImage.get_data_size();
-		PTZRImageData = new uint8_t[count];
-		memcpy(PTZRImageData, PTZRImage.data, sizeof(uint8_t) * count);
-		emit incomingPTZRImageSig(im, &PTZRImageData, PTZRImage.get_data_size());
-	}
-}
-
-void LauncherImpl::incomingWristLImage(QPixmap *im, uint8_t **data, uint len)
-{
-  if(im->loadFromData(*data,len,"jpeg"))
-  {
-  	WristL_IL->setPixmap(*im);
-  }
-  else
-  {
-  	consoleOut("Can't load left wrist image");
-  }
-  delete im;
-  delete *data;
-  *data = NULL;
-}
-
-void LauncherImpl::incomingWristLImageConn()
-{
-	if(!WristLImageData)
-	{
-		QPixmap *im = new QPixmap();
-		const uint32_t count = WristLImage.get_data_size();
-		WristLImageData = new uint8_t[count];
-		memcpy(WristLImageData, WristLImage.data, sizeof(uint8_t) * count);
-		emit incomingWristLImageSig(im, &WristLImageData, WristLImage.get_data_size());
-	}
-}
-
-void LauncherImpl::incomingWristRImage(QPixmap *im, uint8_t **data, uint len)
-{
-  if(im->loadFromData(*data,len,"jpeg"))
-  {
-  	WristR_IL->setPixmap(*im);
-  }
-  else
-  {
-  	consoleOut("Can't load right wrist image");
-  }
-  delete im;
-  delete *data;
-  *data = NULL;
-}
-
-void LauncherImpl::incomingWristRImageConn()
-{
-	if(!WristRImageData)
-	{
-		QPixmap *im = new QPixmap();
-		const uint32_t count = WristRImage.get_data_size();
-		WristRImageData = new uint8_t[count];
-		memcpy(WristRImageData, WristRImage.data, sizeof(uint8_t) * count);
-		emit incomingWristRImageSig(im, &WristRImageData, WristRImage.get_data_size());
-	}
-}
-
-void LauncherImpl::viewChanged(int id)
+void LauncherImpl::viewChanged( wxCommandEvent& event )
 {
 	if(vis3d_Window)
 	{
 		//std::cout << "changing view to " << id << std::endl;
-		vis3d_Window->changeView(id);
+		vis3d_Window->changeView(Views_RB->GetSelection());
 	}
 	else
 	{
-		consoleOut("Cannot change view.  3D window does not exist.");
+		consoleOut(wxT("Cannot change view.  3D window does not exist.\n"));
 	}
 }
 
-void LauncherImpl::PTZL_ptzChanged(int unused)
+void LauncherImpl::HeadLaserChanged( wxCommandEvent& event )
+{
+	if(vis3d_Window)
+	{
+		std::cout << "Selection: " << HeadLaser_RB->GetSelection() << std::endl;
+		//vis3d_Window->scanT = HeadLaser_RB->GetSelection();
+		vis3d_Window->changeHeadLaser(HeadLaser_RB->GetSelection());
+	}
+	else
+		consoleOut(wxT("Cannot change shutter type.  3D window does not exist.\n"));
+}
+
+void LauncherImpl::startStop_Visualization( wxCommandEvent& event )
+{
+	if(Visualization_CB->IsChecked())
+    {
+		consoleOut(wxT("Opening Visualizer\n"));
+		//std::cout << "Opening Visualizer\n";
+		HeadLaser_CB->SetValue(false);
+		FloorLaser_CB->SetValue(false);
+		Stereo_CB->SetValue(false);
+		Model_CB->SetValue(false);
+		UCS_CB->SetValue(false);
+		Grid_CB->SetValue(true);
+		Objects_CB->SetValue(true);
+		LeftDock_FGS->Show(Visualization_SBS,true);
+		//LeftDock_FGS->Hide(HeadLaser_RB,true);
+		HeadLaser_RB->Show(false);
+		Layout();
+		Fit();
+		//LeftDock_FGS->Layout();
+		//Window_FGS->Layout();
+		HeadLaser_CB->Enable(true);
+		FloorLaser_CB->Enable(true);
+		Stereo_CB->Enable(true);
+		Model_CB->Enable(true);
+		UCS_CB->Enable(true);
+		Grid_CB->Enable(true);
+		Objects_CB->Enable(true);
+		Views_RB->Enable(true);
+		if(!vis3d_Window)
+			vis3d_Window = new Vis3d(myNode);
+    }
+    else
+    {
+		consoleOut(wxT("Closing Visualizer\n"));
+		delete vis3d_Window;
+		vis3d_Window = 0;
+		LeftDock_FGS->Hide(Visualization_SBS,true);
+		Layout();
+		Fit();
+		//LeftDock_FGS->Layout();
+		//Window_FGS->Layout();
+		HeadLaser_CB->Enable(false);
+		FloorLaser_CB->Enable(false);
+		Stereo_CB->Enable(false);
+		Model_CB->Enable(false);
+		UCS_CB->Enable(false);
+		Grid_CB->Enable(false);
+		Objects_CB->Enable(false);
+		Views_RB->Enable(false);
+		vis3d_Window->disable();
+    }
+}
+
+void LauncherImpl::startStop_Topdown( wxCommandEvent& event )
+{
+	if(Topdown_CB->IsChecked())
+	{
+		consoleOut(wxT("Opening Topdown\n"));
+		RightDock_FGS->Show(Topdown_SBS,true);
+		Layout();
+		Fit();
+		//Window_FGS->Layout();
+		PLACEHOLDER_B->Enable(true);
+	}
+	else
+	{
+		consoleOut(wxT("Closing Topdown\n"));
+		RightDock_FGS->Hide(Topdown_SBS,true);
+		Layout();
+		Fit();
+		//Window_FGS->Layout();
+		PLACEHOLDER_B->Enable(false);
+	}
+}
+
+void LauncherImpl::startStop_PTZL( wxCommandEvent& event )
+{
+	if(PTZL_CB->IsChecked())
+	{
+		consoleOut(wxT("Opening Left Pan-Tilt-Zoom\n"));
+		LeftDock_FGS->Show(PTZL_SBS,true);
+		Layout();
+		Fit();
+		panPTZL_S->Enable(true);
+		tiltPTZL_S->Enable(true);
+		zoomPTZL_S->Enable(true);
+		PTZL_B->Enable(true);
+		myNode->subscribe("PTZL_image", PTZLImage, &LauncherImpl::incomingPTZLImageConn,this);
+		myNode->subscribe("PTZL_state", PTZL_state, &LauncherImpl::incomingPTZLState,this);
+		myNode->advertise<std_msgs::PTZActuatorCmd>("PTZL_cmd");
+		
+		//*PTZR_bmp = NULL;
+	}
+	else
+	{
+		consoleOut(wxT("Closing Left Pan-Tilt-Zoom\n"));
+		LeftDock_FGS->Hide(PTZL_SBS,true);
+		myNode->unsubscribe("PTZL_image");
+		panPTZL_S->Enable(false);
+		tiltPTZL_S->Enable(false);
+		zoomPTZL_S->Enable(false);
+		PTZL_B->Enable(false);
+		wxSize size(0,0);
+		PTZL_B->SetMinSize(size);
+		Layout();
+		Fit();
+		PTZL_bmp == NULL;
+	}
+}
+
+void LauncherImpl::incomingPTZLState()
+{
+	//std::cout << "receiving position L\n";
+	if(PTZL_state.zoom.pos_valid)
+		zoomPTZL_S->SetValue(round(PTZL_state.zoom.pos));
+	if(PTZL_state.tilt.pos_valid)
+		tiltPTZL_S->SetValue(round(PTZL_state.tilt.pos));
+	if(PTZL_state.pan.pos_valid)
+		panPTZL_S->SetValue(round(PTZL_state.pan.pos));
+}
+
+void LauncherImpl::incomingPTZLImageConn()
+{
+    if(PTZL_GET_NEW_IMAGE)
+    {
+    	PTZL_GET_NEW_IMAGE = false;
+    	const uint32_t count = PTZLImage.get_data_size();
+    	delete PTZLImageData;
+		PTZLImageData = new uint8_t[count];
+		memcpy(PTZLImageData, PTZLImage.data, sizeof(uint8_t) * count);
+		wxMemoryInputStream mis(PTZLImageData,PTZLImage.get_data_size());
+		delete PTZL_im;
+		PTZL_im = new wxImage(mis,wxBITMAP_TYPE_JPEG,-1);
+    	
+    	//Event stuff
+		wxCommandEvent PTZL_Event(wxEVT_COMMAND_BUTTON_CLICKED, PTZL_B->GetId());
+		PTZL_Event.SetEventObject(this);
+		this->AddPendingEvent(PTZL_Event);
+		if(PTZL_bmp == NULL){
+			std::cout << "Layout\n";
+			wxSize size(PTZLImage.width,PTZLImage.height);
+			PTZL_B->SetMinSize(size);
+			PTZL_bmp = new wxBitmap();
+			Layout();
+			Fit();
+		}
+    }
+    //else
+    	//std::cout << "!\n";
+}
+
+void LauncherImpl::PTZLDrawPic( wxCommandEvent& event )
+{		
+		delete PTZL_bmp;
+		PTZL_bmp = new wxBitmap(*PTZL_im);
+		wxClientDC dc( PTZL_B );
+		dc.DrawBitmap( *PTZL_bmp, 0, 0, false ); 
+		PTZL_GET_NEW_IMAGE = true;
+}
+//PTZR
+void LauncherImpl::startStop_PTZR( wxCommandEvent& event )
+{
+	if(PTZR_CB->IsChecked())
+	{
+		consoleOut(wxT("Opening Right Pan-Tilt-Zoom\n"));
+		RightDock_FGS->Show(PTZR_SBS,true);
+		Layout();
+		Fit();
+		panPTZR_S->Enable(true);
+		tiltPTZR_S->Enable(true);
+		zoomPTZR_S->Enable(true);
+		PTZR_B->Enable(true);
+		myNode->subscribe("PTZR_image", PTZRImage, &LauncherImpl::incomingPTZRImageConn,this);
+		myNode->subscribe("PTZR_state", PTZR_state, &LauncherImpl::incomingPTZRState,this);
+		myNode->advertise<std_msgs::PTZActuatorCmd>("PTZR_cmd");
+		//*PTZR_bmp = NULL;
+	}
+	else
+	{
+		consoleOut(wxT("Closing Right Pan-Tilt-Zoom\n"));
+		RightDock_FGS->Hide(PTZR_SBS,true);
+		myNode->unsubscribe("PTZR_image");
+		panPTZR_S->Enable(false);
+		tiltPTZR_S->Enable(false);
+		zoomPTZR_S->Enable(false);
+		PTZR_B->Enable(false);
+		wxSize size(0,0);
+		PTZR_B->SetMinSize(size);
+		Layout();
+		Fit();
+		PTZR_bmp = NULL;
+	}
+}
+
+void LauncherImpl::incomingPTZRState()
+{
+	//std::cout << "receiving position R\n";
+	if(PTZR_state.zoom.pos_valid)
+		zoomPTZR_S->SetValue(round(PTZR_state.zoom.pos));
+	if(PTZR_state.tilt.pos_valid)
+		tiltPTZR_S->SetValue(round(PTZR_state.tilt.pos));
+	if(PTZR_state.pan.pos_valid)
+		panPTZR_S->SetValue(round(PTZR_state.pan.pos));
+	//std::cout << "getting pos " << PTZR_state.pan.pos << " " << PTZR_state.tilt.pos << " " << PTZR_state.zoom.pos << endl;
+}
+
+void LauncherImpl::incomingPTZRImageConn()
+{
+    if(PTZR_GET_NEW_IMAGE)
+    {
+    	PTZR_GET_NEW_IMAGE = false;
+    	const uint32_t count = PTZRImage.get_data_size();
+    	delete PTZRImageData;
+		PTZRImageData = new uint8_t[count];
+		memcpy(PTZRImageData, PTZRImage.data, sizeof(uint8_t) * count);
+		wxMemoryInputStream mis(PTZRImageData,PTZRImage.get_data_size());
+		delete PTZR_im;
+		PTZR_im = new wxImage(mis,wxBITMAP_TYPE_JPEG,-1);
+    	
+    	//Event stuff
+		wxCommandEvent PTZR_Event(wxEVT_COMMAND_BUTTON_CLICKED, PTZR_B->GetId());
+		PTZR_Event.SetEventObject(this);
+		this->AddPendingEvent(PTZR_Event);
+		if(PTZR_bmp == NULL){
+			std::cout << "Layout\n";
+			wxSize size(PTZRImage.width,PTZRImage.height);
+			PTZR_B->SetMinSize(size);
+			PTZR_bmp = new wxBitmap();
+			Layout();
+			Fit();
+		}
+    }
+    //else
+    	//std::cout << "!\n";
+}
+
+void LauncherImpl::PTZRDrawPic( wxCommandEvent& event )
+{		
+		delete PTZR_bmp;
+		PTZR_bmp = new wxBitmap(*PTZR_im);
+		wxClientDC dc( PTZR_B );
+		dc.DrawBitmap( *PTZR_bmp, 0, 0, false ); 
+		PTZR_GET_NEW_IMAGE = true;
+}
+//Left Wrist
+void LauncherImpl::startStop_WristL( wxCommandEvent& event )
+{
+	if(WristL_CB->IsChecked())
+	{
+		consoleOut(wxT("Opening Left Wrist\n"));
+		LeftDock_FGS->Show(WristL_SBS,true);
+		Layout();
+		Fit();
+		myNode->subscribe("WristL_image", WristLImage, &LauncherImpl::incomingWristLImageConn,this);
+		//*WristL_bmp = NULL;
+	}
+	else
+	{
+		consoleOut(wxT("Closing Left Wrist\n"));
+		LeftDock_FGS->Hide(WristL_SBS,true);
+		myNode->unsubscribe("WristL_image");
+		wxSize size(0,0);
+		WristL_B->SetMinSize(size);
+		Layout();
+		Fit();
+		WristL_bmp = NULL;
+	}
+}
+
+void LauncherImpl::incomingWristLImageConn()
+{
+    if(WristL_GET_NEW_IMAGE)
+    {
+    	WristL_GET_NEW_IMAGE = false;
+    	const uint32_t count = WristLImage.get_data_size();
+    	delete WristLImageData;
+		WristLImageData = new uint8_t[count];
+		memcpy(WristLImageData, WristLImage.data, sizeof(uint8_t) * count);
+		wxMemoryInputStream mis(WristLImageData,WristLImage.get_data_size());
+		delete WristL_im;
+		WristL_im = new wxImage(mis,wxBITMAP_TYPE_JPEG,-1);
+    	
+    	//Event stuff
+		wxCommandEvent WristL_Event(wxEVT_COMMAND_BUTTON_CLICKED, WristL_B->GetId());
+		WristL_Event.SetEventObject(this);
+		this->AddPendingEvent(WristL_Event);
+		if(WristL_bmp == NULL){
+			std::cout << "Layout\n";
+			wxSize size(WristLImage.width,WristLImage.height);
+			WristL_B->SetMinSize(size);
+			WristL_bmp = new wxBitmap();
+			Layout();
+			Fit();
+		}
+    }
+    //else
+    	//std::cout << "!\n";
+}
+
+void LauncherImpl::WristLDrawPic( wxCommandEvent& event )
+{		
+		delete WristL_bmp;
+		WristL_bmp = new wxBitmap(*WristL_im);
+		wxClientDC dc( WristL_B );
+		dc.DrawBitmap( *WristL_bmp, 0, 0, false ); 
+		WristL_GET_NEW_IMAGE = true;
+}
+
+//Right Wrist
+void LauncherImpl::startStop_WristR( wxCommandEvent& event )
+{
+	if(WristR_CB->IsChecked())
+	{
+		consoleOut(wxT("Opening Right Wrist\n"));
+		RightDock_FGS->Show(WristR_SBS,true);
+		Layout();
+		Fit();
+		myNode->subscribe("WristR_image", WristRImage, &LauncherImpl::incomingWristRImageConn,this);
+		//*WristR_bmp = NULL;
+	}
+	else
+	{
+		consoleOut(wxT("Closing Right Wrist\n"));
+		RightDock_FGS->Hide(WristR_SBS,true);
+		myNode->unsubscribe("WristR_image");
+		wxSize size(0,0);
+		WristR_B->SetMinSize(size);
+		Layout();
+		Fit();
+		WristR_bmp = NULL;
+	}
+}
+
+void LauncherImpl::incomingWristRImageConn()
+{
+    if(WristR_GET_NEW_IMAGE)
+    {
+    	WristR_GET_NEW_IMAGE = false;
+    	const uint32_t count = WristRImage.get_data_size();
+    	delete WristRImageData;
+		WristRImageData = new uint8_t[count];
+		memcpy(WristRImageData, WristRImage.data, sizeof(uint8_t) * count);
+		wxMemoryInputStream mis(WristRImageData,WristRImage.get_data_size());
+		delete WristR_im;
+		WristR_im = new wxImage(mis,wxBITMAP_TYPE_JPEG,-1);
+    	
+    	//Event stuff
+		wxCommandEvent WristR_Event(wxEVT_COMMAND_BUTTON_CLICKED, WristR_B->GetId());
+		WristR_Event.SetEventObject(this);
+		this->AddPendingEvent(WristR_Event);
+		if(WristR_bmp == NULL){
+			std::cout << "Layout\n";
+			wxSize size(WristRImage.width,WristRImage.height);
+			WristR_B->SetMinSize(size);
+			WristR_bmp = new wxBitmap();
+			Layout();
+			Fit();
+		}
+    }
+    //else
+    	//std::cout << "!\n";
+}
+
+void LauncherImpl::WristRDrawPic( wxCommandEvent& event )
+{		
+		delete WristR_bmp;
+		WristR_bmp = new wxBitmap(*WristR_im);
+		wxClientDC dc( WristR_B );
+		dc.DrawBitmap( *WristR_bmp, 0, 0, false ); 
+		WristR_GET_NEW_IMAGE = true;
+}
+
+void LauncherImpl::PTZL_ptzChanged(wxScrollEvent& event)
 {
 	ptz_cmd.pan.valid = 1;
-	ptz_cmd.pan.cmd = panPTZL_S->value();
+	ptz_cmd.pan.cmd = panPTZL_S->GetValue();
 	ptz_cmd.tilt.valid = 1;
-	ptz_cmd.tilt.cmd = tiltPTZL_S->value();
+	ptz_cmd.tilt.cmd = tiltPTZL_S->GetValue();
 	ptz_cmd.zoom.valid = 1;
-	ptz_cmd.zoom.cmd = zoomPTZL_S->value();
+	ptz_cmd.zoom.cmd = zoomPTZL_S->GetValue();
 	myNode->publish("PTZL_cmd",ptz_cmd);
 }
 
-void LauncherImpl::PTZR_ptzChanged(int unused)
+void LauncherImpl::PTZR_ptzChanged(wxScrollEvent& event)
 {
 	ptz_cmd.pan.valid = 1;
-	ptz_cmd.pan.cmd = panPTZR_S->value();
+	ptz_cmd.pan.cmd = panPTZR_S->GetValue();
 	ptz_cmd.tilt.valid = 1;
-	ptz_cmd.tilt.cmd = tiltPTZR_S->value();
+	ptz_cmd.tilt.cmd = tiltPTZR_S->GetValue();
 	ptz_cmd.zoom.valid = 1;
-	ptz_cmd.zoom.cmd = zoomPTZR_S->value();
+	ptz_cmd.zoom.cmd = zoomPTZR_S->GetValue();
+	//std::cout << "sending pos " << ptz_cmd.pan.cmd << " " << ptz_cmd.tilt.cmd << " " << ptz_cmd.zoom.cmd << endl;
 	myNode->publish("PTZR_cmd",ptz_cmd);
 }
-	
-//
+
+void LauncherImpl::EmergencyStop( wxCommandEvent& event )
+{
+	// TODO: Implement EmergencyStop
+}
