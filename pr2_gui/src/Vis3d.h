@@ -53,7 +53,6 @@ Subscribes to (name/type):
   - Ability to place random objects (sphere, cube, cylinder, etc) to mark suspected object locations
 **/
 
-#define cloudArrayLength 400
 #define intensityRange 16.0
 #include <rosthread/member_thread.h>
 #include "ILClient.hh"
@@ -97,9 +96,9 @@ class Vis3d
 	//irrlicht declarations
 		ILClient *localClient;
 		ILRender *pLocalRenderer;
-		ILPointCloud *ilHeadCloud[cloudArrayLength];
+		std::vector<ILPointCloud*> ilHeadCloud;
 		ILLaserScan *ilFloorCloud;
-		ILPointCloud *ilStereoCloud;
+		std::vector<ILPointCloud*> ilStereoCloud;
 		ILGrid *ilGrid;
 		std::vector<ILModel*> model;
 		std::vector<ILModel*> markers;
@@ -171,8 +170,10 @@ class Vis3d
 		int scanT;
 		///Scan direction.  Should be only -1 or 1.
 		int scanDir;
-		///Number of head laser horizontal scans in the cloud.
+		///Index of currently used head point cloud.
 		int headVertScanCount;
+		///Index of currently used stereo point cloud.
+		int stereoVertScanCount;
 		///Remembers if the user controlled objects are visible or hidded.
 		bool objectsVisibility;
 };

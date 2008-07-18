@@ -6,6 +6,7 @@ Vis3d::Vis3d(ros::node *aNode) : tfClient(*aNode)
 	objectsVisibility = true;
 	myNode = aNode;
 	headVertScanCount = 0;
+	stereoVertScanCount = 0;
 	scanDir = -1;
 	scanT = Wipe;
 	
@@ -14,43 +15,43 @@ Vis3d::Vis3d(ros::node *aNode) : tfClient(*aNode)
 	pLocalRenderer->lock();
 
 	ilFloorCloud = new ILLaserScan(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),200);
-	ilStereoCloud = new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),201);
+	//ilStereoCloud = new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),201);
 	ilGrid = new ILGrid(pLocalRenderer->manager()->getRootSceneNode(), pLocalRenderer->manager(), 202);
 	ilucs = new ILUCS(pLocalRenderer->manager()->getRootSceneNode(), pLocalRenderer->manager(),true, 203);
-	for(int i = 0; i < cloudArrayLength; i++)
+	/*for(int i = 0; i < cloudArrayLength; i++)
 	{
 		ilHeadCloud[i] = new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),206 + i);
-	}
+	}*/
 	pLocalRenderer->unlock();
 	pLocalRenderer->addNode(ilFloorCloud);
-	pLocalRenderer->addNode(ilStereoCloud);
+	/*pLocalRenderer->addNode(ilStereoCloud);
 	for(int i = 0; i < cloudArrayLength; i++)
 	{
 		pLocalRenderer->addNode(ilHeadCloud[i]);
-	}
+	}*/
 	ilGrid->makegrid(100,.1f,50,50,50);
 	pLocalRenderer->addNode(ilGrid);
 	irr::SKeyMap keyMap[8];
 	{
-             keyMap[0].Action = irr::EKA_MOVE_FORWARD;
-             keyMap[0].KeyCode = irr::KEY_UP;
-             keyMap[1].Action = irr::EKA_MOVE_FORWARD;
-             keyMap[1].KeyCode = irr::KEY_KEY_W;
+		 keyMap[0].Action = irr::EKA_MOVE_FORWARD;
+		 keyMap[0].KeyCode = irr::KEY_UP;
+		 keyMap[1].Action = irr::EKA_MOVE_FORWARD;
+		 keyMap[1].KeyCode = irr::KEY_KEY_W;
 
-             keyMap[2].Action = irr::EKA_MOVE_BACKWARD;
-             keyMap[2].KeyCode = irr::KEY_DOWN;
-             keyMap[3].Action = irr::EKA_MOVE_BACKWARD;
-             keyMap[3].KeyCode = irr::KEY_KEY_S;
+		 keyMap[2].Action = irr::EKA_MOVE_BACKWARD;
+		 keyMap[2].KeyCode = irr::KEY_DOWN;
+		 keyMap[3].Action = irr::EKA_MOVE_BACKWARD;
+		 keyMap[3].KeyCode = irr::KEY_KEY_S;
 
-             keyMap[4].Action = irr::EKA_STRAFE_LEFT;
-             keyMap[4].KeyCode = irr::KEY_LEFT;
-             keyMap[5].Action = irr::EKA_STRAFE_LEFT;
-             keyMap[5].KeyCode = irr::KEY_KEY_A;
+		 keyMap[4].Action = irr::EKA_STRAFE_LEFT;
+		 keyMap[4].KeyCode = irr::KEY_LEFT;
+		 keyMap[5].Action = irr::EKA_STRAFE_LEFT;
+		 keyMap[5].KeyCode = irr::KEY_KEY_A;
 
-             keyMap[6].Action = irr::EKA_STRAFE_RIGHT;
-             keyMap[6].KeyCode = irr::KEY_RIGHT;
-             keyMap[7].Action = irr::EKA_STRAFE_RIGHT;
-             keyMap[7].KeyCode = irr::KEY_KEY_D;
+		 keyMap[6].Action = irr::EKA_STRAFE_RIGHT;
+		 keyMap[6].KeyCode = irr::KEY_RIGHT;
+		 keyMap[7].Action = irr::EKA_STRAFE_RIGHT;
+		 keyMap[7].KeyCode = irr::KEY_KEY_D;
 	}
 	cameras[Maya] = pLocalRenderer->manager()->addCameraSceneNodeMaya(NULL,-150.0f,50.0f,25.0f,Maya);
 	cameras[FPS] = pLocalRenderer->manager()->addCameraSceneNodeFPS(NULL,50,5,FPS,keyMap,8);
@@ -108,15 +109,18 @@ Vis3d::~Vis3d()
 {
 	disable();
 	//delete localClient;
-    for(int i = 0; i < cloudArrayLength; i++)
+    for(int i = 0; i < ilHeadCloud.size(); i++)
     {
 	    //if(ilHeadCloud[i])
 		delete ilHeadCloud[i];
     }
     //if(ilFloorCloud)
 	delete ilFloorCloud;
-    //if(ilStereoCloud)
-	delete ilStereoCloud;
+	for(int i = 0; i < ilStereoCloud.size(); i++)
+    {
+	    //if(ilStereoCloud[i])
+		delete ilStereoCloud[i];
+    }
     //if(ilGrid)
 	delete ilGrid;
 	delete ilucs;
@@ -186,11 +190,12 @@ void Vis3d::enableHead()
 	scanDir = 1;
 	headVertScanCount = 0;
     changeHeadLaser(scanT);
-    for(int i = 0; i < cloudArrayLength; i++)
+    for(int i = 0; i < ilHeadCloud.size(); i++)
     {
 		pLocalRenderer->enable(ilHeadCloud[i]);
 		ilHeadCloud[i]->setVisible(true);
     }   
+    std::cout << "Head enabled\n";
 }
 
 void Vis3d::enableModel()
@@ -270,13 +275,16 @@ void Vis3d::enableFloor()
     ilFloorCloud->setVisible(true);
 }
 
-/**Data type should be changed from a point cloud to a ???...big point cloud?*/
 void Vis3d::enableStereo()
 {
     myNode->subscribe("cloudStereo", ptCldStereo, &Vis3d::addStereoCloud,this);
     myNode->subscribe("shutterStereo", shutStereo, &Vis3d::shutterStereo,this);
-    pLocalRenderer->enable(ilStereoCloud);
-    ilStereoCloud->setVisible(true);
+    for( int i = 0 ; i < ilStereoCloud.size(); i++)
+    {
+    	pLocalRenderer->enable(ilStereoCloud[i]);
+    	ilStereoCloud[i]->setVisible(true);
+    }
+    
 }
 
 void Vis3d::enableObjects()
@@ -298,7 +306,7 @@ void Vis3d::disableHead()
     myNode->unsubscribe("cloud_full");
     shutterHead();
 	pLocalRenderer->lock();
-    for(int i = 0; i < cloudArrayLength; i++)
+    for(int i = 0; i < ilHeadCloud.size(); i++)
     {
 	    
 		pLocalRenderer->disable(ilHeadCloud[i]);
@@ -324,8 +332,11 @@ void Vis3d::disableStereo()
     myNode->unsubscribe("shutterStereo");
     shutterStereo();
 	pLocalRenderer->lock();
-    pLocalRenderer->disable(ilStereoCloud);
-    ilStereoCloud->setVisible(false);
+	for( int i = 0; i < ilStereoCloud.size(); i++)
+	{
+    	pLocalRenderer->disable(ilStereoCloud[i]);
+    	ilStereoCloud[i]->setVisible(false);
+    }
 	pLocalRenderer->unlock();
 }
 
@@ -355,11 +366,11 @@ void Vis3d::disableModel()
 	std::cout << "killing model\n";
 	myNode->unsubscribe("transform");
 	pLocalRenderer->lock();
-	/*for(int i = 0; i < PR2::MAX_JOINTS; i++)
+	for(int i = 0; i < model.size(); i++)
 	{
 		delete model[i];
 		model[i] = 0;
-	}*/
+	}
 	model.clear();
 	pLocalRenderer->unlock();
 	
@@ -386,7 +397,7 @@ void Vis3d::shutterHead()
     {
     	case Wipe:
     	case AtOnce:
-			for(int i = 0; i < cloudArrayLength; i++)
+			for(int i = 0; i < ilHeadCloud.size(); i++)
 			{
 				ilHeadCloud[i]->resetCount();
 			}
@@ -410,7 +421,8 @@ void Vis3d::shutterFloor()
 void Vis3d::shutterStereo()
 {
     pLocalRenderer->lock();
-    ilStereoCloud->resetCount();
+    for(int i = 0; i < ilStereoCloud.size(); i++)
+    	ilStereoCloud[i]->resetCount();
     pLocalRenderer->unlock();
 }
 
@@ -445,19 +457,26 @@ void Vis3d::addHeadCloud()
     switch(scanT)
     {
     	case Wipe:
-    	pLocalRenderer->lock();
-			if(headVertScanCount < cloudArrayLength)
+			if(headVertScanCount == ilHeadCloud.size())
 			{
-				for(int i = 0; i < min((uint32_t)65535,ptCldHead.get_pts_size()); i++)
-				{
-					ilHeadCloud[headVertScanCount]->addPoint(inBaseFrame.x + ptCldHead.pts[i].x, inBaseFrame.y + ptCldHead.pts[i].y, inBaseFrame.z + ptCldHead.pts[i].z, 255 ,min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255),min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255));
-				}
-				headVertScanCount++;
+				ilHeadCloud.push_back(new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),-1));
+				pLocalRenderer->addNode(ilHeadCloud[headVertScanCount]);
 			}
+			pLocalRenderer->lock();
+			for(int i = 0; i < min((uint32_t)65535,ptCldHead.get_pts_size()); i++)
+			{
+				ilHeadCloud[headVertScanCount]->addPoint(inBaseFrame.x + ptCldHead.pts[i].x, inBaseFrame.y + ptCldHead.pts[i].y, inBaseFrame.z + ptCldHead.pts[i].z, 255 ,min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255),min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255));
+			}
+			headVertScanCount++;
 			break;
 		case Replace:
-		pLocalRenderer->lock();
-			if(headVertScanCount < cloudArrayLength && headVertScanCount > -1)
+			if(headVertScanCount == ilHeadCloud.size())
+			{
+				ilHeadCloud.push_back(new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),-1));
+				pLocalRenderer->addNode(ilHeadCloud[headVertScanCount]);
+			}
+			pLocalRenderer->lock();
+			if(headVertScanCount > -1)
 			{
 				ilHeadCloud[headVertScanCount]->resetCount();
 				for(int i = 0; i < min((uint32_t)65535,ptCldHead.get_pts_size()); i++)
@@ -471,10 +490,19 @@ void Vis3d::addHeadCloud()
 			shutterHead();
 			pLocalRenderer->lock();
 			//std::cout << "add head cloud full\n";
-			for(int i = 0; i < min(ptCldHead.get_pts_size(),((uint32_t)cloudArrayLength*65535)); i++)
+			for(int i = 0; i < ptCldHead.get_pts_size(); i++)
 			{
 				if(((float)i)/((float)(headVertScanCount + 1)) > 65535)
+				{
 					headVertScanCount++;
+					if(headVertScanCount == ilHeadCloud.size())
+					{
+						ilHeadCloud.push_back(new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),-1));
+						pLocalRenderer->unlock();
+						pLocalRenderer->addNode(ilHeadCloud[headVertScanCount]);
+						pLocalRenderer->lock();
+					}
+				}
 				ilHeadCloud[headVertScanCount]->addPoint(inBaseFrame.x + ptCldHead.pts[i].x, inBaseFrame.y + ptCldHead.pts[i].y, inBaseFrame.z + ptCldHead.pts[i].z, 255 ,min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255),min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255));
 			}
 			break;
@@ -515,7 +543,7 @@ void Vis3d::addFloorCloud()
     pLocalRenderer->lock();
     
 	for(int i = 0; i < min((uint32_t)65535,(uint32_t)((ptCldFloor.angle_max-ptCldFloor.angle_min)/ptCldFloor.angle_increment+.5)); i++)
-	{//CHANGE MY X,Y,Z for transform!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	{
 		ilFloorCloud->addPoint(inBaseFrame.x + cos(i*ptCldFloor.angle_increment + ptCldFloor.angle_min)*ptCldFloor.ranges[i],inBaseFrame.y + sin(i*ptCldFloor.angle_increment + ptCldFloor.angle_min)*ptCldFloor.ranges[i],inBaseFrame.z, min((int)(ptCldFloor.intensities[i]/intensityRange),255),255,min((int)(ptCldFloor.intensities[i]/intensityRange),255));
 	}
 	
@@ -525,20 +553,23 @@ void Vis3d::addFloorCloud()
 void Vis3d::addStereoCloud()
 {
     pLocalRenderer->lock();
-    if(ptCldStereo.get_pts_size() > 65535)
-    {
-		for(int i = 0; i < 65535; i++)
+    for(int i = 0; i < ilStereoCloud.size(); i++)
+    	ilStereoCloud[i]->resetCount();
+	for(size_t i = 0; i < ptCldStereo.get_pts_size(); i++)
+	{
+		if(((float)i)/((float)(stereoVertScanCount + 1)) > 65535)
 		{
-			ilStereoCloud->addPoint(ptCldStereo.pts[i].x, ptCldStereo.pts[i].y, ptCldStereo.pts[i].z, min((int)(ptCldStereo.chan[0].vals[i]),255),min((int)(ptCldStereo.chan[0].vals[i]),255),255);
+			stereoVertScanCount++;
+			if(stereoVertScanCount == ilHeadCloud.size())
+			{
+				ilStereoCloud.push_back(new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),-1));
+				pLocalRenderer->unlock();
+				pLocalRenderer->addNode(ilStereoCloud[stereoVertScanCount]);
+				pLocalRenderer->lock();
+			}
 		}
-    }
-    else
-    {
-		for(size_t i = 0; i < ptCldStereo.get_pts_size(); i++)
-		{
-			ilStereoCloud->addPoint(ptCldStereo.pts[i].x, ptCldStereo.pts[i].y, ptCldStereo.pts[i].z, min((int)(ptCldStereo.chan[0].vals[i]),255),min((int)(ptCldStereo.chan[0].vals[i]),255),255);
-		}
-    }
+		ilStereoCloud[stereoVertScanCount]->addPoint(ptCldStereo.pts[i].x, ptCldStereo.pts[i].y, ptCldStereo.pts[i].z, min((int)(ptCldStereo.chan[0].vals[i]),255),min((int)(ptCldStereo.chan[0].vals[i]),255),255);
+	}
     pLocalRenderer->unlock();
 }
 
