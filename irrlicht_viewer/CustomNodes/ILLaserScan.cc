@@ -26,13 +26,13 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //////////////////////////////////////////////////////////////////////////////
 
-#include "ILPointCloud.hh"
+#include "ILLaserScan.hh"
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 
 using namespace irr;
 
-ILPointCloud::ILPointCloud(irr::scene::ISceneNode* parent, irr::scene::ISceneManager* mgr, irr::s32 id) : scene::ISceneNode(parent, mgr, id), m_numPoints (0), m_numAllocPoints (0), m_points (NULL)
+ILLaserScan::ILLaserScan(irr::scene::ISceneNode* parent, irr::scene::ISceneManager* mgr, irr::s32 id) : scene::ISceneNode(parent, mgr, id), m_numPoints (0), m_numAllocPoints (0), m_points (NULL)
 {
   m_material.Lighting = false;
   m_material.Wireframe = false;
@@ -43,19 +43,19 @@ ILPointCloud::ILPointCloud(irr::scene::ISceneNode* parent, irr::scene::ISceneMan
   preallocatePoints(1024);
 }
 
-ILPointCloud::~ILPointCloud() {
+ILLaserScan::~ILLaserScan() {
   deallocatePoints();
 }
 
 // Memory management
-void ILPointCloud::preallocatePoints(const size_t numPoints) {
+void ILLaserScan::preallocatePoints(const size_t numPoints) {
   if(m_numAllocPoints == 0) {
     m_points = (video::S3DVertex*)malloc(numPoints*sizeof(video::S3DVertex));
     m_numAllocPoints = numPoints;
   }
 }
 
-void ILPointCloud::deallocatePoints() {
+void ILLaserScan::deallocatePoints() {
   if(m_numAllocPoints > 0) {
     free(m_points);
     m_points = NULL;
@@ -65,7 +65,7 @@ void ILPointCloud::deallocatePoints() {
 }
 
 // Manipulators
-void ILPointCloud::addPoint(const double x, const double y, const double z, const int r, const int g, const int b)
+void ILLaserScan::addPoint(const double x, const double y, const double z, const int r, const int g, const int b)
 {
   if(m_numPoints >= MAX_RENDERABLE)
     {
@@ -85,7 +85,7 @@ void ILPointCloud::addPoint(const double x, const double y, const double z, cons
   m_numPoints++;
 }
 
-void ILPointCloud::addPoints(double *rgX, double *rgY, double *rgZ, int *rgR, int *rgG, int *rgB, const size_t numPoints)
+void ILLaserScan::addPoints(double *rgX, double *rgY, double *rgZ, int *rgR, int *rgG, int *rgB, const size_t numPoints)
 {
   if(m_numPoints+numPoints >= m_numAllocPoints) {
     m_numAllocPoints = MIN ( m_numPoints+numPoints, MAX_RENDERABLE);
@@ -101,11 +101,11 @@ void ILPointCloud::addPoints(double *rgX, double *rgY, double *rgZ, int *rgR, in
   m_numPoints += numPoints;
 }
 
-void ILPointCloud::resetCount() {
+void ILLaserScan::resetCount() {
   m_numPoints = 0;
 }
 
-void ILPointCloud::OnRegisterSceneNode() {
+void ILLaserScan::OnRegisterSceneNode() {
   if (IsVisible) {
     SceneManager->registerNodeForRendering(this);
   }
@@ -113,25 +113,28 @@ void ILPointCloud::OnRegisterSceneNode() {
   ISceneNode::OnRegisterSceneNode();
 }
 
-void ILPointCloud::render() {
+void ILLaserScan::render() {
   video::IVideoDriver* driver = SceneManager->getVideoDriver();
 
   driver->setMaterial(m_material);
   driver->setTransform(video::ETS_WORLD, AbsoluteTransformation);
 
-  for(size_t i=0; i<m_numPoints; i+=MAX_RENDERABLE) {
+  driver->drawVertexPrimitiveList(m_points,MIN(m_numPoints, MAX_RENDERABLE), NULL, MIN(m_numPoints,MAX_RENDERABLE), video::EVT_STANDARD, scene::EPT_POINTS);
+  for(size_t i=1; i<m_numPoints; i+=MAX_RENDERABLE) {
     driver->drawVertexPrimitiveList(m_points,MIN(m_numPoints-i, MAX_RENDERABLE), NULL, MIN(m_numPoints-i,MAX_RENDERABLE), video::EVT_STANDARD, scene::EPT_POINTS);
+    //driver->draw3DLine(core::vector3df(m_points[i-1].Pos.X, m_points[i-1].Pos.Y, m_points[i-1].Pos.Z), core::vector3df(m_points[i].Pos.X, m_points[i].Pos.Y, m_points[i].Pos.Z), m_points[i].Color);
+  	//std::cout << "drawing line\n";
   }
 }
 
-const irr::core::aabbox3d<irr::f32>& ILPointCloud::getBoundingBox() const {
+const irr::core::aabbox3d<irr::f32>& ILLaserScan::getBoundingBox() const {
   return m_box;
 }
 
-irr::u32 ILPointCloud::getMaterialCount() {
+irr::u32 ILLaserScan::getMaterialCount() {
   return 1;
 }
 
-irr::video::SMaterial& ILPointCloud::getMaterial(irr::u32 i) {
+irr::video::SMaterial& ILLaserScan::getMaterial(irr::u32 i) {
   return m_material;
 }	

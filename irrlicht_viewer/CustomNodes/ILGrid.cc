@@ -72,12 +72,16 @@ void ILGrid::render() {
   driver->setTransform(video::ETS_WORLD, AbsoluteTransformation);
 
   double inc;
-
+	//driver->draw3DLine(irr::core::vector3d<irr::f32>(0,0,0),irr::core::vector3d<irr::f32>(0,0,1),irr::video::SColor(255,255,0,0));
+	//driver->draw3DLine(irr::core::vector3d<irr::f32>(0,0,0),irr::core::vector3d<irr::f32>(-1,0,0),irr::video::SColor(255,0,255,0));
+	//driver->draw3DLine(irr::core::vector3d<irr::f32>(0,0,0),irr::core::vector3d<irr::f32>(0,1,0),irr::video::SColor(255,0,0,255));
   for(size_t i=0; i<=m_gridSize; i++) {
     inc = m_extent-i*m_cellLength;
 
     driver->draw3DLine(core::vector3df(inc,0,-1*m_extent), core::vector3df(inc,0,m_extent), video::SColor(255,m_r,m_g,m_b));
     driver->draw3DLine(core::vector3df(-1*m_extent,0,inc), core::vector3df(m_extent,0,inc), video::SColor(255,m_r,m_g,m_b));
+    //driver->draw3DLine(core::vector3df(0,inc,-1*m_extent), core::vector3df(0,inc,m_extent), video::SColor(255,m_r,m_g,m_b));
+    //driver->draw3DLine(core::vector3df(0,-1*m_extent,inc), core::vector3df(0,m_extent,inc), video::SColor(255,m_r,m_g,m_b));
   }
 }
 
