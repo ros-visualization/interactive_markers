@@ -226,7 +226,6 @@ void Vis3d::enableModel()
 		}
 		catch(libTF::TransformReference::LookupException e)
 		{
-			inBaseFrame;
 			inBaseFrame.x = 0;
 			inBaseFrame.y = 0;
 			inBaseFrame.z = 0;
@@ -270,7 +269,7 @@ void Vis3d::enableGrid()
 void Vis3d::enableFloor()
 {
     myNode->subscribe("scan", ptCldFloor, &Vis3d::addFloorCloud,this);
-    myNode->subscribe("shutterFloor", shutFloor, &Vis3d::shutterFloor,this);
+    myNode->subscribe("shutterScan", shutFloor, &Vis3d::shutterFloor,this);
     pLocalRenderer->enable(ilFloorCloud);
     ilFloorCloud->setVisible(true);
 }
@@ -318,7 +317,7 @@ void Vis3d::disableHead()
 void Vis3d::disableFloor()
 {
     myNode->unsubscribe("scan");
-    myNode->unsubscribe("shutterFloor");
+    myNode->unsubscribe("shutterScan");
     shutterFloor();
 	pLocalRenderer->lock();
     pLocalRenderer->disable(ilFloorCloud);
@@ -444,7 +443,6 @@ void Vis3d::addHeadCloud()
 	}
 	catch(libTF::TransformReference::LookupException e)
 	{
-		inBaseFrame;
 		inBaseFrame.x = 0;
 		inBaseFrame.y = 0;
 		inBaseFrame.z = 0;
@@ -488,6 +486,8 @@ void Vis3d::addHeadCloud()
 			break;
 		case AtOnce:
 			shutterHead();
+			if(ilHeadCloud.size() == 0)
+				ilHeadCloud.push_back(new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),-1));
 			pLocalRenderer->lock();
 			//std::cout << "add head cloud full\n";
 			for(int i = 0; i < ptCldHead.get_pts_size(); i++)
@@ -529,7 +529,6 @@ void Vis3d::addFloorCloud()
 	}
 	catch(libTF::TransformReference::LookupException e)
 	{
-		inBaseFrame;
 		inBaseFrame.x = 0;
 		inBaseFrame.y = 0;
 		inBaseFrame.z = 0;
@@ -552,10 +551,39 @@ void Vis3d::addFloorCloud()
 
 void Vis3d::addStereoCloud()
 {
+	libTF::TFPose aPose;
+	aPose.x = 0;
+	aPose.y = 0;
+	aPose.z = 0;
+	aPose.roll = 0;
+	aPose.pitch = 0;
+	aPose.yaw = 0;
+	aPose.time = 0;
+	aPose.frame = PR2::FRAMEID_STEREO_BLOCK;
+	libTF::TFPose inBaseFrame;
+	try
+	{
+		inBaseFrame = this->tfClient.transformPose(PR2::FRAMEID_BASE, aPose);
+	}
+	catch(libTF::TransformReference::LookupException e)
+	{
+		inBaseFrame.x = 0;
+		inBaseFrame.y = 0;
+		inBaseFrame.z = 0;
+		inBaseFrame.roll = 0;
+		inBaseFrame.pitch = 0;
+		inBaseFrame.yaw = 0;
+		inBaseFrame.time = 0;
+		inBaseFrame.frame = PR2::FRAMEID_BASE;
+	}
     pLocalRenderer->lock();
     for(int i = 0; i < ilStereoCloud.size(); i++)
+    {
     	ilStereoCloud[i]->resetCount();
-	for(size_t i = 0; i < ptCldStereo.get_pts_size(); i++)
+    }
+    if(ilStereoCloud.size() == 0)
+    	ilStereoCloud.push_back(new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),-1));
+	for(int i = 0; i < ptCldStereo.get_pts_size(); i++)
 	{
 		if(((float)i)/((float)(stereoVertScanCount + 1)) > 65535)
 		{
@@ -568,7 +596,7 @@ void Vis3d::addStereoCloud()
 				pLocalRenderer->lock();
 			}
 		}
-		ilStereoCloud[stereoVertScanCount]->addPoint(ptCldStereo.pts[i].x, ptCldStereo.pts[i].y, ptCldStereo.pts[i].z, min((int)(ptCldStereo.chan[0].vals[i]),255),min((int)(ptCldStereo.chan[0].vals[i]),255),255);
+		ilStereoCloud[stereoVertScanCount]->addPoint(inBaseFrame.x + ptCldStereo.pts[i].x, inBaseFrame.y + ptCldStereo.pts[i].y, inBaseFrame.z + ptCldStereo.pts[i].z, min((int)(ptCldStereo.chan[0].vals[i]),255),min((int)(ptCldStereo.chan[0].vals[i]),255),255);
 	}
     pLocalRenderer->unlock();
 }
@@ -645,7 +673,6 @@ void Vis3d::newTransform()
 /**Displays objects (arrows, cubes, spheres, text, and meshes) with user controlled parameters.  Check enums in header and VisualizationMarker.msg for details*/
 void Vis3d::newMarker()
 {
-	std::cerr << "numMarkers " << markers.size() <<  std::endl;
 	pLocalRenderer->lock();
 	switch(visMarker.action)
 	{

@@ -41,16 +41,16 @@
 
 Subscribes to (name/type):
 - @b "cloud"/std_msgs::PointCloudFloat32 : Point cloud received from head Hokuyo
-- @b "cloudFloor"/std_msgs::PointCloudFloat32 : Point cloud received from base Hokuyo (type may be changed soon)
+- @b "scan"/std_msgs::LaserScan : Laser cloud received from base Hokuyo
 - @b "cloudStereo"/std_msgs::PointCloudFloat32 : Point cloud received from stereo vision (type may be changed soon)
 - @b "shutter"/std_msgs::Empty : Cue to erase "cloud" information
-- @b "shutterFloor"/std_msgs::Empty : Cue to erase "cloudFloor" information
+- @b "shutterScan"/std_msgs::Empty : Cue to erase "cloudFloor" information
 - @b "shutterStereo"/std_msgs::Empty : Cue to erase "cloudStereo" information
+- @b "visualizationMarker"/std_msgs::VisualizationMarker : User defined object in the 3d world
+- @b "transform"/std_msgs::Empty : Cue to update model (new transform is available)
 
-@todo Start using libTF for transform management:
-  - Use libTF to place models
-  - Read in joint angles from ros
-  - Ability to place random objects (sphere, cube, cylinder, etc) to mark suspected object locations
+@todo 
+- Please put some stuff here
 **/
 
 #define intensityRange 16.0
