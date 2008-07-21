@@ -4,6 +4,9 @@
 // ROS includes
 #include "ros/node.h"
 
+// wx includes
+#include <wx/msgdlg.h>
+
 TopicDisplayDialog::TopicDisplayDialog(wxWindow* parent, ros::node* node, bool multiselect)
 : GenTopicDisplayDialog( parent )
 {
@@ -17,7 +20,15 @@ TopicDisplayDialog::~TopicDisplayDialog()
 
 void TopicDisplayDialog::onOK( wxCommandEvent& event )
 {
-	EndModal( wxID_OK );
+	std::vector<std::string> selection = m_TopicDisplayPanel->getSelectedTopics();
+	if (!selection.empty())
+	{
+		EndModal( wxID_OK );
+	}
+	else
+	{
+		wxMessageBox( wxT("Please select a topic!"), wxT("No topic selected"), wxOK | wxCENTRE | wxICON_ERROR, this );
+	}
 }
 
 void TopicDisplayDialog::onCancel( wxCommandEvent& event )
