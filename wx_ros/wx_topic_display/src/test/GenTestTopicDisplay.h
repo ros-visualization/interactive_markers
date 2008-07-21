@@ -33,10 +33,12 @@ class GenTestTopicDisplay : public wxFrame
 		wxPanel* topicPanel;
 		wxPanel* topicPanel2;
 		wxButton* m_button1;
+		wxButton* m_Browse;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void onClose( wxCloseEvent& event ){ event.Skip(); }
 		virtual void printSelections( wxCommandEvent& event ){ event.Skip(); }
+		virtual void browse( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:

@@ -1,6 +1,8 @@
 #include "TopicDisplay.h"
 
-TopicDisplay::TopicDisplay( wxWindow* parent, ros::node* _node ) : GenTopicDisplay( parent ), rosNode(_node)
+TopicDisplay::TopicDisplay( wxWindow* parent, ros::node* _node, const wxSize& size ) 
+: GenTopicDisplay( parent, wxID_ANY, wxDefaultPosition, size )
+, rosNode(_node)
 {
     timer = new wxTimer(this);
 
@@ -9,8 +11,14 @@ TopicDisplay::TopicDisplay( wxWindow* parent, ros::node* _node ) : GenTopicDispl
     timer->Start(1000);
 
     rootId  = topicTree->AddRoot(wxT("/"));
+
+    refreshTopics();
 }
 
+TopicDisplay::~TopicDisplay()
+{
+  delete timer;
+}
 
 void TopicDisplay::checkIsTopic ( wxTreeEvent& event )
 {
@@ -20,9 +28,9 @@ void TopicDisplay::checkIsTopic ( wxTreeEvent& event )
   }
 }
 
-void TopicDisplay::tick( wxTimerEvent& event )
+void TopicDisplay::refreshTopics()
 {
-  TopicList topics;
+    TopicList topics;
 
   rosNode->get_published_topics(&topics);
 
@@ -128,8 +136,14 @@ void TopicDisplay::tick( wxTimerEvent& event )
   Refresh();
 }
 
+void TopicDisplay::tick( wxTimerEvent& event )
+{
+  refreshTopics();
+}
 
-std::vector<std::string> TopicDisplay::getSelectedTopics() {
+
+std::vector<std::string> TopicDisplay::getSelectedTopics() 
+{
 
   std::vector<std::string> selectVec;
 
@@ -137,7 +151,7 @@ std::vector<std::string> TopicDisplay::getSelectedTopics() {
 
   topicTree->GetSelections(selections);
 
-  for (int i = 0; i < selections.GetCount(); i++)
+  for (unsigned int i = 0; i < selections.GetCount(); i++)
   {
     wxTreeItemId id = selections.Item(i);
     if (topicTree->GetItemData(id) != NULL)
@@ -148,4 +162,23 @@ std::vector<std::string> TopicDisplay::getSelectedTopics() {
   }
 
   return selectVec;
+}
+
+void TopicDisplay::setMultiselectAllowed(bool allowed)
+{
+  long treeStyle = topicTree->GetWindowStyle();
+
+  if (allowed)
+  {
+    treeStyle &= ~wxTR_SINGLE;
+    treeStyle |= wxTR_MULTIPLE;
+  }
+  else
+  {
+    treeStyle &= ~wxTR_MULTIPLE;
+    treeStyle |= wxTR_SINGLE;
+  }
+
+  topicTree->SetWindowStyle( treeStyle );
+  topicTree->Refresh();
 }

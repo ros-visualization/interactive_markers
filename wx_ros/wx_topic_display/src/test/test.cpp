@@ -2,7 +2,8 @@
 #include <wx/app.h>
 
 #include "ros/node.h"
-#include "wx_topic_display/TopicDisplay.h"
+#include "../wx_topic_display/TopicDisplay.h"
+#include "../wx_topic_display/TopicDisplayDialog.h"
 
 #include "GenTestTopicDisplay.h"
 
@@ -65,6 +66,30 @@ public:
 
     event.Skip();
   }
+
+  virtual void browse( wxCommandEvent& event )
+  {
+		TopicDisplayDialog dialog( this, node, false );
+		int result = dialog.ShowModal();
+	
+		if (result == wxID_OK)
+		{
+			std::vector<std::string> selection;
+			dialog.getSelection(selection);
+	
+			printf( "Selection:\n" );
+			std::vector<std::string>::iterator it = selection.begin();
+			std::vector<std::string>::iterator end = selection.end();
+			for (; it != end; ++it)
+			{
+				printf( "\t%s\n", it->c_str() );
+			}
+		}
+		else
+		{
+			printf( "Browse canceled\n" );
+		}
+	}
 };
 
 class TestApp : public wxApp

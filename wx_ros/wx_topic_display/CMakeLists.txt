@@ -26,7 +26,8 @@ endif(WXFORMBUILDER)
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
 rospack_add_library(wxtopicdisplay src/wx_topic_display/TopicDisplay.cpp
-                                   src/wx_topic_display/GenTopicDisplay.cpp)
+                                   src/wx_topic_display/GenTopicDisplay.cpp
+				   src/wx_topic_display/TopicDisplayDialog.cpp)
 
 rospack_add_executable(test src/test/test.cpp
                             src/test/GenTestTopicDisplay.cpp)

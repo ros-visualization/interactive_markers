@@ -72,12 +72,15 @@ private:
 
   virtual void checkIsTopic ( wxTreeEvent& event );
   virtual void tick(wxTimerEvent& event);
+  virtual void refreshTopics();
 
 public:
 
-  TopicDisplay( wxWindow* parent, ros::node* rosNode );
+  TopicDisplay( wxWindow* parent, ros::node* rosNode, const wxSize& size = wxSize( 500,300 ) );
+  virtual ~TopicDisplay();
 
   std::vector<std::string> getSelectedTopics();
+  virtual void setMultiselectAllowed( bool allowed );
   
 };
 
