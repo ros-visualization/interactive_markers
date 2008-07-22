@@ -1,5 +1,5 @@
 #include <ros/node.h>
-#include <rostime/clock.h>
+#include <ros/time.h>
 //#include <rostools/Time.h>
 #include <std_msgs/PointCloudFloat32.h>
 #include <std_msgs/Empty.h>
@@ -25,7 +25,7 @@ public:
     cloud.set_chan_size(1);
     cloud.chan[0].name = "intensities";
     cloud.chan[0].set_vals_size(num_points);
-    double seconds = (double)(myClock.ulltime())/1000000000.0;
+    double seconds = (double)(ros::Time::now().to_ull())/1000000000.0;
     for (unsigned int i = 0; i < num_points ; i++)
       {
 	cloud.pts[i].x = cos((double)i/100.0 +seconds) * (1 - sin(seconds/45.0)) * 10.0;
@@ -49,7 +49,6 @@ private:
   std_msgs::PointCloudFloat32 cloud;
   std_msgs::Empty shutter;
   
-  ros::time::clock myClock;
   
 };
 
