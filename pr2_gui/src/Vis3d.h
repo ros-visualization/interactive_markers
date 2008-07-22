@@ -31,8 +31,6 @@
 /**
 @mainpage
 
-@htmlinclude manifest.html
-
 @b Vis3d is a 3D visualization of the robot's current state and sensor feedback using the Irrlicht rendering engine.
 
 <hr>

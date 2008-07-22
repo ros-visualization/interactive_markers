@@ -4,7 +4,8 @@ LauncherImpl::LauncherImpl( wxWindow* parent )
 :
 launcher( parent )
 {
-
+	PTZLCodec = new ImageCodec<std_msgs::Image>(&PTZLImage);
+	
 	wxInitAllImageHandlers();
 	LeftDock_FGS->Hide(HeadLaser_RB,true);
 	LeftDock_FGS->Hide(Visualization_SBS,true);
@@ -259,7 +260,7 @@ void LauncherImpl::startStop_PTZL( wxCommandEvent& event )
 		tiltPTZL_S->Enable(true);
 		zoomPTZL_S->Enable(true);
 		PTZL_B->Enable(true);
-		myNode->subscribe("PTZL_image", PTZLImage, &LauncherImpl::incomingPTZLImageConn,this);
+		myNode->subscribe("image", PTZLImage, &LauncherImpl::incomingPTZLImageConn,this);
 		myNode->subscribe("PTZL_state", PTZL_state, &LauncherImpl::incomingPTZLState,this);
 		myNode->advertise<std_msgs::PTZActuatorCmd>("PTZL_cmd");
 		
@@ -297,19 +298,22 @@ void LauncherImpl::incomingPTZLImageConn()
 {
     if(PTZL_GET_NEW_IMAGE)
     {
-    	PTZL_GET_NEW_IMAGE = false;
-    	const uint32_t count = PTZLImage.get_data_size();
-    	delete PTZLImageData;
+		PTZL_GET_NEW_IMAGE = false;
+		if(PTZLImage.compression == string("raw"))
+		{
+			PTZLCodec->inflate();
+			PTZLImage.compression = string("jpeg");
+			if(!PTZLCodec->deflate(100))
+				return;
+		}
+		const uint32_t count = PTZLImage.get_data_size();
+		delete PTZLImageData;
 		PTZLImageData = new uint8_t[count];
 		memcpy(PTZLImageData, PTZLImage.data, sizeof(uint8_t) * count);
 		wxMemoryInputStream mis(PTZLImageData,PTZLImage.get_data_size());
 		delete PTZL_im;
-		PTZL_im = new wxImage(mis,wxBITMAP_TYPE_JPEG,-1);
-    	
-    	//Event stuff
-		wxCommandEvent PTZL_Event(wxEVT_COMMAND_BUTTON_CLICKED, PTZL_B->GetId());
-		PTZL_Event.SetEventObject(this);
-		this->AddPendingEvent(PTZL_Event);
+		PTZL_im = new wxImage(mis,wxBITMAP_TYPE_ANY,-1);
+					
 		if(PTZL_bmp == NULL){
 			std::cout << "Layout\n";
 			wxSize size(PTZLImage.width,PTZLImage.height);
@@ -318,6 +322,11 @@ void LauncherImpl::incomingPTZLImageConn()
 			Layout();
 			Fit();
 		}
+    	
+    	//Event stuff
+		wxCommandEvent PTZL_Event(wxEVT_COMMAND_BUTTON_CLICKED, PTZL_B->GetId());
+		PTZL_Event.SetEventObject(this);
+		this->AddPendingEvent(PTZL_Event);
     }
     //else
     	//std::cout << "!\n";
@@ -383,19 +392,21 @@ void LauncherImpl::incomingPTZRImageConn()
     if(PTZR_GET_NEW_IMAGE)
     {
     	PTZR_GET_NEW_IMAGE = false;
+    	if(PTZRImage.compression == string("raw"))
+		{
+			PTZRCodec->inflate();
+			PTZRImage.compression = string("jpeg");
+			if(!PTZRCodec->deflate(100))
+				return;
+		}
     	const uint32_t count = PTZRImage.get_data_size();
     	delete PTZRImageData;
 		PTZRImageData = new uint8_t[count];
 		memcpy(PTZRImageData, PTZRImage.data, sizeof(uint8_t) * count);
 		wxMemoryInputStream mis(PTZRImageData,PTZRImage.get_data_size());
 		delete PTZR_im;
-		PTZR_im = new wxImage(mis,wxBITMAP_TYPE_JPEG,-1);
-    	
-    	//Event stuff
-		wxCommandEvent PTZR_Event(wxEVT_COMMAND_BUTTON_CLICKED, PTZR_B->GetId());
-		PTZR_Event.SetEventObject(this);
-		this->AddPendingEvent(PTZR_Event);
-		if(PTZR_bmp == NULL){
+		PTZR_im = new wxImage(mis,wxBITMAP_TYPE_ANY,-1);
+    	if(PTZR_bmp == NULL){
 			std::cout << "Layout\n";
 			wxSize size(PTZRImage.width,PTZRImage.height);
 			PTZR_B->SetMinSize(size);
@@ -403,6 +414,10 @@ void LauncherImpl::incomingPTZRImageConn()
 			Layout();
 			Fit();
 		}
+    	//Event stuff
+		wxCommandEvent PTZR_Event(wxEVT_COMMAND_BUTTON_CLICKED, PTZR_B->GetId());
+		PTZR_Event.SetEventObject(this);
+		this->AddPendingEvent(PTZR_Event);
     }
     //else
     	//std::cout << "!\n";
@@ -446,19 +461,21 @@ void LauncherImpl::incomingWristLImageConn()
     if(WristL_GET_NEW_IMAGE)
     {
     	WristL_GET_NEW_IMAGE = false;
+    	if(WristLImage.compression == string("raw"))
+		{
+			WristLCodec->inflate();
+			WristLImage.compression = string("jpeg");
+			if(!WristLCodec->deflate(100))
+				return;
+		}
     	const uint32_t count = WristLImage.get_data_size();
     	delete WristLImageData;
 		WristLImageData = new uint8_t[count];
 		memcpy(WristLImageData, WristLImage.data, sizeof(uint8_t) * count);
 		wxMemoryInputStream mis(WristLImageData,WristLImage.get_data_size());
 		delete WristL_im;
-		WristL_im = new wxImage(mis,wxBITMAP_TYPE_JPEG,-1);
-    	
-    	//Event stuff
-		wxCommandEvent WristL_Event(wxEVT_COMMAND_BUTTON_CLICKED, WristL_B->GetId());
-		WristL_Event.SetEventObject(this);
-		this->AddPendingEvent(WristL_Event);
-		if(WristL_bmp == NULL){
+		WristL_im = new wxImage(mis,wxBITMAP_TYPE_ANY,-1);
+    	if(WristL_bmp == NULL){
 			std::cout << "Layout\n";
 			wxSize size(WristLImage.width,WristLImage.height);
 			WristL_B->SetMinSize(size);
@@ -466,6 +483,11 @@ void LauncherImpl::incomingWristLImageConn()
 			Layout();
 			Fit();
 		}
+    	//Event stuff
+		wxCommandEvent WristL_Event(wxEVT_COMMAND_BUTTON_CLICKED, WristL_B->GetId());
+		WristL_Event.SetEventObject(this);
+		this->AddPendingEvent(WristL_Event);
+		
     }
     //else
     	//std::cout << "!\n";
@@ -510,19 +532,21 @@ void LauncherImpl::incomingWristRImageConn()
     if(WristR_GET_NEW_IMAGE)
     {
     	WristR_GET_NEW_IMAGE = false;
+    	if(WristRImage.compression == string("raw"))
+		{
+			WristRCodec->inflate();
+			WristRImage.compression = string("jpeg");
+			if(!WristRCodec->deflate(100))
+				return;
+		}
     	const uint32_t count = WristRImage.get_data_size();
     	delete WristRImageData;
 		WristRImageData = new uint8_t[count];
 		memcpy(WristRImageData, WristRImage.data, sizeof(uint8_t) * count);
 		wxMemoryInputStream mis(WristRImageData,WristRImage.get_data_size());
 		delete WristR_im;
-		WristR_im = new wxImage(mis,wxBITMAP_TYPE_JPEG,-1);
-    	
-    	//Event stuff
-		wxCommandEvent WristR_Event(wxEVT_COMMAND_BUTTON_CLICKED, WristR_B->GetId());
-		WristR_Event.SetEventObject(this);
-		this->AddPendingEvent(WristR_Event);
-		if(WristR_bmp == NULL){
+		WristR_im = new wxImage(mis,wxBITMAP_TYPE_ANY,-1);
+    	if(WristR_bmp == NULL){
 			std::cout << "Layout\n";
 			wxSize size(WristRImage.width,WristRImage.height);
 			WristR_B->SetMinSize(size);
@@ -530,6 +554,11 @@ void LauncherImpl::incomingWristRImageConn()
 			Layout();
 			Fit();
 		}
+    	//Event stuff
+		wxCommandEvent WristR_Event(wxEVT_COMMAND_BUTTON_CLICKED, WristR_B->GetId());
+		WristR_Event.SetEventObject(this);
+		this->AddPendingEvent(WristR_Event);
+		
     }
     //else
     	//std::cout << "!\n";

@@ -62,7 +62,8 @@ ILClient::~ILClient() {
     s_pRenderer = NULL;
     pthread_mutex_destroy(s_pSingletonMutex);
     delete s_pSingletonMutex;
-  } else {
+  } 
+  else {
     // Release the lock
     pthread_mutex_unlock(s_pSingletonMutex);
   }
