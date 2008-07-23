@@ -61,6 +61,10 @@
 #define BAR_WINDOW_PROPORTION (0.9f)
 #define BAR_WIDTH (10)
 
+#define TARGET_PAN_EPSILON (1.0f)
+#define TARGET_TILT_EPSILON (1.0f)
+#define TARGET_ZOOM_EPSILON (10.0f)
+
 BEGIN_DECLARE_EVENT_TYPES()
 DECLARE_EVENT_TYPE(EVT_FAKE_REFRESH, wxID_ANY)
 END_DECLARE_EVENT_TYPES()
@@ -77,6 +81,12 @@ CameraPanel::CameraPanel(wxWindow* parent)
 , m_CurrentPan( 0.0f )
 , m_CurrentTilt( 0.0f )
 , m_CurrentZoom( 0.0f )
+, m_HasPanTarget( false )
+, m_PanTarget( 0.0f )
+, m_HasTiltTarget( false )
+, m_TiltTarget( 0.0f )
+, m_HasZoomTarget( false )
+, m_ZoomTarget( 0.0f )
 , m_LeftMouseDown( false )
 , m_RightMouseDown( false )
 , m_StartMouseX( 0 )
@@ -273,6 +283,21 @@ void CameraPanel::IncomingPTZState()
     m_CurrentZoom = m_PTZStateMessage.zoom.pos;
   }
 
+  if ( m_HasPanTarget && abs( m_CurrentPan - m_PanTarget ) < TARGET_PAN_EPSILON )
+  {
+    m_HasPanTarget = false;
+  }
+
+  if ( m_HasTiltTarget && abs( m_CurrentTilt - m_TiltTarget ) < TARGET_TILT_EPSILON )
+  {
+    m_HasTiltTarget = false;
+  }
+
+  if ( m_HasZoomTarget && abs( m_CurrentZoom - m_ZoomTarget ) < TARGET_ZOOM_EPSILON )
+  {
+    m_HasZoomTarget = false;
+  }
+
   // wx really doesn't like a Refresh call coming from a separate thread
   // send a fake refresh event, so that the call to Refresh comes from the main thread
   wxCommandEvent evt( EVT_FAKE_REFRESH, m_ImagePanel->GetId() );
@@ -373,8 +398,8 @@ void CameraPanel::DrawTilt( wxDC& dc, wxPen& pen, float tilt )
 
 void CameraPanel::DrawNewPanTiltLocations( wxDC& dc )
 {
-  float newPan = ComputeNewPan( m_StartMouseX, m_CurrentMouseX, m_CurrentPan );
-  float newTilt = ComputeNewTilt( m_StartMouseY, m_CurrentMouseY, m_CurrentTilt );
+  float newPan = ComputeNewPan( m_StartMouseX, m_CurrentMouseX );
+  float newTilt = ComputeNewTilt( m_StartMouseY, m_CurrentMouseY );
 
   wxPen pen( *wxRED_PEN );
   pen.SetWidth( POSITION_TICK_WIDTH );
@@ -414,7 +439,7 @@ void CameraPanel::DrawZoom( wxDC& dc, wxPen& pen, float zoom )
 
 void CameraPanel::DrawNewZoomLocation( wxDC& dc )
 {
-  float newZoom = ComputeNewZoom( m_StartMouseY, m_CurrentMouseY, m_CurrentZoom );
+  float newZoom = ComputeNewZoom( m_StartMouseY, m_CurrentMouseY );
   wxPen pen( *wxRED_PEN );
   pen.SetWidth( POSITION_TICK_WIDTH );
 
@@ -521,11 +546,12 @@ void CameraPanel::OnImagePaint( wxPaintEvent& event )
   if ( !( m_LeftMouseDown && m_RightMouseDown ) )
   {
     // Now draw pan/tilt if necessary
-    if ( m_LeftMouseDown )
+    if ( m_LeftMouseDown || m_HasPanTarget || m_HasTiltTarget )
     {
       DrawNewPanTiltLocations( dc );
     }
-    else if ( m_RightMouseDown )
+
+    if ( m_RightMouseDown || m_HasZoomTarget )
     {
       DrawNewZoomLocation( dc );
     }
@@ -576,8 +602,8 @@ void CameraPanel::OnLeftMouseUp( wxMouseEvent& event )
     return;
   }
 
-  float newPan = ComputeNewPan( m_StartMouseX, event.GetX(), m_CurrentPan );
-  float newTilt = ComputeNewTilt( m_StartMouseY, event.GetY(), m_CurrentTilt );
+  float newPan = ComputeNewPan( m_StartMouseX, event.GetX() );
+  float newTilt = ComputeNewTilt( m_StartMouseY, event.GetY() );
 
   m_PTZControlMessage.pan.valid = 1;
   m_PTZControlMessage.pan.cmd = newPan;
@@ -588,6 +614,14 @@ void CameraPanel::OnLeftMouseUp( wxMouseEvent& event )
   m_ROSNode->publish(m_PTZControlTopic, m_PTZControlMessage);
 
   m_LeftMouseDown = false;
+
+  m_HasPanTarget = true;
+  m_HasTiltTarget = true;
+  m_PanTarget = newPan;
+  m_TiltTarget = newTilt;
+
+  m_StartMouseX = m_CurrentMouseX = event.GetX();
+  m_StartMouseY = m_CurrentMouseY = event.GetY();
 
   m_ImagePanel->Refresh();
 }
@@ -632,7 +666,7 @@ void CameraPanel::OnRightMouseUp( wxMouseEvent& event )
     return;
   }
 
-  float newZoom = ComputeNewZoom( m_StartMouseY, event.GetY(), m_CurrentZoom );
+  float newZoom = ComputeNewZoom( m_StartMouseY, event.GetY() );
 
   m_PTZControlMessage.pan.valid = 0;
   m_PTZControlMessage.tilt.valid = 0;
@@ -642,6 +676,12 @@ void CameraPanel::OnRightMouseUp( wxMouseEvent& event )
   m_ROSNode->publish(m_PTZControlTopic, m_PTZControlMessage);
 
   m_RightMouseDown = false;
+
+  m_HasZoomTarget = true;
+  m_ZoomTarget = newZoom;
+
+  m_StartMouseX = m_CurrentMouseX = event.GetX();
+  m_StartMouseY = m_CurrentMouseY = event.GetY();
 
   m_ImagePanel->Refresh();
 }
@@ -660,23 +700,26 @@ void CameraPanel::OnMouseMotion( wxMouseEvent& event )
   m_ImagePanel->Refresh();
 }
 
-float CameraPanel::ComputeNewPan( int32_t startX, int32_t endX, float currentPan )
+float CameraPanel::ComputeNewPan( int32_t startX, int32_t endX )
 {
+  float pan = m_HasPanTarget ? m_PanTarget : m_CurrentPan;
   int32_t diffX = endX - startX;
 
-  return std::min(std::max(currentPan  + PAN_SCALE*(float)diffX, PAN_MIN), PAN_MAX);
+  return std::min(std::max(pan  + PAN_SCALE*(float)diffX, PAN_MIN), PAN_MAX);
 }
 
-float CameraPanel::ComputeNewTilt( int32_t startY, int32_t endY, float currentTilt )
+float CameraPanel::ComputeNewTilt( int32_t startY, int32_t endY )
 {
+  float tilt = m_HasTiltTarget ? m_TiltTarget : m_CurrentTilt;
   int32_t diffY = startY - endY;
 
-  return std::min(std::max(currentTilt + TILT_SCALE*(float)diffY, TILT_MIN), TILT_MAX);
+  return std::min(std::max(tilt + TILT_SCALE*(float)diffY, TILT_MIN), TILT_MAX);
 }
 
-float CameraPanel::ComputeNewZoom( int32_t startY, int32_t endY, float currentZoom )
+float CameraPanel::ComputeNewZoom( int32_t startY, int32_t endY )
 {
+  float zoom = m_HasZoomTarget ? m_ZoomTarget : m_CurrentZoom;
   int32_t diffY = startY - endY;
 
-  return std::min(std::max(currentZoom + ZOOM_SCALE*(float)diffY, ZOOM_MIN), ZOOM_MAX);
+  return std::min(std::max(zoom + ZOOM_SCALE*(float)diffY, ZOOM_MIN), ZOOM_MAX);
 }

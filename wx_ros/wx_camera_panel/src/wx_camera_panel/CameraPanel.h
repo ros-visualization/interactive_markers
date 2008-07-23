@@ -104,11 +104,11 @@ private:
   void IncomingPTZState();
 
   /// Compute a new pan value, given a mouse start/end position
-  float ComputeNewPan( int32_t startX, int32_t endX, float currentPan );
+  float ComputeNewPan( int32_t startX, int32_t endX );
   /// Compute a new tilt value, given a mouse start/end position
-  float ComputeNewTilt( int32_t startY, int32_t endY, float currentTilt );
+  float ComputeNewTilt( int32_t startY, int32_t endY );
   /// Compute a new zoom value, given a mouse start/end position
-  float ComputeNewZoom( int32_t startY, int32_t endY, float currentZoom );
+  float ComputeNewZoom( int32_t startY, int32_t endY );
 
   // custom draw functions
 
@@ -195,6 +195,15 @@ private:
   float m_CurrentTilt;
   /// Latest zoom received from ROS
   float m_CurrentZoom;
+
+  bool m_HasPanTarget;
+  float m_PanTarget;
+
+  bool m_HasTiltTarget;
+  float m_TiltTarget;
+
+  bool m_HasZoomTarget;
+  float m_ZoomTarget;
 
   // Mouse handling
   /// Is the left mouse button currently pressed?
