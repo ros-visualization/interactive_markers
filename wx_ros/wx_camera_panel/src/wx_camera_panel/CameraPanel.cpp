@@ -25,6 +25,18 @@
 #define ZOOM_MIN (0.0f)
 #define ZOOM_MAX (10000.0F)
 
+#define POSITION_TICK_LENGTH (20)
+#define POSITION_TICK_WIDTH (5)
+
+#define BAR_WINDOW_PROPORTION (0.9f)
+#define BAR_WIDTH (10)
+
+BEGIN_DECLARE_EVENT_TYPES()
+DECLARE_EVENT_TYPE(EVT_FAKE_REFRESH, wxID_ANY)
+END_DECLARE_EVENT_TYPES()
+
+DEFINE_EVENT_TYPE(EVT_FAKE_REFRESH)
+
 CameraPanel::CameraPanel(wxWindow* parent)
 : CameraPanelBase( parent )
 , m_Enabled( false )
@@ -51,10 +63,14 @@ CameraPanel::CameraPanel(wxWindow* parent)
 	 
 	// jfaust TODO: rosnode should be passed in once STROS is here and it supports multiple subscribers to the same topic
 	m_ROSNode = new ros::node( ss.str() );
+
+	m_ImagePanel->Connect( EVT_FAKE_REFRESH, wxCommandEventHandler( CameraPanel::OnFakeRefresh ), NULL, this );
 }
 
 CameraPanel::~CameraPanel()
 {
+	m_ImagePanel->Disconnect( EVT_FAKE_REFRESH, wxCommandEventHandler( CameraPanel::OnFakeRefresh ), NULL, this );
+
 	SetEnabled( false );
 
 	m_ROSNode->shutdown();
@@ -228,6 +244,11 @@ void CameraPanel::IncomingPTZState()
 	}
 
 	//printf( "Pan: %.2f    Tilt: %.2f    Zoom: %.2f\n", m_CurrentPan, m_CurrentTilt, m_CurrentZoom );
+
+	// wx really doesn't like a Refresh call coming from a separate thread
+	// send a fake refresh event, so that the call to Refresh comes from the main thread
+	wxCommandEvent evt( EVT_FAKE_REFRESH, m_ImagePanel->GetId() );
+	wxPostEvent( m_ImagePanel, evt );
 }
 
 void CameraPanel::IncomingImage()
@@ -252,12 +273,19 @@ void CameraPanel::IncomingImage()
 	wxMemoryInputStream memoryStream( m_ImageData, dataSize );
 	m_Image = new wxImage( memoryStream, wxBITMAP_TYPE_ANY, -1 );
 
-	// wx really doesn't like a Refresh coming from a separate thread
-	// force a size event instead, which will also cause a refresh
-	wxCommandEvent evt( wxEVT_SIZE, m_ImagePanel->GetId() );
-	wxPostEvent( this, evt );
+	m_RecreateBitmap = true;
+
+	// wx really doesn't like a Refresh call coming from a separate thread
+	// send a fake refresh event, so that the call to Refresh comes from the main thread
+	wxCommandEvent evt( EVT_FAKE_REFRESH, m_ImagePanel->GetId() );
+	wxPostEvent( m_ImagePanel, evt );
 
 	m_ImageMutex.unlock();
+}
+
+void CameraPanel::OnFakeRefresh( wxCommandEvent& event )
+{
+	m_ImagePanel->Refresh();
 }
 
 void CameraPanel::OnImageSize( wxSizeEvent& event )
@@ -270,6 +298,158 @@ void CameraPanel::OnImageSize( wxSizeEvent& event )
 	}
 
 	event.Skip();
+}
+
+void CameraPanel::DrawPan( wxDC& dc, wxPen& pen, float pan )
+{
+	wxSize panelSize = m_ImagePanel->GetSize();
+	int panelWidth = panelSize.GetWidth();
+	int panelHeight = panelSize.GetHeight();
+
+	int adjustedWidth = panelWidth * BAR_WINDOW_PROPORTION;
+
+	int padWidth = (panelWidth - adjustedWidth) / 2;
+	
+	// Normalize pan to the window
+	pan -= PAN_MIN;
+	pan /= (PAN_MAX - PAN_MIN);
+	pan *= adjustedWidth;
+
+	dc.SetPen( pen );
+	// draw pan tick
+	dc.DrawLine( padWidth + (int)pan, panelHeight, padWidth + (int)pan, panelHeight - POSITION_TICK_LENGTH );
+}
+
+void CameraPanel::DrawTilt( wxDC& dc, wxPen& pen, float tilt )
+{
+	wxSize panelSize = m_ImagePanel->GetSize();
+	int panelWidth = panelSize.GetWidth();
+	int panelHeight = panelSize.GetHeight();
+
+	int adjustedHeight = panelHeight * BAR_WINDOW_PROPORTION;
+
+	int padHeight = (panelHeight - adjustedHeight) / 2;
+
+	// Normalize tilt to the window
+	tilt -= TILT_MIN;
+	tilt /= (TILT_MAX - TILT_MIN);
+	tilt *= adjustedHeight;
+
+	dc.SetPen( pen );
+	// draw tilt tick
+	dc.DrawLine( panelWidth, adjustedHeight + padHeight - (int)tilt, 
+				 panelWidth - POSITION_TICK_LENGTH, adjustedHeight + padHeight - (int)tilt );
+}
+
+void CameraPanel::DrawNewPanTiltLocations( wxDC& dc )
+{
+	float newPan = ComputeNewPan( m_StartMouseX, m_CurrentMouseX, m_CurrentPan );
+	float newTilt = ComputeNewTilt( m_StartMouseY, m_CurrentMouseY, m_CurrentTilt );
+
+	wxPen pen( *wxRED_PEN );
+	pen.SetWidth( POSITION_TICK_WIDTH );
+	
+	DrawPan( dc, pen, newPan );
+	DrawTilt( dc, pen, newTilt );
+}
+
+void CameraPanel::DrawCurrentPanTiltLocations( wxDC& dc )
+{
+	wxPen pen( *wxWHITE_PEN );
+	pen.SetWidth( POSITION_TICK_WIDTH );
+
+	DrawPan( dc, pen, m_CurrentPan );
+	DrawTilt( dc, pen, m_CurrentTilt );
+}
+
+void CameraPanel::DrawZoom( wxDC& dc, wxPen& pen, float zoom )
+{
+	wxSize panelSize = m_ImagePanel->GetSize();
+	int panelHeight = panelSize.GetHeight();
+
+	int adjustedHeight = panelHeight * BAR_WINDOW_PROPORTION;
+
+	int padHeight = (panelHeight - adjustedHeight) / 2;
+
+	// Normalize zoom to the window
+	zoom -= ZOOM_MIN;
+	zoom /= (ZOOM_MAX - ZOOM_MIN);
+	zoom *= adjustedHeight;
+
+	dc.SetPen( pen );
+
+	// draw zoom bar
+	dc.DrawLine( 0, adjustedHeight + padHeight - (int)zoom, POSITION_TICK_LENGTH, adjustedHeight + padHeight - (int)zoom );
+}
+
+void CameraPanel::DrawNewZoomLocation( wxDC& dc )
+{
+	float newZoom = ComputeNewZoom( m_StartMouseY, m_CurrentMouseY, m_CurrentZoom );
+	wxPen pen( *wxRED_PEN );
+	pen.SetWidth( POSITION_TICK_WIDTH );
+	
+	DrawZoom( dc, pen, newZoom );
+}
+
+void CameraPanel::DrawCurrentZoomLocation( wxDC& dc )
+{
+	wxPen pen( *wxWHITE_PEN );
+	pen.SetWidth( POSITION_TICK_WIDTH );
+
+	DrawZoom( dc, pen, m_CurrentZoom );
+}
+
+void CameraPanel::DrawPanBar( wxDC& dc )
+{
+	wxSize panelSize = m_ImagePanel->GetSize();
+	int panelWidth = panelSize.GetWidth();
+	int panelHeight = panelSize.GetHeight();
+
+	int adjustedWidth = panelWidth * BAR_WINDOW_PROPORTION;
+
+	int padWidth = (panelWidth - adjustedWidth) / 2;
+
+	wxBrush brush( *wxBLACK_BRUSH );
+	dc.SetBrush( brush );
+	wxPen pen( *wxWHITE_PEN );
+	dc.SetPen( pen );
+	
+	dc.DrawRectangle( padWidth, panelHeight - BAR_WIDTH, adjustedWidth, BAR_WIDTH );
+}
+
+void CameraPanel::DrawTiltBar( wxDC& dc )
+{
+	wxSize panelSize = m_ImagePanel->GetSize();
+	int panelWidth = panelSize.GetWidth();
+	int panelHeight = panelSize.GetHeight();
+
+	int adjustedHeight = panelHeight * BAR_WINDOW_PROPORTION;
+
+	int padHeight = (panelHeight - adjustedHeight) / 2;
+
+	wxBrush brush( *wxBLACK_BRUSH );
+	dc.SetBrush( brush );
+	wxPen pen( *wxWHITE_PEN );
+	dc.SetPen( pen );
+
+	dc.DrawRectangle( panelWidth - BAR_WIDTH, padHeight, BAR_WIDTH, adjustedHeight );
+}
+
+void CameraPanel::DrawZoomBar( wxDC& dc )
+{
+	wxSize panelSize = m_ImagePanel->GetSize();
+	int panelHeight = panelSize.GetHeight();
+
+	int adjustedHeight = panelHeight * BAR_WINDOW_PROPORTION;
+
+	int padHeight = (panelHeight - adjustedHeight) / 2;
+
+	wxBrush brush( *wxBLACK_BRUSH );
+	dc.SetBrush( brush );
+	wxPen pen( *wxWHITE_PEN );
+	dc.SetPen( pen );
+
+	dc.DrawRectangle( 0, padHeight, BAR_WIDTH, adjustedHeight );
 }
 
 void CameraPanel::OnImagePaint( wxPaintEvent& event )
@@ -285,6 +465,8 @@ void CameraPanel::OnImagePaint( wxPaintEvent& event )
         {
 			wxSize scale = m_ImagePanel->GetSize();
             m_Bitmap = m_Image->Scale( scale.GetWidth(), scale.GetHeight() );
+
+			m_RecreateBitmap = false;
 		}
 
 		dc.DrawBitmap( m_Bitmap, 0, 0, false );
@@ -296,56 +478,33 @@ void CameraPanel::OnImagePaint( wxPaintEvent& event )
 		dc.DrawText( wxT( "No image to display" ), 0, 0 );
 	}
 
+	bool ptzStateEnabled = IsPTZStateEnabled();
+	bool ptzControlEnabled = IsPTZControlEnabled();
+
+	if ( ptzStateEnabled || ptzControlEnabled )
+	{
+		DrawPanBar( dc );
+		DrawTiltBar( dc );
+		DrawZoomBar( dc );
+	}
+
 	if ( !( m_LeftMouseDown && m_RightMouseDown ) )
 	{
 		// Now draw pan/tilt if necessary
 		if ( m_LeftMouseDown )
 		{
-			float newPan = ComputeNewPan( m_StartMouseX, m_CurrentMouseX, m_CurrentPan );
-			float newTilt = ComputeNewTilt( m_StartMouseY, m_CurrentMouseY, m_CurrentTilt );
-
-			wxSize panelSize = m_ImagePanel->GetSize();
-			int panelWidth = panelSize.GetWidth();
-			int panelHeight = panelSize.GetHeight();
-			
-			// Normalize pan to the window
-			newPan -= PAN_MIN;
-			newPan /= (PAN_MAX - PAN_MIN);
-			newPan *= panelWidth;
-
-			// Normalize tilt to the window
-			newTilt -= TILT_MIN;
-			newTilt /= (TILT_MAX - TILT_MIN);
-			newTilt *= panelHeight;
-
-			wxPen pen( *wxRED_PEN );
-			pen.SetWidth( 5 );
-			dc.SetPen( pen );
-			// draw pan bar
-			dc.DrawLine( (int)newPan, panelHeight, (int)newPan, panelHeight - 20 );
-			// draw tilt bar
-			dc.DrawLine( panelWidth, panelHeight - (int)newTilt, panelWidth - 20, panelHeight - (int)newTilt );
+			DrawNewPanTiltLocations( dc );
 		}
 		else if ( m_RightMouseDown )
 		{
-			float newZoom = ComputeNewZoom( m_StartMouseY, m_CurrentMouseY, m_CurrentZoom );
-
-			wxSize panelSize = m_ImagePanel->GetSize();
-			int panelWidth = panelSize.GetWidth();
-			int panelHeight = panelSize.GetHeight();
-
-			// Normalize zoom to the window
-			newZoom -= ZOOM_MIN;
-			newZoom /= (ZOOM_MAX - ZOOM_MIN);
-			newZoom *= panelHeight;
-
-			wxPen pen( *wxCYAN_PEN );
-			pen.SetWidth( 5 );
-			dc.SetPen( pen );
-
-			// draw zoom bar
-			dc.DrawLine( panelWidth, panelHeight - (int)newZoom, panelWidth - 20, panelHeight - (int)newZoom );
+			DrawNewZoomLocation( dc );
 		}
+	}
+
+	if ( ptzStateEnabled )
+	{
+		DrawCurrentPanTiltLocations( dc );
+		DrawCurrentZoomLocation( dc );
 	}
 }
 
@@ -399,6 +558,8 @@ void CameraPanel::OnLeftMouseUp( wxMouseEvent& event )
 	m_ROSNode->publish(m_PTZControlCommand, m_PTZControlMessage);
 
 	m_LeftMouseDown = false;
+
+	m_ImagePanel->Refresh();
 }
 
 void CameraPanel::OnRightMouseDown( wxMouseEvent& event )
@@ -432,6 +593,8 @@ void CameraPanel::OnRightMouseUp( wxMouseEvent& event )
 	m_ROSNode->publish(m_PTZControlCommand, m_PTZControlMessage);
 
 	m_RightMouseDown = false;
+
+	m_ImagePanel->Refresh();
 }
 
 void CameraPanel::OnMouseMotion( wxMouseEvent& event )

@@ -34,8 +34,8 @@ public:
 
 	void SetPTZControlCommand( const std::string& command );
 
-	bool IsPTZStateEnabled() { return !m_PTZStateSubscription.empty(); }
-	bool IsPTZControlEnabled() { return !m_PTZControlCommand.empty(); }
+	bool IsPTZStateEnabled() { return m_Enabled && !m_PTZStateSubscription.empty(); }
+	bool IsPTZControlEnabled() { return m_Enabled && !m_PTZControlCommand.empty(); }
 
 private:
 	void SubscribeImage();
@@ -54,6 +54,21 @@ private:
 	float ComputeNewTilt( int32_t startY, int32_t endY, float currentTilt );
 	float ComputeNewZoom( int32_t startY, int32_t endY, float currentZoom );
 
+	void DrawNewPanTiltLocations( wxDC& dc );
+	void DrawCurrentPanTiltLocations( wxDC& dc );
+
+	void DrawNewZoomLocation( wxDC& dc );
+	void DrawCurrentZoomLocation( wxDC& dc );
+
+	// custom draw functions
+	void DrawPan( wxDC& dc, wxPen& pen, float pan );
+	void DrawTilt( wxDC& dc, wxPen& pen, float tilt );
+	void DrawZoom( wxDC& dc, wxPen& pen, float zoom );
+
+	void DrawPanBar( wxDC& dc );
+	void DrawTiltBar( wxDC& dc );
+	void DrawZoomBar( wxDC& dc );
+
 	// wx callbacks
 	void OnSetup( wxCommandEvent& event );
 	void OnEnable( wxCommandEvent& event );
@@ -66,6 +81,8 @@ private:
 	void OnLeftMouseUp( wxMouseEvent& event );
 
 	void OnMouseMotion( wxMouseEvent& event );
+
+	void OnFakeRefresh( wxCommandEvent& event );
 	
 
 	// private variables
