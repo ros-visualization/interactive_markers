@@ -121,7 +121,6 @@ private:
   void DrawNewZoomLocation( wxDC& dc );
   /// Draws the current zoom location (latest data from the camera)
   void DrawCurrentZoomLocation( wxDC& dc );
-
   /// Draw a pan tickmark
   void DrawPan( wxDC& dc, wxPen& pen, float pan );
   /// Draw a tilt tickmark
@@ -150,6 +149,8 @@ private:
   void OnRightMouseDown( wxMouseEvent& event );
   /// wx callback, called when the right mouse button is released on the image panel
   void OnRightMouseUp( wxMouseEvent& event );
+  /// wx callback, called when the middle mouse button is released on the image panel
+  void OnMiddleMouseUp( wxMouseEvent& event );
   /// wx callback, called when the left mouse button is pressed on the image panel
   void OnLeftMouseDown( wxMouseEvent& event );
   /// wx callback, called when the left mouse button is released on the image panel

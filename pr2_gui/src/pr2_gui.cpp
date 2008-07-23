@@ -344,6 +344,7 @@ launcher::launcher( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	HeadLaser_RB->Connect( wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler( launcher::HeadLaserChanged ), NULL, this );
 	panPTZL_S->Connect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( launcher::PTZL_ptzChanged ), NULL, this );
 	zoomPTZL_S->Connect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( launcher::PTZL_ptzChanged ), NULL, this );
+	PTZL_B->Connect( wxEVT_RIGHT_UP, wxMouseEventHandler( launcher::PTZL_click ), NULL, this );
 	tiltPTZL_S->Connect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( launcher::PTZL_ptzChanged ), NULL, this );
 	Visualization_CB->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( launcher::startStop_Visualization ), NULL, this );
 	Topdown_CB->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( launcher::startStopTopdown ), NULL, this );
@@ -354,6 +355,7 @@ launcher::launcher( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	EmStop_B->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( launcher::EmergencyStop ), NULL, this );
 	panPTZR_S->Connect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( launcher::PTZR_ptzChanged ), NULL, this );
 	zoomPTZR_S->Connect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( launcher::PTZR_ptzChanged ), NULL, this );
+	PTZR_B->Connect( wxEVT_RIGHT_UP, wxMouseEventHandler( launcher::PTZR_click ), NULL, this );
 	tiltPTZR_S->Connect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( launcher::PTZR_ptzChanged ), NULL, this );
 }
 
@@ -371,6 +373,7 @@ launcher::~launcher()
 	HeadLaser_RB->Disconnect( wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler( launcher::HeadLaserChanged ), NULL, this );
 	panPTZL_S->Disconnect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( launcher::PTZL_ptzChanged ), NULL, this );
 	zoomPTZL_S->Disconnect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( launcher::PTZL_ptzChanged ), NULL, this );
+	PTZL_B->Disconnect( wxEVT_RIGHT_UP, wxMouseEventHandler( launcher::PTZL_click ), NULL, this );
 	tiltPTZL_S->Disconnect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( launcher::PTZL_ptzChanged ), NULL, this );
 	Visualization_CB->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( launcher::startStop_Visualization ), NULL, this );
 	Topdown_CB->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( launcher::startStopTopdown ), NULL, this );
@@ -381,5 +384,6 @@ launcher::~launcher()
 	EmStop_B->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( launcher::EmergencyStop ), NULL, this );
 	panPTZR_S->Disconnect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( launcher::PTZR_ptzChanged ), NULL, this );
 	zoomPTZR_S->Disconnect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( launcher::PTZR_ptzChanged ), NULL, this );
+	PTZR_B->Disconnect( wxEVT_RIGHT_UP, wxMouseEventHandler( launcher::PTZR_click ), NULL, this );
 	tiltPTZR_S->Disconnect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( launcher::PTZR_ptzChanged ), NULL, this );
 }

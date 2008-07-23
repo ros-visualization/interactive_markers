@@ -85,6 +85,7 @@ class launcher : public wxFrame
 		virtual void viewChanged( wxCommandEvent& event ){ event.Skip(); }
 		virtual void HeadLaserChanged( wxCommandEvent& event ){ event.Skip(); }
 		virtual void PTZL_ptzChanged( wxScrollEvent& event ){ event.Skip(); }
+		virtual void PTZL_click( wxMouseEvent& event ){ event.Skip(); }
 		virtual void startStop_Visualization( wxCommandEvent& event ){ event.Skip(); }
 		virtual void startStopTopdown( wxCommandEvent& event ){ event.Skip(); }
 		virtual void startStop_PTZL( wxCommandEvent& event ){ event.Skip(); }
@@ -93,10 +94,11 @@ class launcher : public wxFrame
 		virtual void startStop_WristR( wxCommandEvent& event ){ event.Skip(); }
 		virtual void EmergencyStop( wxCommandEvent& event ){ event.Skip(); }
 		virtual void PTZR_ptzChanged( wxScrollEvent& event ){ event.Skip(); }
+		virtual void PTZR_click( wxMouseEvent& event ){ event.Skip(); }
 		
 	
 	public:
-		launcher( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Launcher"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 953,406 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL, const wxString& name = wxT("launcher") );
+		launcher( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Launcher"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 1474,523 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL, const wxString& name = wxT("launcher") );
 		~launcher();
 	
 };

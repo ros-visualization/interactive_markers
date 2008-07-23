@@ -52,8 +52,8 @@
 #define TILT_MAX (90.0f)
 
 #define ZOOM_SCALE (10.0f)
-#define ZOOM_MIN (0.0f)
-#define ZOOM_MAX (10000.0F)
+#define ZOOM_MIN (1.0f)
+#define ZOOM_MAX (9999.0F)
 
 #define POSITION_TICK_LENGTH (20)
 #define POSITION_TICK_WIDTH (5)
@@ -592,6 +592,25 @@ void CameraPanel::OnLeftMouseUp( wxMouseEvent& event )
   m_ImagePanel->Refresh();
 }
 
+void CameraPanel::OnMiddleMouseUp( wxMouseEvent& event )
+{
+	wxSize scale = m_ImagePanel->GetSize();
+	
+	float h_mid = ((float)scale.GetWidth())/2.0f;
+	float v_mid = ((float)scale.GetHeight())/2.0f;
+	
+	float delH = (event.m_x - h_mid)/h_mid*(21.0f-(m_CurrentZoom)/500.0f);
+	float delV = (event.m_y - v_mid)/v_mid*(15.0f-(m_CurrentZoom)/700.0f);
+	
+	m_PTZControlMessage.pan.valid = 1;
+	m_PTZControlMessage.pan.cmd = std::min(std::max(m_CurrentPan + delH, PAN_MIN), PAN_MAX);
+	m_PTZControlMessage.tilt.valid = 1;
+	m_PTZControlMessage.tilt.cmd = std::min(std::max(m_CurrentTilt - delV, TILT_MIN), TILT_MAX);
+	m_PTZControlMessage.zoom.valid = 0;
+
+	m_ROSNode->publish(m_PTZControlTopic, m_PTZControlMessage);
+}
+	
 void CameraPanel::OnRightMouseDown( wxMouseEvent& event )
 {
   if ( !IsPTZControlEnabled() )

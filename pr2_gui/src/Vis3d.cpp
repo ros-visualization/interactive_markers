@@ -207,9 +207,9 @@ void Vis3d::enableModel()
 	//static const char *modelPaths[] = {"","","pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","pr2_models/base1000r.3DS","pr2_models/body1000r.3DS","pr2_models/sh-pan1000.3DS","pr2_models/sh-pitch1000.3DS","pr2_models/sh-roll1000.3DS","","","","","","","pr2_models/sh-pan1000.3DS","pr2_models/sh-pitch1000.3DS","pr2_models/sh-roll1000.3DS","","","","","","","pr2_models/head-pan1000.3DS","pr2_models/head-tilt1000.3DS","","",""};
 	static const char *modelPaths[] = {"../pr2_models/wheel.3DS","../pr2_models/wheel.3DS","../pr2_models/caster.3DS","../pr2_models/wheel.3DS","../pr2_models/wheel.3DS","../pr2_models/caster.3DS","../pr2_models/wheel.3DS","../pr2_models/wheel.3DS","../pr2_models/caster.3DS","../pr2_models/wheel.3DS","../pr2_models/wheel.3DS","../pr2_models/caster.3DS","../pr2_models/base.3DS","../pr2_models/body.3DS","../pr2_models/sh-pan.3DS","../pr2_models/sh-pitch.3DS","../pr2_models/sh-roll.3DS","../pr2_models/el-pitch.3DS","../pr2_models/fa-roll.3DS","../pr2_models/wr-pitch.3DS","../pr2_models/wr-roll.3DS","","","../pr2_models/sh-pan.3DS","../pr2_models/sh-pitch.3DS","../pr2_models/sh-roll.3DS","../pr2_models/el-pitch.3DS","../pr2_models/fa-roll.3DS","../pr2_models/wr-pitch.3DS","../pr2_models/wr-roll.3DS","","","../pr2_models/head-pan.3DS","../pr2_models/head-tilt.3DS","","",""};
 	pLocalRenderer->lock();
-	for(int i = 0; i < PR2::MAX_FRAMEIDS-PR2::FRAMEID_CASTER_FL_WHEEL_L; i++)
+	for(int i = 0; i < PR2::PR2_FRAMEID_COUNT; i++)
 	{
-		if (i != 21 && i != 22 && i != 30 && i != 31 && i < 31){
+		//if (i != 21 && i != 22 && i != 30 && i != 31 && i < 31){
 		libTF::TFPose aPose;
 		aPose.x = 0;
 		aPose.y = 0;
@@ -218,7 +218,7 @@ void Vis3d::enableModel()
 		aPose.pitch = 0;
 		aPose.yaw = 0;
 		aPose.time = 0;
-		aPose.frame = this->tfClient.lookup("FRAMEID_CASTER_FL_WHEEL_L");
+		aPose.frame = this->tfClient.lookup(PR2::PR2_FRAMEID[i]);// + i
 		libTF::TFPose inBaseFrame;
 		try
 		{
@@ -236,13 +236,16 @@ void Vis3d::enableModel()
 			inBaseFrame.frame = this->tfClient.lookup("FRAMEID_BASE");
 		}
 		std::cout << "Coordinates for : " << i << "; "<<inBaseFrame.x << ", " <<  inBaseFrame.y << ", " << inBaseFrame.z << "; "<<inBaseFrame.roll << ", " <<  inBaseFrame.pitch << ", " << inBaseFrame.yaw <<std::endl;
-		ILModel *tempModel = new ILModel(pLocalRenderer->manager(), intermediate, (irr::c8*)modelPaths[i], this->tfClient.lookup("FRAMEID_CASTER_FL_WHEEL_L"), (float)inBaseFrame.x,(float)inBaseFrame.y, (float)inBaseFrame.z, (float)inBaseFrame.roll,(float)(inBaseFrame.pitch), (float)(inBaseFrame.yaw));
-		tempModel->getNode()->getMaterial(0).AmbientColor.set(255,100+int(155.0*rand()/(RAND_MAX + 1.0)),100+int(155.0*rand()/(RAND_MAX + 1.0)),100+int(155.0*rand()/(RAND_MAX + 1.0)));
-		model.push_back(tempModel);
+		if(modelPaths[i] != "")
+		{
+			ILModel *tempModel = new ILModel(pLocalRenderer->manager(), intermediate, (irr::c8*)modelPaths[i], this->tfClient.lookup(PR2::PR2_FRAMEID[i]), (float)inBaseFrame.x,(float)inBaseFrame.y, (float)inBaseFrame.z, (float)inBaseFrame.roll,(float)(inBaseFrame.pitch), (float)(inBaseFrame.yaw));
+			tempModel->getNode()->getMaterial(0).AmbientColor.set(255,100+int(155.0*rand()/(RAND_MAX + 1.0)),100+int(155.0*rand()/(RAND_MAX + 1.0)),100+int(155.0*rand()/(RAND_MAX + 1.0)));
+			model.push_back(tempModel);
 		}
 		else
 			model.push_back(NULL);
 	}
+	std::cout << "Loaded all models\n";
 	myNode->subscribe("transform",transform, &Vis3d::newTransform,this);
 	pLocalRenderer->unlock();
 }
@@ -635,9 +638,11 @@ void Vis3d::changeHeadLaser(int choice)
 
 void Vis3d::newTransform()
 {
-	for(int i = 0; i < PR2::MAX_FRAMEIDS-PR2::FRAMEID_CASTER_FL_WHEEL_L; i++)
+	//std::cout << "New Transform!\n";
+	for(int i = 0; i < PR2::PR2_FRAMEID_COUNT; i++)
 	{
-		if (i != 21 && i != 22 && i != 30 && i != 31 && i < 31){
+		//std::cout << "i = " << i << std::endl;
+		//if (i != 21 && i != 22 && i != 30 && i != 31 && i < 31){
 			libTF::TFPose aPose;
 			aPose.x = 0;
 			aPose.y = 0;
@@ -646,7 +651,7 @@ void Vis3d::newTransform()
 			aPose.pitch = 0;
 			aPose.yaw = 0;
 			aPose.time = 0;
-			aPose.frame = this->tfClient.lookup("FRAMEID_CASTER_FL_WHEEL_L");
+			aPose.frame = this->tfClient.lookup(PR2::PR2_FRAMEID[i]);
 			libTF::TFPose inBaseFrame;
 			try
 			{
@@ -664,9 +669,12 @@ void Vis3d::newTransform()
 				inBaseFrame.time = 0;
 				inBaseFrame.frame = this->tfClient.lookup("FRAMEID_BASE");
 			}
-			model[i]->setPosition((float)inBaseFrame.x,(float)inBaseFrame.y, (float)inBaseFrame.z);
-			model[i]->setRotation((float)inBaseFrame.roll,(float)(inBaseFrame.pitch), (float)(inBaseFrame.yaw));
-		}
+			if(model[i] != NULL)
+			{
+				model[i]->setPosition((float)inBaseFrame.x,(float)inBaseFrame.y, (float)inBaseFrame.z);
+				model[i]->setRotation((float)inBaseFrame.roll,(float)(inBaseFrame.pitch), (float)(inBaseFrame.yaw));
+			}
+		//}
 	}
 }
 

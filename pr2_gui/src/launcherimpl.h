@@ -139,6 +139,10 @@ protected:
 	void PTZR_ptzChanged(wxScrollEvent& event);
 	///(Publisher) Sends a position command to the left PTZ
 	void PTZL_ptzChanged(wxScrollEvent& event);
+	///Centers the right PTZ on a clicked location
+	void PTZR_click( wxMouseEvent& event);
+	///Centers the left PTZ on a clicked location
+	void PTZL_click( wxMouseEvent& event);
 	
 public:
 //Variables
@@ -178,6 +182,8 @@ public:
 	bool WristR_GET_NEW_IMAGE;
 	///Flag stating a new frame can be displayed for the left wrist
 	bool WristL_GET_NEW_IMAGE;
+	///Floats to keep track of PTZs
+	float panPTZR, tiltPTZR, panPTZL, tiltPTZL;
 	///wx bitmap object necessary for displaying camera/pictures
 	wxBitmap *PTZL_bmp;
 	///wx bitmap object necessary for displaying camera/pictures

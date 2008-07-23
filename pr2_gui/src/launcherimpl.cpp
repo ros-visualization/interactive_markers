@@ -5,6 +5,9 @@ LauncherImpl::LauncherImpl( wxWindow* parent )
 launcher( parent )
 {
 	PTZLCodec = new ImageCodec<std_msgs::Image>(&PTZLImage);
+	PTZRCodec = new ImageCodec<std_msgs::Image>(&PTZRImage);
+	WristLCodec = new ImageCodec<std_msgs::Image>(&WristLImage);
+	WristRCodec = new ImageCodec<std_msgs::Image>(&WristRImage);
 	
 	wxInitAllImageHandlers();
 	LeftDock_FGS->Hide(HeadLaser_RB,true);
@@ -260,7 +263,7 @@ void LauncherImpl::startStop_PTZL( wxCommandEvent& event )
 		tiltPTZL_S->Enable(true);
 		zoomPTZL_S->Enable(true);
 		PTZL_B->Enable(true);
-		myNode->subscribe("image", PTZLImage, &LauncherImpl::incomingPTZLImageConn,this);
+		myNode->subscribe("PTZL_image", PTZLImage, &LauncherImpl::incomingPTZLImageConn,this);
 		myNode->subscribe("PTZL_state", PTZL_state, &LauncherImpl::incomingPTZLState,this);
 		myNode->advertise<std_msgs::PTZActuatorCmd>("PTZL_cmd");
 		
@@ -281,6 +284,21 @@ void LauncherImpl::startStop_PTZL( wxCommandEvent& event )
 		Fit();
 		PTZL_bmp == NULL;
 	}
+}
+
+void LauncherImpl::PTZL_click( wxMouseEvent& event)
+{
+	ptz_cmd.pan.valid = 1;
+	float h_mid = ((float)PTZL_B->GetSize().GetWidth())/2.0f;
+	float v_mid = ((float)PTZL_B->GetSize().GetHeight())/2.0f;
+	float delH = (event.m_x - h_mid)/h_mid*(21.0f-((float)zoomPTZL_S->GetValue())/500.0f);
+	float delV = (event.m_y - v_mid)/v_mid*(15.0f-((float)zoomPTZL_S->GetValue())/700.0f);
+	ptz_cmd.pan.cmd = panPTZL + delH;
+	ptz_cmd.tilt.valid = 1;
+	ptz_cmd.tilt.cmd = tiltPTZL - delV;
+	ptz_cmd.zoom.valid = 0;
+	//std::cout << "Click: " << ptz_cmd.pan.cmd << ", " << ptz_cmd.tilt.cmd << std::endl << "Diff: " << delH << ", " << delV << std::endl << "At: " << panPTZR << ", " << tiltPTZR << std::endl;
+	myNode->publish("PTZL_cmd",ptz_cmd);
 }
 
 void LauncherImpl::incomingPTZLState()
@@ -375,20 +393,42 @@ void LauncherImpl::startStop_PTZR( wxCommandEvent& event )
 	}
 }
 
+void LauncherImpl::PTZR_click( wxMouseEvent& event)
+{
+	ptz_cmd.pan.valid = 1;
+	float h_mid = ((float)PTZR_B->GetSize().GetWidth())/2.0f;
+	float v_mid = ((float)PTZR_B->GetSize().GetHeight())/2.0f;
+	float delH = (event.m_x - h_mid)/h_mid*(21.0f-((float)zoomPTZR_S->GetValue())/500.0f);
+	float delV = (event.m_y - v_mid)/v_mid*(15.0f-((float)zoomPTZR_S->GetValue())/700.0f);
+	ptz_cmd.pan.cmd = panPTZR + delH;
+	ptz_cmd.tilt.valid = 1;
+	ptz_cmd.tilt.cmd = tiltPTZR - delV;
+	ptz_cmd.zoom.valid = 0;
+	//std::cout << "Click: " << ptz_cmd.pan.cmd << ", " << ptz_cmd.tilt.cmd << std::endl << "Diff: " << delH << ", " << delV << std::endl << "At: " << panPTZR << ", " << tiltPTZR << std::endl;
+	myNode->publish("PTZR_cmd",ptz_cmd);
+}
+
 void LauncherImpl::incomingPTZRState()
 {
 	//std::cout << "receiving position R\n";
 	if(PTZR_state.zoom.pos_valid)
 		zoomPTZR_S->SetValue(round(PTZR_state.zoom.pos));
 	if(PTZR_state.tilt.pos_valid)
+	{
+		tiltPTZR = PTZR_state.tilt.pos;
 		tiltPTZR_S->SetValue(round(PTZR_state.tilt.pos));
+	}
 	if(PTZR_state.pan.pos_valid)
+	{
+		panPTZR = PTZR_state.pan.pos;
 		panPTZR_S->SetValue(round(PTZR_state.pan.pos));
+	}
 	//std::cout << "getting pos " << PTZR_state.pan.pos << " " << PTZR_state.tilt.pos << " " << PTZR_state.zoom.pos << endl;
 }
 
 void LauncherImpl::incomingPTZRImageConn()
 {
+	//std::cout << "image\n";
     if(PTZR_GET_NEW_IMAGE)
     {
     	PTZR_GET_NEW_IMAGE = false;
@@ -599,4 +639,12 @@ void LauncherImpl::PTZR_ptzChanged(wxScrollEvent& event)
 void LauncherImpl::EmergencyStop( wxCommandEvent& event )
 {
 	// TODO: Implement EmergencyStop
+}
+
+template <class T> const T& max ( const T& a, const T& b ) {
+	return (b<a)?a:b;
+}
+
+template <class T> const T& min ( const T& a, const T& b ) {
+	return (a<b)?a:b;
 }
