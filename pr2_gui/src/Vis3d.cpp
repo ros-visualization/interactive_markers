@@ -218,11 +218,11 @@ void Vis3d::enableModel()
 		aPose.pitch = 0;
 		aPose.yaw = 0;
 		aPose.time = 0;
-		aPose.frame = PR2::FRAMEID_CASTER_FL_WHEEL_L + i;
+		aPose.frame = this->tfClient.lookup("FRAMEID_CASTER_FL_WHEEL_L");
 		libTF::TFPose inBaseFrame;
 		try
 		{
-			inBaseFrame = this->tfClient.transformPose(PR2::FRAMEID_BASE, aPose);
+			inBaseFrame = this->tfClient.transformPose("FRAMEID_BASE", aPose);
 		}
 		catch(libTF::TransformReference::LookupException e)
 		{
@@ -233,10 +233,10 @@ void Vis3d::enableModel()
 			inBaseFrame.pitch = 0;
 			inBaseFrame.yaw = 0;
 			inBaseFrame.time = 0;
-			inBaseFrame.frame = PR2::FRAMEID_BASE;
+			inBaseFrame.frame = this->tfClient.lookup("FRAMEID_BASE");
 		}
 		std::cout << "Coordinates for : " << i << "; "<<inBaseFrame.x << ", " <<  inBaseFrame.y << ", " << inBaseFrame.z << "; "<<inBaseFrame.roll << ", " <<  inBaseFrame.pitch << ", " << inBaseFrame.yaw <<std::endl;
-		ILModel *tempModel = new ILModel(pLocalRenderer->manager(), intermediate, (irr::c8*)modelPaths[i], PR2::FRAMEID_CASTER_FL_WHEEL_L + i, (float)inBaseFrame.x,(float)inBaseFrame.y, (float)inBaseFrame.z, (float)inBaseFrame.roll,(float)(inBaseFrame.pitch), (float)(inBaseFrame.yaw));
+		ILModel *tempModel = new ILModel(pLocalRenderer->manager(), intermediate, (irr::c8*)modelPaths[i], this->tfClient.lookup("FRAMEID_CASTER_FL_WHEEL_L"), (float)inBaseFrame.x,(float)inBaseFrame.y, (float)inBaseFrame.z, (float)inBaseFrame.roll,(float)(inBaseFrame.pitch), (float)(inBaseFrame.yaw));
 		tempModel->getNode()->getMaterial(0).AmbientColor.set(255,100+int(155.0*rand()/(RAND_MAX + 1.0)),100+int(155.0*rand()/(RAND_MAX + 1.0)),100+int(155.0*rand()/(RAND_MAX + 1.0)));
 		model.push_back(tempModel);
 		}
@@ -435,11 +435,11 @@ void Vis3d::addHeadCloud()
 	aPose.pitch = 0;
 	aPose.yaw = 0;
 	aPose.time = 0;
-	aPose.frame = PR2::FRAMEID_TILT_LASER_BLOCK;
+	aPose.frame = this->tfClient.lookup("FRAMEID_TILT_LASER_BLOCK");
 	libTF::TFPose inBaseFrame;
 	try
 	{
-		inBaseFrame = this->tfClient.transformPose(PR2::FRAMEID_BASE, aPose);
+		inBaseFrame = this->tfClient.transformPose("FRAMEID_BASE", aPose);
 	}
 	catch(libTF::TransformReference::LookupException e)
 	{
@@ -450,7 +450,7 @@ void Vis3d::addHeadCloud()
 		inBaseFrame.pitch = 0;
 		inBaseFrame.yaw = 0;
 		inBaseFrame.time = 0;
-		inBaseFrame.frame = PR2::FRAMEID_BASE;
+		inBaseFrame.frame = this->tfClient.lookup("FRAMEID_BASE");
 	}
     switch(scanT)
     {
@@ -521,11 +521,11 @@ void Vis3d::addFloorCloud()
 	aPose.pitch = 0;
 	aPose.yaw = 0;
 	aPose.time = 0;
-	aPose.frame = PR2::FRAMEID_BASE_LASER_BLOCK;
+	aPose.frame = this->tfClient.lookup("FRAMEID_BASE_LASER_BLOCK");
 	libTF::TFPose inBaseFrame;
 	try
 	{
-		inBaseFrame = this->tfClient.transformPose(PR2::FRAMEID_BASE, aPose);
+		inBaseFrame = this->tfClient.transformPose("FRAMEID_BASE", aPose);
 	}
 	catch(libTF::TransformReference::LookupException e)
 	{
@@ -536,7 +536,7 @@ void Vis3d::addFloorCloud()
 		inBaseFrame.pitch = 0;
 		inBaseFrame.yaw = 0;
 		inBaseFrame.time = 0;
-		inBaseFrame.frame = PR2::FRAMEID_BASE;
+		inBaseFrame.frame = this->tfClient.lookup("FRAMEID_BASE");
 	}
 	shutterFloor();
     pLocalRenderer->lock();
@@ -559,11 +559,11 @@ void Vis3d::addStereoCloud()
 	aPose.pitch = 0;
 	aPose.yaw = 0;
 	aPose.time = 0;
-	aPose.frame = PR2::FRAMEID_STEREO_BLOCK;
+	aPose.frame = this->tfClient.lookup("FRAMEID_STEREO_BLOCK");
 	libTF::TFPose inBaseFrame;
 	try
 	{
-		inBaseFrame = this->tfClient.transformPose(PR2::FRAMEID_BASE, aPose);
+		inBaseFrame = this->tfClient.transformPose("FRAMEID_BASE", aPose);
 	}
 	catch(libTF::TransformReference::LookupException e)
 	{
@@ -574,7 +574,7 @@ void Vis3d::addStereoCloud()
 		inBaseFrame.pitch = 0;
 		inBaseFrame.yaw = 0;
 		inBaseFrame.time = 0;
-		inBaseFrame.frame = PR2::FRAMEID_BASE;
+		inBaseFrame.frame = this->tfClient.lookup("FRAMEID_BASE");
 	}
     pLocalRenderer->lock();
     for(int i = 0; i < ilStereoCloud.size(); i++)
@@ -646,11 +646,11 @@ void Vis3d::newTransform()
 			aPose.pitch = 0;
 			aPose.yaw = 0;
 			aPose.time = 0;
-			aPose.frame = PR2::FRAMEID_CASTER_FL_WHEEL_L + i;
+			aPose.frame = this->tfClient.lookup("FRAMEID_CASTER_FL_WHEEL_L");
 			libTF::TFPose inBaseFrame;
 			try
 			{
-				inBaseFrame = this->tfClient.transformPose(PR2::FRAMEID_BASE, aPose);
+				inBaseFrame = this->tfClient.transformPose("FRAMEID_BASE", aPose);
 			}
 			catch(libTF::TransformReference::LookupException e)
 			{
@@ -662,7 +662,7 @@ void Vis3d::newTransform()
 				inBaseFrame.pitch = 0;
 				inBaseFrame.yaw = 0;
 				inBaseFrame.time = 0;
-				inBaseFrame.frame = PR2::FRAMEID_BASE;
+				inBaseFrame.frame = this->tfClient.lookup("FRAMEID_BASE");
 			}
 			model[i]->setPosition((float)inBaseFrame.x,(float)inBaseFrame.y, (float)inBaseFrame.z);
 			model[i]->setRotation((float)inBaseFrame.roll,(float)(inBaseFrame.pitch), (float)(inBaseFrame.yaw));
