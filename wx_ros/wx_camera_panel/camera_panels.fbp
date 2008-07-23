@@ -13,7 +13,7 @@
         <property name="internationalize">0</property>
         <property name="name">CameraPanels</property>
         <property name="namespace"></property>
-        <property name="path">src/wx_camera_panels</property>
+        <property name="path">src/wx_camera_panel</property>
         <property name="precompiled_header"></property>
         <property name="relative_path">1</property>
         <property name="use_enum">0</property>
@@ -237,8 +237,8 @@
                                 <event name="OnLeftDown">OnLeftMouseDown</event>
                                 <event name="OnLeftUp">OnLeftMouseUp</event>
                                 <event name="OnMiddleDClick"></event>
-                                <event name="OnMiddleDown"></event>
-                                <event name="OnMiddleUp"></event>
+                                <event name="OnMiddleDown">OnMiddleMouseDown</event>
+                                <event name="OnMiddleUp">OnMiddleMouseUp</event>
                                 <event name="OnMotion">OnMouseMotion</event>
                                 <event name="OnMouseEvents"></event>
                                 <event name="OnMouseWheel">OnMouseWheel</event>

@@ -42,6 +42,8 @@ class CameraPanelBase : public wxPanel
 		virtual void OnSetup( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnLeftMouseDown( wxMouseEvent& event ){ event.Skip(); }
 		virtual void OnLeftMouseUp( wxMouseEvent& event ){ event.Skip(); }
+		virtual void OnMiddleMouseDown( wxMouseEvent& event ){ event.Skip(); }
+		virtual void OnMiddleMouseUp( wxMouseEvent& event ){ event.Skip(); }
 		virtual void OnMouseMotion( wxMouseEvent& event ){ event.Skip(); }
 		virtual void OnMouseWheel( wxMouseEvent& event ){ event.Skip(); }
 		virtual void OnImagePaint( wxPaintEvent& event ){ event.Skip(); }

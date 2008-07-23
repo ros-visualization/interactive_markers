@@ -47,6 +47,8 @@ CameraPanelBase::CameraPanelBase( wxWindow* parent, wxWindowID id, const wxPoint
 	m_Setup->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CameraPanelBase::OnSetup ), NULL, this );
 	m_ImagePanel->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( CameraPanelBase::OnLeftMouseDown ), NULL, this );
 	m_ImagePanel->Connect( wxEVT_LEFT_UP, wxMouseEventHandler( CameraPanelBase::OnLeftMouseUp ), NULL, this );
+	m_ImagePanel->Connect( wxEVT_MIDDLE_DOWN, wxMouseEventHandler( CameraPanelBase::OnMiddleMouseDown ), NULL, this );
+	m_ImagePanel->Connect( wxEVT_MIDDLE_UP, wxMouseEventHandler( CameraPanelBase::OnMiddleMouseUp ), NULL, this );
 	m_ImagePanel->Connect( wxEVT_MOTION, wxMouseEventHandler( CameraPanelBase::OnMouseMotion ), NULL, this );
 	m_ImagePanel->Connect( wxEVT_MOUSEWHEEL, wxMouseEventHandler( CameraPanelBase::OnMouseWheel ), NULL, this );
 	m_ImagePanel->Connect( wxEVT_PAINT, wxPaintEventHandler( CameraPanelBase::OnImagePaint ), NULL, this );
@@ -62,6 +64,8 @@ CameraPanelBase::~CameraPanelBase()
 	m_Setup->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( CameraPanelBase::OnSetup ), NULL, this );
 	m_ImagePanel->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( CameraPanelBase::OnLeftMouseDown ), NULL, this );
 	m_ImagePanel->Disconnect( wxEVT_LEFT_UP, wxMouseEventHandler( CameraPanelBase::OnLeftMouseUp ), NULL, this );
+	m_ImagePanel->Disconnect( wxEVT_MIDDLE_DOWN, wxMouseEventHandler( CameraPanelBase::OnMiddleMouseDown ), NULL, this );
+	m_ImagePanel->Disconnect( wxEVT_MIDDLE_UP, wxMouseEventHandler( CameraPanelBase::OnMiddleMouseUp ), NULL, this );
 	m_ImagePanel->Disconnect( wxEVT_MOTION, wxMouseEventHandler( CameraPanelBase::OnMouseMotion ), NULL, this );
 	m_ImagePanel->Disconnect( wxEVT_MOUSEWHEEL, wxMouseEventHandler( CameraPanelBase::OnMouseWheel ), NULL, this );
 	m_ImagePanel->Disconnect( wxEVT_PAINT, wxPaintEventHandler( CameraPanelBase::OnImagePaint ), NULL, this );
