@@ -41,12 +41,19 @@ class CameraSetupDialog : public CameraSetupDialogBase
 {
 public:
 	CameraSetupDialog( wxWindow* parent, ros::node* node, const std::string& imageSubscription, const std::string& ptzStateSubscription, 
-					   const std::string& ptzControlCommand );
+					   const std::string& ptzControlCommand, float panMin, float panMax, float tiltMin, float tiltMax, float zoomMin,
+					   float zoomMax);
 	~CameraSetupDialog();
 
 	std::string GetImageSubscription();
 	std::string GetPTZStateSubscription();
 	std::string GetPTZControlCommand();
+	float GetPanMin();
+	float GetPanMax();
+	float GetTiltMin();
+	float GetTiltMax();
+	float GetZoomMin();
+	float GetZoomMax();
 
 private:
 	void OnOk( wxCommandEvent& event );
@@ -54,6 +61,7 @@ private:
 
 	void OnImageSubscriptionBrowse( wxCommandEvent& event );
 	void OnPTZStateSubscriptionBrowse( wxCommandEvent& event );
+	void OnPTZEnableChecked( wxCommandEvent& event);
 
 
 	ros::node* m_ROSNode;

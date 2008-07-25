@@ -20,6 +20,7 @@
 #include <wx/statbox.h>
 #include <wx/stattext.h>
 #include <wx/textctrl.h>
+#include <wx/spinctrl.h>
 #include <wx/dialog.h>
 
 ///////////////////////////////////////////////////////////////////////////
@@ -69,6 +70,22 @@ class CameraSetupDialogBase : public wxDialog
 		wxStaticText* m_staticText711;
 		wxTextCtrl* m_ImageSubscriptionText;
 		wxButton* m_ImageSubscriptionBrowse;
+		wxCheckBox* m_EnablePTZCheck;
+		wxStaticText* m_staticText4;
+		wxStaticText* m_staticText5;
+		wxSpinCtrl* m_PanMinSpin;
+		wxStaticText* m_staticText6;
+		wxSpinCtrl* m_PanMaxSpin;
+		wxStaticText* m_staticText411;
+		wxStaticText* m_staticText511;
+		wxSpinCtrl* m_TiltMinSpin;
+		wxStaticText* m_staticText611;
+		wxSpinCtrl* m_TiltMaxSpin;
+		wxStaticText* m_staticText41;
+		wxStaticText* m_staticText51;
+		wxSpinCtrl* m_ZoomMinSpin;
+		wxStaticText* m_staticText61;
+		wxSpinCtrl* m_ZoomMaxSpin;
 		wxStaticText* m_staticText71;
 		wxTextCtrl* m_PTZStateSubscriptionText;
 		wxButton* m_PTZStateSubscriptionBrowse;
@@ -79,13 +96,14 @@ class CameraSetupDialogBase : public wxDialog
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnImageSubscriptionBrowse( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnPTZEnableChecked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnPTZStateSubscriptionBrowse( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnOk( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnCancel( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:
-		CameraSetupDialogBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Camera Setup"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 472,231 ), long style = wxDEFAULT_DIALOG_STYLE );
+		CameraSetupDialogBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Camera Setup"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 472,400 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~CameraSetupDialogBase();
 	
 };

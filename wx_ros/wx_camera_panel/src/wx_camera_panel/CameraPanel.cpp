@@ -44,16 +44,10 @@
 
 // jfaust TODO: some of these values should be read from a config somewhere (min/max mostly)
 #define PAN_SCALE (0.1f)
-#define PAN_MIN (-169.0f)
-#define PAN_MAX (169.0f)
 
 #define TILT_SCALE (0.1f)
-#define TILT_MIN (-10.0f)
-#define TILT_MAX (90.0f)
 
 #define ZOOM_SCALE (10.0f)
-#define ZOOM_MIN (1.0f)
-#define ZOOM_MAX (9999.0F)
 
 #define POSITION_TICK_LENGTH (20)
 #define POSITION_TICK_WIDTH (5)
@@ -64,6 +58,9 @@
 #define TARGET_PAN_EPSILON (1.0f)
 #define TARGET_TILT_EPSILON (1.0f)
 #define TARGET_ZOOM_EPSILON (10.0f)
+
+#define SCROLL_WAIT_INTERVAL ( 300 )
+#define ZOOM_SCROLL_STEPS (20.0f)
 
 BEGIN_DECLARE_EVENT_TYPES()
 DECLARE_EVENT_TYPE(EVT_FAKE_REFRESH, wxID_ANY)
@@ -93,9 +90,18 @@ CameraPanel::CameraPanel(wxWindow* parent)
 , m_StartMouseY( 0 )
 , m_CurrentMouseX( 0 )
 , m_CurrentMouseY( 0 )
+, m_PanMin( -169.0f )
+, m_PanMax( 169.0f )
+, m_TiltMin( -10.0f )
+, m_TiltMax( 90.0f )
+, m_ZoomMin( 1.0f )
+, m_ZoomMax( 9999.0f )
+, m_ZoomScrollTimer( this )
 {
   wxInitAllImageHandlers();
-
+  
+  Connect( wxEVT_TIMER, wxTimerEventHandler(CameraPanel::OnScrollComplete), NULL, this);
+  
   // ensure a unique node name
   static uint32_t count = 0;
   std::stringstream ss;
@@ -366,8 +372,8 @@ void CameraPanel::DrawPan( wxDC& dc, wxPen& pen, float pan )
   int padWidth = (panelWidth - adjustedWidth) / 2;
 
   // Normalize pan to the measure bar
-  pan -= PAN_MIN;
-  pan /= (PAN_MAX - PAN_MIN);
+  pan -= m_PanMin;
+  pan /= (m_PanMax - m_PanMin);
   pan *= adjustedWidth;
 
   dc.SetPen( pen );
@@ -386,8 +392,8 @@ void CameraPanel::DrawTilt( wxDC& dc, wxPen& pen, float tilt )
   int padHeight = (panelHeight - adjustedHeight) / 2;
 
   // Normalize tilt to the measure bar
-  tilt -= TILT_MIN;
-  tilt /= (TILT_MAX - TILT_MIN);
+  tilt -= m_TiltMin;
+  tilt /= (m_TiltMax - m_TiltMin);
   tilt *= adjustedHeight;
 
   dc.SetPen( pen );
@@ -398,8 +404,17 @@ void CameraPanel::DrawTilt( wxDC& dc, wxPen& pen, float tilt )
 
 void CameraPanel::DrawNewPanTiltLocations( wxDC& dc )
 {
-  float newPan = ComputeNewPan( m_StartMouseX, m_CurrentMouseX );
-  float newTilt = ComputeNewTilt( m_StartMouseY, m_CurrentMouseY );
+	float newPan, newTilt;
+	if( m_LeftMouseDown )
+	{
+	  newPan = ComputeNewPan( m_StartMouseX, m_CurrentMouseX );
+	  newTilt = ComputeNewTilt( m_StartMouseY, m_CurrentMouseY );
+	}
+	else
+	{
+		newPan = m_PanTarget;
+		newTilt = m_TiltTarget;
+	}
 
   wxPen pen( *wxRED_PEN );
   pen.SetWidth( POSITION_TICK_WIDTH );
@@ -427,8 +442,8 @@ void CameraPanel::DrawZoom( wxDC& dc, wxPen& pen, float zoom )
   int padHeight = (panelHeight - adjustedHeight) / 2;
 
   // Normalize zoom to the window
-  zoom -= ZOOM_MIN;
-  zoom /= (ZOOM_MAX - ZOOM_MIN);
+  zoom -= m_ZoomMin;
+  zoom /= (m_ZoomMax - m_ZoomMin);
   zoom *= adjustedHeight;
 
   dc.SetPen( pen );
@@ -439,7 +454,15 @@ void CameraPanel::DrawZoom( wxDC& dc, wxPen& pen, float zoom )
 
 void CameraPanel::DrawNewZoomLocation( wxDC& dc )
 {
-  float newZoom = ComputeNewZoom( m_StartMouseY, m_CurrentMouseY );
+	float newZoom;
+	if( m_RightMouseDown )
+	{
+		newZoom = ComputeNewZoom( m_StartMouseY, m_CurrentMouseY );
+	}
+	else
+	{
+		newZoom = m_ZoomTarget;
+	}
   wxPen pen( *wxRED_PEN );
   pen.SetWidth( POSITION_TICK_WIDTH );
 
@@ -541,39 +564,46 @@ void CameraPanel::OnImagePaint( wxPaintEvent& event )
     DrawPanBar( dc );
     DrawTiltBar( dc );
     DrawZoomBar( dc );
-  }
 
-  if ( !( m_LeftMouseDown && m_RightMouseDown ) )
-  {
-    // Now draw pan/tilt if necessary
-    if ( m_LeftMouseDown || m_HasPanTarget || m_HasTiltTarget )
-    {
-      DrawNewPanTiltLocations( dc );
-    }
+	if ( !( m_LeftMouseDown && m_RightMouseDown ) && ptzControlEnabled )
+	{
+		// Now draw pan/tilt if necessary
+		if ( m_LeftMouseDown || m_HasPanTarget || m_HasTiltTarget )
+		{
+		  DrawNewPanTiltLocations( dc );
+		}
 
-    if ( m_RightMouseDown || m_HasZoomTarget )
-    {
-      DrawNewZoomLocation( dc );
-    }
-  }
+		if ( m_RightMouseDown || m_HasZoomTarget )
+		{
+		  DrawNewZoomLocation( dc );
+		}
+	}
 
-  if ( ptzStateEnabled )
-  {
-    DrawCurrentPanTiltLocations( dc );
-    DrawCurrentZoomLocation( dc );
+	if ( ptzStateEnabled )
+	{
+		DrawCurrentPanTiltLocations( dc );
+		DrawCurrentZoomLocation( dc );
+	}
   }
 }
 
 void CameraPanel::OnSetup( wxCommandEvent& event )
 {
-  CameraSetupDialog dialog( this, m_ROSNode, m_ImageTopic, m_PTZStateTopic, m_PTZControlTopic );
+  CameraSetupDialog dialog( this, m_ROSNode, m_ImageTopic, m_PTZStateTopic, m_PTZControlTopic, m_PanMin, m_PanMax, m_TiltMin, m_TiltMax, m_ZoomMin, m_ZoomMax );
 
   if (dialog.ShowModal() == wxID_OK)
   {
     SetImageSubscription( dialog.GetImageSubscription() );
     SetPTZStateSubscription( dialog.GetPTZStateSubscription() );
     SetPTZControlCommand( dialog.GetPTZControlCommand() );
+    m_PanMin = dialog.GetPanMin();
+    m_PanMax = dialog.GetPanMax();
+    m_TiltMin = dialog.GetTiltMin();
+    m_TiltMax = dialog.GetTiltMax();
+    m_ZoomMin = dialog.GetZoomMin();
+    m_ZoomMax = dialog.GetZoomMax();
   }
+  m_ImagePanel->Refresh();
 }
 
 void CameraPanel::OnEnable( wxCommandEvent& event )
@@ -628,21 +658,66 @@ void CameraPanel::OnLeftMouseUp( wxMouseEvent& event )
 
 void CameraPanel::OnMiddleMouseUp( wxMouseEvent& event )
 {
+	if ( !IsPTZControlEnabled() )
+		return;
+	
 	wxSize scale = m_ImagePanel->GetSize();
 	
-	float h_mid = ((float)scale.GetWidth())/2.0f;
-	float v_mid = ((float)scale.GetHeight())/2.0f;
+	float pan_mid = ((float)scale.GetWidth())/2.0f;
+	float tilt_mid = ((float)scale.GetHeight())/2.0f;
 	
-	float delH = (event.m_x - h_mid)/h_mid*(21.0f-(m_CurrentZoom)/500.0f);
-	float delV = (event.m_y - v_mid)/v_mid*(15.0f-(m_CurrentZoom)/700.0f);
+	float pan_change = (event.m_x - pan_mid)/pan_mid*(21.0f-(m_CurrentZoom)/500.0f);
+	float tilt_change = -(event.m_y - tilt_mid)/tilt_mid*(15.0f-(m_CurrentZoom)/700.0f);
+	
+	if( m_HasPanTarget )
+		m_PanTarget = m_PanTarget + pan_change;
+	else
+		m_PanTarget = m_CurrentPan + pan_change;
+		
+	if( m_HasTiltTarget )
+		m_TiltTarget = m_TiltTarget + tilt_change;
+	else
+		m_TiltTarget = m_CurrentTilt + tilt_change;
+	
+	m_HasPanTarget = true;
+	m_HasTiltTarget = true;
 	
 	m_PTZControlMessage.pan.valid = 1;
-	m_PTZControlMessage.pan.cmd = std::min(std::max(m_CurrentPan + delH, PAN_MIN), PAN_MAX);
+	m_PTZControlMessage.pan.cmd = std::min(std::max(m_PanTarget, m_PanMin), m_PanMax);
 	m_PTZControlMessage.tilt.valid = 1;
-	m_PTZControlMessage.tilt.cmd = std::min(std::max(m_CurrentTilt - delV, TILT_MIN), TILT_MAX);
+	m_PTZControlMessage.tilt.cmd = std::min(std::max(m_TiltTarget, m_TiltMin), m_TiltMax);
 	m_PTZControlMessage.zoom.valid = 0;
 
 	m_ROSNode->publish(m_PTZControlTopic, m_PTZControlMessage);
+	
+	m_ImagePanel->Refresh();
+}
+
+void CameraPanel::OnMouseWheel( wxMouseEvent& event )
+{
+	if( !IsPTZControlEnabled() )
+	{
+		return;
+	}
+	
+	float zoom = m_HasZoomTarget ? m_ZoomTarget : m_CurrentZoom;
+	m_HasZoomTarget = true;
+	zoom = std::min(std::max(zoom + (float)event.GetWheelRotation()*(m_ZoomMax-m_ZoomMin)/ZOOM_SCROLL_STEPS/(float)event.GetWheelDelta(), m_ZoomMin), m_ZoomMax);
+	if(zoom != m_ZoomTarget)
+	{
+		m_ZoomTarget = zoom;
+		m_ZoomScrollTimer.Start(SCROLL_WAIT_INTERVAL,true);
+	}
+}
+
+void CameraPanel::OnScrollComplete( wxTimerEvent& event )
+{
+  m_PTZControlMessage.pan.valid = 0;
+  m_PTZControlMessage.tilt.valid = 0;
+  m_PTZControlMessage.zoom.valid = 1;
+  m_PTZControlMessage.zoom.cmd = m_ZoomTarget;
+
+  m_ROSNode->publish(m_PTZControlTopic, m_PTZControlMessage);
 }
 	
 void CameraPanel::OnRightMouseDown( wxMouseEvent& event )
@@ -705,7 +780,7 @@ float CameraPanel::ComputeNewPan( int32_t startX, int32_t endX )
   float pan = m_HasPanTarget ? m_PanTarget : m_CurrentPan;
   int32_t diffX = endX - startX;
 
-  return std::min(std::max(pan  + PAN_SCALE*(float)diffX, PAN_MIN), PAN_MAX);
+  return std::min(std::max(pan  + PAN_SCALE*(float)diffX, m_PanMin), m_PanMax);
 }
 
 float CameraPanel::ComputeNewTilt( int32_t startY, int32_t endY )
@@ -713,7 +788,7 @@ float CameraPanel::ComputeNewTilt( int32_t startY, int32_t endY )
   float tilt = m_HasTiltTarget ? m_TiltTarget : m_CurrentTilt;
   int32_t diffY = startY - endY;
 
-  return std::min(std::max(tilt + TILT_SCALE*(float)diffY, TILT_MIN), TILT_MAX);
+  return std::min(std::max(tilt + TILT_SCALE*(float)diffY, m_TiltMin), m_TiltMax);
 }
 
 float CameraPanel::ComputeNewZoom( int32_t startY, int32_t endY )
@@ -721,5 +796,5 @@ float CameraPanel::ComputeNewZoom( int32_t startY, int32_t endY )
   float zoom = m_HasZoomTarget ? m_ZoomTarget : m_CurrentZoom;
   int32_t diffY = startY - endY;
 
-  return std::min(std::max(zoom + ZOOM_SCALE*(float)diffY, ZOOM_MIN), ZOOM_MAX);
+  return std::min(std::max(zoom + ZOOM_SCALE*(float)diffY, m_ZoomMin), m_ZoomMax);
 }

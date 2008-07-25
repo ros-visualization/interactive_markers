@@ -263,7 +263,7 @@ void LauncherImpl::startStop_PTZL( wxCommandEvent& event )
 		tiltPTZL_S->Enable(true);
 		zoomPTZL_S->Enable(true);
 		PTZL_B->Enable(true);
-		myNode->subscribe("PTZL_image", PTZLImage, &LauncherImpl::incomingPTZLImageConn,this);
+		myNode->subscribe("image_ptz_left", PTZLImage, &LauncherImpl::incomingPTZLImageConn,this);
 		myNode->subscribe("PTZL_state", PTZL_state, &LauncherImpl::incomingPTZLState,this);
 		myNode->advertise<std_msgs::PTZActuatorCmd>("PTZL_cmd");
 		
@@ -273,7 +273,7 @@ void LauncherImpl::startStop_PTZL( wxCommandEvent& event )
 	{
 		consoleOut(wxT("Closing Left Pan-Tilt-Zoom\n"));
 		LeftDock_FGS->Hide(PTZL_SBS,true);
-		myNode->unsubscribe("PTZL_image");
+		myNode->unsubscribe("image_ptz_left");
 		panPTZL_S->Enable(false);
 		tiltPTZL_S->Enable(false);
 		zoomPTZL_S->Enable(false);
@@ -371,7 +371,7 @@ void LauncherImpl::startStop_PTZR( wxCommandEvent& event )
 		tiltPTZR_S->Enable(true);
 		zoomPTZR_S->Enable(true);
 		PTZR_B->Enable(true);
-		myNode->subscribe("PTZR_image", PTZRImage, &LauncherImpl::incomingPTZRImageConn,this);
+		myNode->subscribe("image_ptz_right", PTZRImage, &LauncherImpl::incomingPTZRImageConn,this);
 		myNode->subscribe("PTZR_state", PTZR_state, &LauncherImpl::incomingPTZRState,this);
 		myNode->advertise<std_msgs::PTZActuatorCmd>("PTZR_cmd");
 		//*PTZR_bmp = NULL;
@@ -380,7 +380,7 @@ void LauncherImpl::startStop_PTZR( wxCommandEvent& event )
 	{
 		consoleOut(wxT("Closing Right Pan-Tilt-Zoom\n"));
 		RightDock_FGS->Hide(PTZR_SBS,true);
-		myNode->unsubscribe("PTZR_image");
+		myNode->unsubscribe("image_ptz_right");
 		panPTZR_S->Enable(false);
 		tiltPTZR_S->Enable(false);
 		zoomPTZR_S->Enable(false);
@@ -480,14 +480,14 @@ void LauncherImpl::startStop_WristL( wxCommandEvent& event )
 		LeftDock_FGS->Show(WristL_SBS,true);
 		Layout();
 		Fit();
-		myNode->subscribe("WristL_image", WristLImage, &LauncherImpl::incomingWristLImageConn,this);
+		myNode->subscribe("image_wrist_left", WristLImage, &LauncherImpl::incomingWristLImageConn,this);
 		//*WristL_bmp = NULL;
 	}
 	else
 	{
 		consoleOut(wxT("Closing Left Wrist\n"));
 		LeftDock_FGS->Hide(WristL_SBS,true);
-		myNode->unsubscribe("WristL_image");
+		myNode->unsubscribe("image_wrist_left");
 		wxSize size(0,0);
 		WristL_B->SetMinSize(size);
 		Layout();
@@ -551,14 +551,14 @@ void LauncherImpl::startStop_WristR( wxCommandEvent& event )
 		RightDock_FGS->Show(WristR_SBS,true);
 		Layout();
 		Fit();
-		myNode->subscribe("WristR_image", WristRImage, &LauncherImpl::incomingWristRImageConn,this);
+		myNode->subscribe("image_wrist_right", WristRImage, &LauncherImpl::incomingWristRImageConn,this);
 		//*WristR_bmp = NULL;
 	}
 	else
 	{
 		consoleOut(wxT("Closing Right Wrist\n"));
 		RightDock_FGS->Hide(WristR_SBS,true);
-		myNode->unsubscribe("WristR_image");
+		myNode->unsubscribe("image_wrist_right");
 		wxSize size(0,0);
 		WristR_B->SetMinSize(size);
 		Layout();

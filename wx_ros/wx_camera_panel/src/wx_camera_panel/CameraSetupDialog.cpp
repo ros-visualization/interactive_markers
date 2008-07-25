@@ -33,13 +33,29 @@
 #include "wx_topic_display/TopicDisplayDialog.h"
 
 CameraSetupDialog::CameraSetupDialog(wxWindow* parent, ros::node* node, const std::string& imageSubscription, const std::string& ptzStateSubscription, 
-									 const std::string& ptzControlCommand)
+									 const std::string& ptzControlCommand, float panMin, float panMax, float tiltMin, float tiltMax, float zoomMin,
+									 float zoomMax)
 : CameraSetupDialogBase( parent )
 , m_ROSNode( node )
 {
 	m_ImageSubscriptionText->SetValue( wxString::FromAscii( imageSubscription.c_str() ) );
 	m_PTZStateSubscriptionText->SetValue( wxString::FromAscii( ptzStateSubscription.c_str() ) );
 	m_PTZControlCommandText->SetValue( wxString::FromAscii( ptzControlCommand.c_str() ) );
+	
+	m_PanMinSpin->SetValue((int)panMin);
+	m_PanMaxSpin->SetValue((int)panMax);
+	m_TiltMinSpin->SetValue((int)tiltMin);
+	m_TiltMaxSpin->SetValue((int)tiltMax);
+	m_ZoomMinSpin->SetValue((int)zoomMin);
+	m_ZoomMaxSpin->SetValue((int)zoomMax);
+	
+	if(ptzStateSubscription == std::string("") && ptzControlCommand == std::string(""))
+	{
+		m_EnablePTZCheck->SetValue(false);
+		m_PTZStateSubscriptionText->Enable(false);
+		m_PTZStateSubscriptionBrowse->Enable(false);
+		m_PTZControlCommandText->Enable(false);
+	}
 }
 
 CameraSetupDialog::~CameraSetupDialog()
@@ -88,6 +104,26 @@ void CameraSetupDialog::OnPTZStateSubscriptionBrowse( wxCommandEvent& event )
 	}
 }
 
+void CameraSetupDialog::OnPTZEnableChecked( wxCommandEvent& event)
+{
+	if(m_EnablePTZCheck->IsChecked())
+	{
+		m_PTZStateSubscriptionText->SetValue( wxString() );
+		m_PTZControlCommandText->SetValue( wxString() );
+		m_PTZStateSubscriptionText->Enable(true);
+		m_PTZStateSubscriptionBrowse->Enable(true);
+		m_PTZControlCommandText->Enable(true);
+	}
+	else
+	{
+		m_PTZStateSubscriptionText->SetValue( wxString() );
+		m_PTZControlCommandText->SetValue( wxString() );
+		m_PTZStateSubscriptionText->Enable(false);
+		m_PTZStateSubscriptionBrowse->Enable(false);
+		m_PTZControlCommandText->Enable(false);
+	}
+}
+
 std::string CameraSetupDialog::GetImageSubscription()
 {
 	return (const char*)m_ImageSubscriptionText->GetValue().mb_str();
@@ -101,4 +137,29 @@ std::string CameraSetupDialog::GetPTZStateSubscription()
 std::string CameraSetupDialog::GetPTZControlCommand()
 {
 	return (const char*)m_PTZControlCommandText->GetValue().mb_str();
+}
+
+float CameraSetupDialog::GetPanMin()
+{
+	return (float)m_PanMinSpin->GetValue();
+}
+float CameraSetupDialog::GetPanMax()
+{
+	return (float)m_PanMaxSpin->GetValue();
+}
+float CameraSetupDialog::GetTiltMin()
+{
+	return (float)m_TiltMinSpin->GetValue();
+}
+float CameraSetupDialog::GetTiltMax()
+{
+	return (float)m_TiltMaxSpin->GetValue();
+}
+float CameraSetupDialog::GetZoomMin()
+{
+	return (float)m_ZoomMinSpin->GetValue();
+}
+float CameraSetupDialog::GetZoomMax()
+{
+	return (float)m_ZoomMaxSpin->GetValue();
 }

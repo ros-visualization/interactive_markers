@@ -43,6 +43,7 @@
 
 // wx includes
 #include <wx/bitmap.h>
+#include <wx/timer.h>
 
 namespace ros
 {
@@ -151,6 +152,8 @@ private:
   void OnRightMouseUp( wxMouseEvent& event );
   /// wx callback, called when the middle mouse button is released on the image panel
   void OnMiddleMouseUp( wxMouseEvent& event );
+  /// wx callback, called when the scroll wheel is spun on the image panel
+  void OnMouseWheel(wxMouseEvent& event);
   /// wx callback, called when the left mouse button is pressed on the image panel
   void OnLeftMouseDown( wxMouseEvent& event );
   /// wx callback, called when the left mouse button is released on the image panel
@@ -161,6 +164,8 @@ private:
 
   /// wx callback for a custom event, called to force a refresh from another thread
   void OnFakeRefresh( wxCommandEvent& event );
+  
+  void OnScrollComplete( wxTimerEvent& event );
 
 
   // private variables
@@ -219,6 +224,17 @@ private:
   int32_t m_CurrentMouseX;
   /// Y pixel location of the mouse right now (relative to the image panel)
   int32_t m_CurrentMouseY;
+  
+  float m_PanMin;
+  float m_PanMax;
+  
+  float m_TiltMin;
+  float m_TiltMax;
+  
+  float m_ZoomMin;
+  float m_ZoomMax;
+  
+  wxTimer m_ZoomScrollTimer;
 };
 
 #endif
