@@ -31,8 +31,8 @@ rospack_add_library(wxtopicdisplay src/wx_topic_display/TopicDisplay.cpp
                                    src/wx_topic_display/GenTopicDisplay.cpp
 				   src/wx_topic_display/TopicDisplayDialog.cpp)
 
-rospack_add_executable(test src/test/test.cpp
+rospack_add_executable(simpletest src/test/test.cpp
                             src/test/GenTestTopicDisplay.cpp)
 
-target_link_libraries(test wxtopicdisplay ${wxWidgets_LIBRARIES})
+target_link_libraries(simpletest wxtopicdisplay ${wxWidgets_LIBRARIES})
 
