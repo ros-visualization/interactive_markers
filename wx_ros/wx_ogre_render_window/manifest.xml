@@ -9,7 +9,7 @@
     <url>http://pr.willowgarage.com/wiki/ROS</url>
     <depend package="ogre"/>
     <export> 
-        <cpp cflags="-I${prefix}/src/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lwxogrerenderwinow"/>
+        <cpp cflags="-I${prefix}/src/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lwxogrerenderwindow"/>
     </export>
 </package>
 
