@@ -210,6 +210,24 @@ void CameraPanel::SetEnabled( bool enabled )
   m_Enable->SetValue( enabled );
 }
 
+void CameraPanel::SetPanLimits( float min, float max )
+{
+  m_PanMin = min;
+  m_PanMax = max;
+}
+
+void CameraPanel::SetTiltLimits( float min, float max )
+{
+  m_TiltMin = min;
+  m_TiltMax = max;
+}
+
+void CameraPanel::SetZoomLimits( float min, float max )
+{
+  m_ZoomMin = min;
+  m_ZoomMax = max;
+}
+
 void CameraPanel::StartAll()
 {
   SubscribeImage();

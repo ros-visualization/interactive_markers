@@ -70,6 +70,18 @@ public:
 
   /// Set the advertised topic for the PTZ control commands
   void SetPTZControlCommand( const std::string& topic );
+  
+  /// Set the pan limits for this camera.  Note that the values are arbitrary, and are not in any defined units -- they just need
+  /// to match what the camera is expecting.
+  void SetPanLimits( float min, float max );
+  
+  /// Set the tilt limits for this camera.  Note that the values are arbitrary, and are not in any defined units -- they just need
+  /// to match what the camera is expecting.
+  void SetTiltLimits( float min, float max );
+  
+  /// Set the zoom limits for this camera.  Note that the values are arbitrary, and are not in any defined units -- they just need
+  /// to match what the camera is expecting.
+  void SetZoomLimits( float min, float max );
 
 private:
   /// Subscribes to the current image topic, unless disabled
