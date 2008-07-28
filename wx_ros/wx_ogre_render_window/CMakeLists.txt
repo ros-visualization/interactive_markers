@@ -24,5 +24,5 @@ rospack_add_library(wxogrerenderwindow src/wx_ogre_render_window/wx_ogre_render_
 target_link_libraries(wxogrerenderwindow ${wxWidgets_LIBRARIES} ${GTK2_LIBRARIES} ${OPENGL_gl_LIBRARY})
 
 # test application
-rospack_add_executable(bin/test src/test/test.cpp)
-target_link_libraries(bin/test wxogrerenderwindow ${wxWidgets_LIBRARIES})
+rospack_add_executable(bin/test_render_window src/test/test.cpp)
+target_link_libraries(bin/test_render_window wxogrerenderwindow ${wxWidgets_LIBRARIES})
