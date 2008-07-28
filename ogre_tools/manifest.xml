@@ -1,0 +1,15 @@
+<package>
+    <description brief="Ogre Visualization Tools">
+    
+    This is a set of visualization tools for rendering things using Ogre3D.
+    
+    </description>
+    <author>Josh Faust</author>
+    <license>BSD</license>
+    <url>http://pr.willowgarage.com/wiki/ROS</url>
+    <depend package="ogre"/>
+    <export> 
+        <cpp cflags="-I${prefix}/src/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -logre_viewer"/>
+    </export>
+</package>
+
