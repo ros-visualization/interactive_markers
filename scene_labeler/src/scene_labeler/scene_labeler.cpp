@@ -38,6 +38,13 @@ class scene_labeler : public ros::node
 {
 public:
   
+  scene_labeler() : ros::node("scene_labeler") 
+  {
+    advertise<std_msgs::PointCloudFloat32>("full_cloud");
+    advertise<std_msgs::Empty>("shutter");
+    advertise<std_msgs::VisualizationMarker>("visualizationMarker");
+  }
+
   scene_labeler(string file1, string file2) : ros::node("scene_labeler")
   {
     advertise<std_msgs::PointCloudFloat32>("full_cloud");
@@ -66,12 +73,13 @@ int main(int argc, char **argv) {
 
   scene_labeler *sl;
 
-  //Filename parsing on foreground.  Not for argc==2 case.
-
+  // ------------------------------------------
   //  If we just get one bag, load the data and publish it.
+  // ------------------------------------------
   if(argc==2) { 
     sl = new scene_labeler(string(argv[1]), string(argv[1]));
     sl->publish("full_cloud", sl->cloud1);
+    cout << "Publishing " << sl->cloud1.get_pts_size() << " points." << endl;
 
 //     //Put it into scan_utils.
 //     SmartScan *ss = new SmartScan();
@@ -97,7 +105,10 @@ int main(int argc, char **argv) {
 //     delete ss;
   }
 
+  // ------------------------------------------
   //-s option: subtract one from the other and publish the difference.
+  //           Also, save an intermediate file which can be loaded with the -l option.
+  // ------------------------------------------
   else if(argc==4 && !strcmp(argv[1], "-s")) {
     cout << "Segmenting..." << endl;
     
@@ -111,15 +122,14 @@ int main(int argc, char **argv) {
     sl = new scene_labeler(string(argv[2]), string(argv[3]));
     
     //Put them both into SmartScans.
-    SmartScan foreground, foreground2, background, background2;
+    SmartScan foreground, foreground2, background;
     foreground.setPoints(sl->cloud1.get_pts_size(), sl->cloud1.pts);
     foreground2.setPoints(sl->cloud1.get_pts_size(), sl->cloud1.pts);
     background.setPoints(sl->cloud2.get_pts_size(), sl->cloud2.pts);
-    background2.setPoints(sl->cloud2.get_pts_size(), sl->cloud2.pts);
-    foreground.crop(0,0,0,1.2,1.2,1.2);
-    foreground2.crop(0,0,0,1.2,1.2,1.2);
-    background.crop(0,0,0,1.2,1.2,1.2);
-    background2.crop(0,0,0,1.2,1.2,1.2);
+    float BOXSIZE = 1.2;
+    foreground.crop(0,0,0,BOXSIZE,BOXSIZE,BOXSIZE);
+    background.crop(0,0,0,BOXSIZE,BOXSIZE,BOXSIZE);
+    foreground2.crop(0,0,0,BOXSIZE,BOXSIZE,BOXSIZE);
 
     //Subtract the background.
     time_t start, end, dif;
@@ -139,61 +149,125 @@ int main(int argc, char **argv) {
       final.addScan((*ccs)[i]);
     }
 
-    //Publish the final scan and save it to a file.
+    //Publish the final scan.
     std_msgs::PointCloudFloat32 finalcloudmsg = final.getPointCloud();
-//     string toSave = fgDir + string("/") + fgNum + string("-sg-full_cloud.bag"); //TODO: make this general.
-//     string topic = string("full_cloud");
-//     dustbuster *db = new dustbuster(topic, toSave);
     sl->publish("full_cloud", finalcloudmsg); //This will be saved by dustbuster.
-//     delete db;
+
+    //Save the scan to a file.
+    string segmentedString  = fgDir + string("/") + fgNum + string("-sg-full_cloud.txt");
+    ofstream f(segmentedString.c_str()); 
+    if(!f.is_open()) {
+      cerr << "Could not open temporary file." << endl;
+    }
+
+    std_msgs::Point3DFloat32 pt;
+    int label;
+    vector<std_msgs::Point3DFloat32> *nearby;
+    cout << "Writing " << foreground2.size() << " points to " << segmentedString << endl;
+    for(int i=0; i<foreground2.size(); i++) {
+      pt = foreground2.getPoint(i);
+      nearby = final.getPointsWithinRadius(pt.x, pt.y, pt.z, .01);
+      if(nearby->size() > 0) 
+	label = -1; //Interesting and to be labeled by a human.
+      else
+	label = 0; //Background.
+
+      f << pt.x << " " << pt.y << " " << pt.z << " " << 0 << " " << label << endl;
+    }
+    f.close();
+    cout << "Done." << endl;
   }
 
-  /*
-  //*****
+
+
+  // ------------------------------------------
   //-l option: label the connected components in the segmented pointcloud.
-  else if(argc==4 && !strcmp(argv[1], "-l")) {
+  // ------------------------------------------
+  else if(argc==3 && !strcmp(argv[1], "-l")) {
     cout << "Labeling..." << endl;
 
-    string foregroundString = string(argv[2]);
-    string fgDir, fgFile;
-    SplitFilename(foregroundString, &fgDir, &fgFile);
-    string fgNum = fgFile.substr(0, fgFile.find_first_of("-"));
-
-    //Do filename parsing to get the segmented filename.
+    //Do filename parsing to get the segmented and labeled filenames.
     string segmentedString = string(argv[2]);
     string sgDir, sgFile;
     SplitFilename(segmentedString, &sgDir, &sgFile);
     string sgNum = sgFile.substr(0, sgFile.find_first_of("-"));
-    if(sgNum.compare(fgNum)) {
-      cout << "Foreground and segmented file do not have the same number!" << endl;
-    }
-    string labeledFile = fgDir + string("/") + fgNum + string("-segmented.bag");
-    cout << "saving to " << labeledFile << endl;
+    string labeledString = sgDir + string("/") + sgNum + string("-labeled-full_cloud.txt");
+    cout << "saving to " << labeledString << endl;
    
     //Load the data.
-    sl.read_bag(argv[2], 0);
-    sl.read_bag(argv[3], 1);
+    FILE *fp = fopen(segmentedString.c_str(), "r");
+    if(!fp) {
+      cerr << "Could not open segmented file." << endl;
+      return 1;
+    }
+
+    cout << "Counting lines..." << endl;
+    float x, y, z;
+    int intensity, label;    
+    int nLines = 0;
+    while(fscanf(fp, "%f %f %f %d %d\n", &x, &y, &z, &intensity, &label) != EOF) {
+      if(label==-1) {
+	nLines++;
+      }
+    }
+    cout << "Found " << nLines << " points that are interesting." << endl;
+
+    std_msgs::PointCloudFloat32 cloud;    
+    cloud.set_pts_size(nLines);
+    cloud.set_chan_size(2);
+    cloud.set_chan_size(1);
+    cloud.chan[0].name = "intensity";
+    cloud.chan[0].set_vals_size(nLines);
+    cloud.chan[1].name = "label";
+    cloud.chan[1].set_vals_size(nLines);
+
+    cout << "Reading in data.." << endl;
+    rewind(fp);
+    int i = 0;
+    while(fscanf(fp, "%f %f %f %d %d", &x, &y, &z, &intensity, &label) == 5) { 
+      if(label==-1) {
+	cloud.pts[i].x = x;
+	cloud.pts[i].y = y;
+	cloud.pts[i].z = z;
+	cloud.chan[0].vals[i] = intensity;
+	cloud.chan[1].vals[i] = label;
+	i++;
+      }
+    }
+    cout << "done" << endl;
+
+    //Publish the data to make sure it looks right.
+    sl = new scene_labeler();
+    sl->publish("full_cloud", cloud);
+    cout << "Press Enter to continue . . .\n";
+    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     
-    //Put them both into SmartScans.
-    SmartScan foreground, segmented;
-    foreground.setPoints(sl.cloud[0]->get_pts_size(), sl.cloud[0]->pts);
-    segmented.setPoints(sl.cloud[1]->get_pts_size(), sl.cloud[1]->pts);
+    
+    //Put it into a smartScan.
+    SmartScan foreground;
+    foreground.setPoints(cloud.get_pts_size(), cloud.pts);
 
     //Get the segments.
     vector<SmartScan*> *ccs;
     ccs = foreground.connectedComponents(CCTHRESH, MINPTS);
+    
 
     //Present each segment in turn and ask the user for a label.
     for(unsigned int i=0; i<ccs->size(); i++) {
       std_msgs::PointCloudFloat32 msg = (*ccs)[i]->getPointCloud();
-      sl.publish("full_cloud", msg);
-      cout << "Pausing..." << endl;
-      int dummy; cin >> dummy; //TODO: Actually ask for and apply a label.
+      sl->publish("full_cloud", msg);
+      cout << "\n\n****  What is this?" << endl;
+      system("cat labels.txt");
+      cout << "Enter a number: ";
+      cin >> label;
+      cout << "\nLabeling as " << label << endl;
     }
   }
-  */
+  
 
+  // ------------------------------------------
   //-si option: Demo spin images on a single scene.
+  // ------------------------------------------
   else if(argc==3 && !strcmp(argv[1], "-si")) {
     cout << "Demoing spin image." << endl;
     sl = new scene_labeler(string(argv[2]), string(argv[2]));
@@ -279,7 +353,8 @@ int main(int argc, char **argv) {
 	f << endl;
       }
       system("killall gnuplot");
-      int status = system(cmd);
+      f.close();
+      system(cmd);
       remove(filename);
 
       //Clean up.
