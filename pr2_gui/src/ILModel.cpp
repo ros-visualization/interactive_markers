@@ -31,7 +31,7 @@ ILModel(irr::scene::ISceneManager *mngr, irr::scene::ISceneNode *prnt, irr::c8 *
 		{
 			node = manager->addAnimatedMeshSceneNode(mesh,parent,ID);
 			setPosition(x,y,z);
-		setRotation(roll,pitch,yaw);
+			setRotation(roll,pitch,yaw);
 		}
 	}
 }

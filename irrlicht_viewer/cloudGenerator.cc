@@ -1,6 +1,6 @@
 #include <ros/node.h>
 #include <ros/time.h>
-//#include <rostools/Time.h>
+#include <rostools/Time.h>
 #include <std_msgs/PointCloudFloat32.h>
 #include <std_msgs/Empty.h>
 
@@ -9,12 +9,12 @@
 class cloudGenerator : public ros::node
 {
 public:
-  static const unsigned int num_points = 10000;
+  static const unsigned int num_points = 100000;
   
   
   cloudGenerator(): ros::node("CloudGenerator")
   { 
-    advertise<std_msgs::PointCloudFloat32>("cloud");
+    advertise<std_msgs::PointCloudFloat32>("cloudStereo");
     advertise<std_msgs::Empty>("shutter");
   };
   //  ~cloudGenerator(){return;};
@@ -34,7 +34,7 @@ public:
 	cloud.chan[0].vals[i] = cos(seconds)*2000.0 + 2000;
       }
     
-    publish("cloud",cloud);
+    publish("cloudStereo",cloud);
   };
 
   void sendShutter()
@@ -64,7 +64,7 @@ int main(int argc, char ** argv)
       myClouder.sendCloud();
       if (i++ % 100)
 	myClouder.sendShutter();
-      usleep(10000);
+      usleep(100000);
       
   }
  

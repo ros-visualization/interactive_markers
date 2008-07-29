@@ -2,30 +2,30 @@
 #define VIS3D_H
 
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 // Copyright (C) 2008, Willow Garage Inc.
 //
-// Redistribution and use in source and binary forms, with or without 
+// Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-//   * Redistributions of source code must retain the above copyright notice, 
+//   * Redistributions of source code must retain the above copyright notice,
 //     this list of conditions and the following disclaimer.
-//   * Redistributions in binary form must reproduce the above copyright 
-//     notice, this list of conditions and the following disclaimer in the 
+//   * Redistributions in binary form must reproduce the above copyright
+//     notice, this list of conditions and the following disclaimer in the
 //     documentation and/or other materials provided with the distribution.
-//   * Neither the name of Stanford University nor the names of its 
-//     contributors may be used to endorse or promote products derived from 
+//   * Neither the name of Stanford University nor the names of its
+//     contributors may be used to endorse or promote products derived from
 //     this software without specific prior written permission.
-//   
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //////////////////////////////////////////////////////////////////////////////
 /**
@@ -47,7 +47,7 @@ Subscribes to (name/type):
 - @b "visualizationMarker"/std_msgs::VisualizationMarker : User defined object in the 3d world
 - @b "transform"/std_msgs::Empty : Cue to update model (new transform is available)
 
-@todo 
+@todo
 - Please put some stuff here
 **/
 
@@ -75,7 +75,8 @@ class Vis3d
 		///Camera views
 		enum viewEnum{Maya,FPS,TFL,TFR,TRL,TRR,Top,Bottom,Front,Rear,Left,Right,MaxViewEnum};
 		///Type of head laser scan display
-		enum scanType{Wipe, Replace, AtOnce, MaxScanType};
+		//enum scanType{Wipe, Replace, AtOnce, MaxScanType};
+		enum scanType{Wipe, AtOnce, MaxScanType};
 		///Marker insertion actions
 		enum Action {newObject, modifyObject, deleteObject, MaxAction};
 		///Marker insertion object types
@@ -94,18 +95,20 @@ class Vis3d
 	//irrlicht declarations
 		ILClient *localClient;
 		ILRender *pLocalRenderer;
-		std::vector<ILPointCloud*> ilHeadCloud;
+		//std::vector<ILPointCloud*> ilHeadCloud;
+		ILLaserScan *ilHeadCloud;
 		ILLaserScan *ilFloorCloud;
-		std::vector<ILPointCloud*> ilStereoCloud;
+		ILLaserScan *ilStereoCloud;
+		//std::vector<ILPointCloud*> ilStereoCloud;
 		ILGrid *ilGrid;
-		std::vector<ILModel*> model;
+		//std::vector<ILModel*> model;
 		std::vector<ILModel*> markers;
 		ILUCS *ilucs;
 		irr::scene::ILightSceneNode *light[2];
 		irr::scene::ICameraSceneNode *cameras[MaxViewEnum];
 		irr::scene::ISceneNode *intermediate;
 		irr::scene::IAnimatedMesh *ArrowMesh;
-	
+
 		///Vis3d constructor
 		Vis3d(ros::node *aNode);
 		///Vis3d destructor
@@ -174,6 +177,9 @@ class Vis3d
 		int stereoVertScanCount;
 		///Remembers if the user controlled objects are visible or hidded.
 		bool objectsVisibility;
+
+		std::map<std::string, ILModel*> m_modelMap;
+		//std::map<std::string, std::string> m_nameMap;
 };
 
 #endif // VIS3D_H

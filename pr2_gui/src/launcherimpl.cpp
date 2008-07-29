@@ -47,11 +47,6 @@ void LauncherImpl::startStopHeadPtCld( wxCommandEvent& event )
 		HeadLaser_RB->Show(true);
 		Layout();
 		Fit();
-		/*if(LeftDock_FGS->Show(HeadLaser_RB,true))
-			std::cout << "found HeadLaser_RB show\n";
-		Layout();
-		Fit();*/
-		//std::cout << "showing HeadLaser_RB\n";
     }
     else
     {
@@ -60,10 +55,6 @@ void LauncherImpl::startStopHeadPtCld( wxCommandEvent& event )
 		HeadLaser_RB->Show(false);
 		Layout();
 		Fit();
-		/*if(LeftDock_FGS->Show(HeadLaser_RB,true))
-			std::cout << "found HeadLaser_RB hide\n";
-		Layout();
-		Fit();*/
     }
 }
 
@@ -155,7 +146,6 @@ void LauncherImpl::viewChanged( wxCommandEvent& event )
 {
 	if(vis3d_Window)
 	{
-		//std::cout << "changing view to " << id << std::endl;
 		vis3d_Window->changeView(Views_RB->GetSelection());
 	}
 	else
@@ -169,7 +159,6 @@ void LauncherImpl::HeadLaserChanged( wxCommandEvent& event )
 	if(vis3d_Window)
 	{
 		std::cout << "Selection: " << HeadLaser_RB->GetSelection() << std::endl;
-		//vis3d_Window->scanT = HeadLaser_RB->GetSelection();
 		vis3d_Window->changeHeadLaser(HeadLaser_RB->GetSelection());
 	}
 	else
@@ -181,7 +170,6 @@ void LauncherImpl::startStop_Visualization( wxCommandEvent& event )
 	if(Visualization_CB->IsChecked())
     {
 		consoleOut(wxT("Opening Visualizer\n"));
-		//std::cout << "Opening Visualizer\n";
 		HeadLaser_CB->SetValue(false);
 		FloorLaser_CB->SetValue(false);
 		Stereo_CB->SetValue(false);
@@ -190,12 +178,9 @@ void LauncherImpl::startStop_Visualization( wxCommandEvent& event )
 		Grid_CB->SetValue(true);
 		Objects_CB->SetValue(true);
 		LeftDock_FGS->Show(Visualization_SBS,true);
-		//LeftDock_FGS->Hide(HeadLaser_RB,true);
 		HeadLaser_RB->Show(false);
 		Layout();
 		Fit();
-		//LeftDock_FGS->Layout();
-		//Window_FGS->Layout();
 		HeadLaser_CB->Enable(true);
 		FloorLaser_CB->Enable(true);
 		Stereo_CB->Enable(true);
@@ -215,8 +200,6 @@ void LauncherImpl::startStop_Visualization( wxCommandEvent& event )
 		LeftDock_FGS->Hide(Visualization_SBS,true);
 		Layout();
 		Fit();
-		//LeftDock_FGS->Layout();
-		//Window_FGS->Layout();
 		HeadLaser_CB->Enable(false);
 		FloorLaser_CB->Enable(false);
 		Stereo_CB->Enable(false);
@@ -237,7 +220,6 @@ void LauncherImpl::startStop_Topdown( wxCommandEvent& event )
 		RightDock_FGS->Show(Topdown_SBS,true);
 		Layout();
 		Fit();
-		//Window_FGS->Layout();
 		PLACEHOLDER_B->Enable(true);
 	}
 	else
@@ -246,7 +228,6 @@ void LauncherImpl::startStop_Topdown( wxCommandEvent& event )
 		RightDock_FGS->Hide(Topdown_SBS,true);
 		Layout();
 		Fit();
-		//Window_FGS->Layout();
 		PLACEHOLDER_B->Enable(false);
 	}
 }
@@ -266,8 +247,6 @@ void LauncherImpl::startStop_PTZL( wxCommandEvent& event )
 		myNode->subscribe("image_ptz_left", PTZLImage, &LauncherImpl::incomingPTZLImageConn,this);
 		myNode->subscribe("PTZL_state", PTZL_state, &LauncherImpl::incomingPTZLState,this);
 		myNode->advertise<std_msgs::PTZActuatorCmd>("PTZL_cmd");
-		
-		//*PTZR_bmp = NULL;
 	}
 	else
 	{
@@ -297,13 +276,11 @@ void LauncherImpl::PTZL_click( wxMouseEvent& event)
 	ptz_cmd.tilt.valid = 1;
 	ptz_cmd.tilt.cmd = tiltPTZL - delV;
 	ptz_cmd.zoom.valid = 0;
-	//std::cout << "Click: " << ptz_cmd.pan.cmd << ", " << ptz_cmd.tilt.cmd << std::endl << "Diff: " << delH << ", " << delV << std::endl << "At: " << panPTZR << ", " << tiltPTZR << std::endl;
 	myNode->publish("PTZL_cmd",ptz_cmd);
 }
 
 void LauncherImpl::incomingPTZLState()
 {
-	//std::cout << "receiving position L\n";
 	if(PTZL_state.zoom.pos_valid)
 		zoomPTZL_S->SetValue(round(PTZL_state.zoom.pos));
 	if(PTZL_state.tilt.pos_valid)
@@ -346,8 +323,6 @@ void LauncherImpl::incomingPTZLImageConn()
 		PTZL_Event.SetEventObject(this);
 		this->AddPendingEvent(PTZL_Event);
     }
-    //else
-    	//std::cout << "!\n";
 }
 
 void LauncherImpl::PTZLDrawPic( wxCommandEvent& event )
@@ -374,7 +349,6 @@ void LauncherImpl::startStop_PTZR( wxCommandEvent& event )
 		myNode->subscribe("image_ptz_right", PTZRImage, &LauncherImpl::incomingPTZRImageConn,this);
 		myNode->subscribe("PTZR_state", PTZR_state, &LauncherImpl::incomingPTZRState,this);
 		myNode->advertise<std_msgs::PTZActuatorCmd>("PTZR_cmd");
-		//*PTZR_bmp = NULL;
 	}
 	else
 	{
@@ -404,13 +378,11 @@ void LauncherImpl::PTZR_click( wxMouseEvent& event)
 	ptz_cmd.tilt.valid = 1;
 	ptz_cmd.tilt.cmd = tiltPTZR - delV;
 	ptz_cmd.zoom.valid = 0;
-	//std::cout << "Click: " << ptz_cmd.pan.cmd << ", " << ptz_cmd.tilt.cmd << std::endl << "Diff: " << delH << ", " << delV << std::endl << "At: " << panPTZR << ", " << tiltPTZR << std::endl;
 	myNode->publish("PTZR_cmd",ptz_cmd);
 }
 
 void LauncherImpl::incomingPTZRState()
 {
-	//std::cout << "receiving position R\n";
 	if(PTZR_state.zoom.pos_valid)
 		zoomPTZR_S->SetValue(round(PTZR_state.zoom.pos));
 	if(PTZR_state.tilt.pos_valid)
@@ -423,12 +395,10 @@ void LauncherImpl::incomingPTZRState()
 		panPTZR = PTZR_state.pan.pos;
 		panPTZR_S->SetValue(round(PTZR_state.pan.pos));
 	}
-	//std::cout << "getting pos " << PTZR_state.pan.pos << " " << PTZR_state.tilt.pos << " " << PTZR_state.zoom.pos << endl;
 }
 
 void LauncherImpl::incomingPTZRImageConn()
 {
-	//std::cout << "image\n";
     if(PTZR_GET_NEW_IMAGE)
     {
     	PTZR_GET_NEW_IMAGE = false;
@@ -459,8 +429,6 @@ void LauncherImpl::incomingPTZRImageConn()
 		PTZR_Event.SetEventObject(this);
 		this->AddPendingEvent(PTZR_Event);
     }
-    //else
-    	//std::cout << "!\n";
 }
 
 void LauncherImpl::PTZRDrawPic( wxCommandEvent& event )
@@ -481,7 +449,6 @@ void LauncherImpl::startStop_WristL( wxCommandEvent& event )
 		Layout();
 		Fit();
 		myNode->subscribe("image_wrist_left", WristLImage, &LauncherImpl::incomingWristLImageConn,this);
-		//*WristL_bmp = NULL;
 	}
 	else
 	{
@@ -529,8 +496,6 @@ void LauncherImpl::incomingWristLImageConn()
 		this->AddPendingEvent(WristL_Event);
 		
     }
-    //else
-    	//std::cout << "!\n";
 }
 
 void LauncherImpl::WristLDrawPic( wxCommandEvent& event )
@@ -552,7 +517,6 @@ void LauncherImpl::startStop_WristR( wxCommandEvent& event )
 		Layout();
 		Fit();
 		myNode->subscribe("image_wrist_right", WristRImage, &LauncherImpl::incomingWristRImageConn,this);
-		//*WristR_bmp = NULL;
 	}
 	else
 	{
@@ -600,8 +564,6 @@ void LauncherImpl::incomingWristRImageConn()
 		this->AddPendingEvent(WristR_Event);
 		
     }
-    //else
-    	//std::cout << "!\n";
 }
 
 void LauncherImpl::WristRDrawPic( wxCommandEvent& event )
@@ -632,7 +594,6 @@ void LauncherImpl::PTZR_ptzChanged(wxScrollEvent& event)
 	ptz_cmd.tilt.cmd = tiltPTZR_S->GetValue();
 	ptz_cmd.zoom.valid = 1;
 	ptz_cmd.zoom.cmd = zoomPTZR_S->GetValue();
-	//std::cout << "sending pos " << ptz_cmd.pan.cmd << " " << ptz_cmd.tilt.cmd << " " << ptz_cmd.zoom.cmd << endl;
 	myNode->publish("PTZR_cmd",ptz_cmd);
 }
 

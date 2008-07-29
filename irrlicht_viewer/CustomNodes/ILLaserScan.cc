@@ -39,7 +39,8 @@ ILLaserScan::ILLaserScan(irr::scene::ISceneNode* parent, irr::scene::ISceneManag
   m_material.PointCloud = true;
   m_material.BackfaceCulling = false;
   m_material.Thickness = 2;
-
+  
+  m_points.push_back(new video::S3DVertex);
   preallocatePoints(1024);
 }
 
@@ -50,15 +51,19 @@ ILLaserScan::~ILLaserScan() {
 // Memory management
 void ILLaserScan::preallocatePoints(const size_t numPoints) {
   if(m_numAllocPoints == 0) {
-    m_points = (video::S3DVertex*)malloc(numPoints*sizeof(video::S3DVertex));
+    m_points[m_numPoints/MAX_RENDERABLE] = (video::S3DVertex*)malloc(numPoints*sizeof(video::S3DVertex));
     m_numAllocPoints = numPoints;
   }
 }
 
 void ILLaserScan::deallocatePoints() {
-  if(m_numAllocPoints > 0) {
-    free(m_points);
-    m_points = NULL;
+  if(m_numAllocPoints > 0 || m_points.size() > 0) {
+    for( int i = 0; i < m_points.size(); i++)
+    {
+		free(m_points[i]);
+		
+    }
+    m_points.clear();
     m_numAllocPoints = 0;
     m_numPoints = 0;
   }
@@ -67,38 +72,26 @@ void ILLaserScan::deallocatePoints() {
 // Manipulators
 void ILLaserScan::addPoint(const double x, const double y, const double z, const int r, const int g, const int b)
 {
-  if(m_numPoints >= MAX_RENDERABLE)
+  if(m_numPoints/m_points.size() == MAX_RENDERABLE)
     {
-      //std::cerr<<"Overfilling"<< std::endl;
-      return;
+      m_points.push_back(new video::S3DVertex);
+      m_numAllocPoints = 0;
+      preallocatePoints(1024);
     }
-  if(m_numPoints == m_numAllocPoints) {
-    //std::cerr<<"Reallocating"<<std::endl;
+  if(m_numPoints - (m_points.size() - 1) * MAX_RENDERABLE == m_numAllocPoints) {
     m_numAllocPoints = MIN(2 * m_numAllocPoints, MAX_RENDERABLE);
-    m_points = (video::S3DVertex*)realloc(m_points,m_numAllocPoints*sizeof(video::S3DVertex));
+    m_points[m_numPoints/MAX_RENDERABLE] = (video::S3DVertex*)realloc(m_points[m_numPoints/MAX_RENDERABLE],m_numAllocPoints*sizeof(video::S3DVertex));
   }
-
-  m_points[m_numPoints].Pos.set(-y,z,x);
-  //m_points[m_numPoints].Pos.set(z,-x,y);
-  m_points[m_numPoints].Color.set(255,r,g,b);
-
+  m_points[m_numPoints/MAX_RENDERABLE][m_numPoints % MAX_RENDERABLE].Pos.set(-y,z,x);
+  m_points[m_numPoints/MAX_RENDERABLE][m_numPoints % MAX_RENDERABLE].Color.set(255,r,g,b);
   m_numPoints++;
 }
 
 void ILLaserScan::addPoints(double *rgX, double *rgY, double *rgZ, int *rgR, int *rgG, int *rgB, const size_t numPoints)
 {
-  if(m_numPoints+numPoints >= m_numAllocPoints) {
-    m_numAllocPoints = MIN ( m_numPoints+numPoints, MAX_RENDERABLE);
-    m_points = (video::S3DVertex*)realloc(m_points,m_numAllocPoints * sizeof(video::S3DVertex));
-  }
-
   for(int i=0; i<numPoints; i++) {
-    m_points[m_numPoints + i].Pos.set(-rgY[i],rgZ[i],rgX[i]);
-    //m_points[m_numPoints + i].Pos.set(rgZ[i],-rgX[i],rgY[i]);
-    m_points[m_numPoints + i].Color.set(255,rgR[i],rgG[i],rgB[i]);
+    addPoint(-1*rgY[i],1*rgZ[i],1*rgX[i],1*rgR[i],1*rgG[i],1*rgB[i]);
   }
-  
-  m_numPoints += numPoints;
 }
 
 void ILLaserScan::resetCount() {
@@ -119,11 +112,8 @@ void ILLaserScan::render() {
   driver->setMaterial(m_material);
   driver->setTransform(video::ETS_WORLD, AbsoluteTransformation);
 
-  driver->drawVertexPrimitiveList(m_points,MIN(m_numPoints, MAX_RENDERABLE), NULL, MIN(m_numPoints,MAX_RENDERABLE), video::EVT_STANDARD, scene::EPT_POINTS);
-  for(size_t i=1; i<m_numPoints; i+=MAX_RENDERABLE) {
-    driver->drawVertexPrimitiveList(m_points,MIN(m_numPoints-i, MAX_RENDERABLE), NULL, MIN(m_numPoints-i,MAX_RENDERABLE), video::EVT_STANDARD, scene::EPT_POINTS);
-    //driver->draw3DLine(core::vector3df(m_points[i-1].Pos.X, m_points[i-1].Pos.Y, m_points[i-1].Pos.Z), core::vector3df(m_points[i].Pos.X, m_points[i].Pos.Y, m_points[i].Pos.Z), m_points[i].Color);
-  	//std::cout << "drawing line\n";
+  for(size_t i=0; i<m_numPoints; i+=MAX_RENDERABLE) {
+    driver->drawVertexPrimitiveList(m_points[i/MAX_RENDERABLE],MIN(m_numPoints-i, MAX_RENDERABLE), NULL, MIN(m_numPoints-i,MAX_RENDERABLE), video::EVT_STANDARD, scene::EPT_POINTS);
   }
 }
 

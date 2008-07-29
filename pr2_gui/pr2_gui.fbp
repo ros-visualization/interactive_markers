@@ -582,7 +582,7 @@
                                             <property name="proportion">1</property>
                                             <object class="wxRadioBox" expanded="1">
                                                 <property name="bg"></property>
-                                                <property name="choices">&quot;Wipe&quot; &quot;Replace&quot; &quot;At Once&quot;</property>
+                                                <property name="choices">&quot;Wipe&quot; &quot;At Once&quot;</property>
                                                 <property name="context_help"></property>
                                                 <property name="enabled">1</property>
                                                 <property name="fg"></property>

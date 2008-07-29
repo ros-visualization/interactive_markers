@@ -108,7 +108,7 @@ launcher::launcher( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	
 	Visualization_FGS->Add( Views_RB, 1, wxEXPAND|wxALL, 5 );
 	
-	wxString HeadLaser_RBChoices[] = { wxT("Wipe"), wxT("Replace"), wxT("At Once") };
+	wxString HeadLaser_RBChoices[] = { wxT("Wipe"), wxT("At Once") };
 	int HeadLaser_RBNChoices = sizeof( HeadLaser_RBChoices ) / sizeof( wxString );
 	HeadLaser_RB = new wxRadioBox( this, wxID_ANY, wxT("Head Laser"), wxDefaultPosition, wxDefaultSize, HeadLaser_RBNChoices, HeadLaser_RBChoices, 1, wxRA_SPECIFY_COLS );
 	HeadLaser_RB->SetSelection( 0 );

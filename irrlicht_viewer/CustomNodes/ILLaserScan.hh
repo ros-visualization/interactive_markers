@@ -31,6 +31,7 @@
 #include <irrlicht.h>
 #include <iostream>
 #include <math.h>
+#include <vector>
 
 class ILLaserScan : public irr::scene::ISceneNode {
 public:
@@ -60,7 +61,7 @@ private:
 
 
   size_t m_numPoints, m_numAllocPoints;
-  irr::video::S3DVertex *m_points;
+  std::vector<irr::video::S3DVertex*> m_points;
 
   irr::video::SMaterial m_material;
   irr::core::aabbox3d<irr::f32> m_box;

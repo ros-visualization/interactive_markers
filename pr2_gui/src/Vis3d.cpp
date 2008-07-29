@@ -1,4 +1,5 @@
 #include "Vis3d.h"
+#include "urdf/URDF.h"
 
 /**Initializes all Irrlicht models, cameras, and lights */
 Vis3d::Vis3d(ros::node *aNode) : tfClient(*aNode)
@@ -9,26 +10,19 @@ Vis3d::Vis3d(ros::node *aNode) : tfClient(*aNode)
 	stereoVertScanCount = 0;
 	scanDir = -1;
 	scanT = Wipe;
-	
+
 	localClient = new ILClient();
 	pLocalRenderer = ILClient::getSingleton();
 	pLocalRenderer->lock();
-
+	ilHeadCloud = new ILLaserScan(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),199);
 	ilFloorCloud = new ILLaserScan(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),200);
-	//ilStereoCloud = new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),201);
+	ilStereoCloud = new ILLaserScan(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),201);
 	ilGrid = new ILGrid(pLocalRenderer->manager()->getRootSceneNode(), pLocalRenderer->manager(), 202);
 	ilucs = new ILUCS(pLocalRenderer->manager()->getRootSceneNode(), pLocalRenderer->manager(),true, 203);
-	/*for(int i = 0; i < cloudArrayLength; i++)
-	{
-		ilHeadCloud[i] = new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),206 + i);
-	}*/
 	pLocalRenderer->unlock();
 	pLocalRenderer->addNode(ilFloorCloud);
-	/*pLocalRenderer->addNode(ilStereoCloud);
-	for(int i = 0; i < cloudArrayLength; i++)
-	{
-		pLocalRenderer->addNode(ilHeadCloud[i]);
-	}*/
+	pLocalRenderer->addNode(ilStereoCloud);
+	pLocalRenderer->addNode(ilHeadCloud);
 	ilGrid->makegrid(100,.1f,50,50,50);
 	pLocalRenderer->addNode(ilGrid);
 	irr::SKeyMap keyMap[8];
@@ -67,40 +61,19 @@ Vis3d::Vis3d(ros::node *aNode) : tfClient(*aNode)
 	cameras[Right] = pLocalRenderer->manager()->addCameraSceneNode(NULL,irr::core::vector3df(3,1,0),irr::core::vector3df(0,1,0),Right);
 	pLocalRenderer->manager()->setActiveCamera(cameras[Rear]);
 	changeView(Maya);
-	
+
 	irr::video::SColorf ambColor(0.2f,0.2f,0.2f,1.0f);
 	pLocalRenderer->manager()->setAmbientLight(ambColor);
 	light[0] = pLocalRenderer->manager()->addLightSceneNode(NULL,irr::core::vector3df(50,50,50),irr::video::SColorf(.9f,.9f,.9f,1.0f));
 	//light[1] = pLocalRenderer->manager()->addLightSceneNode(NULL,irr::core::vector3df(-50,-50,-50),irr::video::SColorf(.5f,.5f,.5f,1.0f));
-	
+
 	intermediate = pLocalRenderer->manager()->addCubeSceneNode(0.0);
 	intermediate->setRotation(irr::core::vector3df(90, 90, 0));
 	intermediate->setScale(irr::core::vector3df(1, 1, 1));
-	
+
 	ArrowMesh = pLocalRenderer->manager()->addArrowMesh("GeneralArrow",irr::video::SColor::SColor(255,0,0,0),irr::video::SColor::SColor(255,0,0,0)); //for use with random object
-	
+
 	myNode->subscribe("visualizationMarker", visMarker, &Vis3d::newMarker,this);
-	//test
-	/*std::cout << "maxRand is " << RAND_MAX << std::endl;
-	visMarker.x = markers.size();
-	visMarker.y = 0;
-	visMarker.z = 0;
-	visMarker.roll = 0;
-	visMarker.pitch = 0;
-	visMarker.yaw = 0;
-	visMarker.alpha = 255;
-	visMarker.r = 100+int(155.0*rand()/(RAND_MAX + 1.0));
-	visMarker.g = 100+int(155.0*rand()/(RAND_MAX + 1.0));
-	visMarker.b = 100+int(155.0*rand()/(RAND_MAX + 1.0));
-	visMarker.xScale = 1;
-	visMarker.yScale = 1;
-	visMarker.zScale = 1;
-	visMarker.text = "cheese!";
-	visMarker.id = 1000+markers.size();
-	visMarker.type = markers.size()%4;
-	visMarker.action = 0;
-	newMarker();*/
-	//end test
 }
 
 ///Vis3d destructor
@@ -108,34 +81,23 @@ Vis3d::Vis3d(ros::node *aNode) : tfClient(*aNode)
 Vis3d::~Vis3d()
 {
 	disable();
-	//delete localClient;
-    for(int i = 0; i < ilHeadCloud.size(); i++)
-    {
-	    //if(ilHeadCloud[i])
-		delete ilHeadCloud[i];
-    }
-    //if(ilFloorCloud)
-	delete ilFloorCloud;
-	for(int i = 0; i < ilStereoCloud.size(); i++)
-    {
-	    //if(ilStereoCloud[i])
-		delete ilStereoCloud[i];
-    }
-    //if(ilGrid)
-	delete ilGrid;
-	delete ilucs;
-	//delete tfClient;
 }
 
 /**Disables all drawings, but does not delete them.  This allows for future use of the window*/
 void Vis3d::disable()
 {
+	std::cerr << "Disable 1\n";
 	disableUCS();
-	if(model[0])
-		disableModel();
+	std::cerr << "Disable 2\n";
+	//if(model[0])
+	disableModel();
+	std::cerr << "Disable 3\n";
 	disableHead();
+	std::cerr << "Disable 4\n";
 	disableStereo();
-	disableFloor();		
+	std::cerr << "Disable 5\n";
+	disableFloor();
+	std::cerr << "Disable 6\n";
 }
 
 /**Almost always true*/
@@ -157,59 +119,45 @@ void Vis3d::changeView(int id)
 			cameras[id]->setTarget(tar);
 			cameras[id]->setPosition(pos);
 			break;
-			
+
 	}
 	pLocalRenderer->manager()->setActiveCamera(cameras[id]);
 	irr::core::rect<irr::s32> viewPort = pLocalRenderer->driver()->getViewPort();
 	pLocalRenderer->manager()->getActiveCamera()->setAspectRatio(((float)viewPort.getWidth())/((float)viewPort.getHeight()));
 	pLocalRenderer->unlock();
-	//this is for testing purposes only
-	/*std::cerr << std::endl;
-	visMarker.x = markers.size();
-	visMarker.y = 0;
-	visMarker.z = 0;
-	visMarker.roll = 0;
-	visMarker.pitch = 0;
-	visMarker.yaw = 0;
-	visMarker.alpha = 255;
-	visMarker.r = 100+int(155.0*rand()/(RAND_MAX + 1.0));
-	visMarker.g = 100+int(155.0*rand()/(RAND_MAX + 1.0));
-	visMarker.b = 100+int(155.0*rand()/(RAND_MAX + 1.0));
-	visMarker.xScale = 1;
-	visMarker.yScale = 1;
-	visMarker.zScale = 1;
-	visMarker.text = "cheese!";
-	visMarker.id = 1000+markers.size();
-	visMarker.type = markers.size()%4;
-	visMarker.action = 0;
-	newMarker();*/
 }
 
 void Vis3d::enableHead()
 {
-	scanDir = 1;
-	headVertScanCount = 0;
     changeHeadLaser(scanT);
-    for(int i = 0; i < ilHeadCloud.size(); i++)
-    {
-		pLocalRenderer->enable(ilHeadCloud[i]);
-		ilHeadCloud[i]->setVisible(true);
-    }   
-    std::cout << "Head enabled\n";
+    pLocalRenderer->enable(ilHeadCloud);
+	ilHeadCloud->setVisible(true);
 }
 
 void Vis3d::enableModel()
 {
-	//TiXmlDocument robodesc( descPath );
-	//robodesc.LoadFile();
-	//static const char *modelPaths[] = {"../pr2_models/base1000.3DS","../pr2_models/body1000.3DS","../pr2_models/caster1000r2.3DS","../pr2_models/caster1000r2.3DS","../pr2_models/caster1000r2.3DS","../pr2_models/caster1000r2.3DS"};
-	//static const char *modelPaths[] = {"pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","","","pr2_models/body1000.3DS","pr2_models/sh-pan1000.3DS","pr2_models/sh-pitch1000.3DS","pr2_models/sh-roll1000.3DS","","","","","pr2_models/sh-pan1000.3DS","pr2_models/sh-pitch1000.3DS","pr2_models/sh-roll1000.3DS","","","","","","","pr2_models/head-pan1000.3DS","pr2_models/head-tilt1000.3DS","","","","","","pr2_models/base1000.3DS","",""};
-	//static const char *modelPaths[] = {"","","pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","","","pr2_models/caster1000r2.3DS","pr2_models/base1000r.3DS","pr2_models/body1000r.3DS","pr2_models/sh-pan1000.3DS","pr2_models/sh-pitch1000.3DS","pr2_models/sh-roll1000.3DS","","","","","","","pr2_models/sh-pan1000.3DS","pr2_models/sh-pitch1000.3DS","pr2_models/sh-roll1000.3DS","","","","","","","pr2_models/head-pan1000.3DS","pr2_models/head-tilt1000.3DS","","",""};
-	static const char *modelPaths[] = {"../pr2_models/wheel.3DS","../pr2_models/wheel.3DS","../pr2_models/caster.3DS","../pr2_models/wheel.3DS","../pr2_models/wheel.3DS","../pr2_models/caster.3DS","../pr2_models/wheel.3DS","../pr2_models/wheel.3DS","../pr2_models/caster.3DS","../pr2_models/wheel.3DS","../pr2_models/wheel.3DS","../pr2_models/caster.3DS","../pr2_models/base.3DS","../pr2_models/body.3DS","../pr2_models/sh-pan.3DS","../pr2_models/sh-pitch.3DS","../pr2_models/sh-roll.3DS","../pr2_models/el-pitch.3DS","../pr2_models/fa-roll.3DS","../pr2_models/wr-pitch.3DS","../pr2_models/wr-roll.3DS","","","../pr2_models/sh-pan.3DS","../pr2_models/sh-pitch.3DS","../pr2_models/sh-roll.3DS","../pr2_models/el-pitch.3DS","../pr2_models/fa-roll.3DS","../pr2_models/wr-pitch.3DS","../pr2_models/wr-roll.3DS","","","../pr2_models/head-pan.3DS","../pr2_models/head-tilt.3DS","","",""};
+	std::string pathnamePrefix("../pr2_models/");
+	std::string pathnameSuffix(".3DS");
+	std::string content;
+	myNode->get_param("robotdesc/pr2", content);
+	robot_desc::URDF *file = new robot_desc::URDF();
+	file->loadString(content.c_str());
+	std::vector <robot_desc::URDF::Link*> links;
+	file->getLinks(links);
+	//m_nameMap.clear();
+	m_modelMap.clear();
 	pLocalRenderer->lock();
-	for(int i = 0; i < PR2::PR2_FRAMEID_COUNT; i++)
+	for(unsigned int i = 0; i < links.size(); i++)
 	{
-		//if (i != 21 && i != 22 && i != 30 && i != 31 && i < 31){
+		//m_nameMap[links[i]->name] = pathnamePrefix + links[i]->visual->geometry->filename + pathnameSuffix;
+		std::cout << links[i]->name << ": " << pathnamePrefix + links[i]->visual->geometry->filename + pathnameSuffix << std::endl;
+	//}
+
+
+	//static const char *modelPaths[] = {"../pr2_models/wheel.3DS","../pr2_models/wheel.3DS","../pr2_models/caster.3DS","../pr2_models/wheel.3DS","../pr2_models/wheel.3DS","../pr2_models/caster.3DS","../pr2_models/wheel.3DS","../pr2_models/wheel.3DS","../pr2_models/caster.3DS","../pr2_models/wheel.3DS","../pr2_models/wheel.3DS","../pr2_models/caster.3DS","../pr2_models/base.3DS","../pr2_models/body.3DS","../pr2_models/sh-pan.3DS","../pr2_models/sh-pitch.3DS","../pr2_models/sh-roll.3DS","../pr2_models/el-pitch.3DS","../pr2_models/fa-roll.3DS","../pr2_models/wr-pitch.3DS","../pr2_models/wr-roll.3DS","","","../pr2_models/sh-pan.3DS","../pr2_models/sh-pitch.3DS","../pr2_models/sh-roll.3DS","../pr2_models/el-pitch.3DS","../pr2_models/fa-roll.3DS","../pr2_models/wr-pitch.3DS","../pr2_models/wr-roll.3DS","","","../pr2_models/head-pan.3DS","../pr2_models/head-tilt.3DS","","",""};
+
+	//for(int i = 0; i < PR2::PR2_FRAMEID_COUNT; i++)
+	//{
 		libTF::TFPose aPose;
 		aPose.x = 0;
 		aPose.y = 0;
@@ -218,11 +166,12 @@ void Vis3d::enableModel()
 		aPose.pitch = 0;
 		aPose.yaw = 0;
 		aPose.time = 0;
-		aPose.frame = this->tfClient.lookup(PR2::PR2_FRAMEID[i]);// + i
+		//aPose.frame = this->tfClient.lookup(PR2::PR2_FRAMEID[i]);// + i
+		aPose.frame = this->tfClient.lookup(links[i]->name);
 		libTF::TFPose inBaseFrame;
 		try
 		{
-			inBaseFrame = this->tfClient.transformPose("FRAMEID_BASE", aPose);
+			inBaseFrame = this->tfClient.transformPose("base", aPose);
 		}
 		catch(libTF::TransformReference::LookupException e)
 		{
@@ -233,18 +182,30 @@ void Vis3d::enableModel()
 			inBaseFrame.pitch = 0;
 			inBaseFrame.yaw = 0;
 			inBaseFrame.time = 0;
-			inBaseFrame.frame = this->tfClient.lookup("FRAMEID_BASE");
+			inBaseFrame.frame = this->tfClient.lookup("base");
 		}
 		std::cout << "Coordinates for : " << i << "; "<<inBaseFrame.x << ", " <<  inBaseFrame.y << ", " << inBaseFrame.z << "; "<<inBaseFrame.roll << ", " <<  inBaseFrame.pitch << ", " << inBaseFrame.yaw <<std::endl;
-		if(modelPaths[i] != "")
-		{
-			ILModel *tempModel = new ILModel(pLocalRenderer->manager(), intermediate, (irr::c8*)modelPaths[i], this->tfClient.lookup(PR2::PR2_FRAMEID[i]), (float)inBaseFrame.x,(float)inBaseFrame.y, (float)inBaseFrame.z, (float)inBaseFrame.roll,(float)(inBaseFrame.pitch), (float)(inBaseFrame.yaw));
-			tempModel->getNode()->getMaterial(0).AmbientColor.set(255,100+int(155.0*rand()/(RAND_MAX + 1.0)),100+int(155.0*rand()/(RAND_MAX + 1.0)),100+int(155.0*rand()/(RAND_MAX + 1.0)));
-			model.push_back(tempModel);
+		try{
+			if(links[i]->visual->geometry->filename != "")
+			{
+				ILModel *tempModel = new ILModel(pLocalRenderer->manager(), intermediate, (irr::c8*)(pathnamePrefix + links[i]->visual->geometry->filename + pathnameSuffix).c_str(), this->tfClient.lookup(links[i]->name), (float)inBaseFrame.x,(float)inBaseFrame.y, (float)inBaseFrame.z, (float)inBaseFrame.roll,(float)(inBaseFrame.pitch), (float)(inBaseFrame.yaw));
+				if(tempModel->getNode() != NULL)
+				{
+					tempModel->getNode()->getMaterial(0).AmbientColor.set(255,100+int(155.0*rand()/(RAND_MAX + 1.0)),100+int(155.0*rand()/(RAND_MAX + 1.0)),100+int(155.0*rand()/(RAND_MAX + 1.0)));
+					//model.push_back(tempModel);
+					m_modelMap[links[i]->name] = tempModel;
+				}
+			}
+			else
+				throw -1;
 		}
-		else
-			model.push_back(NULL);
+		catch(...)
+		{
+			//model.push_back(NULL);
+			m_modelMap[links[i]->name] = NULL;
+		}
 	}
+	delete file;
 	std::cout << "Loaded all models\n";
 	myNode->subscribe("transform",transform, &Vis3d::newTransform,this);
 	pLocalRenderer->unlock();
@@ -254,8 +215,6 @@ void Vis3d::enableModel()
 void Vis3d::enableUCS()
 {
 	pLocalRenderer->lock();
-	/*if(!ilucs)
-		ilucs = new ILUCS(pLocalRenderer->manager(),true);*/
 	ilucs->setVisible(true);
 	pLocalRenderer->unlock();
 }
@@ -281,12 +240,9 @@ void Vis3d::enableStereo()
 {
     myNode->subscribe("cloudStereo", ptCldStereo, &Vis3d::addStereoCloud,this);
     myNode->subscribe("shutterStereo", shutStereo, &Vis3d::shutterStereo,this);
-    for( int i = 0 ; i < ilStereoCloud.size(); i++)
-    {
-    	pLocalRenderer->enable(ilStereoCloud[i]);
-    	ilStereoCloud[i]->setVisible(true);
-    }
-    
+    pLocalRenderer->enable(ilStereoCloud);
+    ilStereoCloud->setVisible(true);
+
 }
 
 void Vis3d::enableObjects()
@@ -308,13 +264,9 @@ void Vis3d::disableHead()
     myNode->unsubscribe("cloud_full");
     shutterHead();
 	pLocalRenderer->lock();
-    for(int i = 0; i < ilHeadCloud.size(); i++)
-    {
-	    
-		pLocalRenderer->disable(ilHeadCloud[i]);
-	    ilHeadCloud[i]->setVisible(false);
-    }  
-	pLocalRenderer->unlock();	    
+    ilHeadCloud->setVisible(false);
+    pLocalRenderer->disable(ilHeadCloud);
+	pLocalRenderer->unlock();
 }
 
 void Vis3d::disableFloor()
@@ -323,8 +275,8 @@ void Vis3d::disableFloor()
     myNode->unsubscribe("shutterScan");
     shutterFloor();
 	pLocalRenderer->lock();
+	ilFloorCloud->setVisible(false);
     pLocalRenderer->disable(ilFloorCloud);
-    ilFloorCloud->setVisible(false);
 	pLocalRenderer->unlock();
 }
 
@@ -334,22 +286,14 @@ void Vis3d::disableStereo()
     myNode->unsubscribe("shutterStereo");
     shutterStereo();
 	pLocalRenderer->lock();
-	for( int i = 0; i < ilStereoCloud.size(); i++)
-	{
-    	pLocalRenderer->disable(ilStereoCloud[i]);
-    	ilStereoCloud[i]->setVisible(false);
-    }
+    ilStereoCloud->setVisible(false);
+    pLocalRenderer->disable(ilStereoCloud);
 	pLocalRenderer->unlock();
 }
 
 void Vis3d::disableUCS()
 {
 	pLocalRenderer->lock();
-	/*if(ilucs)
-	{
-		delete ilucs;
-		ilucs = 0;
-	}*/
 	ilucs->setVisible(false);
 	pLocalRenderer->unlock();
 }
@@ -368,14 +312,14 @@ void Vis3d::disableModel()
 	std::cout << "killing model\n";
 	myNode->unsubscribe("transform");
 	pLocalRenderer->lock();
-	for(int i = 0; i < model.size(); i++)
+	/*for(int i = 0; i < model.size(); i++)
 	{
 		delete model[i];
 		model[i] = 0;
-	}
-	model.clear();
+	}*/
+	m_modelMap.clear();
 	pLocalRenderer->unlock();
-	
+
 }
 
 void Vis3d::disableObjects()
@@ -393,23 +337,8 @@ void Vis3d::disableObjects()
 
 void Vis3d::shutterHead()
 {
-	//std::cout << "shutter\n";
     pLocalRenderer->lock();
-    switch(scanT)
-    {
-    	case Wipe:
-    	case AtOnce:
-			for(int i = 0; i < ilHeadCloud.size(); i++)
-			{
-				ilHeadCloud[i]->resetCount();
-			}
-			headVertScanCount = 0;
-			break;
-		case Replace:
-			scanDir *= -1;
-			headVertScanCount += scanDir;
-			break;
-	}
+	ilHeadCloud->resetCount();
     pLocalRenderer->unlock();
 }
 
@@ -423,8 +352,7 @@ void Vis3d::shutterFloor()
 void Vis3d::shutterStereo()
 {
     pLocalRenderer->lock();
-    for(int i = 0; i < ilStereoCloud.size(); i++)
-    	ilStereoCloud[i]->resetCount();
+    	ilStereoCloud->resetCount();
     pLocalRenderer->unlock();
 }
 
@@ -458,19 +386,21 @@ void Vis3d::addHeadCloud()
     switch(scanT)
     {
     	case Wipe:
-			if(headVertScanCount == ilHeadCloud.size())
+			/*if(headVertScanCount == ilHeadCloud.size())
 			{
 				ilHeadCloud.push_back(new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),-1));
 				pLocalRenderer->addNode(ilHeadCloud[headVertScanCount]);
-			}
+			}*/
 			pLocalRenderer->lock();
-			for(int i = 0; i < min((uint32_t)65535,ptCldHead.get_pts_size()); i++)
+			//for(int i = 0; i < min((uint32_t)65535,ptCldHead.get_pts_size()); i++)
+			for(int i = 0; i < ptCldHead.get_pts_size(); i++)
 			{
-				ilHeadCloud[headVertScanCount]->addPoint(inBaseFrame.x + ptCldHead.pts[i].x, inBaseFrame.y + ptCldHead.pts[i].y, inBaseFrame.z + ptCldHead.pts[i].z, 255 ,min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255),min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255));
+				//ilHeadCloud[headVertScanCount]->addPoint(inBaseFrame.x + ptCldHead.pts[i].x, inBaseFrame.y + ptCldHead.pts[i].y, inBaseFrame.z + ptCldHead.pts[i].z, 255 ,min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255),min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255));
+				ilHeadCloud->addPoint(inBaseFrame.x + ptCldHead.pts[i].x, inBaseFrame.y + ptCldHead.pts[i].y, inBaseFrame.z + ptCldHead.pts[i].z, 255 ,min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255),min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255));
 			}
-			headVertScanCount++;
+			//headVertScanCount++;
 			break;
-		case Replace:
+		/*case Replace:
 			if(headVertScanCount == ilHeadCloud.size())
 			{
 				ilHeadCloud.push_back(new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),-1));
@@ -486,16 +416,16 @@ void Vis3d::addHeadCloud()
 				}
 				headVertScanCount += scanDir;
 			}
-			break;
+			break;*/
 		case AtOnce:
 			shutterHead();
-			if(ilHeadCloud.size() == 0)
-				ilHeadCloud.push_back(new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),-1));
+			/*if(ilHeadCloud.size() == 0)
+				ilHeadCloud.push_back(new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),-1));*/
 			pLocalRenderer->lock();
 			//std::cout << "add head cloud full\n";
 			for(int i = 0; i < ptCldHead.get_pts_size(); i++)
 			{
-				if(((float)i)/((float)(headVertScanCount + 1)) > 65535)
+				/*if(((float)i)/((float)(headVertScanCount + 1)) > 65535)
 				{
 					headVertScanCount++;
 					if(headVertScanCount == ilHeadCloud.size())
@@ -505,8 +435,9 @@ void Vis3d::addHeadCloud()
 						pLocalRenderer->addNode(ilHeadCloud[headVertScanCount]);
 						pLocalRenderer->lock();
 					}
-				}
-				ilHeadCloud[headVertScanCount]->addPoint(inBaseFrame.x + ptCldHead.pts[i].x, inBaseFrame.y + ptCldHead.pts[i].y, inBaseFrame.z + ptCldHead.pts[i].z, 255 ,min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255),min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255));
+				}*/
+				//ilHeadCloud[headVertScanCount]->addPoint(inBaseFrame.x + ptCldHead.pts[i].x, inBaseFrame.y + ptCldHead.pts[i].y, inBaseFrame.z + ptCldHead.pts[i].z, 255 ,min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255),min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255));
+				ilHeadCloud->addPoint(inBaseFrame.x + ptCldHead.pts[i].x, inBaseFrame.y + ptCldHead.pts[i].y, inBaseFrame.z + ptCldHead.pts[i].z, 255 ,min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255),min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255));
 			}
 			break;
 		default: break;
@@ -543,12 +474,13 @@ void Vis3d::addFloorCloud()
 	}
 	shutterFloor();
     pLocalRenderer->lock();
-    
-	for(int i = 0; i < min((uint32_t)65535,(uint32_t)((ptCldFloor.angle_max-ptCldFloor.angle_min)/ptCldFloor.angle_increment+.5)); i++)
+
+	//for(int i = 0; i < min((uint32_t)65535,(uint32_t)((ptCldFloor.angle_max-ptCldFloor.angle_min)/ptCldFloor.angle_increment+.5)); i++)
+	for(int i = 0; i < (uint32_t)((ptCldFloor.angle_max-ptCldFloor.angle_min)/ptCldFloor.angle_increment+.5); i++)
 	{
 		ilFloorCloud->addPoint(inBaseFrame.x + cos(i*ptCldFloor.angle_increment + ptCldFloor.angle_min)*ptCldFloor.ranges[i],inBaseFrame.y + sin(i*ptCldFloor.angle_increment + ptCldFloor.angle_min)*ptCldFloor.ranges[i],inBaseFrame.z, min((int)(ptCldFloor.intensities[i]/intensityRange),255),255,min((int)(ptCldFloor.intensities[i]/intensityRange),255));
 	}
-	
+
     pLocalRenderer->unlock();
 }
 
@@ -580,15 +512,16 @@ void Vis3d::addStereoCloud()
 		inBaseFrame.frame = this->tfClient.lookup("FRAMEID_BASE");
 	}
     pLocalRenderer->lock();
-    for(int i = 0; i < ilStereoCloud.size(); i++)
+    /*for(int i = 0; i < ilStereoCloud.size(); i++)
     {
     	ilStereoCloud[i]->resetCount();
-    }
-    if(ilStereoCloud.size() == 0)
-    	ilStereoCloud.push_back(new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),-1));
+    }*/
+    ilStereoCloud->resetCount();
+    //if(ilStereoCloud.size() == 0)
+    	//ilStereoCloud.push_back(new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),-1));
 	for(int i = 0; i < ptCldStereo.get_pts_size(); i++)
 	{
-		if(((float)i)/((float)(stereoVertScanCount + 1)) > 65535)
+		/*if(((float)i)/((float)(stereoVertScanCount + 1)) > 65535)
 		{
 			stereoVertScanCount++;
 			if(stereoVertScanCount == ilHeadCloud.size())
@@ -598,8 +531,9 @@ void Vis3d::addStereoCloud()
 				pLocalRenderer->addNode(ilStereoCloud[stereoVertScanCount]);
 				pLocalRenderer->lock();
 			}
-		}
-		ilStereoCloud[stereoVertScanCount]->addPoint(inBaseFrame.x + ptCldStereo.pts[i].x, inBaseFrame.y + ptCldStereo.pts[i].y, inBaseFrame.z + ptCldStereo.pts[i].z, min((int)(ptCldStereo.chan[0].vals[i]),255),min((int)(ptCldStereo.chan[0].vals[i]),255),255);
+		}*/
+		//ilStereoCloud[stereoVertScanCount]->addPoint(inBaseFrame.x + ptCldStereo.pts[i].x, inBaseFrame.y + ptCldStereo.pts[i].y, inBaseFrame.z + ptCldStereo.pts[i].z, min((int)(ptCldStereo.chan[0].vals[i]),255),min((int)(ptCldStereo.chan[0].vals[i]),255),255);
+		ilStereoCloud->addPoint(inBaseFrame.x + ptCldStereo.pts[i].x, inBaseFrame.y + ptCldStereo.pts[i].y, inBaseFrame.z + ptCldStereo.pts[i].z, min((int)(ptCldStereo.chan[0].vals[i]),255),min((int)(ptCldStereo.chan[0].vals[i]),255),255);
 	}
     pLocalRenderer->unlock();
 }
@@ -626,7 +560,7 @@ void Vis3d::changeHeadLaser(int choice)
     		scanT = choice;
     		break;
 		case Wipe:
-		case Replace:
+		//case Replace:
 			//std::cout << "Wipe/Replace\n";
 			myNode->unsubscribe("full_cloud");
 			myNode->subscribe("cloud", ptCldHead, &Vis3d::addHeadCloud,this);
@@ -639,7 +573,8 @@ void Vis3d::changeHeadLaser(int choice)
 void Vis3d::newTransform()
 {
 	//std::cout << "New Transform!\n";
-	for(int i = 0; i < PR2::PR2_FRAMEID_COUNT; i++)
+	//for(int i = 0; i < PR2::PR2_FRAMEID_COUNT; i++)
+	for( map<std::string, ILModel*>::iterator iter = m_modelMap.begin(); iter != m_modelMap.end(); iter++ )
 	{
 		//std::cout << "i = " << i << std::endl;
 		//if (i != 21 && i != 22 && i != 30 && i != 31 && i < 31){
@@ -651,11 +586,11 @@ void Vis3d::newTransform()
 			aPose.pitch = 0;
 			aPose.yaw = 0;
 			aPose.time = 0;
-			aPose.frame = this->tfClient.lookup(PR2::PR2_FRAMEID[i]);
+			aPose.frame = this->tfClient.lookup((*iter).first);
 			libTF::TFPose inBaseFrame;
 			try
 			{
-				inBaseFrame = this->tfClient.transformPose("FRAMEID_BASE", aPose);
+				inBaseFrame = this->tfClient.transformPose("base", aPose);
 			}
 			catch(libTF::TransformReference::LookupException e)
 			{
@@ -667,12 +602,12 @@ void Vis3d::newTransform()
 				inBaseFrame.pitch = 0;
 				inBaseFrame.yaw = 0;
 				inBaseFrame.time = 0;
-				inBaseFrame.frame = this->tfClient.lookup("FRAMEID_BASE");
+				inBaseFrame.frame = this->tfClient.lookup("base");
 			}
-			if(model[i] != NULL)
+			if((*iter).second != NULL)
 			{
-				model[i]->setPosition((float)inBaseFrame.x,(float)inBaseFrame.y, (float)inBaseFrame.z);
-				model[i]->setRotation((float)inBaseFrame.roll,(float)(inBaseFrame.pitch), (float)(inBaseFrame.yaw));
+				(*iter).second->setPosition((float)inBaseFrame.x,(float)inBaseFrame.y, (float)inBaseFrame.z);
+				(*iter).second->setRotation((float)inBaseFrame.roll,(float)(inBaseFrame.pitch), (float)(inBaseFrame.yaw));
 			}
 		//}
 	}
@@ -684,7 +619,7 @@ void Vis3d::newMarker()
 	pLocalRenderer->lock();
 	switch(visMarker.action)
 	{
-		
+
 		case newObject: //0
 			switch(visMarker.type)
 			{
@@ -702,8 +637,8 @@ void Vis3d::newMarker()
 					{
 					ILModel *tempModel = new ILModel(pLocalRenderer->manager(), intermediate, pLocalRenderer->manager()->addCubeSceneNode(1.0f), visMarker.id, visMarker.x, visMarker.y, visMarker.z, visMarker.roll, visMarker.pitch, visMarker.yaw);
 					tempModel->setScale(visMarker.xScale,visMarker.yScale,visMarker.zScale);
-					tempModel->getNode()->getMaterial(0).AmbientColor.set(visMarker.alpha,visMarker.r,visMarker.g,visMarker.b);		
-					tempModel->setVisible(objectsVisibility);				
+					tempModel->getNode()->getMaterial(0).AmbientColor.set(visMarker.alpha,visMarker.r,visMarker.g,visMarker.b);
+					tempModel->setVisible(objectsVisibility);
 					markers.push_back(tempModel);
 					}
 					break;
@@ -711,7 +646,7 @@ void Vis3d::newMarker()
 					{
 					ILModel *tempModel = new ILModel(pLocalRenderer->manager(), intermediate, pLocalRenderer->manager()->addSphereSceneNode(.5f), visMarker.id, visMarker.x, visMarker.y, visMarker.z, visMarker.roll, visMarker.pitch, visMarker.yaw);
 					tempModel->setScale(visMarker.xScale,visMarker.yScale,visMarker.zScale);
-					tempModel->getNode()->getMaterial(0).AmbientColor.set(visMarker.alpha,visMarker.r,visMarker.g,visMarker.b);	
+					tempModel->getNode()->getMaterial(0).AmbientColor.set(visMarker.alpha,visMarker.r,visMarker.g,visMarker.b);
 					tempModel->setVisible(objectsVisibility);
 					markers.push_back(tempModel);
 					}
@@ -790,5 +725,5 @@ void Vis3d::newMarker()
 			break;
 	}
 	pLocalRenderer->unlock();
-} 
+}
 
