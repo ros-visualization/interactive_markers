@@ -1,0 +1,11 @@
+<package>
+  <description brief="python utilities for wx">
+     Provides a collection of frames and widgets that can be embedded in a wxpython program. It depends on MatplotLib to generate nice plots.
+  </description>
+  <author>Timothy Hunter/tjhunter@willowgarage.com</author>
+  <license>BSD</license>
+  <url>http://pr.willowgarage.com/wiki/rospy_wx</url>
+  <depend package="rospy" />
+  <depend package="std_msgs" />
+  <depend package="wxmpl" />
+</package>
