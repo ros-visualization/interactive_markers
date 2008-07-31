@@ -51,9 +51,10 @@ void CloudViewer::clear_cloud()
 	points.clear();
 }
 
-void CloudViewer::add_point(float x, float y, float z, uint8_t r, uint8_t g, uint8_t b)
+void CloudViewer::add_point(float x, float y, float z, uint8_t r, uint8_t g, uint8_t b,
+                            float *extra, uint32_t num_extra)
 {
-	points.push_back(CloudViewerPoint(x,y,z,r,g,b));
+	points.push_back(CloudViewerPoint(x,y,z,r,g,b,extra,num_extra));
 }
 
 void CloudViewer::render()
@@ -163,13 +164,16 @@ bool CloudViewer::write_file(const std::string &filename)
     return false;
   for (size_t i = 0; i < points.size(); i++)
   {
-    fprintf(f, "%f %f %f %f %f %f\n", 
+    fprintf(f, "%f %f %f %f %f %f ", 
             points[i].x,
             points[i].y,
             points[i].z,
             points[i].r / 255.0,
             points[i].g / 255.0,
             points[i].b / 255.0);
+    for (size_t j = 0; j < points[i].num_extra; j++)
+      fprintf(f, "%f ", points[i].extra[j]);
+    fprintf(f, "\n");
   }
   fclose(f);
   return true;
