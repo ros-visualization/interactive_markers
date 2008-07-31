@@ -17,5 +17,8 @@ A flexible visualization and teleoperation GUI for the PR2.
 <depend package="wg_robot_description_parser"/>
 <export> 
 </export>
+
+<sysdepend os="Ubuntu" version="7.04" package="libwxgtk2.8-dev"/>
+<sysdepend os="Ubuntu" version="8.04.1" package="libwxgtk2.8-dev"/>
 </package>
 
