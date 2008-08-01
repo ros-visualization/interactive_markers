@@ -38,7 +38,6 @@
 
 PointCloudVisualizer::PointCloudVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled )
     : VisualizerBase( sceneManager, node, tfClient, name, enabled )
-    , m_Frame( "FRAMEID_BASE" )
     , m_HasNewPoints( false )
 {
   m_Cloud = new ogre_tools::PointCloud( m_SceneManager );
@@ -61,12 +60,6 @@ void PointCloudVisualizer::SetTopic( const std::string& topic )
   m_Topic = topic;
 
   Subscribe();
-}
-
-void PointCloudVisualizer::SetFrame( const std::string& frame )
-{
-  m_Frame = frame;
-  m_Cloud->Clear();
 }
 
 void PointCloudVisualizer::OnEnable()
@@ -105,7 +98,11 @@ void PointCloudVisualizer::Update( float dt )
   {
     m_Cloud->Clear();
 
-    m_Message.header.frame_id = m_TFClient->lookup( "FRAMEID_BASE" );
+    if ( m_Message.header.frame_id == 0 )
+    {
+      m_Message.header.frame_id = m_TFClient->lookup( "FRAMEID_BASE" );
+    }
+
     try
     {
       m_TFClient->transformPointCloud("FRAMEID_BASE_OGRE", m_Message, m_Message);

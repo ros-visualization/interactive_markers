@@ -53,7 +53,6 @@ public:
   ~PointCloudVisualizer();
 
   void SetTopic( const std::string& topic );
-  void SetFrame( const std::string& frame );
 
   virtual void Update( float dt );
 
@@ -69,7 +68,6 @@ protected:
   ogre_tools::PointCloud* m_Cloud;
 
   std::string m_Topic;
-  std::string m_Frame;
   std_msgs::PointCloudFloat32 m_Message;
 
   bool m_HasNewPoints;

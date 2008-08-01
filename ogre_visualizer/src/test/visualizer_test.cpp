@@ -95,8 +95,7 @@ public:
     m_VisualizationPanel->CreateVisualizer<GridVisualizer>( "Grid Visualizer 2", true );
 
     PointCloudVisualizer* pointCloud = m_VisualizationPanel->CreateVisualizer<PointCloudVisualizer>( "Head Full Cloud", true );
-    pointCloud->SetTopic( "full_cloud" );
-    pointCloud->SetFrame( "FRAMEID_BASE_OGRE" );
+    pointCloud->SetTopic( "cloudStereo" );
   }
 
   ~MyFrame()
