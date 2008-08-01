@@ -5,9 +5,13 @@
 
 namespace Ogre
 {
-    class Root;
-    class RenderWindow;
+class Root;
+class RenderWindow;
+class Viewport;
+class Camera;
 }
+
+class abstractFunctor;
 
 namespace ogre_tools
 {
@@ -20,76 +24,96 @@ namespace ogre_tools
 	@author Jesús Alonso Abad 'Kencho', Other contributors (original wxOgre).  Heavily modified by Josh Faust
  */
 class wxOgreRenderWindow : public wxControl {
-	DECLARE_CLASS (wxOgreRenderWindow)
-	DECLARE_EVENT_TABLE ()
+  DECLARE_CLASS (wxOgreRenderWindow)
+  DECLARE_EVENT_TABLE ()
 
-// Attributes ------------------------------------------------------------------
-	protected:
-		/// This control's own render window reference.
-		Ogre::RenderWindow* m_RenderWindow;
-        
-        /// This control's pointer to the global Ogre::Root
-        Ogre::Root* m_OgreRoot;
+  // Attributes ------------------------------------------------------------------
+protected:
+  /// This control's own render window reference.
+  Ogre::RenderWindow* m_RenderWindow;
 
-		/// The Id of the next render window
-		static unsigned int sm_NextRenderWindowId;
+  /// This control's pointer to the global Ogre::Root
+  Ogre::Root* m_OgreRoot;
+  
+  /// This control's Viewport
+  Ogre::Viewport* m_Viewport;
 
-// Methods ---------------------------------------------------------------------
-	public:
-		/** wx-like Constructor.
-			@param parent The parent wxWindow component.
-			@param id The control id.
-			@param pos The default position.
-			@param size The default size.
-			@param style The default style for this component.
-			@param validator A default validator for the component.
-		 */
-		wxOgreRenderWindow (Ogre::Root* ogreRoot, wxWindow *parent, wxWindowID id = wxID_ANY,
-				const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxDefaultSize,
-				long style = wxSUNKEN_BORDER, const wxValidator &validator = wxDefaultValidator);
+  /// The Id of the next render window
+  static unsigned int sm_NextRenderWindowId;
 
-		/** Virtual destructor.
-		 */
-		virtual ~wxOgreRenderWindow ();
+  // Methods ---------------------------------------------------------------------
+public:
+  /** wx-like Constructor.
+  	@param parent The parent wxWindow component.
+  	@param id The control id.
+  	@param pos The default position.
+  	@param size The default size.
+  	@param style The default style for this componOgre::SceneManager* sceneManager,ent.
+  	@param validator A default validator for the component.
+   */
+  wxOgreRenderWindow (Ogre::Root* ogreRoot, wxWindow* parent, wxWindowID id = wxID_ANY,
+                      const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxDefaultSize,
+                      long style = wxSUNKEN_BORDER, const wxValidator &validator = wxDefaultValidator);
 
-		/** Overrides the default implementation.
-			This override is here for convenience. Returns a symbolic 320x240px size.
-			@return A size of 320x240 (just a symbolic 4:3 size).
-		 */
-		virtual wxSize DoGetBestSize () const;
+  /** Virtual destructor.
+   */
+  virtual ~wxOgreRenderWindow ();
+  
+  /** Set the pre-render callback. */
+  virtual void SetPreRenderCallback( abstractFunctor* func );
+  virtual void SetPostRenderCallback( abstractFunctor* func );
 
-		/** Gets the associated Ogre render window.
-			@return The render window used to paint this control.
-		 */
-		Ogre::RenderWindow *GetRenderWindow () const;
+  /** Overrides the default implementation.
+  	This override is here for convenience. Returns a symbolic 320x240px size.
+  	@return A size of 320x240 (just a symbolic 4:3 size).
+   */
+  virtual wxSize DoGetBestSize () const;
 
-		/** Painting event callback.
-			@param evt Data regarding the painting event.
-		 */
-		virtual void OnPaint (wxPaintEvent &evt);
+  /** Gets the associated Ogre render window.
+  	@return The render window used to paint this control.
+   */
+  Ogre::RenderWindow* GetRenderWindow () const;
+  
+  /** Gets the associated Ogre viewport.
+    @return The viewport used to render this window.
+   */
+  Ogre::Viewport* GetViewport() const;
+  
+  /** Set the camera associated with this render window's viewport.
+   */
+  void SetCamera( Ogre::Camera* camera );
 
-		/** Resizing events callback.
-			@param evt Data regarding the resize event.
-		 */
-		virtual void OnSize (wxSizeEvent &evt);
+  /** Painting event callback.
+  	@param evt Data regarding the painting event.
+   */
+  virtual void OnPaint (wxPaintEvent &evt);
 
-		/** Mouse events callback.
-			@remarks Note this will call the specified callback function to process
-				the event.
-			@param evt Data regarding the mouse event.
-		 */
-		virtual void OnMouseEvents (wxMouseEvent &evt);
+  /** Resizing events callback.
+  	@param evt Data regarding the resize event.
+   */
+  virtual void OnSize (wxSizeEvent &evt);
 
-	protected:
-		/** Creates an Ogre render window for this widget.
-		 */
-		virtual void CreateRenderWindow ();
+  /** Mouse events callback.
+  	@remarks Note this will call the specified callback function to process
+  		the event.
+  	@param evt Data regarding the mouse event.
+   */
+  virtual void OnMouseEvents (wxMouseEvent &evt);
 
-		/** Gets the handle for the render window.
-			@return The render window handle.
-		 */
-		virtual std::string GetOgreHandle () const;
+protected:
+  /** Creates an Ogre render window for this widget.
+   */
+  virtual void CreateRenderWindow ();
 
+  /** Gets the handle for the render window.
+  	@return The render window handle.
+   */
+  virtual std::string GetOgreHandle () const;
+  
+  void SetCameraAspectRatio();
+
+  abstractFunctor* m_PreRenderCallback;
+  abstractFunctor* m_PostRenderCallback;
 };
 
 } // namespace ogre_tools

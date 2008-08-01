@@ -51,10 +51,13 @@ public:
   PointCloud( Ogre::SceneManager* manager );
   ~PointCloud();
   
-  /// Must be called after adding points, to actually update the ogre ManualObject
+  /// Clear this point cloud
+  void Clear();
+  
+  /// Commit any points added to this cloud. Must be called after adding points, to actually update the ogre ManualObject
   void Commit();
 
-  /// Add a single point to this point cloud
+  /// Add a single point to this point cloud.  Must call Commit() for this to take effect
   void AddPoint( float x, float y, float z, float r, float g, float b );
 
   struct Point
@@ -69,6 +72,7 @@ public:
     float m_B;
   };
 
+  /// Add points to this point cloud.  Must call Commit() for this to take effect
   void AddPoints( Point* points, uint32_t numPoints );
 
 private:

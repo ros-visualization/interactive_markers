@@ -2,27 +2,26 @@
 
 #include <Ogre.h>
 
+#include <stdint.h>
+#include <sstream>
+
 namespace ogre_tools
 {
     
-FPSCamera::FPSCamera( Ogre::SceneManager* sceneManager, Ogre::Camera* camera )
-: m_Camera( camera )
-{
+FPSCamera::FPSCamera( Ogre::SceneManager* sceneManager )
+: CameraBase( sceneManager )
+{ 
   m_PositionNode = sceneManager->getRootSceneNode()->createChildSceneNode();
   m_YawNode = m_PositionNode->createChildSceneNode();
   m_PitchNode = m_YawNode->createChildSceneNode();
   m_RollNode = m_PitchNode->createChildSceneNode();
   
-  // Set ourselves from the current camera position/orientation
-  Ogre::Vector3 position = m_Camera->getPosition();
-  SetPosition( position.x, position.y, position.z );
-  m_Camera->setPosition( Ogre::Vector3::ZERO );
-  
-  Ogre::Quaternion orientation = m_Camera->getOrientation();
-  SetOrientation( orientation.x, orientation.y, orientation.z, orientation.w );
-  m_Camera->setOrientation( Ogre::Quaternion::IDENTITY );
-  
   m_RollNode->attachObject( m_Camera );
+}
+
+FPSCamera::~FPSCamera()
+{ 
+  m_PositionNode->getParentSceneNode()->removeAndDestroyChild( m_PositionNode->getName() );
 }
 
 void FPSCamera::Yaw( float angle )
@@ -65,6 +64,22 @@ void FPSCamera::Move( float x, float y, float z )
 void FPSCamera::SetPosition( float x, float y, float z )
 {
   m_PositionNode->setPosition( x, y, z );
-} 
+}
+
+void FPSCamera::MouseLeftDrag( int diffX, int diffY )
+{
+  Yaw( -diffX*0.005 );
+  Pitch( -diffY*0.005 );
+}
+
+void FPSCamera::MouseMiddleDrag( int diffX, int diffY )
+{
+  Move( diffX*0.1, -diffY*0.1, 0.0f );
+}
+
+void FPSCamera::MouseRightDrag( int diffX, int diffY )
+{
+  Move( 0.0f, 0.0f, diffY*0.1 );
+}
 
 } // namespace ogre_tools

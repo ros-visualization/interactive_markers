@@ -27,64 +27,51 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "grid.h"
+#ifndef OGRE_VISUALIZER_GRID_VISUALIZER_H
+#define OGRE_VISUALIZER_GRID_VISUALIZER_H
 
-#include "Ogre.h"
-#include "OgreManualObject.h"
-#include "OgreSceneManager.h"
-
-#include <sstream>
+#include "../visualizer_base.h"
 
 namespace ogre_tools
 {
-
-Grid::Grid( Ogre::SceneManager* sceneManager, uint32_t gridSize, float cellLength, float r, float g, float b )
-    : m_SceneManager( sceneManager )
-{
-  static uint32_t gridCount = 0;
-  std::stringstream ss;
-  ss << "Grid" << gridCount++;
-
-  m_ManualObject = m_SceneManager->createManualObject( ss.str() );
-
-  m_SceneNode = m_SceneManager->getRootSceneNode()->createChildSceneNode();
-  m_SceneNode->attachObject( m_ManualObject );
-
-  Set( gridSize, cellLength, r, g, b );
+class Grid;
 }
 
-Grid::~Grid()
+class wxFocusEvent;
+class wxCommandEvent;
+
+class GridOptionsPanel;
+
+class GridVisualizer : public VisualizerBase
 {
-  m_SceneNode->detachAllObjects();
-  m_SceneManager->destroyManualObject( m_ManualObject );
-  m_SceneNode->getParentSceneNode()->removeAndDestroyChild( m_SceneNode->getName() );
-}
+public:
+  GridVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
+  virtual ~GridVisualizer();
 
-void Grid::Set( uint32_t gridSize, float cellLength, float r, float g, float b )
-{
-  m_ManualObject->clear();
+  virtual wxPanel* GetOptionsPanel( wxWindow* parent );
 
-  m_ManualObject->estimateVertexCount( gridSize * 4 );
-  m_ManualObject->begin( "BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_LIST );
+  uint32_t GetCellCount() { return m_CellCount; }
+  float GetCellSize() { return m_CellSize; }
+  void GetColor( float& r, float& g, float& b );
 
-  float extent = (cellLength*((double)gridSize))/2;
+  void Set( uint32_t cellCount, float cellSize, float r, float g, float b );
+  void SetCellCount( uint32_t cellCount );
+  void SetCellSize( float cellSize );
+  void SetColor( float r, float g, float b );
 
-  for( uint32_t i = 0; i <= gridSize; i++ )
-  {
-    float inc = extent - ( i * cellLength );
+protected:
+  void Update();
 
-    m_ManualObject->position( inc, 0, -extent );
-    m_ManualObject->colour( r, g, b );
-    m_ManualObject->position( inc, 0, extent );
-    m_ManualObject->colour( r, g, b );
+  // overrides from VisualizerBase
+  virtual void OnEnable();
+  virtual void OnDisable();
 
-    m_ManualObject->position( -extent, 0, inc );
-    m_ManualObject->colour( r, g, b );
-    m_ManualObject->position( extent, 0, inc );
-    m_ManualObject->colour( r, g, b );
-  }
+  float m_CellSize;
+  uint32_t m_CellCount;
+  float m_R;
+  float m_G;
+  float m_B;
+  ogre_tools::Grid* m_Grid;
+};
 
-  m_ManualObject->end();
-}
-
-} // namespace ogre_tools
+ #endif

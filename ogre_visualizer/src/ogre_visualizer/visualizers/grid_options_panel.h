@@ -26,42 +26,21 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef OGRE_TOOLS_OGRE_GRID_H
-#define OGRE_TOOLS_OGRE_GRID_H
-
-#include <stdint.h>
  
-#include <vector>
+#include "generated/grid_options_panel.h"
 
-namespace Ogre
-{
-class SceneManager;
+class GridVisualizer;
 
-class ManualObject;
-class SceneNode;
-}
-
-namespace ogre_tools
-{
-
-class Grid
+class GridOptionsPanel : public GridOptionsPanelGenerated
 {
 public:
-  Grid( Ogre::SceneManager* manager, uint32_t cellCount, float cellLength, float r, float g, float b );
-  ~Grid();
+  GridOptionsPanel( wxWindow* parent, GridVisualizer* visualizer );
   
-  void Set( uint32_t gridSize, float cellLength, float r, float g, float b );
+protected:
+  void OnKillFocus( wxFocusEvent& event );
+  void OnTextEnter( wxCommandEvent& event );
   
-  Ogre::SceneNode* GetSceneNode() { return m_SceneNode; }
+  void OptionChanged( int windowId );
 
-private:
-  Ogre::SceneManager* m_SceneManager;
-  Ogre::SceneNode* m_SceneNode;
-  Ogre::ManualObject* m_ManualObject;
-  
+  GridVisualizer* m_Visualizer; 
 };
-
-} // namespace ogre_tools
-
-#endif

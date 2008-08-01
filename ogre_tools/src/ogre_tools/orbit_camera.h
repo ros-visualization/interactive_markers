@@ -1,5 +1,5 @@
-#ifndef OGRE_TOOLS_FPS_CAMERA_H_
-#define OGRE_TOOLS_FPS_CAMERA_H_
+#ifndef OGRE_TOOLS_ORBIT_CAMERA_H_
+#define OGRE_TOOLS_ORBIT_CAMERA_H_
 
 #include "camera_base.h"
 
@@ -13,11 +13,11 @@ namespace Ogre
 namespace ogre_tools
 {
     
-class FPSCamera : public CameraBase
+class OrbitCamera : public CameraBase
 {
 public:
-  FPSCamera( Ogre::SceneManager* sceneManager );
-  virtual ~FPSCamera();
+  OrbitCamera( Ogre::SceneManager* sceneManager );
+  virtual ~OrbitCamera();
   
   virtual void Yaw( float angle );
   virtual void Pitch( float angle );
@@ -34,6 +34,7 @@ public:
     
 protected:
   Ogre::SceneNode* m_PositionNode;
+  Ogre::SceneNode* m_PivotNode;
   Ogre::SceneNode* m_YawNode;
   Ogre::SceneNode* m_PitchNode;
   Ogre::SceneNode* m_RollNode;
@@ -41,4 +42,4 @@ protected:
   
 } // namespace ogre_tools
 
-#endif /*OGRE_TOOLS_FPS_CAMERA_H_*/
+#endif /*OGRE_TOOLS_ORBIT_CAMERA_H_*/

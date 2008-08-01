@@ -61,6 +61,11 @@ PointCloud::~PointCloud()
   m_SceneNode->getParentSceneNode()->removeAndDestroyChild( m_SceneNode->getName() );
 }
 
+void PointCloud::Clear()
+{
+  m_ManualObject->clear();
+}
+
 void PointCloud::AddPoints( Point* points, uint32_t numPoints )
 {
   Point* currentPoint = points;
@@ -101,6 +106,8 @@ void PointCloud::Commit()
   }
   
   m_ManualObject->end();   
+  
+  m_ScratchPoints.clear();
 }
 
 void PointCloud::AddPoint( float x, float y, float z, float r, float g, float b )

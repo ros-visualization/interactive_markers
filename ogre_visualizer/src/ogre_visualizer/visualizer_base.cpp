@@ -27,64 +27,88 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "grid.h"
+#include "visualizer_base.h"
 
-#include "Ogre.h"
-#include "OgreManualObject.h"
-#include "OgreSceneManager.h"
+#include "ros/common.h"
 
-#include <sstream>
-
-namespace ogre_tools
+VisualizerBase::VisualizerBase( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient,
+                                const std::string& name, bool enabled )
+: m_SceneManager( sceneManager )
+, m_Name( name )
+, m_Enabled( enabled )
+, m_RenderCallback( NULL )
+, m_RenderLock( NULL )
+, m_RenderUnlock( NULL )
+, m_ROSNode( node )
+, m_TFClient( tfClient )
 {
-
-Grid::Grid( Ogre::SceneManager* sceneManager, uint32_t gridSize, float cellLength, float r, float g, float b )
-    : m_SceneManager( sceneManager )
-{
-  static uint32_t gridCount = 0;
-  std::stringstream ss;
-  ss << "Grid" << gridCount++;
-
-  m_ManualObject = m_SceneManager->createManualObject( ss.str() );
-
-  m_SceneNode = m_SceneManager->getRootSceneNode()->createChildSceneNode();
-  m_SceneNode->attachObject( m_ManualObject );
-
-  Set( gridSize, cellLength, r, g, b );
 }
 
-Grid::~Grid()
+VisualizerBase::~VisualizerBase()
 {
-  m_SceneNode->detachAllObjects();
-  m_SceneManager->destroyManualObject( m_ManualObject );
-  m_SceneNode->getParentSceneNode()->removeAndDestroyChild( m_SceneNode->getName() );
+  delete m_RenderCallback;
 }
 
-void Grid::Set( uint32_t gridSize, float cellLength, float r, float g, float b )
+void VisualizerBase::Enable()
 {
-  m_ManualObject->clear();
-
-  m_ManualObject->estimateVertexCount( gridSize * 4 );
-  m_ManualObject->begin( "BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_LIST );
-
-  float extent = (cellLength*((double)gridSize))/2;
-
-  for( uint32_t i = 0; i <= gridSize; i++ )
+  if ( m_Enabled )
   {
-    float inc = extent - ( i * cellLength );
-
-    m_ManualObject->position( inc, 0, -extent );
-    m_ManualObject->colour( r, g, b );
-    m_ManualObject->position( inc, 0, extent );
-    m_ManualObject->colour( r, g, b );
-
-    m_ManualObject->position( -extent, 0, inc );
-    m_ManualObject->colour( r, g, b );
-    m_ManualObject->position( extent, 0, inc );
-    m_ManualObject->colour( r, g, b );
+    return;
   }
 
-  m_ManualObject->end();
+  OnEnable();
+
+  m_Enabled = true;
 }
 
-} // namespace ogre_tools
+void VisualizerBase::Disable()
+{
+  if ( !m_Enabled )
+  {
+    return;
+  }
+
+  OnDisable();
+
+  m_Enabled = false;
+}
+
+void VisualizerBase::SetRenderCallback( abstractFunctor* func )
+{
+  delete m_RenderCallback;
+
+  m_RenderCallback = func;
+}
+
+void VisualizerBase::SetLockRenderCallback( abstractFunctor* func )
+{
+  delete m_RenderLock;
+
+  m_RenderLock = func;
+}
+
+void VisualizerBase::SetUnlockRenderCallback( abstractFunctor* func )
+{
+  delete m_RenderUnlock;
+
+  m_RenderUnlock = func;
+}
+
+
+void VisualizerBase::CauseRender()
+{
+  if ( m_RenderCallback )
+  {
+    m_RenderCallback->call();
+  }
+}
+
+void VisualizerBase::LockRender()
+{
+  m_RenderLock->call();
+}
+
+void VisualizerBase::UnlockRender()
+{
+  m_RenderUnlock->call();
+}

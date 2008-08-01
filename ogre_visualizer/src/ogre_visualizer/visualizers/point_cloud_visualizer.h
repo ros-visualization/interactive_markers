@@ -27,64 +27,52 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "grid.h"
+#ifndef OGRE_VISUALIZER_POINT_CLOUD_VISUALIZER_H
+#define OGRE_VISUALIZER_POINT_CLOUD_VISUALIZER_H
 
-#include "Ogre.h"
-#include "OgreManualObject.h"
-#include "OgreSceneManager.h"
+#include "../visualizer_base.h"
+#include "std_msgs/PointCloudFloat32.h"
 
-#include <sstream>
+namespace ros
+{
+  class node;
+}
+
 
 namespace ogre_tools
 {
-
-Grid::Grid( Ogre::SceneManager* sceneManager, uint32_t gridSize, float cellLength, float r, float g, float b )
-    : m_SceneManager( sceneManager )
-{
-  static uint32_t gridCount = 0;
-  std::stringstream ss;
-  ss << "Grid" << gridCount++;
-
-  m_ManualObject = m_SceneManager->createManualObject( ss.str() );
-
-  m_SceneNode = m_SceneManager->getRootSceneNode()->createChildSceneNode();
-  m_SceneNode->attachObject( m_ManualObject );
-
-  Set( gridSize, cellLength, r, g, b );
+  class PointCloud;
 }
 
-Grid::~Grid()
+class rosTFClient;
+
+class PointCloudVisualizer : public VisualizerBase
 {
-  m_SceneNode->detachAllObjects();
-  m_SceneManager->destroyManualObject( m_ManualObject );
-  m_SceneNode->getParentSceneNode()->removeAndDestroyChild( m_SceneNode->getName() );
-}
+public:
+  PointCloudVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
+  ~PointCloudVisualizer();
 
-void Grid::Set( uint32_t gridSize, float cellLength, float r, float g, float b )
-{
-  m_ManualObject->clear();
+  void SetTopic( const std::string& topic );
+  void SetFrame( const std::string& frame );
 
-  m_ManualObject->estimateVertexCount( gridSize * 4 );
-  m_ManualObject->begin( "BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_LIST );
+  virtual void Update( float dt );
 
-  float extent = (cellLength*((double)gridSize))/2;
+protected:
+  virtual void OnEnable();
+  virtual void OnDisable();
 
-  for( uint32_t i = 0; i <= gridSize; i++ )
-  {
-    float inc = extent - ( i * cellLength );
+  void Subscribe();
+  void Unsubscribe();
 
-    m_ManualObject->position( inc, 0, -extent );
-    m_ManualObject->colour( r, g, b );
-    m_ManualObject->position( inc, 0, extent );
-    m_ManualObject->colour( r, g, b );
+  void IncomingCloudCallback();
 
-    m_ManualObject->position( -extent, 0, inc );
-    m_ManualObject->colour( r, g, b );
-    m_ManualObject->position( extent, 0, inc );
-    m_ManualObject->colour( r, g, b );
-  }
+  ogre_tools::PointCloud* m_Cloud;
 
-  m_ManualObject->end();
-}
+  std::string m_Topic;
+  std::string m_Frame;
+  std_msgs::PointCloudFloat32 m_Message;
 
-} // namespace ogre_tools
+  bool m_HasNewPoints;
+};
+
+#endif

@@ -1,0 +1,20 @@
+<package>
+    <description brief="Ogre Visualizer">
+    
+    This is a wx panel and set of classes you can use to put a 3d visualization window in any wx app.
+    
+    </description>
+    <author>Josh Faust</author>
+    <license>BSD</license>
+    <url>http://pr.willowgarage.com/wiki/ROS</url>
+    <depend package="ogre"/>
+    <depend package="ogre_tools"/>
+    <depend package="roscpp"/>
+    <depend package="std_msgs"/>
+    <depend package="rosthread"/>
+    <depend package="rosTF"/>
+    <export> 
+        <cpp cflags="-I${prefix}/src/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -logre_visualizer"/>
+    </export>
+</package>
+

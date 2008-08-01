@@ -27,64 +27,81 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "grid.h"
+#include "grid_visualizer.h"
+#include "grid_options_panel.h"
 
-#include "Ogre.h"
-#include "OgreManualObject.h"
-#include "OgreSceneManager.h"
+#include "ogre_tools/grid.h"
 
-#include <sstream>
+#include <Ogre.h>
 
-namespace ogre_tools
+GridVisualizer::GridVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled )
+: VisualizerBase( sceneManager, node, tfClient, name, enabled )
+, m_CellSize( 1.0f )
+, m_CellCount( 10 )
+, m_R( 0.5 )
+, m_G( 0.5 )
+, m_B( 0.5 )
 {
+  m_Grid = new ogre_tools::Grid( sceneManager, m_CellCount, m_CellSize, m_R, m_G, m_B );
 
-Grid::Grid( Ogre::SceneManager* sceneManager, uint32_t gridSize, float cellLength, float r, float g, float b )
-    : m_SceneManager( sceneManager )
-{
-  static uint32_t gridCount = 0;
-  std::stringstream ss;
-  ss << "Grid" << gridCount++;
-
-  m_ManualObject = m_SceneManager->createManualObject( ss.str() );
-
-  m_SceneNode = m_SceneManager->getRootSceneNode()->createChildSceneNode();
-  m_SceneNode->attachObject( m_ManualObject );
-
-  Set( gridSize, cellLength, r, g, b );
+  m_Grid->GetSceneNode()->setVisible( IsEnabled() );
 }
 
-Grid::~Grid()
+GridVisualizer::~GridVisualizer()
 {
-  m_SceneNode->detachAllObjects();
-  m_SceneManager->destroyManualObject( m_ManualObject );
-  m_SceneNode->getParentSceneNode()->removeAndDestroyChild( m_SceneNode->getName() );
 }
 
-void Grid::Set( uint32_t gridSize, float cellLength, float r, float g, float b )
+void GridVisualizer::OnEnable()
 {
-  m_ManualObject->clear();
-
-  m_ManualObject->estimateVertexCount( gridSize * 4 );
-  m_ManualObject->begin( "BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_LIST );
-
-  float extent = (cellLength*((double)gridSize))/2;
-
-  for( uint32_t i = 0; i <= gridSize; i++ )
-  {
-    float inc = extent - ( i * cellLength );
-
-    m_ManualObject->position( inc, 0, -extent );
-    m_ManualObject->colour( r, g, b );
-    m_ManualObject->position( inc, 0, extent );
-    m_ManualObject->colour( r, g, b );
-
-    m_ManualObject->position( -extent, 0, inc );
-    m_ManualObject->colour( r, g, b );
-    m_ManualObject->position( extent, 0, inc );
-    m_ManualObject->colour( r, g, b );
-  }
-
-  m_ManualObject->end();
+  m_Grid->GetSceneNode()->setVisible( true );
 }
 
-} // namespace ogre_tools
+void GridVisualizer::OnDisable()
+{
+  m_Grid->GetSceneNode()->setVisible( false );
+}
+
+void GridVisualizer::Update()
+{
+  m_Grid->Set( m_CellCount, m_CellSize, m_R, m_G, m_B );
+
+  CauseRender();
+}
+
+void GridVisualizer::Set( uint32_t cellCount, float cellSize, float r, float g, float b )
+{
+  m_CellCount = cellCount;
+  m_CellSize = cellSize;
+  m_R = r;
+  m_G = g;
+  m_B = b;
+
+  Update();
+}
+
+void GridVisualizer::SetCellSize( float size )
+{
+  Set( m_CellCount, size, m_R, m_G, m_B );
+}
+
+void GridVisualizer::SetCellCount( uint32_t count )
+{
+  Set( count, m_CellSize, m_R, m_G, m_B );
+}
+
+void GridVisualizer::SetColor( float r, float g, float b )
+{
+  Set( m_CellCount, m_CellSize, r, g, b );
+}
+
+wxPanel* GridVisualizer::GetOptionsPanel( wxWindow* parent )
+{
+  return new GridOptionsPanel( parent, this );
+}
+
+void GridVisualizer::GetColor( float& r, float& g, float& b )
+{
+  r = m_R;
+  g = m_G;
+  b = m_B;
+}

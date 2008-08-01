@@ -33,6 +33,7 @@
 #include "../ogre_tools/wx_ogre_render_window.h"
 #include "../ogre_tools/grid.h"
 #include "../ogre_tools/fps_camera.h"
+#include "../ogre_tools/orbit_camera.h"
 
 #include "Ogre.h"
 
@@ -98,29 +99,20 @@ public:
         m_WXRenderWindow = new ogre_tools::wxOgreRenderWindow( m_Root, this );
         m_WXRenderWindow->SetSize( this->GetSize() );
         
-        m_Camera = m_SceneManager->createCamera( "TestCam" );
-        m_Camera->setPosition( Ogre::Vector3( 0, 0, 15 ) );
-        m_Camera->lookAt( 0.0f, 0.0f, 0.0f ); 
-        m_Camera->setNearClipDistance( 1 );
+        m_Camera = new ogre_tools::OrbitCamera( m_SceneManager );
+        m_Camera->SetPosition( 0, 0, 15 ); 
+        m_Camera->GetOgreCamera()->setNearClipDistance( 1 );
         
-        Ogre::RenderWindow* ogreRenderWindow = m_WXRenderWindow->GetRenderWindow();
-        Ogre::Viewport* viewport = ogreRenderWindow->addViewport( m_Camera );
+        m_WXRenderWindow->GetViewport()->setCamera( m_Camera->GetOgreCamera() );
         
         m_Grid = new ogre_tools::Grid( m_SceneManager, 10, 1.0f, 1.0f, 0.0f, 0.0f );
         m_Grid->GetSceneNode()->pitch( Ogre::Degree( 90 ) );
-        
-        m_FPSCamera = new ogre_tools::FPSCamera( m_SceneManager, m_Camera );
     }
     catch ( Ogre::Exception& e )
     {
         printf( "Fatal error: %s\n", e.what() );
         exit(1);
     }
-    
-    m_RenderTimer = new wxTimer( this );
-    m_RenderTimer->Start( 100 );
-    
-    Connect( m_RenderTimer->GetId(), wxEVT_TIMER, wxTimerEventHandler( MyFrame::RenderCallback ), NULL, this );
     
     m_WXRenderWindow->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
     m_WXRenderWindow->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
@@ -137,8 +129,6 @@ public:
     m_WXRenderWindow->Disconnect( wxEVT_LEFT_UP, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
     m_WXRenderWindow->Disconnect( wxEVT_RIGHT_UP, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
     
-    Disconnect( m_RenderTimer->GetId(), wxEVT_TIMER, wxTimerEventHandler( MyFrame::RenderCallback ), NULL, this );
-    
     delete m_Grid;
     
     delete m_RenderTimer;
@@ -148,10 +138,6 @@ public:
   }
   
 private:
-  void RenderCallback( wxTimerEvent& event )
-  {
-    m_Root->renderOneFrame();
-  }
   
   void OnMouseEvents( wxMouseEvent& event )
   {
@@ -184,29 +170,26 @@ private:
       bool handled = false;
       if ( m_Orient )
       {
-        m_FPSCamera->Yaw( -(m_MouseX - lastX)*0.005 );
-        m_FPSCamera->Pitch( -(m_MouseY - lastY)*0.005 );
+        m_Camera->Yaw( -(m_MouseX - lastX)*0.005 );
+        m_Camera->Pitch( -(m_MouseY - lastY)*0.005 );
         
         handled = true;
       } 
       else if ( m_Translate )
       {
-        m_FPSCamera->Move( 0.0f, 0.0f, (m_MouseY - lastY)*.1 );
+        m_Camera->Move( 0.0f, 0.0f, (m_MouseY - lastY)*.1 );
         
         handled = true;
       }
       
-      // fake a timer event so we redraw
       if ( handled )
       {
-        wxTimerEvent event( m_RenderTimer->GetId() );
-        wxPostEvent( this, event );
+        m_WXRenderWindow->Refresh();
       }
     }
   }
 
   Ogre::Root* m_Root;
-  Ogre::Camera* m_Camera;
   Ogre::SceneManager* m_SceneManager;
   
   ogre_tools::wxOgreRenderWindow* m_WXRenderWindow;
@@ -214,7 +197,7 @@ private:
   wxTimer* m_RenderTimer;
   
   ogre_tools::Grid* m_Grid;
-  ogre_tools::FPSCamera* m_FPSCamera;
+  ogre_tools::CameraBase* m_Camera;
   
   bool m_Orient;
   bool m_Translate;
