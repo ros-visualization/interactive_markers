@@ -1,4 +1,4 @@
-# import rostools ; will handle importing all the ros depedencies
+    # import rostools ; will handle importing all the ros depedencies
 import rostools
 rostools.update_path('rospy')
 import rospy
@@ -18,21 +18,36 @@ from rosControllers.msg import RotaryJointState
 #Define the channels
 class MyChannel(Channel):
     
+    def __init__(self):
+        Channel.__init__(self, 'r+')    
+    
     def callback(self, state):
-        self.addPoint(state.PosAct-state.PosCmd)
+        self.addPoint(state.PosCmd)
   
 class MyChannelAct(Channel):
     
     def callback(self, state):
         self.addPoint(state.PosAct)
 
+class MySubscriber:
+    def __init__(self):
+        self.channels = []
+    
+    def callback(self, state):
+        for channel in self.channels:
+            channel.callback(state)
+
 # Creating channels
 channel = MyChannel()
 channel2 = MyChannelAct()
 
+#Create a subsciber to the ROS topics:
+subscriber = MySubscriber()
+subscriber.channels.append(channel)
+subscriber.channels.append(channel2)
+
 #Registering to the topics
-rospy.TopicSub('ARM_L_PAN_state', RotaryJointState, channel.callback)
-rospy.TopicSub('ARM_L_PAN_state', RotaryJointState, channel2.callback)
+rospy.TopicSub('ARM_L_PAN_state', RotaryJointState, subscriber.callback)
 #Starting ROS in the background
 ROSListener("My Node Name").start()
 
@@ -41,7 +56,7 @@ app = wx.PySimpleApp(0)
 #Crete a frame
 frame = wx.Frame(None, -1,"")
 #Add a plot to the frame
-panel = WXPlot(frame)
+panel = WXSlidingPlot(frame)
 # set how long we want to display (seconds)
 panel.setTimespan(10.0)
 #Add the channels to the frame
