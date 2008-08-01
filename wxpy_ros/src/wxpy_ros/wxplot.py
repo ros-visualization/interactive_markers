@@ -48,7 +48,7 @@ from matplotlib.figure import Figure
 from matplotlib.transforms import Bbox, BboxTransform
 import numpy
 import time
-
+import copy
 
 __all__ = ['Channel' 'WXPlot']
 
@@ -75,15 +75,11 @@ class Channel:
         self.dataChanged = False
         return (x,y)
     
-    def transform(self,y):
-        """Redefine this functions if you want to to apply a transformation on the data."""
-        return y
-    
     def addPoint(self,x,y):
         """Adds a point to be plotted.
         x,y: floats"""
         self.x.append(x)
-        self.y.append(self.transform(y))
+        self.y.append(y)
         self.dataChanged = True
     
     def addPoint(self, y):
@@ -91,7 +87,7 @@ class Channel:
         y: float"""
         self.index += 1
         self.x.append(time.time() - self.time_begin)
-        self.y.append(self.transform(y))
+        self.y.append(y)
         self.dataChanged = True
 
 class WXPlot(wx.Panel):
@@ -269,6 +265,199 @@ class WXPlot(wx.Panel):
         self._doRePlot = True
 
 
+class WXSlidingPlot(wx.Panel):
+    """WXPlot: a plot pannel for WxPython applications.
+    This plots acts as an oscilloscope.
+    use addChannels() to register some channels to be plotted
+    set the length of the run with setTimespan
+    by default, WXPlot will try to guess the vertical limits of the plot after a while.
+    You can fix them by calling setYLim"""
+    # Todo: right now, the graph is redrawn on idelevents, which means it will 
+    # try to eat as much cpu as possible. Not optimal...
+    def __init__(self, parent):
+        wx.Panel.__init__(self,parent, -1)
+    
+        self.fig = None
+        self.canvas = None
+        self.ax = None
+        self.background = None
+        self.lines = []
+        self.cached_datax = []
+        self.cached_datay = []
+        self._doRePlot = True
+                
+        self.ylim = None
+        self.autolim = None
+        self.span = 500
+        self.begin = 0
+        self.channels = []
+        
+        self._SetSize()
+        
+        self.Bind(wx.EVT_IDLE, self._onIdle)
+        self.Bind(wx.EVT_SIZE, self._onSize)
+        self._resizeFlag = True
+        
+        sizer=wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.canvas,1,wx.GROW)
+        self.SetSizer(sizer)
+        self.canvas.Show() 
+    
+    def addChannel(self, channel):
+        """Add a channel to plot.
+        channel: object of type Channel."""
+        self.channels.append(channel)
+        self._doRePlot = True
+        
+    def setTimespan(self, span):
+        """Set the length of the graph.
+        span: double (seconds)"""
+        self.span = span
+        self._doRePlot = True
+        
+    def setYlim(self, ymin, ymax):
+        """Set the vertical limits of the graph:
+        ymin: minimum printed on the graph (float)
+        ymin: maximum printed on the graph (float)"""
+        self.ylim = [ymin, ymax]
+        self._doRePlot = True
+        
+    def draw_plot(self):
+        if self._doRePlot:
+            self._resizeCreateContent()
+        if self.background is None:
+            padding = 0
+            print self.ax.bbox.bounds
+            bbox = Bbox.from_bounds(self.ax.bbox.bounds[0],self.ax.bbox.bounds[1],self.ax.bbox.bounds[2]+2*padding,self.ax.bbox.bounds[3]+2*padding)
+            self.background = self.canvas.copy_from_bbox(bbox)
+        
+        changes_box = None
+        #try:
+            
+        for i in range(len(self.lines)):
+            data=self.channels[i].getNext()
+            if len(data[0]) > 0:
+              if len(data[0]) != len(data[1]):
+                print 'incoherent data',  len(data[0]),  len(data[1])
+                return
+              # Add new points
+              #print type(self.cached_datax[i]), type(data[0])
+              if isinstance(data[0], numpy.ndarray):
+                self.cached_datax[i] += data[0].tolist()
+                self.cached_datay[i] += data[1].tolist()
+              else:
+                self.cached_datax[i] += data[0]
+                self.cached_datay[i] += data[1]
+                
+              # Do we need to reshape the graph?
+              if self.autolim:
+                  data_ymin = min(data[1])
+                  data_ymax = max(data[1])
+                  if self.autolim[0] > data_ymin or self.autolim[1] < data_ymax:
+                      self.autolim = [ min(self.autolim[0], data_ymin), \
+                          max(self.autolim[1], data_ymax) ]
+                      self._doRePlot = True
+                      print 'change autolim', self.autolim, data_ymin, data_ymax
+                      
+              else:
+                  self.autolim = [ min(data[1]), max(data[1]) ]
+                  print 'set autolim', self.autolim
+                  self._doRePlot = True
+                  
+
+              #print i,self.cached_datax[i]
+  
+              # If some points are beyond the window, move the window
+              if len(self.cached_datax[i]) > 0 and self.cached_datax[i][-1] > self.begin + self.span:
+                    #print 42, self.cached_datax[i][-1]
+                    self.begin = self.cached_datax[i][-1] - self.span
+        # No need for replot, we have to reallocate                    
+        if self._doRePlot:
+            return
+        # Remove the points behind the window
+        for i in range(len(self.lines)):
+            # Bad points to move?
+            if len(self.cached_datax[i]) > 0 and self.cached_datax[i][0] < self.begin:
+                index = 0
+                # Could be faster by divide and conquer...
+                while self.cached_datax[i][index] < self.begin:
+                  index += 1
+                # Prune out old data
+                self.cached_datax[i] = self.cached_datax[i][index:]
+                self.cached_datay[i] = self.cached_datay[i][index:]
+                # Set line data.
+            self.lines[i].set_data(numpy.array(self.cached_datax[i])-self.begin, \
+                numpy.array(self.cached_datay[i]))
+        
+        self.canvas.restore_region(self.background)
+
+        for line in self.lines:
+            self.ax.draw_artist(line)
+        
+        self.canvas.blit(None)
+        #self.canvas.blit(changes_box_inframe)
+        #except :
+                #pass
+                #print '>>>>>>>>>>>>>>'
+                #print e
+    
+    def _resizeCreateContent(self):
+        """Resize graph according to user input and initialize plots"""
+        self.lines=[]        
+        for c in self.channels:
+            data=c.getNext()
+            line, = self.ax.plot(data[0],data[1], c.style, animated = True)
+            self.lines.append(line)
+            self.cached_datax.append([])
+            self.cached_datay.append([])
+        gca = self.fig.gca()
+        #TODO: add an auto mode here
+        if self.ylim:
+            gca.set_ylim(self.ylim)
+        else:
+            if self.autolim:
+                diff = self.autolim[1] - self.autolim[0]
+                gca.set_ylim([self.autolim[0] - 0.1*diff, self.autolim[1] + 0.1*diff])
+            else:
+                gca.set_ylim([-1,1])
+        #gca.set_xlim([self.begin, (self.begin+self.span)])
+        gca.set_xlim([0, (self.span)])
+        self.ax.grid()
+        
+        self.canvas.draw()        
+        self.background = None
+        self._doRePlot = False
+        print 'R'
+        
+        
+    def _createGraphics(self):
+        """Reallocate new figure and take care of panel resizing issues"""
+        self.fig=Figure()
+        self.canvas=FigureCanvas(self,-1,self.fig)
+        self.ax = self.fig.add_subplot(111)
+        
+        self.ax._cachedRenderer=self.canvas.get_renderer()
+        
+    def _onSize(self, evt):
+        self._resizeFlag = True
+        
+    def _onIdle(self, event):
+        event.RequestMore(True)
+        if self._resizeFlag:
+            self._resizeFlag = False
+            self._SetSize()
+        self.draw_plot()
+
+    def _SetSize(self, pixels=None):
+        if not pixels:
+            pixels = self.GetClientSize()
+        self._createGraphics()
+        self.canvas.SetSize(pixels)
+        
+        self.fig.set_size_inches(pixels[0]/self.fig.get_dpi(),
+        pixels[1]/self.fig.get_dpi(), forward=True)
+        self._doRePlot = True
+
 if __name__ == "__main__":
     
     class MyChannel(Channel):
@@ -305,7 +494,7 @@ if __name__ == "__main__":
 
     app = wx.PySimpleApp(0)
     frame = wx.Frame(None, -1,"")
-    panel = WXPlot(frame)
+    panel = WXSlidingPlot(frame)
     panel.setTimespan(10.0)
     channel = MyChannel('r')
     channel2 = MyChannel2('y+')
