@@ -22,6 +22,8 @@ include_directories( ${OPENGL_INCLUDE_DIR} )
 
 rospack_add_library(ogretools src/ogre_tools/point_cloud.cpp
 			      src/ogre_tools/grid.cpp
+			      src/ogre_tools/super_ellipsoid.cpp
+			      src/ogre_tools/axes.cpp
 			      src/ogre_tools/camera_base.cpp
 			      src/ogre_tools/fps_camera.cpp
 			      src/ogre_tools/orbit_camera.cpp

@@ -31,11 +31,15 @@
 
 #include "ros/common.h"
 
+namespace ogre_vis
+{
+
 VisualizerBase::VisualizerBase( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient,
                                 const std::string& name, bool enabled )
 : m_SceneManager( sceneManager )
 , m_Name( name )
 , m_Enabled( enabled )
+, m_TargetFrame( "FRAMEID_BASE" )
 , m_RenderCallback( NULL )
 , m_RenderLock( NULL )
 , m_RenderUnlock( NULL )
@@ -112,3 +116,5 @@ void VisualizerBase::UnlockRender()
 {
   m_RenderUnlock->call();
 }
+
+} // namespace ogre_vis

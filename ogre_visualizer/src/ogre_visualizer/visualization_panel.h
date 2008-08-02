@@ -60,9 +60,13 @@ class node;
 
 class wxTimerEvent;
 class wxTimer;
-class VisualizerBase;
 
 class rosTFClient;
+
+namespace ogre_vis
+{
+
+class VisualizerBase;
 
 class VisualizationPanel : public VisualizationPanelGenerated
 {
@@ -123,5 +127,7 @@ protected:
   // HACK HACK HACK until single threaded ROS
   ros::thread::mutex m_RenderMutex;
 };
+
+} // namespace ogre_vis
 
 #endif

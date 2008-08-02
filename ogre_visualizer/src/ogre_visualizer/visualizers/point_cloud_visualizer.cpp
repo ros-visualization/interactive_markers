@@ -28,6 +28,7 @@
  */
 
 #include "point_cloud_visualizer.h"
+#include "../common.h"
 
 #include "ros/node.h"
 #include "ogre_tools/point_cloud.h"
@@ -36,9 +37,12 @@
 
 #include <Ogre.h>
 
+namespace ogre_vis
+{
+
 PointCloudVisualizer::PointCloudVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled )
     : VisualizerBase( sceneManager, node, tfClient, name, enabled )
-    , m_HasNewPoints( false )
+    , m_RegenerateCloud( false )
 {
   m_Cloud = new ogre_tools::PointCloud( m_SceneManager );
 
@@ -94,40 +98,45 @@ void PointCloudVisualizer::Update( float dt )
 {
   m_Message.lock();
 
-  if ( m_HasNewPoints )
+  if ( m_RegenerateCloud )
   {
     m_Cloud->Clear();
 
-    if ( m_Message.header.frame_id == 0 )
+    // First find the min/max intensity values
+    float minIntensity = 999999.0f;
+    float maxIntensity = -999999.0f;
+
+    uint32_t pointCount = m_Message.get_pts_size();
+    for(uint32_t i = 0; i < pointCount; i++)
     {
-      m_Message.header.frame_id = m_TFClient->lookup( "FRAMEID_BASE" );
+      float& intensity = m_Message.chan[0].vals[i];
+      // arbitrarily cap to 4096 for now
+      intensity = std::min( intensity, 4096.0f );
+      minIntensity = std::min( minIntensity, intensity );
+      maxIntensity = std::max( maxIntensity, intensity );
     }
 
-    try
-    {
-      m_TFClient->transformPointCloud("FRAMEID_BASE_OGRE", m_Message, m_Message);
-    }
-    catch(libTF::TransformReference::LookupException& e)
-    {
-      printf( "Failed to transform point cloud %s: %s\n", m_Name.c_str(), e.what() );
-    }
+    float diffIntensity = maxIntensity - minIntensity;
 
-    for(uint32_t i = 0; i < m_Message.get_pts_size(); i++)
+    for(uint32_t i = 0; i < pointCount; i++)
     {
-      float x = m_Message.pts[i].x;
-      float y = m_Message.pts[i].y;
-      float z = m_Message.pts[i].z;
+      Ogre::Vector3 point( m_Message.pts[i].x, m_Message.pts[i].y, m_Message.pts[i].z );
+      RobotToOgre( point );
 
-      float r = 1.0;
-      float g = std::min((int)(m_Message.chan[0].vals[i]),4000) / 4000.0;
-      float b = std::min((int)(m_Message.chan[0].vals[i]),4000) / 4000.0;
+      float intensity = m_Message.chan[0].vals[i];
 
-      m_Cloud->AddPoint(x, y, z, r, g, b );
+      float normalizedIntensity = ( intensity - minIntensity ) / diffIntensity;
+
+      float r = normalizedIntensity;
+      float g = normalizedIntensity;
+      float b = normalizedIntensity;
+
+      m_Cloud->AddPoint(point.x, point.y, point.z, r, g, b );
     }
 
     m_Cloud->Commit();
 
-    m_HasNewPoints = false;
+    m_RegenerateCloud = false;
 
     CauseRender();
   }
@@ -137,5 +146,21 @@ void PointCloudVisualizer::Update( float dt )
 
 void PointCloudVisualizer::IncomingCloudCallback()
 {
-  m_HasNewPoints = true;
+  if ( m_Message.header.frame_id == 0 )
+  {
+    m_Message.header.frame_id = m_TFClient->lookup( "FRAMEID_BASE" );
+  }
+
+  try
+  {
+    m_TFClient->transformPointCloud(m_TargetFrame, m_Message, m_Message);
+  }
+  catch(libTF::TransformReference::LookupException& e)
+  {
+    printf( "Failed to transform point cloud %s: %s\n", m_Name.c_str(), e.what() );
+  }
+
+  m_RegenerateCloud = true;
 }
+
+} // namespace ogre_vis

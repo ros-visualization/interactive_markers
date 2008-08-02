@@ -47,6 +47,9 @@ class wxWindow;
 class abstractFunctor;
 class rosTFClient;
 
+namespace ogre_vis
+{
+
 /** Abstract base class for all visualizers.  This provides a common interface for the visualization panel to interact with,
  * so that new visualizers can be added without the visualization panel knowing anything about them.
  * */
@@ -79,6 +82,8 @@ public:
   /// Override this to provide an options panel for this visualization.  The panel is owned by the caller, so it must handle any cleanup.
   virtual wxPanel* GetOptionsPanel( wxWindow* parent ) { return NULL; } // default to no options
 
+  void SetTargetFrame( const std::string& frame ) { m_TargetFrame = frame; }
+
 protected:
   /// Derived classes override this to do the actual work of enabling themselves
   virtual void OnEnable() = 0;
@@ -92,6 +97,8 @@ protected:
   std::string m_Name;
   bool m_Enabled;
 
+  std::string m_TargetFrame;
+
   abstractFunctor* m_RenderCallback;
   abstractFunctor* m_RenderLock;
   abstractFunctor* m_RenderUnlock;
@@ -99,5 +106,7 @@ protected:
   ros::node* m_ROSNode;
   rosTFClient* m_TFClient;
 };
+
+} // namespace ogre_vis
 
 #endif

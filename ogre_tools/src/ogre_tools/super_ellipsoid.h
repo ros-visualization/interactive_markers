@@ -27,54 +27,54 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_VISUALIZER_POINT_CLOUD_VISUALIZER_H
-#define OGRE_VISUALIZER_POINT_CLOUD_VISUALIZER_H
+// adapted from http://www.ogre3d.org/wiki/index.php/SuperEllipsoid
 
-#include "../visualizer_base.h"
-#include "std_msgs/PointCloudFloat32.h"
+#ifndef OGRE_TOOLS_SUPER_ELLIPSOID_H
+#define OGRE_TOOLS_SUPER_ELLIPSOID_H
 
-namespace ros
-{
-  class node;
-}
+#include <Ogre.h>
 
 namespace ogre_tools
 {
-  class PointCloud;
-}
 
-class rosTFClient;
-
-namespace ogre_vis
-{
-
-class PointCloudVisualizer : public VisualizerBase
+class SuperEllipsoid
 {
 public:
-  PointCloudVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
-  ~PointCloudVisualizer();
+  enum Shape
+  {
+    Cube,
+    RoundedCube,
+    Cylinder,
+    Sphere,
+  };
 
-  void SetTopic( const std::string& topic );
+  SuperEllipsoid(Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode = NULL);
+  ~SuperEllipsoid();
 
-  virtual void Update( float dt );
+  void Create(int samples, float n1, float n2, const Ogre::Vector3& scale = Ogre::Vector3( 1.0f, 1.0f, 1.0f ));
+  void Create(Shape shape, int samples = 60, const Ogre::Vector3& scale = Ogre::Vector3( 1.0f, 1.0f, 1.0f ));
 
-protected:
-  virtual void OnEnable();
-  virtual void OnDisable();
+  void SetColor( float r, float g, float b );
+  void SetOffset( const Ogre::Vector3&  offset );
+  void SetPosition( const Ogre::Vector3& position );
+  void SetOrientation( const Ogre::Quaternion& orientation );
 
-  void Subscribe();
-  void Unsubscribe();
+  Ogre::SceneNode* GetRootNode() { return m_SceneNode; }
 
-  void IncomingCloudCallback();
+private:
+  Ogre::Vector3 Sample(float phi, float beta, float n1, float n2,
+                                     float scaleX = 1.0, float scaleY = 1.0, float scaleZ = 1.0);
+  Ogre::Vector3 CalculateNormal(float phi, float beta, float n1, float n2,
+                                float scaleX, float scaleY, float scaleZ);
 
-  ogre_tools::PointCloud* m_Cloud;
-
-  std::string m_Topic;
-  std_msgs::PointCloudFloat32 m_Message;
-
-  bool m_RegenerateCloud;
+  Ogre::SceneManager* m_SceneManager;
+  Ogre::SceneNode* m_SceneNode;
+  Ogre::SceneNode* m_OffsetNode;
+  Ogre::ManualObject* m_ManualObject;
+  Ogre::MaterialPtr m_Material;
+  std::string m_MaterialName;
 };
 
-} // namespace ogre_vis
+} // namespace ogre_tools
 
 #endif

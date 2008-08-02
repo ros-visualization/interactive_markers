@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2008, Willow Garage, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of the Willow Garage, Inc. nor the names of its
  *       contributors may be used to endorse or promote products derived from
  *       this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,9 +26,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 #include "grid_options_panel.h"
 #include "grid_visualizer.h"
+
+namespace ogre_vis
+{
 
 GridOptionsPanel::GridOptionsPanel( wxWindow* parent, GridVisualizer* visualizer )
 : GridOptionsPanelGenerated( parent )
@@ -38,7 +41,7 @@ GridOptionsPanel::GridOptionsPanel( wxWindow* parent, GridVisualizer* visualizer
   float cellSize = m_Visualizer->GetCellSize();
   float r, g, b;
   m_Visualizer->GetColor( r, g, b );
-  
+
   *m_CellCount << (int)cellCount;
   *m_CellSize << cellSize;
   *m_R << r;
@@ -88,33 +91,35 @@ void GridOptionsPanel::OptionChanged( int windowId )
   {
     float origR, origG, origB;
     double r, g, b;
-    
+
     m_Visualizer->GetColor( origR, origG, origB );
-    
-    // Reset our background color to the default 
+
+    // Reset our background color to the default
     m_R->SetBackgroundColour( wxNullColour );
     m_G->SetBackgroundColour( wxNullColour );
     m_B->SetBackgroundColour( wxNullColour );
-    
+
     if ( !m_R->GetValue().ToDouble( &r ) || r < 0.0 || r > 1.0 )
     {
       m_R->SetBackgroundColour( *wxRED );
       r = origR;
     }
-    
+
     if ( !m_G->GetValue().ToDouble( &g ) || g < 0.0 || g > 1.0 )
     {
       m_G->SetBackgroundColour( *wxRED );
       g = origG;
     }
-    
+
     if ( !m_B->GetValue().ToDouble( &b ) || b < 0.0 || b > 1.0 )
     {
       m_B->SetBackgroundColour( *wxRED );
       b = origB;
     }
-    
+
     m_Visualizer->SetColor( r, g, b );
   }
-  
-} 
+
+}
+
+} // namespace ogre_vis

@@ -34,6 +34,9 @@
 
 #include <Ogre.h>
 
+namespace ogre_vis
+{
+
 GridVisualizer::GridVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled )
 : VisualizerBase( sceneManager, node, tfClient, name, enabled )
 , m_CellSize( 1.0f )
@@ -61,7 +64,7 @@ void GridVisualizer::OnDisable()
   m_Grid->GetSceneNode()->setVisible( false );
 }
 
-void GridVisualizer::Update()
+void GridVisualizer::Create()
 {
   m_Grid->Set( m_CellCount, m_CellSize, m_R, m_G, m_B );
 
@@ -76,7 +79,7 @@ void GridVisualizer::Set( uint32_t cellCount, float cellSize, float r, float g, 
   m_G = g;
   m_B = b;
 
-  Update();
+  Create();
 }
 
 void GridVisualizer::SetCellSize( float size )
@@ -105,3 +108,5 @@ void GridVisualizer::GetColor( float& r, float& g, float& b )
   g = m_G;
   b = m_B;
 }
+
+} // namespace ogre_vis

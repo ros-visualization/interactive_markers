@@ -32,11 +32,15 @@
 
 #include "../ogre_visualizer/visualization_panel.h"
 #include "../ogre_visualizer/visualizers/grid_visualizer.h"
+#include "../ogre_visualizer/visualizers/axes_visualizer.h"
 #include "../ogre_visualizer/visualizers/point_cloud_visualizer.h"
+#include "../ogre_visualizer/visualizers/laser_scan_visualizer.h"
 
 #include "Ogre.h"
 
 #include "ros/node.h"
+
+using namespace ogre_vis;
 
 class MyFrame : public wxFrame
 {
@@ -95,7 +99,14 @@ public:
     m_VisualizationPanel->CreateVisualizer<GridVisualizer>( "Grid Visualizer 2", true );
 
     PointCloudVisualizer* pointCloud = m_VisualizationPanel->CreateVisualizer<PointCloudVisualizer>( "Head Full Cloud", true );
-    pointCloud->SetTopic( "cloudStereo" );
+    pointCloud->SetTopic( "full_cloud" );
+
+    LaserScanVisualizer* laserScan = m_VisualizationPanel->CreateVisualizer<LaserScanVisualizer>( "Head Scan", true );
+    //laserScan->SetCloudTopic( "cloudStereo" );
+    //laserScan->SetShutterTopic( "shutter" );
+    laserScan->SetScanTopic( "scan" );
+
+    m_VisualizationPanel->CreateVisualizer<AxesVisualizer>( "Origin Axes", true );
   }
 
   ~MyFrame()

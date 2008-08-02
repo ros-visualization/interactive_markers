@@ -27,54 +27,39 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_VISUALIZER_POINT_CLOUD_VISUALIZER_H
-#define OGRE_VISUALIZER_POINT_CLOUD_VISUALIZER_H
+#ifndef OGRE_VISUALIZER_AXES_VISUALIZER_H
+#define OGRE_VISUALIZER_AXES_VISUALIZER_H
 
 #include "../visualizer_base.h"
-#include "std_msgs/PointCloudFloat32.h"
-
-namespace ros
-{
-  class node;
-}
 
 namespace ogre_tools
 {
-  class PointCloud;
+class Axes;
 }
-
-class rosTFClient;
 
 namespace ogre_vis
 {
 
-class PointCloudVisualizer : public VisualizerBase
+class AxesVisualizer : public VisualizerBase
 {
 public:
-  PointCloudVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
-  ~PointCloudVisualizer();
+  AxesVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
+  virtual ~AxesVisualizer();
 
-  void SetTopic( const std::string& topic );
-
-  virtual void Update( float dt );
+  void Set( float length, float radius );
 
 protected:
+  void Create();
+
+  // overrides from VisualizerBase
   virtual void OnEnable();
   virtual void OnDisable();
 
-  void Subscribe();
-  void Unsubscribe();
-
-  void IncomingCloudCallback();
-
-  ogre_tools::PointCloud* m_Cloud;
-
-  std::string m_Topic;
-  std_msgs::PointCloudFloat32 m_Message;
-
-  bool m_RegenerateCloud;
+  float m_Length;
+  float m_Radius;
+  ogre_tools::Axes* m_Axes;
 };
 
 } // namespace ogre_vis
 
-#endif
+ #endif

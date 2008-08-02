@@ -27,54 +27,57 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_VISUALIZER_POINT_CLOUD_VISUALIZER_H
-#define OGRE_VISUALIZER_POINT_CLOUD_VISUALIZER_H
+#include "axes_visualizer.h"
+#include "../common.h"
 
-#include "../visualizer_base.h"
-#include "std_msgs/PointCloudFloat32.h"
+#include "ogre_tools/axes.h"
 
-namespace ros
-{
-  class node;
-}
-
-namespace ogre_tools
-{
-  class PointCloud;
-}
-
-class rosTFClient;
+#include <Ogre.h>
 
 namespace ogre_vis
 {
 
-class PointCloudVisualizer : public VisualizerBase
+AxesVisualizer::AxesVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled )
+: VisualizerBase( sceneManager, node, tfClient, name, enabled )
+, m_Length( 1.0 )
+, m_Radius( 0.1 )
 {
-public:
-  PointCloudVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
-  ~PointCloudVisualizer();
+  m_Axes = new ogre_tools::Axes( sceneManager, m_Length, m_Radius );
 
-  void SetTopic( const std::string& topic );
+  m_Axes->GetSceneNode()->setVisible( IsEnabled() );
 
-  virtual void Update( float dt );
+  Ogre::Quaternion orient( Ogre::Quaternion::IDENTITY );
+  OgreToRobot( orient );
+  m_Axes->SetOrientation( orient );
+}
 
-protected:
-  virtual void OnEnable();
-  virtual void OnDisable();
+AxesVisualizer::~AxesVisualizer()
+{
+}
 
-  void Subscribe();
-  void Unsubscribe();
+void AxesVisualizer::OnEnable()
+{
+  m_Axes->GetSceneNode()->setVisible( true );
+}
 
-  void IncomingCloudCallback();
+void AxesVisualizer::OnDisable()
+{
+  m_Axes->GetSceneNode()->setVisible( false );
+}
 
-  ogre_tools::PointCloud* m_Cloud;
+void AxesVisualizer::Create()
+{
+  m_Axes->Set( m_Length, m_Radius );
 
-  std::string m_Topic;
-  std_msgs::PointCloudFloat32 m_Message;
+  CauseRender();
+}
 
-  bool m_RegenerateCloud;
-};
+void AxesVisualizer::Set( float length, float radius )
+{
+  m_Length = length;
+  m_Radius = radius;
+
+  Create();
+}
 
 } // namespace ogre_vis
-
-#endif

@@ -42,6 +42,9 @@ class wxCommandEvent;
 
 class GridOptionsPanel;
 
+namespace ogre_vis
+{
+
 class GridVisualizer : public VisualizerBase
 {
 public:
@@ -60,7 +63,7 @@ public:
   void SetColor( float r, float g, float b );
 
 protected:
-  void Update();
+  void Create();
 
   // overrides from VisualizerBase
   virtual void OnEnable();
@@ -73,5 +76,7 @@ protected:
   float m_B;
   ogre_tools::Grid* m_Grid;
 };
+
+} // namespace ogre_vis
 
  #endif

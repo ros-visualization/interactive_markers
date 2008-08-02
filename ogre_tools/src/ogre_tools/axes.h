@@ -27,54 +27,47 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_VISUALIZER_POINT_CLOUD_VISUALIZER_H
-#define OGRE_VISUALIZER_POINT_CLOUD_VISUALIZER_H
+#ifndef OGRE_TOOLS_AXES_H
+#define OGRE_TOOLS_AXES_H
 
-#include "../visualizer_base.h"
-#include "std_msgs/PointCloudFloat32.h"
+#include <stdint.h>
 
-namespace ros
+#include <vector>
+
+namespace Ogre
 {
-  class node;
+class SceneManager;
+class SceneNode;
+class Vector3;
+class Quaternion;
 }
 
 namespace ogre_tools
 {
-  class PointCloud;
-}
+class SuperEllipsoid;
 
-class rosTFClient;
-
-namespace ogre_vis
-{
-
-class PointCloudVisualizer : public VisualizerBase
+class Axes
 {
 public:
-  PointCloudVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
-  ~PointCloudVisualizer();
+  Axes( Ogre::SceneManager* manager, float length, float radius );
+  ~Axes();
 
-  void SetTopic( const std::string& topic );
+  void Set( float length, float radius );
+  void SetOrientation( Ogre::Quaternion& orientation );
+  void SetPosition( Ogre::Vector3& position );
 
-  virtual void Update( float dt );
+  Ogre::SceneNode* GetSceneNode() { return m_SceneNode; }
 
-protected:
-  virtual void OnEnable();
-  virtual void OnDisable();
+private:
+  Ogre::SceneManager* m_SceneManager;
+  Ogre::SceneNode* m_SceneNode;
 
-  void Subscribe();
-  void Unsubscribe();
-
-  void IncomingCloudCallback();
-
-  ogre_tools::PointCloud* m_Cloud;
-
-  std::string m_Topic;
-  std_msgs::PointCloudFloat32 m_Message;
-
-  bool m_RegenerateCloud;
+  SuperEllipsoid* m_XAxis;
+  SuperEllipsoid* m_YAxis;
+  SuperEllipsoid* m_ZAxis;
 };
 
-} // namespace ogre_vis
+} // namespace ogre_tools
 
 #endif
+

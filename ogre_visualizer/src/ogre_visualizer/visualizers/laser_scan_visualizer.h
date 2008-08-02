@@ -27,16 +27,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_VISUALIZER_POINT_CLOUD_VISUALIZER_H
-#define OGRE_VISUALIZER_POINT_CLOUD_VISUALIZER_H
+#ifndef OGRE_VISUALIZER_LASER_SCAN_VISUALIZER_H
+#define OGRE_VISUALIZER_LASER_SCAN_VISUALIZER_H
 
 #include "../visualizer_base.h"
+#include "laser_scan_utils/laser_scan.h"
+#include "std_msgs/LaserScan.h"
 #include "std_msgs/PointCloudFloat32.h"
+#include "std_msgs/Empty.h"
 
 namespace ros
 {
   class node;
 }
+
 
 namespace ogre_tools
 {
@@ -48,13 +52,16 @@ class rosTFClient;
 namespace ogre_vis
 {
 
-class PointCloudVisualizer : public VisualizerBase
+class LaserScanVisualizer : public VisualizerBase
 {
 public:
-  PointCloudVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
-  ~PointCloudVisualizer();
+  LaserScanVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
+  ~LaserScanVisualizer();
 
-  void SetTopic( const std::string& topic );
+
+  void SetCloudTopic( const std::string& topic );
+  void SetScanTopic( const std::string& topic );
+  void SetShutterTopic( const std::string& topic );
 
   virtual void Update( float dt );
 
@@ -65,14 +72,25 @@ protected:
   void Subscribe();
   void Unsubscribe();
 
+  void TransformCloud();
+
   void IncomingCloudCallback();
+  void IncomingScanCallback();
+  void IncomingShutterCallback();
 
   ogre_tools::PointCloud* m_Cloud;
 
-  std::string m_Topic;
-  std_msgs::PointCloudFloat32 m_Message;
+  std::string m_CloudTopic;
+  std::string m_ScanTopic;
+  std::string m_ShutterTopic;
+  std_msgs::PointCloudFloat32 m_CloudMessage;
+  std_msgs::LaserScan m_ScanMessage;
+  std_msgs::Empty m_ShutterMessage;
+
+  laser_scan::LaserProjection m_LaserProjection;
 
   bool m_RegenerateCloud;
+  bool m_ClearNextFrame;
 };
 
 } // namespace ogre_vis

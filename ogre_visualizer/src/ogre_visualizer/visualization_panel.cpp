@@ -29,6 +29,7 @@
 
 #include "visualization_panel.h"
 #include "visualizer_base.h"
+#include "common.h"
 
 #include "ogre_tools/wx_ogre_render_window.h"
 #include "ogre_tools/fps_camera.h"
@@ -40,6 +41,9 @@
 
 #include <Ogre.h>
 #include <wx/timer.h>
+
+namespace ogre_vis
+{
 
 namespace ViewTools
 {
@@ -61,6 +65,8 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent, Ogre::Root* root )
     , m_MouseX( 0 )
     , m_MouseY( 0 )
 {
+  InitializeCommon();
+
   static int count = 0;
   std::stringstream ss;
   ss << "VisualizationPanelNode" << count++;
@@ -68,16 +74,14 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent, Ogre::Root* root )
   m_TFClient = new rosTFClient( *m_ROSNode );
 
   // register our robot->ogre transforms
-  Ogre::Quaternion quat;
-  quat.FromAngleAxis( Ogre::Degree( -90 ), Ogre::Vector3::UNIT_Y );
 
   m_TFClient->setWithEulers( m_TFClient->lookup( "FRAMEID_BASE_OGRE" ), m_TFClient->lookup( "FRAMEID_BASE" ), 0.0, 0.0, 0.0,
                              -Ogre::Math::PI / 2.0, 0.0, Ogre::Math::PI / 2.0, 0 );
+  m_TFClient->setWithEulers( m_TFClient->lookup( "FRAMEID_MAP_OGRE" ), m_TFClient->lookup( "FRAMEID_MAP" ), 0.0, 0.0, 0.0,
+                               -Ogre::Math::PI / 2.0, 0.0, Ogre::Math::PI / 2.0, 0 );
+  m_TFClient->setWithEulers( m_TFClient->lookup( "FRAMEID_ROBOT_OGRE" ), m_TFClient->lookup( "FRAMEID_ROBOT" ), 0.0, 0.0, 0.0,
+                               -Ogre::Math::PI / 2.0, 0.0, Ogre::Math::PI / 2.0, 0 );
 
-  /*m_TFClient->setWithQuaternion( m_TFClient->lookup( "FRAMEID_BASE_OGRE" ), m_TFClient->lookup( "FRAMEID_BASE"), 0.0, 0.0, 0.0,
-                                 quat.x, quat.y, quat.z, quat.w, 0 );
-  m_TFClient->setWithQuaternion( m_TFClient->lookup( "FRAMEID_MAP_OGRE" ), m_TFClient->lookup( "FRAMEID_MAP"), 0.0, 0.0, 0.0,
-                                   quat.x, quat.y, quat.z, quat.w, 0 );*/
 
   m_SceneManager = m_OgreRoot->createSceneManager( Ogre::ST_GENERIC );
 
@@ -332,3 +336,5 @@ void VisualizationPanel::OnRenderWindowMouseEvents( wxMouseEvent& event )
     }
   }
 }
+
+} // namespace ogre_vis
