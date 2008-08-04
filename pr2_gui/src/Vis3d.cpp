@@ -312,12 +312,15 @@ void Vis3d::disableModel()
 	std::cout << "killing model\n";
 	myNode->unsubscribe("transform");
 	pLocalRenderer->lock();
-	/*for(int i = 0; i < model.size(); i++)
+	if(m_modelMap.size() > 0)
 	{
-		delete model[i];
-		model[i] = 0;
-	}*/
-	m_modelMap.clear();
+		for( map<std::string, ILModel*>::iterator iter = m_modelMap.begin(); iter != m_modelMap.end(); iter++ )
+		{
+			delete (*iter).second;
+			//model[i] = 0;
+		}
+		m_modelMap.clear();
+	}
 	pLocalRenderer->unlock();
 
 }

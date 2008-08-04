@@ -8,7 +8,7 @@ launcher( parent )
 	PTZRCodec = new ImageCodec<std_msgs::Image>(&PTZRImage);
 	WristLCodec = new ImageCodec<std_msgs::Image>(&WristLImage);
 	WristRCodec = new ImageCodec<std_msgs::Image>(&WristRImage);
-	
+
 	wxInitAllImageHandlers();
 	LeftDock_FGS->Hide(HeadLaser_RB,true);
 	LeftDock_FGS->Hide(Visualization_SBS,true);
@@ -19,18 +19,28 @@ launcher( parent )
 	RightDock_FGS->Hide(WristR_SBS,true);
 	Layout();
 	Fit();
-	
-	
+
+
 	PTZL_GET_NEW_IMAGE = true;
 	PTZR_GET_NEW_IMAGE = true;
 	WristR_GET_NEW_IMAGE = true;
 	WristL_GET_NEW_IMAGE = true;
 	vis3d_Window = NULL;
 	myNode = new ros::node("guiNode");
+	myNode->subscribe("/roserr",rosErrMsg, &LauncherImpl::errorOut);
 	this->Connect(PTZL_B->GetId(), wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(LauncherImpl::PTZLDrawPic));
 	this->Connect(PTZR_B->GetId(), wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(LauncherImpl::PTZRDrawPic));
 	this->Connect(WristL_B->GetId(), wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(LauncherImpl::WristLDrawPic));
 	this->Connect(WristR_B->GetId(), wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(LauncherImpl::WristRDrawPic));
+}
+
+void LauncherImpl::errorOut()
+{
+	//std::cerr << "errorOut!!!\n";
+	long first = Ros_TC->GetLastPosition();
+	wxString line;
+	line.FromUTF8(rosErrMsg.msg.c_str());
+	Ros_TC->AppendText(line);
 }
 
 void LauncherImpl::consoleOut(wxString Line)
@@ -308,7 +318,7 @@ void LauncherImpl::incomingPTZLImageConn()
 		wxMemoryInputStream mis(PTZLImageData,PTZLImage.get_data_size());
 		delete PTZL_im;
 		PTZL_im = new wxImage(mis,wxBITMAP_TYPE_ANY,-1);
-					
+
 		if(PTZL_bmp == NULL){
 			std::cout << "Layout\n";
 			wxSize size(PTZLImage.width,PTZLImage.height);
@@ -317,7 +327,7 @@ void LauncherImpl::incomingPTZLImageConn()
 			Layout();
 			Fit();
 		}
-    	
+
     	//Event stuff
 		wxCommandEvent PTZL_Event(wxEVT_COMMAND_BUTTON_CLICKED, PTZL_B->GetId());
 		PTZL_Event.SetEventObject(this);
@@ -326,11 +336,11 @@ void LauncherImpl::incomingPTZLImageConn()
 }
 
 void LauncherImpl::PTZLDrawPic( wxCommandEvent& event )
-{		
+{
 		delete PTZL_bmp;
 		PTZL_bmp = new wxBitmap(*PTZL_im);
 		wxClientDC dc( PTZL_B );
-		dc.DrawBitmap( *PTZL_bmp, 0, 0, false ); 
+		dc.DrawBitmap( *PTZL_bmp, 0, 0, false );
 		PTZL_GET_NEW_IMAGE = true;
 }
 //PTZR
@@ -432,11 +442,11 @@ void LauncherImpl::incomingPTZRImageConn()
 }
 
 void LauncherImpl::PTZRDrawPic( wxCommandEvent& event )
-{		
+{
 		delete PTZR_bmp;
 		PTZR_bmp = new wxBitmap(*PTZR_im);
 		wxClientDC dc( PTZR_B );
-		dc.DrawBitmap( *PTZR_bmp, 0, 0, false ); 
+		dc.DrawBitmap( *PTZR_bmp, 0, 0, false );
 		PTZR_GET_NEW_IMAGE = true;
 }
 //Left Wrist
@@ -494,16 +504,16 @@ void LauncherImpl::incomingWristLImageConn()
 		wxCommandEvent WristL_Event(wxEVT_COMMAND_BUTTON_CLICKED, WristL_B->GetId());
 		WristL_Event.SetEventObject(this);
 		this->AddPendingEvent(WristL_Event);
-		
+
     }
 }
 
 void LauncherImpl::WristLDrawPic( wxCommandEvent& event )
-{		
+{
 		delete WristL_bmp;
 		WristL_bmp = new wxBitmap(*WristL_im);
 		wxClientDC dc( WristL_B );
-		dc.DrawBitmap( *WristL_bmp, 0, 0, false ); 
+		dc.DrawBitmap( *WristL_bmp, 0, 0, false );
 		WristL_GET_NEW_IMAGE = true;
 }
 
@@ -562,16 +572,16 @@ void LauncherImpl::incomingWristRImageConn()
 		wxCommandEvent WristR_Event(wxEVT_COMMAND_BUTTON_CLICKED, WristR_B->GetId());
 		WristR_Event.SetEventObject(this);
 		this->AddPendingEvent(WristR_Event);
-		
+
     }
 }
 
 void LauncherImpl::WristRDrawPic( wxCommandEvent& event )
-{		
+{
 		delete WristR_bmp;
 		WristR_bmp = new wxBitmap(*WristR_im);
 		wxClientDC dc( WristR_B );
-		dc.DrawBitmap( *WristR_bmp, 0, 0, false ); 
+		dc.DrawBitmap( *WristR_bmp, 0, 0, false );
 		WristR_GET_NEW_IMAGE = true;
 }
 
