@@ -154,58 +154,71 @@ class WXPlot(wx.Panel):
             self.background = self.canvas.copy_from_bbox(self.ax.bbox)
         
         changes_box = None
-        try:
+        #try:
             
-            for i in range(len(self.lines)):
-                data=self.channels[i].getNext()
-                
-                if len(data[1])>0:
-                    if self.autolim:
-                        self.autolim = [ min(self.autolim[0], min(data[1])), \
-                            max(self.autolim[1], max(data[1])) ]
-                    else:
-                        self.autolim = [ min(data[1]), min(data[1]) ]
-                    
-                    if changes_box is None:
-                        changes_box = Bbox.unit()
-                    changes_box.update_from_data(numpy.array(data[0]), \
-                            numpy.array(data[1]), ignore=changes_box.is_unit())
-                    
-                    if not self._doRePlot and len(data[0]) > 0 :
-                        end = data[0][-1]
-                        
-                        if end > self.begin+self.span:
-                            self.begin = end
-                            self._doRePlot = True
-                    #print 'C'
-                    self.cached_datax[i] += (data[0])
-                    self.cached_datay[i] += (data[1])
-                    #print self.cached_datay[i], self.cached_datax[i]
-                    self.lines[i].set_data(self.cached_datax[i], \
-                        self.cached_datay[i])
-                    #self.lines[i].set_data(data[0], data[1])
-                else:
-                    self.lines[i].set_data([], [])
-            
-            if not changes_box:
+        for i in range(len(self.lines)):
+            data=self.channels[i].getNext()
+
+            if len(data[0]) > 0:
+              if len(data[0]) != len(data[1]):
+                print 'incoherent data',  len(data[0]),  len(data[1])
                 return
+              # Add new points
+              #print type(self.cached_datax[i]), type(data[0])
+              if isinstance(data[0], numpy.ndarray):
+                self.cached_datax[i] += list(data[0])
+                self.cached_datay[i] += data[1].tolist()
+              else:
+                self.cached_datax[i] += data[0]
+                self.cached_datay[i] += data[1]
             
-            for line in self.lines:
-                self.ax.draw_artist(line)
-                tr = line.get_transform()
+            if len(data[1])>0:
+                if self.autolim:
+                    self.autolim = [ min(self.autolim[0], min(data[1])), \
+                        max(self.autolim[1], max(data[1])) ]
+                else:
+                    self.autolim = [ min(data[1]), min(data[1]) ]
                 
-            changes_box_inframe = changes_box.transformed(tr)
+                if changes_box is None:
+                    changes_box = Bbox.unit()
+                changes_box.update_from_data(numpy.array(data[0]), \
+                        numpy.array(data[1]), ignore=changes_box.is_unit())
+                
+                if not self._doRePlot and len(data[0]) > 0 :
+                    end = data[0][-1]
+                    
+                    if end > self.begin+self.span:
+                        self.begin = end
+                        self._doRePlot = True
+                #print 'C'
+                #self.cached_datax[i] += (data[0])
+                #self.cached_datay[i] += (data[1])
+                #print self.cached_datay[i], self.cached_datax[i]
+                self.lines[i].set_data(self.cached_datax[i], \
+                    self.cached_datay[i])
+                #self.lines[i].set_data(data[0], data[1])
+            else:
+                self.lines[i].set_data([], [])
+        
+        if not changes_box:
+            return
+        
+        for line in self.lines:
+            self.ax.draw_artist(line)
+            tr = line.get_transform()
             
-            box_xpadding = 20
-            box_ypadding = 100
-            (x,y,l,w) = changes_box_inframe.bounds
-            changes_box_inframe = Bbox.from_bounds(x-box_xpadding, \
-                y-box_ypadding, l+2*box_xpadding, w+2*box_ypadding)
-            
-            #self.canvas.blit(None)
-            self.canvas.blit(changes_box_inframe)
-        except :
-                pass
+        changes_box_inframe = changes_box.transformed(tr)
+        
+        box_xpadding = 20
+        box_ypadding = 100
+        (x,y,l,w) = changes_box_inframe.bounds
+        changes_box_inframe = Bbox.from_bounds(x-box_xpadding, \
+            y-box_ypadding, l+2*box_xpadding, w+2*box_ypadding)
+        
+        #self.canvas.blit(None)
+        self.canvas.blit(changes_box_inframe)
+        #except :
+                #pass
                 #print '>>>>>>>>>>>>>>'
                 #print e
     
@@ -275,7 +288,7 @@ class WXSlidingPlot(wx.Panel):
     # Todo: right now, the graph is redrawn on idelevents, which means it will 
     # try to eat as much cpu as possible. Not optimal...
     def __init__(self, parent):
-        wx.Panel.__init__(self,parent, -1)
+        wx.Panel.__init__(self,parent, -1, size=(400,400))
     
         self.fig = None
         self.canvas = None
@@ -494,7 +507,7 @@ if __name__ == "__main__":
 
     app = wx.PySimpleApp(0)
     frame = wx.Frame(None, -1,"")
-    panel = WXSlidingPlot(frame)
+    panel = WXPlot(frame)
     panel.setTimespan(10.0)
     channel = MyChannel('r')
     channel2 = MyChannel2('y+')
