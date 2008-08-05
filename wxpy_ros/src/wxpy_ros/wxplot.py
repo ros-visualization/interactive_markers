@@ -50,7 +50,7 @@ import numpy
 import time
 import copy
 
-__all__ = ['Channel' 'WXPlot']
+__all__ = ['Channel','WXPlot','WXSlidingPlot']
 
 
 class Channel:
