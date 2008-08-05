@@ -27,57 +27,37 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "axes_visualizer.h"
-#include "../common.h"
+#ifndef OGRE_TOOLS_CONE_H
+#define OGRE_TOOLS_CONE_H
 
-#include "ogre_tools/axes.h"
-
-#include <Ogre.h>
-
-namespace ogre_vis
+namespace Ogre
 {
-
-AxesVisualizer::AxesVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled )
-: VisualizerBase( sceneManager, node, tfClient, name, enabled )
-, m_Length( 1.0 )
-, m_Radius( 0.1 )
-{
-  m_Axes = new ogre_tools::Axes( sceneManager, m_Length, m_Radius );
-
-  m_Axes->GetSceneNode()->setVisible( IsEnabled() );
-
-  Ogre::Quaternion orient( Ogre::Quaternion::IDENTITY );
-  RobotToOgre( orient );
-  m_Axes->SetOrientation( orient );
+class SceneManager;
+class SceneNode;
+class ManualObject;
+class Vector3;
 }
 
-AxesVisualizer::~AxesVisualizer()
+namespace ogre_tools
 {
-}
 
-void AxesVisualizer::OnEnable()
+class Cone
 {
-  m_Axes->GetSceneNode()->setVisible( true );
-}
+public:
+  Cone( Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode = 0, int xTes = 20, int yTes = 20, float r = 1.0f, float g = 1.0f, float b = 1.0f );
+  ~Cone();
 
-void AxesVisualizer::OnDisable()
-{
-  m_Axes->GetSceneNode()->setVisible( false );
-}
+  void Create( int xTes, int yTes, float r, float g, float b );
 
-void AxesVisualizer::Create()
-{
-  m_Axes->Set( m_Length, m_Radius );
+protected:
+  void GetVertex( double theta, double h, Ogre::Vector3& vertex );
+  void GetNormal( double theta, double h, Ogre::Vector3& normal );
 
-  CauseRender();
-}
+  Ogre::SceneManager* m_SceneManager;
+  Ogre::SceneNode* m_SceneNode;
+  Ogre::ManualObject* m_ManualObject;
+};
 
-void AxesVisualizer::Set( float length, float radius )
-{
-  m_Length = length;
-  m_Radius = radius;
+} // namespace ogre_tools
 
-  Create();
-}
-
-} // namespace ogre_vis
+#endif /* OGRE_TOOLS_CONE_H */

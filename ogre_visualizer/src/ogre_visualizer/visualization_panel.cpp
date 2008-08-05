@@ -73,16 +73,6 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent, Ogre::Root* root )
   m_ROSNode = new ros::node( ss.str() );
   m_TFClient = new rosTFClient( *m_ROSNode );
 
-  // register our robot->ogre transforms
-
-  m_TFClient->setWithEulers( m_TFClient->lookup( "FRAMEID_BASE_OGRE" ), m_TFClient->lookup( "FRAMEID_BASE" ), 0.0, 0.0, 0.0,
-                             -Ogre::Math::PI / 2.0, 0.0, Ogre::Math::PI / 2.0, 0 );
-  m_TFClient->setWithEulers( m_TFClient->lookup( "FRAMEID_MAP_OGRE" ), m_TFClient->lookup( "FRAMEID_MAP" ), 0.0, 0.0, 0.0,
-                               -Ogre::Math::PI / 2.0, 0.0, Ogre::Math::PI / 2.0, 0 );
-  m_TFClient->setWithEulers( m_TFClient->lookup( "FRAMEID_ROBOT_OGRE" ), m_TFClient->lookup( "FRAMEID_ROBOT" ), 0.0, 0.0, 0.0,
-                               -Ogre::Math::PI / 2.0, 0.0, Ogre::Math::PI / 2.0, 0 );
-
-
   m_SceneManager = m_OgreRoot->createSceneManager( Ogre::ST_GENERIC );
 
   m_RenderPanel = new ogre_tools::wxOgreRenderWindow( m_OgreRoot, m_3DPanel );

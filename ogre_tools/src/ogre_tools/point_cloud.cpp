@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2008, Willow Garage, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of the Willow Garage, Inc. nor the names of its
  *       contributors may be used to endorse or promote products derived from
  *       this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -79,19 +79,19 @@ void PointCloud::Commit()
 {
   if ( m_ScratchPoints.empty() )
   {
-    return; 
+    return;
   }
-    
-  m_ManualObject->begin( "BaseWhiteNoLighting", Ogre::RenderOperation::OT_POINT_LIST ); 
-   
+
+  m_ManualObject->begin( "BaseWhiteNoLighting", Ogre::RenderOperation::OT_POINT_LIST );
+
   uint32_t pointsInSection = 0;
-    
+
   V_Point::iterator pointIt = m_ScratchPoints.begin();
   V_Point::iterator pointEnd = m_ScratchPoints.end();
   for ( ; pointIt != pointEnd; ++pointIt )
   {
     Point& point = *pointIt;
-    
+
     if ( pointsInSection >= MAX_POINTS_PER_SECTION )
     {
       m_ManualObject->end();
@@ -104,9 +104,9 @@ void PointCloud::Commit()
     m_ManualObject->colour( point.m_R, point.m_G, point.m_B );
     ++pointsInSection;
   }
-  
-  m_ManualObject->end();   
-  
+
+  m_ManualObject->end();
+
   m_ScratchPoints.clear();
 }
 
@@ -114,6 +114,11 @@ void PointCloud::AddPoint( float x, float y, float z, float r, float g, float b 
 {
   Point point( x, y, z, r, g, b );
   AddPoints( &point, 1 );
+}
+
+void PointCloud::SetVisible( bool visible )
+{
+  m_SceneNode->setVisible( visible );
 }
 
 } // namespace ogre_tools

@@ -58,10 +58,11 @@ public:
   LaserScanVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
   ~LaserScanVisualizer();
 
-
   void SetCloudTopic( const std::string& topic );
   void SetScanTopic( const std::string& topic );
   void SetShutterTopic( const std::string& topic );
+
+  void SetColor( float r, float g, float b );
 
   virtual void Update( float dt );
 
@@ -91,6 +92,13 @@ protected:
 
   bool m_RegenerateCloud;
   bool m_ClearNextFrame;
+
+  float m_R;
+  float m_G;
+  float m_B;
+
+  float m_IntensityMin;
+  float m_IntensityMax;
 };
 
 } // namespace ogre_vis

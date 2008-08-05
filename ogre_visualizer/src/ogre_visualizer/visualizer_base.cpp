@@ -39,7 +39,7 @@ VisualizerBase::VisualizerBase( Ogre::SceneManager* sceneManager, ros::node* nod
 : m_SceneManager( sceneManager )
 , m_Name( name )
 , m_Enabled( enabled )
-, m_TargetFrame( "FRAMEID_BASE" )
+, m_TargetFrame( "base" )
 , m_RenderCallback( NULL )
 , m_RenderLock( NULL )
 , m_RenderUnlock( NULL )
@@ -60,9 +60,9 @@ void VisualizerBase::Enable()
     return;
   }
 
-  OnEnable();
-
   m_Enabled = true;
+
+  OnEnable();
 }
 
 void VisualizerBase::Disable()
@@ -72,9 +72,9 @@ void VisualizerBase::Disable()
     return;
   }
 
-  OnDisable();
-
   m_Enabled = false;
+
+  OnDisable();
 }
 
 void VisualizerBase::SetRenderCallback( abstractFunctor* func )

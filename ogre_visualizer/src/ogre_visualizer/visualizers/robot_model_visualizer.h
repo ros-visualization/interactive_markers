@@ -27,57 +27,58 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "axes_visualizer.h"
-#include "../common.h"
+#ifndef OGRE_VISUALIZER_ROBOT_MODEL_VISUALIZER_H
+#define OGRE_VISUALIZER_ROBOT_MODEL_VISUALIZER_H
 
-#include "ogre_tools/axes.h"
+#include "../visualizer_base.h"
+#include "std_msgs/Empty.h"
 
-#include <Ogre.h>
+#include <map>
+
+namespace Ogre
+{
+class Entity;
+class SceneNode;
+}
 
 namespace ogre_vis
 {
 
-AxesVisualizer::AxesVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled )
-: VisualizerBase( sceneManager, node, tfClient, name, enabled )
-, m_Length( 1.0 )
-, m_Radius( 0.1 )
+class RobotModelVisualizer : public VisualizerBase
 {
-  m_Axes = new ogre_tools::Axes( sceneManager, m_Length, m_Radius );
+public:
+  RobotModelVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
+  virtual ~RobotModelVisualizer();
 
-  m_Axes->GetSceneNode()->setVisible( IsEnabled() );
+  void Initialize( const std::string& descriptionParam, const std::string& transformTopic );
 
-  Ogre::Quaternion orient( Ogre::Quaternion::IDENTITY );
-  RobotToOgre( orient );
-  m_Axes->SetOrientation( orient );
-}
+  virtual void Update( float dt );
 
-AxesVisualizer::~AxesVisualizer()
-{
-}
+protected:
 
-void AxesVisualizer::OnEnable()
-{
-  m_Axes->GetSceneNode()->setVisible( true );
-}
+  // overrides from VisualizerBase
+  virtual void OnEnable();
+  virtual void OnDisable();
 
-void AxesVisualizer::OnDisable()
-{
-  m_Axes->GetSceneNode()->setVisible( false );
-}
+  void Subscribe();
+  void Unsubscribe();
 
-void AxesVisualizer::Create()
-{
-  m_Axes->Set( m_Length, m_Radius );
+  void IncomingTransform();
+  void UpdateTransforms();
 
-  CauseRender();
-}
+  std_msgs::Empty m_Message;
+  std::string m_TransformTopic;
 
-void AxesVisualizer::Set( float length, float radius )
-{
-  m_Length = length;
-  m_Radius = radius;
+  typedef std::map< std::string, Ogre::Entity* > M_StringToEntity;
+  M_StringToEntity m_Models;
 
-  Create();
-}
+  Ogre::SceneNode* m_RootNode;
+  bool m_HasNewTransforms;
+
+  bool m_Initialized;
+};
 
 } // namespace ogre_vis
+
+ #endif
+

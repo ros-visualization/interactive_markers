@@ -44,6 +44,11 @@ LaserScanVisualizer::LaserScanVisualizer( Ogre::SceneManager* sceneManager, ros:
     : VisualizerBase( sceneManager, node, tfClient, name, enabled )
     , m_RegenerateCloud( false )
     , m_ClearNextFrame( false )
+    , m_R( 1.0 )
+    , m_G( 0.0 )
+    , m_B( 0.0 )
+    , m_IntensityMin( 999999.0f )
+    , m_IntensityMax( -999999.0f )
 {
   m_Cloud = new ogre_tools::PointCloud( m_SceneManager );
 
@@ -55,6 +60,8 @@ LaserScanVisualizer::LaserScanVisualizer( Ogre::SceneManager* sceneManager, ros:
 
 LaserScanVisualizer::~LaserScanVisualizer()
 {
+  Unsubscribe();
+
   delete m_Cloud;
 }
 
@@ -85,20 +92,34 @@ void LaserScanVisualizer::SetShutterTopic( const std::string& topic )
   Subscribe();
 }
 
+void LaserScanVisualizer::SetColor( float r, float g, float b )
+{
+  m_R = r;
+  m_G = g;
+  m_B = b;
+
+  m_RegenerateCloud = true;
+}
+
 void LaserScanVisualizer::OnEnable()
 {
+  m_Cloud->SetVisible( true );
   Subscribe();
-  m_Cloud->Clear();
 }
 
 void LaserScanVisualizer::OnDisable()
 {
+  m_Cloud->SetVisible( false );
   Unsubscribe();
-  m_Cloud->Clear();
 }
 
 void LaserScanVisualizer::Subscribe()
 {
+  if ( !IsEnabled() )
+  {
+    return;
+  }
+
   if ( !m_CloudTopic.empty() )
   {
     m_ROSNode->subscribe( m_CloudTopic, m_CloudMessage, &LaserScanVisualizer::IncomingCloudCallback, this );
@@ -146,16 +167,31 @@ void LaserScanVisualizer::Update( float dt )
       m_ClearNextFrame = false;
     }
 
-    for(uint32_t i = 0; i < m_CloudMessage.get_pts_size(); i++)
+    uint32_t pointCount = m_CloudMessage.get_pts_size();
+    for(uint32_t i = 0; i < pointCount; i++)
+    {
+      float& intensity = m_CloudMessage.chan[0].vals[i];
+      // arbitrarily cap to 4096 for now
+      intensity = std::min( intensity, 4096.0f );
+      m_IntensityMin = std::min( m_IntensityMin, intensity );
+      m_IntensityMax = std::max( m_IntensityMax, intensity );
+    }
+
+    float diffIntensity = m_IntensityMax - m_IntensityMin;
+
+    for(uint32_t i = 0; i < pointCount; i++)
     {
       Ogre::Vector3 point( m_CloudMessage.pts[i].x, m_CloudMessage.pts[i].y, m_CloudMessage.pts[i].z );
       RobotToOgre( point );
 
-      float r = 1.0;
-      float g = std::min((int)(m_CloudMessage.chan[0].vals[i]),4000) / 4000.0;
-      float b = std::min((int)(m_CloudMessage.chan[0].vals[i]),4000) / 4000.0;
+      float intensity = m_CloudMessage.chan[0].vals[i];
 
-      m_Cloud->AddPoint(point.x, point.y, point.z, r, g, b );
+      float normalizedIntensity = (diffIntensity > 0.0f) ? ( intensity - m_IntensityMin ) / diffIntensity : 1.0f;
+
+      Ogre::Vector3 color( m_R, m_G, m_B );
+      color *= normalizedIntensity;
+
+      m_Cloud->AddPoint(point.x, point.y, point.z, color.x, color.y, color.z );
     }
 
     m_Cloud->Commit();
@@ -181,7 +217,7 @@ void LaserScanVisualizer::TransformCloud()
   }
   catch(libTF::TransformReference::LookupException& e)
   {
-    printf( "Failed to transform point cloud %s: %s\n", m_Name.c_str(), e.what() );
+    printf( "Failed to transform laser scan '%s': %s\n", m_Name.c_str(), e.what() );
   }
 }
 

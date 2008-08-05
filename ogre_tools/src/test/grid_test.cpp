@@ -35,6 +35,7 @@
 #include "../ogre_tools/fps_camera.h"
 #include "../ogre_tools/orbit_camera.h"
 #include "../ogre_tools/axes.h"
+#include "../ogre_tools/cone.h"
 
 #include "Ogre.h"
 
@@ -109,7 +110,8 @@ public:
         m_Grid = new ogre_tools::Grid( m_SceneManager, 10, 1.0f, 1.0f, 0.0f, 0.0f );
         //m_Grid->GetSceneNode()->pitch( Ogre::Degree( 90 ) );
 
-        ogre_tools::Axes* axes = new ogre_tools::Axes( m_SceneManager, 1.0, 0.1 );
+        //ogre_tools::Axes* axes = new ogre_tools::Axes( m_SceneManager, 1.0, 0.1 );
+        ogre_tools::Cone* cone = new ogre_tools::Cone( m_SceneManager, NULL );
     }
     catch ( Ogre::Exception& e )
     {

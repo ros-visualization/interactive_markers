@@ -35,10 +35,12 @@
 #include "../ogre_visualizer/visualizers/axes_visualizer.h"
 #include "../ogre_visualizer/visualizers/point_cloud_visualizer.h"
 #include "../ogre_visualizer/visualizers/laser_scan_visualizer.h"
+#include "../ogre_visualizer/visualizers/robot_model_visualizer.h"
 
 #include "Ogre.h"
 
 #include "ros/node.h"
+#include "ros/common.h"
 
 using namespace ogre_vis;
 
@@ -52,8 +54,26 @@ public:
     m_Root = new Ogre::Root();
     m_Root->loadPlugin( "RenderSystem_GL" );
     m_Root->loadPlugin( "Plugin_OctreeSceneManager" );
+    m_Root->loadPlugin( "Plugin_CgProgramManager" );
 
-    Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
+    std::vector<std::string> paths;
+    std::string mediaPath = ros::get_package_path( "gazebo_robot_description" );
+    mediaPath += "/world/Media/";
+    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath, "FileSystem", "General" );
+    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "fonts", "FileSystem", "General" );
+    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "materials", "FileSystem", "General" );
+    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "materials/scripts", "FileSystem", "General" );
+    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "materials/programs", "FileSystem", "General" );
+    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "materials/textures", "FileSystem", "General" );
+    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "models", "FileSystem", "General" );
+    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "models/pr2", "FileSystem", "General" );
+
+    std::vector<std::string>::iterator dirIt = paths.begin();
+    std::vector<std::string>::iterator dirEnd = paths.end();
+    for ( ; dirIt != dirEnd; ++dirIt )
+    {
+      Ogre::ResourceGroupManager::getSingleton().addResourceLocation( *dirIt, "FileSystem", "General" );
+    }
 
     // Taken from gazebo
     Ogre::RenderSystemList *rsList = m_Root->getAvailableRenderers();
@@ -95,18 +115,35 @@ public:
 
     m_VisualizationPanel = new VisualizationPanel( this, m_Root );
 
-    m_VisualizationPanel->CreateVisualizer<GridVisualizer>( "Grid Visualizer 1", true );
-    m_VisualizationPanel->CreateVisualizer<GridVisualizer>( "Grid Visualizer 2", true );
+    // TODO: figure out how we can move this back to before panel (renderwindow) creation (manually creating a GpuProgramManager?)
+    try
+    {
+      Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
+    }
+    catch ( Ogre::Exception& e )
+    {
+      printf( "Error initializing resource groups: %s", e.what() );
+      exit( 1 );
+    }
+
+    m_VisualizationPanel->CreateVisualizer<GridVisualizer>( "Grid 1", true );
+    m_VisualizationPanel->CreateVisualizer<GridVisualizer>( "Grid 2", true );
 
     PointCloudVisualizer* pointCloud = m_VisualizationPanel->CreateVisualizer<PointCloudVisualizer>( "Head Full Cloud", true );
     pointCloud->SetTopic( "full_cloud" );
+    pointCloud->SetColor( 1.0, 1.0, 0.0 );
 
     LaserScanVisualizer* laserScan = m_VisualizationPanel->CreateVisualizer<LaserScanVisualizer>( "Head Scan", true );
-    //laserScan->SetCloudTopic( "cloudStereo" );
-    //laserScan->SetShutterTopic( "shutter" );
+    laserScan->SetScanTopic( "cloud" );
+    laserScan->SetColor( 0.0, 1.0, 0.0 );
+
+    laserScan = m_VisualizationPanel->CreateVisualizer<LaserScanVisualizer>( "Floor Scan", true );
     laserScan->SetScanTopic( "scan" );
 
     m_VisualizationPanel->CreateVisualizer<AxesVisualizer>( "Origin Axes", true );
+
+    RobotModelVisualizer* model = m_VisualizationPanel->CreateVisualizer<RobotModelVisualizer>( "Robot Model", true );
+    model->Initialize( "robotdesc/pr2", "transform" );
   }
 
   ~MyFrame()

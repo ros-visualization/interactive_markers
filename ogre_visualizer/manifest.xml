@@ -14,6 +14,7 @@
     <depend package="rosthread"/>
     <depend package="rosTF"/>
     <depend package="laser_scan_utils"/>
+    <depend package="wg_robot_description_parser"/>
     <export> 
         <cpp cflags="-I${prefix}/src/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -logre_visualizer"/>
     </export>

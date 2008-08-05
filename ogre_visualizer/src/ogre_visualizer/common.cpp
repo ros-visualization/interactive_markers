@@ -27,57 +27,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "axes_visualizer.h"
-#include "../common.h"
-
-#include "ogre_tools/axes.h"
-
-#include <Ogre.h>
+#include "common.h"
 
 namespace ogre_vis
 {
 
-AxesVisualizer::AxesVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled )
-: VisualizerBase( sceneManager, node, tfClient, name, enabled )
-, m_Length( 1.0 )
-, m_Radius( 0.1 )
+Ogre::Matrix3 g_OgreToRobotMatrix;
+Ogre::Matrix3 g_RobotToOgreMatrix;
+
+Ogre::Quaternion g_OgreToRobotQuat;
+Ogre::Quaternion g_RobotToOgreQuat;
+
+void InitializeCommon()
 {
-  m_Axes = new ogre_tools::Axes( sceneManager, m_Length, m_Radius );
+  g_OgreToRobotMatrix.FromEulerAnglesXYZ( Ogre::Degree( 90 ), Ogre::Degree( -90 ), Ogre::Degree( 0 ) );
+  g_RobotToOgreMatrix = g_OgreToRobotMatrix.Inverse();
 
-  m_Axes->GetSceneNode()->setVisible( IsEnabled() );
-
-  Ogre::Quaternion orient( Ogre::Quaternion::IDENTITY );
-  RobotToOgre( orient );
-  m_Axes->SetOrientation( orient );
+  g_OgreToRobotQuat.FromRotationMatrix( g_OgreToRobotMatrix );
+  g_RobotToOgreQuat.FromRotationMatrix( g_RobotToOgreMatrix );
 }
 
-AxesVisualizer::~AxesVisualizer()
-{
 }
-
-void AxesVisualizer::OnEnable()
-{
-  m_Axes->GetSceneNode()->setVisible( true );
-}
-
-void AxesVisualizer::OnDisable()
-{
-  m_Axes->GetSceneNode()->setVisible( false );
-}
-
-void AxesVisualizer::Create()
-{
-  m_Axes->Set( m_Length, m_Radius );
-
-  CauseRender();
-}
-
-void AxesVisualizer::Set( float length, float radius )
-{
-  m_Length = length;
-  m_Radius = radius;
-
-  Create();
-}
-
-} // namespace ogre_vis

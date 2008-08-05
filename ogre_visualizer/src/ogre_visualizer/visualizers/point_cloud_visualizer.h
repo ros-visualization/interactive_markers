@@ -55,6 +55,7 @@ public:
   ~PointCloudVisualizer();
 
   void SetTopic( const std::string& topic );
+  void SetColor( float r, float g, float b );
 
   virtual void Update( float dt );
 
@@ -73,6 +74,10 @@ protected:
   std_msgs::PointCloudFloat32 m_Message;
 
   bool m_RegenerateCloud;
+
+  float m_R;
+  float m_G;
+  float m_B;
 };
 
 } // namespace ogre_vis

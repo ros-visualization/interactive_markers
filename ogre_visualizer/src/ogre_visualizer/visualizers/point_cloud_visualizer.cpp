@@ -43,6 +43,9 @@ namespace ogre_vis
 PointCloudVisualizer::PointCloudVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled )
     : VisualizerBase( sceneManager, node, tfClient, name, enabled )
     , m_RegenerateCloud( false )
+    , m_R( 1.0 )
+    , m_G( 1.0 )
+    , m_B( 1.0 )
 {
   m_Cloud = new ogre_tools::PointCloud( m_SceneManager );
 
@@ -54,6 +57,8 @@ PointCloudVisualizer::PointCloudVisualizer( Ogre::SceneManager* sceneManager, ro
 
 PointCloudVisualizer::~PointCloudVisualizer()
 {
+  Unsubscribe();
+
   delete m_Cloud;
 }
 
@@ -66,20 +71,34 @@ void PointCloudVisualizer::SetTopic( const std::string& topic )
   Subscribe();
 }
 
+void PointCloudVisualizer::SetColor( float r, float g, float b )
+{
+  m_R = r;
+  m_G = g;
+  m_B = b;
+
+  m_RegenerateCloud = true;
+}
+
 void PointCloudVisualizer::OnEnable()
 {
+  m_Cloud->SetVisible( true );
   Subscribe();
-  m_Cloud->Clear();
 }
 
 void PointCloudVisualizer::OnDisable()
 {
+  m_Cloud->SetVisible( false );
   Unsubscribe();
-  m_Cloud->Clear();
 }
 
 void PointCloudVisualizer::Subscribe()
 {
+  if ( !IsEnabled() )
+  {
+    return;
+  }
+
   if ( !m_Topic.empty() )
   {
     m_ROSNode->subscribe( m_Topic, m_Message, &PointCloudVisualizer::IncomingCloudCallback, this );
@@ -125,13 +144,12 @@ void PointCloudVisualizer::Update( float dt )
 
       float intensity = m_Message.chan[0].vals[i];
 
-      float normalizedIntensity = ( intensity - minIntensity ) / diffIntensity;
+      float normalizedIntensity = diffIntensity > 0.0f ? ( intensity - minIntensity ) / diffIntensity : 1.0f;
 
-      float r = normalizedIntensity;
-      float g = normalizedIntensity;
-      float b = normalizedIntensity;
+      Ogre::Vector3 color( m_R, m_G, m_B );
+      color *= normalizedIntensity;
 
-      m_Cloud->AddPoint(point.x, point.y, point.z, r, g, b );
+      m_Cloud->AddPoint(point.x, point.y, point.z, color.x, color.y, color.z );
     }
 
     m_Cloud->Commit();
@@ -148,7 +166,7 @@ void PointCloudVisualizer::IncomingCloudCallback()
 {
   if ( m_Message.header.frame_id == 0 )
   {
-    m_Message.header.frame_id = m_TFClient->lookup( "FRAMEID_BASE" );
+    m_Message.header.frame_id = m_TFClient->lookup( m_TargetFrame );
   }
 
   try

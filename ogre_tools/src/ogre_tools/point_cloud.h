@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2008, Willow Garage, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of the Willow Garage, Inc. nor the names of its
  *       contributors may be used to endorse or promote products derived from
  *       this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -31,7 +31,7 @@
 #define OGRE_TOOLS_OGRE_POINT_CLOUD_H
 
 #include <stdint.h>
- 
+
 #include <vector>
 
 namespace Ogre
@@ -50,10 +50,10 @@ class PointCloud
 public:
   PointCloud( Ogre::SceneManager* manager );
   ~PointCloud();
-  
+
   /// Clear this point cloud
   void Clear();
-  
+
   /// Commit any points added to this cloud. Must be called after adding points, to actually update the ogre ManualObject
   void Commit();
 
@@ -75,11 +75,13 @@ public:
   /// Add points to this point cloud.  Must call Commit() for this to take effect
   void AddPoints( Point* points, uint32_t numPoints );
 
+  void SetVisible( bool visible );
+
 private:
   Ogre::SceneManager* m_SceneManager;
   Ogre::SceneNode* m_SceneNode;
   Ogre::ManualObject* m_ManualObject;
-  
+
   typedef std::vector<Point> V_Point;
   V_Point m_ScratchPoints;
 };

@@ -27,57 +27,65 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "axes_visualizer.h"
-#include "../common.h"
+// DO NOT INCLUDE THIS FROM WITHIN ANOTHER HEADER, AS IT WILL PULL IN ALL OF OGRE
 
-#include "ogre_tools/axes.h"
+#ifndef OGRE_VISUALIZER_COMMON_H
+#define OGRE_VISUALIZER_COMMON_H
 
 #include <Ogre.h>
 
 namespace ogre_vis
 {
 
-AxesVisualizer::AxesVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled )
-: VisualizerBase( sceneManager, node, tfClient, name, enabled )
-, m_Length( 1.0 )
-, m_Radius( 0.1 )
+extern Ogre::Matrix3 g_OgreToRobotMatrix;
+extern Ogre::Matrix3 g_RobotToOgreMatrix;
+
+extern Ogre::Quaternion g_OgreToRobotQuat;
+extern Ogre::Quaternion g_RobotToOgreQuat;
+
+void InitializeCommon();
+
+inline void RobotToOgre( Ogre::Vector3& point )
 {
-  m_Axes = new ogre_tools::Axes( sceneManager, m_Length, m_Radius );
-
-  m_Axes->GetSceneNode()->setVisible( IsEnabled() );
-
-  Ogre::Quaternion orient( Ogre::Quaternion::IDENTITY );
-  RobotToOgre( orient );
-  m_Axes->SetOrientation( orient );
+  point = g_RobotToOgreMatrix * point;
 }
 
-AxesVisualizer::~AxesVisualizer()
+inline void RobotToOgre( Ogre::Quaternion& quat )
 {
+  quat = g_RobotToOgreQuat * quat;
 }
 
-void AxesVisualizer::OnEnable()
+inline void RobotToOgre( Ogre::Matrix3& mat )
 {
-  m_Axes->GetSceneNode()->setVisible( true );
+  mat = g_RobotToOgreMatrix * mat;
 }
 
-void AxesVisualizer::OnDisable()
+
+
+inline void OgreToRobot( Ogre::Vector3& point )
 {
-  m_Axes->GetSceneNode()->setVisible( false );
+  point = g_OgreToRobotMatrix * point;
 }
 
-void AxesVisualizer::Create()
+inline void OgreToRobot( Ogre::Quaternion& quat )
 {
-  m_Axes->Set( m_Length, m_Radius );
-
-  CauseRender();
+  quat = g_OgreToRobotQuat * quat;
 }
 
-void AxesVisualizer::Set( float length, float radius )
+inline void OgreToRobot( Ogre::Matrix3& mat )
 {
-  m_Length = length;
-  m_Radius = radius;
-
-  Create();
+  mat = g_OgreToRobotMatrix * mat;
 }
 
-} // namespace ogre_vis
+
+inline Ogre::Matrix3 OgreMatrixFromRobotEulers( float yaw, float pitch, float roll )
+{
+  Ogre::Matrix3 mat;
+  mat.FromEulerAnglesZYX( Ogre::Radian( yaw ), Ogre::Radian( pitch ), Ogre::Radian( roll ) );
+  RobotToOgre( mat );
+
+  return mat;
+}
+
+}
+#endif
