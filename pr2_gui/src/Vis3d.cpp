@@ -197,7 +197,7 @@ void Vis3d::enableModel()
 				}
 			}
 			else
-				throw -1;
+				m_modelMap[links[i]->name] = NULL;
 		}
 		catch(...)
 		{
@@ -335,6 +335,19 @@ void Vis3d::disableObjects()
 	}
 	objectsVisibility = false;
 	pLocalRenderer->unlock();
+	//deleteObjects();
+}
+
+void Vis3d::deleteObjects()
+{
+	disableObjects();
+	pLocalRenderer->lock();
+	for(int i = 0; i < markers.size(); i++)
+	{
+		delete markers[i];
+	}
+	markers.clear();
+	pLocalRenderer->unlock();
 }
 
 
@@ -369,11 +382,11 @@ void Vis3d::addHeadCloud()
 	aPose.pitch = 0;
 	aPose.yaw = 0;
 	aPose.time = 0;
-	aPose.frame = this->tfClient.lookup("FRAMEID_TILT_LASER_BLOCK");
+	aPose.frame = this->tfClient.lookup("FRAMEID_TILT_LASER_BLOCK"); //TODO: put me in pr2.xml and change my string
 	libTF::TFPose inBaseFrame;
 	try
 	{
-		inBaseFrame = this->tfClient.transformPose("FRAMEID_BASE", aPose);
+		inBaseFrame = this->tfClient.transformPose("base", aPose);
 	}
 	catch(libTF::TransformReference::LookupException e)
 	{
@@ -384,62 +397,22 @@ void Vis3d::addHeadCloud()
 		inBaseFrame.pitch = 0;
 		inBaseFrame.yaw = 0;
 		inBaseFrame.time = 0;
-		inBaseFrame.frame = this->tfClient.lookup("FRAMEID_BASE");
+		inBaseFrame.frame = this->tfClient.lookup("base");
 	}
     switch(scanT)
     {
     	case Wipe:
-			/*if(headVertScanCount == ilHeadCloud.size())
-			{
-				ilHeadCloud.push_back(new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),-1));
-				pLocalRenderer->addNode(ilHeadCloud[headVertScanCount]);
-			}*/
 			pLocalRenderer->lock();
-			//for(int i = 0; i < min((uint32_t)65535,ptCldHead.get_pts_size()); i++)
 			for(int i = 0; i < ptCldHead.get_pts_size(); i++)
 			{
-				//ilHeadCloud[headVertScanCount]->addPoint(inBaseFrame.x + ptCldHead.pts[i].x, inBaseFrame.y + ptCldHead.pts[i].y, inBaseFrame.z + ptCldHead.pts[i].z, 255 ,min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255),min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255));
 				ilHeadCloud->addPoint(inBaseFrame.x + ptCldHead.pts[i].x, inBaseFrame.y + ptCldHead.pts[i].y, inBaseFrame.z + ptCldHead.pts[i].z, 255 ,min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255),min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255));
 			}
-			//headVertScanCount++;
 			break;
-		/*case Replace:
-			if(headVertScanCount == ilHeadCloud.size())
-			{
-				ilHeadCloud.push_back(new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),-1));
-				pLocalRenderer->addNode(ilHeadCloud[headVertScanCount]);
-			}
-			pLocalRenderer->lock();
-			if(headVertScanCount > -1)
-			{
-				ilHeadCloud[headVertScanCount]->resetCount();
-				for(int i = 0; i < min((uint32_t)65535,ptCldHead.get_pts_size()); i++)
-				{
-					ilHeadCloud[headVertScanCount]->addPoint(inBaseFrame.x + ptCldHead.pts[i].x, inBaseFrame.y + ptCldHead.pts[i].y, inBaseFrame.z + ptCldHead.pts[i].z, 255 ,min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255),min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255));
-				}
-				headVertScanCount += scanDir;
-			}
-			break;*/
 		case AtOnce:
 			shutterHead();
-			/*if(ilHeadCloud.size() == 0)
-				ilHeadCloud.push_back(new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),-1));*/
 			pLocalRenderer->lock();
-			//std::cout << "add head cloud full\n";
 			for(int i = 0; i < ptCldHead.get_pts_size(); i++)
 			{
-				/*if(((float)i)/((float)(headVertScanCount + 1)) > 65535)
-				{
-					headVertScanCount++;
-					if(headVertScanCount == ilHeadCloud.size())
-					{
-						ilHeadCloud.push_back(new ILPointCloud(pLocalRenderer->manager()->getRootSceneNode(),pLocalRenderer->manager(),-1));
-						pLocalRenderer->unlock();
-						pLocalRenderer->addNode(ilHeadCloud[headVertScanCount]);
-						pLocalRenderer->lock();
-					}
-				}*/
-				//ilHeadCloud[headVertScanCount]->addPoint(inBaseFrame.x + ptCldHead.pts[i].x, inBaseFrame.y + ptCldHead.pts[i].y, inBaseFrame.z + ptCldHead.pts[i].z, 255 ,min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255),min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255));
 				ilHeadCloud->addPoint(inBaseFrame.x + ptCldHead.pts[i].x, inBaseFrame.y + ptCldHead.pts[i].y, inBaseFrame.z + ptCldHead.pts[i].z, 255 ,min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255),min((int)(ptCldHead.chan[0].vals[i]/intensityRange),255));
 			}
 			break;
@@ -458,11 +431,11 @@ void Vis3d::addFloorCloud()
 	aPose.pitch = 0;
 	aPose.yaw = 0;
 	aPose.time = 0;
-	aPose.frame = this->tfClient.lookup("FRAMEID_BASE_LASER_BLOCK");
+	aPose.frame = this->tfClient.lookup("FRAMEID_BASE_LASER_BLOCK"); //TODO: put me in pr2.xml and change my string
 	libTF::TFPose inBaseFrame;
 	try
 	{
-		inBaseFrame = this->tfClient.transformPose("FRAMEID_BASE", aPose);
+		inBaseFrame = this->tfClient.transformPose("base", aPose);
 	}
 	catch(libTF::TransformReference::LookupException e)
 	{
@@ -473,7 +446,7 @@ void Vis3d::addFloorCloud()
 		inBaseFrame.pitch = 0;
 		inBaseFrame.yaw = 0;
 		inBaseFrame.time = 0;
-		inBaseFrame.frame = this->tfClient.lookup("FRAMEID_BASE");
+		inBaseFrame.frame = this->tfClient.lookup("base");
 	}
 	shutterFloor();
     pLocalRenderer->lock();
@@ -497,11 +470,11 @@ void Vis3d::addStereoCloud()
 	aPose.pitch = 0;
 	aPose.yaw = 0;
 	aPose.time = 0;
-	aPose.frame = this->tfClient.lookup("FRAMEID_STEREO_BLOCK");
+	aPose.frame = this->tfClient.lookup("FRAMEID_STEREO_BLOCK"); //TODO: put me in pr2.xml and change my string
 	libTF::TFPose inBaseFrame;
 	try
 	{
-		inBaseFrame = this->tfClient.transformPose("FRAMEID_BASE", aPose);
+		inBaseFrame = this->tfClient.transformPose("base", aPose);
 	}
 	catch(libTF::TransformReference::LookupException e)
 	{
@@ -512,7 +485,7 @@ void Vis3d::addStereoCloud()
 		inBaseFrame.pitch = 0;
 		inBaseFrame.yaw = 0;
 		inBaseFrame.time = 0;
-		inBaseFrame.frame = this->tfClient.lookup("FRAMEID_BASE");
+		inBaseFrame.frame = this->tfClient.lookup("base");
 	}
     pLocalRenderer->lock();
     /*for(int i = 0; i < ilStereoCloud.size(); i++)

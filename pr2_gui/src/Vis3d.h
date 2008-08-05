@@ -147,6 +147,8 @@ class Vis3d
 		void disableModel();
 		///Disables all user inserted objects (but does not delete them)
 		void disableObjects();
+		///Deletes all user inserted objects
+		void deleteObjects();
 		///(callback)Clears data in the head based Hokuyo point cloud
 		void shutterHead();
 		///(callback)Clears data in the lower Hokuyo point cloud

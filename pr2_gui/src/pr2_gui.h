@@ -82,6 +82,7 @@ class launcher : public wxFrame
 		virtual void startStopUCS( wxCommandEvent& event ){ event.Skip(); }
 		virtual void startStopGrid( wxCommandEvent& event ){ event.Skip(); }
 		virtual void startStopObjects( wxCommandEvent& event ){ event.Skip(); }
+		virtual void deleteObjects( wxMouseEvent& event ){ event.Skip(); }
 		virtual void viewChanged( wxCommandEvent& event ){ event.Skip(); }
 		virtual void HeadLaserChanged( wxCommandEvent& event ){ event.Skip(); }
 		virtual void PTZL_ptzChanged( wxScrollEvent& event ){ event.Skip(); }

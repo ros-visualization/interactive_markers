@@ -94,6 +94,8 @@ protected:
 	void startStopGrid( wxCommandEvent& event );
 	///Enables and disables the user inserted objects
 	void startStopObjects( wxCommandEvent& event );
+	///Deletes all existing objects
+	void deleteObjects( wxMouseEvent& event );
 	///Changes to the selected view
 	void viewChanged( wxCommandEvent& event );
 	///Changes the head hokuyo scan type

@@ -340,6 +340,7 @@ launcher::launcher( wxWindow* parent, wxWindowID id, const wxString& title, cons
 	UCS_CB->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( launcher::startStopUCS ), NULL, this );
 	Grid_CB->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( launcher::startStopGrid ), NULL, this );
 	Objects_CB->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( launcher::startStopObjects ), NULL, this );
+	Objects_CB->Connect( wxEVT_LEFT_DCLICK, wxMouseEventHandler( launcher::deleteObjects ), NULL, this );
 	Views_RB->Connect( wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler( launcher::viewChanged ), NULL, this );
 	HeadLaser_RB->Connect( wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler( launcher::HeadLaserChanged ), NULL, this );
 	panPTZL_S->Connect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( launcher::PTZL_ptzChanged ), NULL, this );
@@ -369,6 +370,7 @@ launcher::~launcher()
 	UCS_CB->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( launcher::startStopUCS ), NULL, this );
 	Grid_CB->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( launcher::startStopGrid ), NULL, this );
 	Objects_CB->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( launcher::startStopObjects ), NULL, this );
+	Objects_CB->Disconnect( wxEVT_LEFT_DCLICK, wxMouseEventHandler( launcher::deleteObjects ), NULL, this );
 	Views_RB->Disconnect( wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler( launcher::viewChanged ), NULL, this );
 	HeadLaser_RB->Disconnect( wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler( launcher::HeadLaserChanged ), NULL, this );
 	panPTZL_S->Disconnect( wxEVT_SCROLL_CHANGED, wxScrollEventHandler( launcher::PTZL_ptzChanged ), NULL, this );

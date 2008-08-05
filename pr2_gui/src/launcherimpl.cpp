@@ -152,6 +152,11 @@ void LauncherImpl::startStopObjects( wxCommandEvent& event )
 	}
 }
 
+void LauncherImpl::deleteObjects(wxMouseEvent& event)
+{
+	vis3d_Window->deleteObjects();
+}
+
 void LauncherImpl::viewChanged( wxCommandEvent& event )
 {
 	if(vis3d_Window)
