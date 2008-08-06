@@ -8,6 +8,9 @@
 <depend package="std_msgs"/>
 <depend package="megamaid"/>
 <depend package="scan_utils"/>
+<depend package="opencv"/>
+<depend package="ffmpeg"/>
+<depend package="image_utils"/>
 <export>
   <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib"/>
 </export>

@@ -13,8 +13,8 @@
 
 using namespace std;
 
-#define MINPTS 100
-#define CCTHRESH .02
+#define MINPTS 50
+#define CCTHRESH .01 //In meters.
 #define BOXSIZE 3 //In meters.
 
 void SplitFilename (const string& str, string *dir, string *file)
@@ -94,6 +94,7 @@ public:
     foreground.removeGrazingPoints(10);
     vector<SmartScan*> *ccs;
     ccs = foreground.connectedComponents(CCTHRESH, MINPTS);
+    cout << ccs->size() << " connected components were large enough." << endl;
 
     //Put just the large-enough connected components into a final scan.
     SmartScan final;
@@ -333,10 +334,6 @@ int main(int argc, char **argv) {
     float support = .1;
     float pixelsPerMeter = 250;
 
-    int randId;
-    cout << " starting while loop" << endl;
-    while(sl->ok()) {
-      usleep(10000);
 
       //Do speed testing.
 //       int iters = 1000;
@@ -353,6 +350,11 @@ int main(int argc, char **argv) {
 //       cout << "Computing " << iters << " spin images took " << dif << " seconds." << endl;
 //       delete psitest;
 
+
+    int randId;
+    cout << " starting while loop" << endl;
+    while(sl->ok()) {
+      usleep(10000);
       sl->publish("full_cloud", finalcloudmsg);
 
       //Compute a random spin image.
@@ -362,13 +364,12 @@ int main(int argc, char **argv) {
       randId = rand() % foreground.size();
       pt = foreground.getPoint(randId);
       //foreground.computeSpinImageFixedOrientation(*psi, pt.x, pt.y, pt.z, support, pixelsPerMeter);
+      foreground.computeSpinImageNatural(*psi, pt.x, pt.y, pt.z, support, pixelsPerMeter);
 
-
-      cout << "markering" << endl;
       //Put special symbol in pr2_gui.
       cout << "Putting a marker at " << pt.x << " " << pt.y << " " << pt.z << endl;
       mark.id = 1000 + randId;
-      mark.type = 0;
+      mark.type = 1;
       mark.action = 0;
       mark.x = pt.x;
       mark.y = pt.y;
@@ -376,9 +377,9 @@ int main(int argc, char **argv) {
       mark.roll = 0;
       mark.pitch = 0;
       mark.yaw = 0;
-      mark.xScale = .05;
-      mark.yScale = .05;
-      mark.zScale = .05;
+      mark.xScale = .02;
+      mark.yScale = .02;
+      mark.zScale = .02;
       mark.alpha = 255;
       mark.r = 0;
       mark.g = 255;
@@ -387,72 +388,94 @@ int main(int argc, char **argv) {
       sl->publish("visualizationMarker", mark);
 
 
+      // **** DIRTY DEBUG
+//         // -- Get the surface normal.
+//         std_msgs::Point3DFloat32 normal = foreground.computePointNormal(pt.x, pt.y, pt.z, .02, 20);
+// 	cout << "Point normal is " << normal.x << " " << normal.y << " " << normal.z << endl;
 
-      // **** DEBUG
-        // -- Get the surface normal.
-        std_msgs::Point3DFloat32 normal = foreground.computePointNormal(pt.x, pt.y, pt.z, .1, 1000);
-	cout << "Point normal is " << normal.x << " " << normal.y << " " << normal.z << endl;
-
-	// -- Get the nearby points and put them into their own SmartScan.
-	std_msgs::PointCloudFloat32* cld = foreground.getPointsWithinRadiusPointCloud(pt.x, pt.y, pt.z, support*sqrt(2));
-	SmartScan ss;
-	ss.setFromRosCloud(*cld);
-	cout << "support has " << ss.size() << " points." << endl;
+// 	// -- Get the nearby points and put them into their own SmartScan.
+// 	std_msgs::PointCloudFloat32* cld = foreground.getPointsWithinRadiusPointCloud(pt.x, pt.y, pt.z, support*sqrt(2));
+// 	SmartScan ss;
+// 	ss.setFromRosCloud(*cld);
+// 	cout << "support has " << ss.size() << " points." << endl;
 	
-	cout << "Press Enter to see support . . .\n";
-	cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-	std_msgs::PointCloudFloat32 ssdisp = ss.getPointCloud();
-	sl->publish("full_cloud", ssdisp);
+// 	cout << "Press Enter to see support . . .\n";
+// 	cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+// 	std_msgs::PointCloudFloat32 ssdisp = ss.getPointCloud();
+// 	sl->publish("full_cloud", ssdisp);
 	
-	// -- Setup libTF.
-	libTF::TFVector tfn0, tfn1, tfn2;
-	libTF::TransformReference tr;
-	tfn0.frame = 13;
-	tfn0.time = 0; 
-	tfn0.x = normal.x;
-	tfn0.y = normal.y;
-	tfn0.z = normal.z;
+// 	// -- Setup libTF.
+// 	libTF::TFVector tfn0, tfn1, tfn2;
+// 	libTF::TransformReference tr;
+// 	tfn0.frame = 13;
+// 	tfn0.time = 0; 
+// 	tfn0.x = normal.x;
+// 	tfn0.y = normal.y;
+// 	tfn0.z = normal.z;
 
-	// -- Find the transformation that makes the surface normal point up.
-	double pitch = atan2(normal.x, normal.z);
-	tr.setWithEulers((unsigned int)13, (unsigned int)14, 0.0, 0.0, 0.0, 0.0, -pitch, 0.0, (libTF::TransformReference::ULLtime)0);
-	tfn1 = tr.transformVector(14, tfn0);
-	float roll = atan2(tfn1.y, tfn1.z);
-	tr.setWithEulers((unsigned int)14, (unsigned int)15, 0.0, 0.0, 0.0, 0.0, 0.0, -roll, (libTF::TransformReference::ULLtime)0);
-	tfn2 = tr.transformVector(15, tfn1);
-	cout << "x: " << tfn2.x << " y: " << tfn2.y << " z: " << tfn2.z << endl;
+// 	// -- Find the transformation that makes the surface normal point up.
+// 	double pitch = atan2(normal.x, normal.z);
+// 	tr.setWithEulers((unsigned int)13, (unsigned int)14, 0.0, 0.0, 0.0, 0.0, -pitch, 0.0, (libTF::TransformReference::ULLtime)0);
+// 	cout << "  pitch is " << pitch << " from x = " << normal.x << " and z = " << normal.z << endl;
 
-	// -- Transform the spin image center point.
-	libTF::TFPoint center0, center2;
-	center0.frame = 13;
-	center0.time = 0;
-	center0.x = pt.x;
-	center0.y = pt.y;
-	center0.z = pt.z;
-	center2 = tr.transformPoint(15, center0);
+// 	tfn1 = tr.transformVector(14, tfn0);
+// 	cout << "New normal is  x: " << tfn1.x << " y: " << tfn1.y << " z: " << tfn1.z << endl;
+// 	float roll = atan2(tfn1.y, tfn1.z);
+// 	cout << "  roll is " << roll << " from y = " << tfn1.y << " and z = " << tfn1.z << endl;
+// 	tr.setWithEulers((unsigned int)14, (unsigned int)15, 0.0, 0.0, 0.0, 0.0, 0.0, roll, (libTF::TransformReference::ULLtime)0);
+// 	tfn2 = tr.transformVector(15, tfn1);
+// 	cout << "Transformed normal is (should be 0,0,1)  x: " << tfn2.x << " y: " << tfn2.y << " z: " << tfn2.z << endl;
 
-	// -- Transform the rest of the points in one shot and get the spin image.
-	ss.applyTransform(tr.getMatrix(13, 15, 0));
+// 	// -- Transform the spin image center point.
+// 	libTF::TFPoint center0, center2;
+// 	center0.frame = 13;
+// 	center0.time = 0;
+// 	center0.x = pt.x;
+// 	center0.y = pt.y;
+// 	center0.z = pt.z;
+// 	center2 = tr.transformPoint(15, center0);
+
+// 	// -- Transform the rest of the points in one shot and get the spin image.
+// 	//ss.applyTransform(tr.getMatrix(13, 15, 0));
+// 	libTF::TFPoint ptf, ptf2;
+// 	std_msgs::Point3DFloat32 p;
+// 	std_msgs::PointCloudFloat32 cld2;
+// 	cld2.set_pts_size(ss.size());
+// 	cld2.set_chan_size(1);
+// 	cld2.chan[0].name = "intensities";
+// 	cld2.chan[0].set_vals_size(ss.size());
+// 	for (int j=0; j<ss.size(); j++) {
+// 	  p = ss.getPoint(j);
+// 	  ptf.frame = 13;
+// 	  ptf.time = 0;
+// 	  ptf.x = p.x;
+// 	  ptf.y = p.y;
+// 	  ptf.z = p.z;
+// 	  ptf2 = tr.transformPoint(15, ptf);
+// 	  cld2.pts[j].x = ptf2.x;
+// 	  cld2.pts[j].y = ptf2.y;
+// 	  cld2.pts[j].z = ptf2.z;
+// 	  cld2.chan[0].vals[j] = 0;
+// 	}
+// 	SmartScan ss2;
+// 	ss2.setFromRosCloud(cld2);
 	
 
-	// -- Display the new ptcld and marker.
-	cout << "Press Enter to see rotated ptcld . . .\n";
-	cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-	ssdisp = ss.getPointCloud();
-	sl->publish("full_cloud", ssdisp);
+// 	// -- Display the new ptcld and marker.
+// 	cout << "Press Enter to see rotated ptcld . . .\n";
+// 	cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+// 	ssdisp = ss.getPointCloud();
+// 	sl->publish("full_cloud", cld2);
 
-	mark.action = 1;
-	mark.x = center2.x;
-	mark.y = center2.y;
-	mark.z = center2.z;
-	sl->publish("visualizationMarker", mark);
+// 	mark.action = 1;
+// 	mark.x = center2.x;
+// 	mark.y = center2.y;
+// 	mark.z = center2.z;
+// 	sl->publish("visualizationMarker", mark);
 
-	ss.computeSpinImageFixedOrientation(*psi, center2.x, center2.y, center2.z, support, pixelsPerMeter);
+// 	ss2.computeSpinImageFixedOrientation(*psi, center2.x, center2.y, center2.z, support, pixelsPerMeter);
 
       //*** DONE DEBUG
-
-	//      foreground.computeSpinImageNatural(*psi, pt.x, pt.y, pt.z, support, pixelsPerMeter);
-
 
       //Display the spin image with gnuplot.
       char cmd[] = "echo \'set pm3d map; set size ratio -1; splot \"gnuplot_tmp\"\' | gnuplot -persist";

@@ -4,5 +4,6 @@ rospack(scene_labeler)
 add_definitions(-Wall)
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 rospack_add_executable(scene_labeler src/scene_labeler/scene_labeler.cpp)
-set_target_properties(scene_labeler PROPERTIES LINK_FLAGS "-g -pg" COMPILE_FLAGS "-g -pg")
+rospack_add_executable(image_bg_subtr src/image_bg_subtr/CaptureObjects.cpp src/image_bg_subtr/cvx_multiwin.cpp src/image_bg_subtr/cv_yuv_codebook.cpp)
+set_target_properties(scene_labeler PROPERTIES LINK_FLAGS "-g" COMPILE_FLAGS "-g")
 
