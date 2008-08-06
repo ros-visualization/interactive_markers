@@ -42,7 +42,7 @@ AxesVisualizer::AxesVisualizer( Ogre::SceneManager* sceneManager, ros::node* nod
 , m_Length( 1.0 )
 , m_Radius( 0.1 )
 {
-  m_Axes = new ogre_tools::Axes( sceneManager, m_Length, m_Radius );
+  m_Axes = new ogre_tools::Axes( sceneManager, NULL, m_Length, m_Radius );
 
   m_Axes->GetSceneNode()->setVisible( IsEnabled() );
 
