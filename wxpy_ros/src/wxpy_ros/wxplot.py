@@ -507,7 +507,7 @@ if __name__ == "__main__":
 
     app = wx.PySimpleApp(0)
     frame = wx.Frame(None, -1,"")
-    panel = WXPlot(frame)
+    panel = WXSlidingPlot(frame)
     panel.setTimespan(10.0)
     channel = MyChannel('r')
     channel2 = MyChannel2('y+')
