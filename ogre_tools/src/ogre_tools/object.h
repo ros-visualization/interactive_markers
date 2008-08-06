@@ -27,14 +27,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_TOOLS_AXES_H
-#define OGRE_TOOLS_AXES_H
-
-#include "object.h"
-
-#include <stdint.h>
-
-#include <vector>
+#ifndef OGRE_TOOLS_OBJECT_H
+#define OGRE_TOOLS_OBJECT_H
 
 namespace Ogre
 {
@@ -46,30 +40,20 @@ class Quaternion;
 
 namespace ogre_tools
 {
-class SuperEllipsoid;
 
-class Axes : public Object
+class Object
 {
 public:
-  Axes( Ogre::SceneManager* manager, Ogre::SceneNode* parentNode = NULL, float length = 1.0f, float radius = 0.1f );
-  ~Axes();
+  Object( Ogre::SceneManager* sceneManager );
 
-  void Set( float length, float radius );
-  virtual void SetOrientation( const Ogre::Quaternion& orientation );
-  virtual void SetPosition( const Ogre::Vector3& position );
-  virtual void SetScale( const Ogre::Vector3& scale );
+  virtual void SetPosition( const Ogre::Vector3& position ) = 0;
+  virtual void SetOrientation( const Ogre::Quaternion& orientation ) = 0;
+  virtual void SetScale( const Ogre::Vector3& scale ) = 0;
 
-  Ogre::SceneNode* GetSceneNode() { return m_SceneNode; }
-
-private:
-  Ogre::SceneNode* m_SceneNode;
-
-  SuperEllipsoid* m_XAxis;
-  SuperEllipsoid* m_YAxis;
-  SuperEllipsoid* m_ZAxis;
+protected:
+  Ogre::SceneManager* m_SceneManager;
 };
 
 } // namespace ogre_tools
 
-#endif
-
+#endif /* OGRE_TOOLS_OBJECT_H */

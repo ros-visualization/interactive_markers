@@ -27,8 +27,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "axes.h"
+#include "arrow.h"
 #include "super_ellipsoid.h"
+#include "cone.h"
 
 #include <Ogre.h>
 
@@ -37,8 +38,9 @@
 namespace ogre_tools
 {
 
-Axes::Axes( Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode, float length, float radius )
-    : Object( sceneManager )
+Arrow::Arrow( Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode, float shaftLength, float shaftRadius,
+              float headLength, float headRadius )
+: Object( sceneManager )
 {
   if ( !parentNode )
   {
@@ -47,53 +49,64 @@ Axes::Axes( Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode, float
 
   m_SceneNode = parentNode->createChildSceneNode();
 
-  m_XAxis = new SuperEllipsoid( m_SceneManager, m_SceneNode );
-  m_YAxis = new SuperEllipsoid( m_SceneManager, m_SceneNode );
-  m_ZAxis = new SuperEllipsoid( m_SceneManager, m_SceneNode );
+  m_Shaft = new SuperEllipsoid( m_SceneManager, m_SceneNode );
+  m_Head = new Cone( m_SceneManager, m_SceneNode );
 
-  Set( length, radius );
+  Set( shaftLength, shaftRadius, headLength, headRadius );
+
+  SetOrientation( Ogre::Quaternion::IDENTITY );
 }
 
-Axes::~Axes()
+Arrow::~Arrow()
 {
-  delete m_XAxis;
-  delete m_YAxis;
-  delete m_ZAxis;
+  delete m_Shaft;
+  delete m_Head;
 
   m_SceneNode->detachAllObjects();
   m_SceneNode->getParentSceneNode()->removeAndDestroyChild( m_SceneNode->getName() );
 }
 
-void Axes::Set( float length, float radius )
+void Arrow::Set( float shaftLength, float shaftRadius, float headLength, float headRadius )
 {
-  m_XAxis->Create( SuperEllipsoid::Cylinder, 20, Ogre::Vector3( radius, length, radius ) );
-  m_YAxis->Create( SuperEllipsoid::Cylinder, 20, Ogre::Vector3( radius, length, radius ) );
-  m_ZAxis->Create( SuperEllipsoid::Cylinder, 20, Ogre::Vector3( radius, length, radius ) );
+  m_Shaft->Create( SuperEllipsoid::Cylinder, 20, Ogre::Vector3( shaftRadius, shaftLength, shaftRadius ) );
+  m_Shaft->SetColor( 0.5f, 0.5f, 0.5f );
+  m_Shaft->SetPosition( Ogre::Vector3( 0.0f, shaftLength/2.0f, 0.0f ) );
 
-  m_XAxis->SetPosition( Ogre::Vector3( length/2.0f, 0.0f, 0.0f ) );
-  m_XAxis->SetOrientation( Ogre::Quaternion( Ogre::Degree( -90 ), Ogre::Vector3::UNIT_Z ) );
-  m_YAxis->SetPosition( Ogre::Vector3( 0.0f, length/2.0f, 0.0f ) );
-  m_ZAxis->SetPosition( Ogre::Vector3( 0.0, 0.0f, length/2.0f ) );
-  m_ZAxis->SetOrientation( Ogre::Quaternion( Ogre::Degree( 90 ), Ogre::Vector3::UNIT_X ) );
-
-  m_XAxis->SetColor( 1.0f, 0.0f, 0.0f );
-  m_YAxis->SetColor( 0.0f, 1.0f, 0.0f );
-  m_ZAxis->SetColor( 0.0f, 0.0f, 1.0f );
+  m_Head->SetScale( Ogre::Vector3( headRadius, headLength, headRadius ) );
+  m_Head->SetColor( 0.5f, 0.5f, 0.5f );
+  m_Head->SetPosition( Ogre::Vector3( 0.0f, shaftLength, 0.0f ) );
 }
 
-void Axes::SetPosition( const Ogre::Vector3& position )
+void Arrow::SetColor( float r, float g, float b )
+{
+  m_Shaft->SetColor( r, g, b );
+  m_Head->SetColor( r, g, b );
+}
+
+void Arrow::SetShaftColor( float r, float g, float b )
+{
+  m_Shaft->SetColor( r, g, b );
+}
+
+void Arrow::SetHeadColor( float r, float g, float b )
+{
+  m_Head->SetColor( r, g, b );
+}
+
+void Arrow::SetPosition( const Ogre::Vector3& position )
 {
   m_SceneNode->setPosition( position );
 }
 
-void Axes::SetOrientation( const Ogre::Quaternion& orientation )
+void Arrow::SetOrientation( const Ogre::Quaternion& orientation )
 {
-  m_SceneNode->setOrientation( orientation );
+  // "forward" (negative z) should always be our identity orientation
+  m_SceneNode->setOrientation( orientation * Ogre::Quaternion( Ogre::Degree( -90 ), Ogre::Vector3::UNIT_X ) );
 }
 
-void Axes::SetScale( const Ogre::Vector3& scale )
+void Arrow::SetScale( const Ogre::Vector3& scale )
 {
-  m_SceneNode->setScale( scale );
+  m_SceneNode->setScale( Ogre::Vector3( scale.x, scale.z, scale.y ) );
 }
 
 } // namespace ogre_tools

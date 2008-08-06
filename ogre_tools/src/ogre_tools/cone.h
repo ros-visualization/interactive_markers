@@ -30,6 +30,10 @@
 #ifndef OGRE_TOOLS_CONE_H
 #define OGRE_TOOLS_CONE_H
 
+#include "object.h"
+
+#include <OgreMaterial.h>
+
 namespace Ogre
 {
 class SceneManager;
@@ -41,7 +45,7 @@ class Vector3;
 namespace ogre_tools
 {
 
-class Cone
+class Cone : public Object
 {
 public:
   Cone( Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode = 0, int xTes = 20, int yTes = 20, float r = 1.0f, float g = 1.0f, float b = 1.0f );
@@ -49,13 +53,25 @@ public:
 
   void Create( int xTes, int yTes, float r, float g, float b );
 
+  void SetOffset( const Ogre::Vector3& offset );
+  void SetColor( float r, float g, float b );
+
+  virtual void SetPosition( const Ogre::Vector3& position );
+  virtual void SetOrientation( const Ogre::Quaternion& orientation );
+  virtual void SetScale( const Ogre::Vector3& scale );
+
 protected:
   void GetVertex( double theta, double h, Ogre::Vector3& vertex );
   void GetNormal( double theta, double h, Ogre::Vector3& normal );
 
-  Ogre::SceneManager* m_SceneManager;
   Ogre::SceneNode* m_SceneNode;
+  Ogre::SceneNode* m_OffsetNode;
   Ogre::ManualObject* m_ManualObject;
+  Ogre::MaterialPtr m_Material;
+  std::string m_MaterialName;
+
+  int m_XTes;
+  int m_YTes;
 };
 
 } // namespace ogre_tools

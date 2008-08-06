@@ -21,9 +21,11 @@ find_package(OpenGL REQUIRED)
 include_directories( ${OPENGL_INCLUDE_DIR} )
 
 rospack_add_library(ogretools src/ogre_tools/point_cloud.cpp
+            src/ogre_tools/object.cpp
             src/ogre_tools/cone.cpp
 			      src/ogre_tools/grid.cpp
 			      src/ogre_tools/super_ellipsoid.cpp
+			      src/ogre_tools/arrow.cpp
 			      src/ogre_tools/axes.cpp
 			      src/ogre_tools/camera_base.cpp
 			      src/ogre_tools/fps_camera.cpp

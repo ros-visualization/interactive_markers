@@ -32,12 +32,21 @@
 #ifndef OGRE_TOOLS_SUPER_ELLIPSOID_H
 #define OGRE_TOOLS_SUPER_ELLIPSOID_H
 
-#include <Ogre.h>
+#include "object.h"
+
+#include <OgreMaterial.h>
+#include <OgreVector3.h>
+
+namespace Ogre
+{
+class SceneManager;
+class SceneNode;
+}
 
 namespace ogre_tools
 {
 
-class SuperEllipsoid
+class SuperEllipsoid : public Object
 {
 public:
   enum Shape
@@ -56,8 +65,10 @@ public:
 
   void SetColor( float r, float g, float b );
   void SetOffset( const Ogre::Vector3&  offset );
-  void SetPosition( const Ogre::Vector3& position );
-  void SetOrientation( const Ogre::Quaternion& orientation );
+
+  virtual void SetPosition( const Ogre::Vector3& position );
+  virtual void SetOrientation( const Ogre::Quaternion& orientation );
+  virtual void SetScale( const Ogre::Vector3& scale );
 
   Ogre::SceneNode* GetRootNode() { return m_SceneNode; }
 
@@ -67,7 +78,6 @@ private:
   Ogre::Vector3 CalculateNormal(float phi, float beta, float n1, float n2,
                                 float scaleX, float scaleY, float scaleZ);
 
-  Ogre::SceneManager* m_SceneManager;
   Ogre::SceneNode* m_SceneNode;
   Ogre::SceneNode* m_OffsetNode;
   Ogre::ManualObject* m_ManualObject;

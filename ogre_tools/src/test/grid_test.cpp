@@ -36,6 +36,7 @@
 #include "../ogre_tools/orbit_camera.h"
 #include "../ogre_tools/axes.h"
 #include "../ogre_tools/cone.h"
+#include "../ogre_tools/arrow.h"
 
 #include "Ogre.h"
 
@@ -110,8 +111,17 @@ public:
         m_Grid = new ogre_tools::Grid( m_SceneManager, 10, 1.0f, 1.0f, 0.0f, 0.0f );
         //m_Grid->GetSceneNode()->pitch( Ogre::Degree( 90 ) );
 
-        //ogre_tools::Axes* axes = new ogre_tools::Axes( m_SceneManager, 1.0, 0.1 );
-        ogre_tools::Cone* cone = new ogre_tools::Cone( m_SceneManager, NULL );
+        //ogre_tools::Axes* axes = new ogre_tools::Axes( m_SceneManager );
+        //axes->SetScale( Ogre::Vector3( 2.0f, 2.0f, 2.0f ) );
+
+        /*ogre_tools::Cone* cone = new ogre_tools::Cone( m_SceneManager, NULL );
+        cone->SetScale( Ogre::Vector3( 0.3f, 2.0f, 0.3f ) );*/
+
+        ogre_tools::Arrow* arrow = new ogre_tools::Arrow( m_SceneManager );
+        arrow->SetHeadColor( 1.0f, 0.0f, 0.0f );
+        arrow->SetShaftColor( 0.0f, 0.0f, 1.0f );
+        arrow->SetOrientation( Ogre::Quaternion( Ogre::Degree( 45 ), Ogre::Vector3::UNIT_X ) );
+        arrow->SetScale( Ogre::Vector3( 1.0f, 1.0f, 3.0f ) );
     }
     catch ( Ogre::Exception& e )
     {

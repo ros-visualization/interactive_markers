@@ -6,7 +6,7 @@ namespace ogre_tools
 {
 
 Cone::Cone(Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode, int xTes, int yTes, float r, float g, float b)
-: m_SceneManager( sceneManager )
+: Object( sceneManager )
 {
   static uint32_t count = 0;
   std::stringstream ss;
@@ -20,9 +20,20 @@ Cone::Cone(Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode, int xT
   }
 
   m_SceneNode = parentNode->createChildSceneNode();
-  m_SceneNode->attachObject( m_ManualObject );
+  m_OffsetNode = m_SceneNode->createChildSceneNode();
+  m_OffsetNode->attachObject( m_ManualObject );
+
+  ss << "Material";
+  m_MaterialName = ss.str();
+  m_Material = Ogre::MaterialManager::getSingleton().create( m_MaterialName, "General" );
+  m_Material->setReceiveShadows(false);
+  m_Material->getTechnique(0)->setLightingEnabled(true);
+  m_Material->getTechnique(0)->setAmbient( 0.5, 0.5, 0.5 );
 
   Create( xTes, yTes, r, g, b );
+
+  // Default the offset so that the base of the cone is at the origin
+  SetOffset( Ogre::Vector3( 0.0f, 0.5f, 0.0f ) );
 }
 
 Cone::~Cone()
@@ -35,8 +46,11 @@ Cone::~Cone()
 
 void Cone::Create(int xTes, int yTes, float r, float g, float b)
 {
+  m_XTes = xTes;
+  m_YTes = yTes;
+
   m_ManualObject->clear();
-  m_ManualObject->begin( "BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_LIST );
+  m_ManualObject->begin( m_MaterialName, Ogre::RenderOperation::OT_TRIANGLE_LIST );
 
   double stepTheta = 2 * Ogre::Math::PI / xTes;
   double stepH = 1.0 / yTes;
@@ -52,7 +66,7 @@ void Cone::Create(int xTes, int yTes, float r, float g, float b)
     {
       Ogre::Vector3 v1, v2, v3;
       Ogre::Vector3 n(0.0, -1.0, 0.0);
-      v1 = Ogre::Vector3( 0.0, 0.0, 0.5 );
+      v1 = Ogre::Vector3( 0.0, -0.5, 0.0 );
       GetVertex( theta, 0.0, v2 );
       GetVertex( theta + stepTheta, 0.0, v3 );
 
@@ -72,7 +86,7 @@ void Cone::Create(int xTes, int yTes, float r, float g, float b)
     //top
     {
       Ogre::Vector3 v1, v2, v3;
-      v1 = Ogre::Vector3( 0.0, 0.0, -0.5 );
+      v1 = Ogre::Vector3( 0.0, 0.5, 0.0 );
       GetVertex( theta, h, v2 );
       GetVertex( theta + stepTheta, h, v3 );
 
@@ -149,16 +163,42 @@ void Cone::Create(int xTes, int yTes, float r, float g, float b)
 
 void Cone::GetVertex(double theta, double h, Ogre::Vector3 & vertex)
 {
-  vertex.x= (1 - h)*0.5*cos(theta);
-  vertex.y= (1 - h)*0.5*sin(theta);
-  vertex.z= 0.5 - h;
+  vertex.x = (1 - h)*0.5*cos(theta);
+  vertex.y = h - 0.5;
+  vertex.z = (1 - h)*0.5*sin(theta);
+
 }
 
 void Cone::GetNormal(double theta, double h, Ogre::Vector3 & normal)
 {
-  normal.x= 0.5*cos(theta);
-  normal.y= 0.5*sin(theta);
-  normal.z= -0.5;
+  normal.x = 0.5*cos(theta);
+  normal.y = 0.5;
+  normal.z = 0.5*sin(theta);
+}
+
+void Cone::SetColor( float r, float g, float b )
+{
+  m_Material->getTechnique(0)->setAmbient( r, g, b );
+}
+
+void Cone::SetOffset( const Ogre::Vector3& offset )
+{
+  m_OffsetNode->setPosition( offset );
+}
+
+void Cone::SetPosition( const Ogre::Vector3& position )
+{
+  m_SceneNode->setPosition( position );
+}
+
+void Cone::SetOrientation( const Ogre::Quaternion& orientation )
+{
+  m_SceneNode->setOrientation( orientation );
+}
+
+void Cone::SetScale( const Ogre::Vector3& scale )
+{
+  m_SceneNode->setScale( scale );
 }
 
 } // namespace ogre_tools

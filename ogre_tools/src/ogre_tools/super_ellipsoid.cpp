@@ -39,7 +39,7 @@ namespace ogre_tools
 {
 
 SuperEllipsoid::SuperEllipsoid( Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode )
-: m_SceneManager( sceneManager )
+: Object( sceneManager )
 {
   static uint32_t count = 0;
   std::stringstream ss;
@@ -94,18 +94,18 @@ void SuperEllipsoid::Create(int samples, float n1, float n2, const Ogre::Vector3
     for(int i=0; i<=samples; i++)
     {
       //Triangle #1
-      m_ManualObject->position(Sample(phi, beta, n1, n2, scaleX, scaleY, scaleZ));
-      m_ManualObject->normal(CalculateNormal(phi, beta, n1, n2, scaleX, scaleY, scaleZ));
       m_ManualObject->position(Sample(phi+dP, beta, n1, n2, scaleX, scaleY, scaleZ));
       m_ManualObject->normal(CalculateNormal(phi+dP, beta, n1, n2, scaleX, scaleY, scaleZ));
+      m_ManualObject->position(Sample(phi, beta, n1, n2, scaleX, scaleY, scaleZ));
+      m_ManualObject->normal(CalculateNormal(phi, beta, n1, n2, scaleX, scaleY, scaleZ));
       m_ManualObject->position(Sample(phi+dP, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
       m_ManualObject->normal(CalculateNormal(phi+dP, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
 
       //Triangle #2
-      m_ManualObject->position(Sample(phi, beta, n1, n2, scaleX, scaleY, scaleZ));
-      m_ManualObject->normal(CalculateNormal(phi, beta, n1, n2, scaleX, scaleY, scaleZ));
       m_ManualObject->position(Sample(phi+dP, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
       m_ManualObject->normal(CalculateNormal(phi+dP, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
+      m_ManualObject->position(Sample(phi, beta, n1, n2, scaleX, scaleY, scaleZ));
+      m_ManualObject->normal(CalculateNormal(phi, beta, n1, n2, scaleX, scaleY, scaleZ));
       m_ManualObject->position(Sample(phi, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
       m_ManualObject->normal(CalculateNormal(phi, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
 
@@ -131,7 +131,7 @@ void SuperEllipsoid::Create(Shape shape, int samples, const Ogre::Vector3& scale
     n1 = n2 = 0.2;
     break;
   case Cylinder:
-    n1 = 0.2;
+    n1 = 0.0;
     n2 = 1.0;
     break;
   case Sphere:
@@ -153,9 +153,9 @@ Ogre::Vector3 SuperEllipsoid::Sample(float phi, float beta, float n1, float n2,
   float sinBeta = sin(beta);
 
 
-  vertex.y = scaleY * SIGN(cosPhi) * pow(fabs(cosPhi), n1) * SIGN(cosBeta) * pow(fabs(cosBeta), n2);
   vertex.x = scaleX * SIGN(cosPhi) * pow(fabs(cosPhi), n1) * SIGN(sinBeta) * pow(fabs(sinBeta), n2);
-  vertex.z = scaleZ * SIGN(sinPhi) * pow(fabs(sinPhi), n1);
+  vertex.y = scaleY * SIGN(sinPhi) * pow(fabs(sinPhi), n1);
+  vertex.z = scaleZ * SIGN(cosPhi) * pow(fabs(cosPhi), n1) * SIGN(cosBeta) * pow(fabs(cosBeta), n2);
 
   return vertex;
 }
@@ -170,9 +170,9 @@ Ogre::Vector3 SuperEllipsoid::CalculateNormal(float phi, float beta, float n1, f
   float sinPhi = sin(phi);
   float sinBeta = sin(beta);
 
-  normal.y = SIGN(cosPhi) * pow(fabs(cosPhi), 2-n1) * SIGN(cosBeta) * pow(fabs(cosBeta), 2-n2) / scaleY;
   normal.x = SIGN(cosPhi) * pow(fabs(cosPhi), 2-n1) * SIGN(sinBeta) * pow(fabs(sinBeta), 2-n2) / scaleX;
-  normal.z = SIGN(sinPhi) * pow(fabs(sinPhi), 2-n1) / scaleZ;
+  normal.y = SIGN(sinPhi) * pow(fabs(sinPhi), 2-n1) / scaleY;
+  normal.z = SIGN(cosPhi) * pow(fabs(cosPhi), 2-n1) * SIGN(cosBeta) * pow(fabs(cosBeta), 2-n2) / scaleZ;
 
   normal.normalise();
 
@@ -196,7 +196,12 @@ void SuperEllipsoid::SetPosition( const Ogre::Vector3& position )
 
 void SuperEllipsoid::SetOrientation( const Ogre::Quaternion& orientation )
 {
-  m_OffsetNode->setOrientation( orientation );
+  m_SceneNode->setOrientation( orientation );
+}
+
+void SuperEllipsoid::SetScale( const Ogre::Vector3& scale )
+{
+  m_SceneNode->setScale( scale );
 }
 
 } // namespace ogre_tools

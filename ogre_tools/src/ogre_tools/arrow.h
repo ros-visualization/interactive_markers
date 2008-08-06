@@ -27,14 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_TOOLS_AXES_H
-#define OGRE_TOOLS_AXES_H
-
 #include "object.h"
 
-#include <stdint.h>
-
-#include <vector>
+#ifndef OGRE_TOOLS_ARROW_H
+#define OGRE_TOOLS_ARROW_H
 
 namespace Ogre
 {
@@ -47,14 +43,21 @@ class Quaternion;
 namespace ogre_tools
 {
 class SuperEllipsoid;
+class Cone;
 
-class Axes : public Object
+class Arrow : public Object
 {
 public:
-  Axes( Ogre::SceneManager* manager, Ogre::SceneNode* parentNode = NULL, float length = 1.0f, float radius = 0.1f );
-  ~Axes();
+  Arrow( Ogre::SceneManager* manager, Ogre::SceneNode* parentNode = 0, float shaftLength = 1.0f, float shaftRadius = 0.1f,
+      float headLength = 0.3f, float headRadius =  0.2f );
+  ~Arrow();
 
-  void Set( float length, float radius );
+  void Set( float shaftLength, float shaftRadius, float headLength, float headRadius );
+
+  void SetColor( float r, float g, float b );
+  void SetHeadColor( float r, float g, float b );
+  void SetShaftColor( float r, float g, float b );
+
   virtual void SetOrientation( const Ogre::Quaternion& orientation );
   virtual void SetPosition( const Ogre::Vector3& position );
   virtual void SetScale( const Ogre::Vector3& scale );
@@ -64,12 +67,10 @@ public:
 private:
   Ogre::SceneNode* m_SceneNode;
 
-  SuperEllipsoid* m_XAxis;
-  SuperEllipsoid* m_YAxis;
-  SuperEllipsoid* m_ZAxis;
+  SuperEllipsoid* m_Shaft;
+  Cone* m_Head;
 };
 
 } // namespace ogre_tools
 
-#endif
-
+#endif /* OGRE_TOOLS_ARROW_H */
