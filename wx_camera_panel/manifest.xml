@@ -1,0 +1,20 @@
+<package>
+    <description brief="wx Camera Panels">
+    
+    wxWidgets Panels for visualizing camera sensors of various kinds.
+    
+    </description>
+    <author>Josh Faust</author>
+    <license>BSD</license>
+    <url>http://pr.willowgarage.com/wiki/ROS</url>
+    <depend package="image_utils"/>
+    <depend package="roscpp"/>
+    <depend package="std_msgs"/>
+    <depend package="wx_topic_display"/>
+    <export> 
+        <cpp cflags="-I${prefix}/src/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lwxcamerapanels"/>
+    </export>
+<sysdepend os="ubuntu" version="7.04-feisty" package="libwxgtk2.8-dev"/>
+<sysdepend os="ubuntu" version="8.04-hardy" package="libwxgtk2.8-dev"/>
+</package>
+
