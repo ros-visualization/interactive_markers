@@ -179,6 +179,8 @@ void LaserScanVisualizer::Update( float dt )
 
     float diffIntensity = m_IntensityMax - m_IntensityMin;
 
+    std::vector<ogre_tools::PointCloud::Point> points;
+    points.resize( pointCount );
     for(uint32_t i = 0; i < pointCount; i++)
     {
       Ogre::Vector3 point( m_CloudMessage.pts[i].x, m_CloudMessage.pts[i].y, m_CloudMessage.pts[i].z );
@@ -191,10 +193,19 @@ void LaserScanVisualizer::Update( float dt )
       Ogre::Vector3 color( m_R, m_G, m_B );
       color *= normalizedIntensity;
 
-      m_Cloud->AddPoint(point.x, point.y, point.z, color.x, color.y, color.z );
+      ogre_tools::PointCloud::Point& currentPoint = points[ i ];
+      currentPoint.m_X = point.x;
+      currentPoint.m_Y = point.y;
+      currentPoint.m_Z = point.z;
+      currentPoint.m_R = color.x;
+      currentPoint.m_G = color.y;
+      currentPoint.m_B = color.z;
     }
 
-    m_Cloud->Commit();
+    if ( pointCount > 0 )
+    {
+      m_Cloud->AddPoints( &points.front(), pointCount );
+    }
 
     m_RegenerateCloud = false;
 

@@ -65,30 +65,14 @@ void PointCloud::Clear()
 
 void PointCloud::AddPoints( Point* points, uint32_t numPoints )
 {
-  Point* currentPoint = points;
-  for ( uint32_t i = 0; i < numPoints; ++i, ++currentPoint )
-  {
-    m_ScratchPoints.push_back( *currentPoint );
-  }
-}
-
-void PointCloud::Commit()
-{
-  if ( m_ScratchPoints.empty() )
-  {
-    return;
-  }
-
+  m_ManualObject->estimateVertexCount( numPoints );
   m_ManualObject->begin( "BaseWhiteNoLighting", Ogre::RenderOperation::OT_POINT_LIST );
 
   uint32_t pointsInSection = 0;
 
-  V_Point::iterator pointIt = m_ScratchPoints.begin();
-  V_Point::iterator pointEnd = m_ScratchPoints.end();
-  for ( ; pointIt != pointEnd; ++pointIt )
+  Point* currentPoint = points;
+  for ( uint32_t i = 0; i < numPoints; ++i, ++currentPoint )
   {
-    Point& point = *pointIt;
-
     if ( pointsInSection >= MAX_POINTS_PER_SECTION )
     {
       m_ManualObject->end();
@@ -97,20 +81,12 @@ void PointCloud::Commit()
       pointsInSection = 0;
     }
 
-    m_ManualObject->position( point.m_X, point.m_Y, point.m_Z );
-    m_ManualObject->colour( point.m_R, point.m_G, point.m_B );
+    m_ManualObject->position( currentPoint->m_X, currentPoint->m_Y, currentPoint->m_Z );
+    m_ManualObject->colour( currentPoint->m_R, currentPoint->m_G, currentPoint->m_B );
     ++pointsInSection;
   }
 
   m_ManualObject->end();
-
-  m_ScratchPoints.clear();
-}
-
-void PointCloud::AddPoint( float x, float y, float z, float r, float g, float b )
-{
-  Point point( x, y, z, r, g, b );
-  AddPoints( &point, 1 );
 }
 
 void PointCloud::SetVisible( bool visible )

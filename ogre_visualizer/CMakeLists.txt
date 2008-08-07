@@ -3,7 +3,7 @@ include(rosbuild)
 
 rospack(ogre_visualizer)
 
-set(ROS_BUILD_TYPE Debug)
+#set(ROS_BUILD_TYPE Debug)
 
 find_package(wxWidgets REQUIRED)
 include(${wxWidgets_USE_FILE})
