@@ -59,12 +59,8 @@ class Channel:
     share a Channel between several plots.
     Channel acts as a buffer between the data input and the plot widget."""
     def __init__(self, style='b'):
-        self.x = []
-        self.y = []
-        self.dataChanged = True
-        self.time_begin = time.time()
-        self.index = -1
         self.style = style
+        self.flush()
         
     def getNext(self):
         """Returns the data waiting to be plotted and cleans the cache afterwards."""
@@ -89,6 +85,14 @@ class Channel:
         self.x.append(time.time() - self.time_begin)
         self.y.append(y)
         self.dataChanged = True
+        
+    def flush(self):
+        """Reinitializes a channel. Needed when a channel is added in a plot"""
+        self.x = []
+        self.y = []
+        self.dataChanged = True
+        self.time_begin = time.time()
+        self.index = -1
 
 class WXPlot(wx.Panel):
     """WXPlot: a plot pannel for WxPython applications.
@@ -298,6 +302,7 @@ class WXSlidingPlot(wx.Panel):
         self.cached_datax = []
         self.cached_datay = []
         self._doRePlot = True
+        self._doFlush = True
                 
         self.ylim = None
         self.autolim = None
@@ -320,7 +325,7 @@ class WXSlidingPlot(wx.Panel):
         """Add a channel to plot.
         channel: object of type Channel."""
         self.channels.append(channel)
-        self._doRePlot = True
+        self._doFlush = True
         
     def setTimespan(self, span):
         """Set the length of the graph.
@@ -336,6 +341,9 @@ class WXSlidingPlot(wx.Panel):
         self._doRePlot = True
         
     def draw_plot(self):
+        if self._doFlush:
+            self._createContent()
+            self._doRePlot = True
         if self._doRePlot:
             self._resizeCreateContent()
         if self.background is None:
@@ -393,7 +401,7 @@ class WXSlidingPlot(wx.Panel):
             if len(self.cached_datax[i]) > 0 and self.cached_datax[i][0] < self.begin:
                 index = 0
                 # Could be faster by divide and conquer...
-                while self.cached_datax[i][index] < self.begin:
+                while index < len(self.cached_datax[i]) and self.cached_datax[i][index] < self.begin :
                   index += 1
                 # Prune out old data
                 self.cached_datax[i] = self.cached_datax[i][index:]
@@ -413,16 +421,23 @@ class WXSlidingPlot(wx.Panel):
                 #pass
                 #print '>>>>>>>>>>>>>>'
                 #print e
+    def _createContent(self):
+        print 'create content'
+        self.cached_datax = []  
+        self.cached_datay = []
+        for c in self.channels:
+            self.cached_datax.append([])
+            self.cached_datay.append([])
+            c.flush()
+        self._doFlush = False
     
     def _resizeCreateContent(self):
         """Resize graph according to user input and initialize plots"""
-        self.lines=[]        
+        self.lines=[]      
         for c in self.channels:
             data=c.getNext()
             line, = self.ax.plot(data[0],data[1], c.style, animated = True)
             self.lines.append(line)
-            self.cached_datax.append([])
-            self.cached_datay.append([])
         gca = self.fig.gca()
         #TODO: add an auto mode here
         if self.ylim:

@@ -13,7 +13,7 @@ class MySubscriber:
         self.channels = []
     
     def callback(self, state):
-        print 'call'
+        #print 'call'
         for channel in self.channels:
             channel.callback(state)
 
@@ -29,7 +29,8 @@ class RosChannel(wxpy_ros.Channel):
         print 'Created ROS channel'
     
     def callback(self, state):
-      print 'received ', self.slotName, getattr(state, self.slotName)
+      self.addPoint(getattr(state, self.slotName))
+      #print 'received ', self.slotName, getattr(state, self.slotName)
 
 class RosMessageHandler:
     def __init__(self, ):
@@ -160,6 +161,11 @@ def getMessageInstance(rosMessageName):
     exec(command)
     return myobj
     
+def getMessageFloatSlots(rosMessageName):
+    """Returns an object of type rosMessageName, or None if it could not be found."""
+    #(modName, messageName) = messageNames(rosMessageName)
+    obj = getMessageInstance(rosMessageName)
+    #slots = 
     
 #if __name__ == '__main__':    
     #sub = MySubscriber()
