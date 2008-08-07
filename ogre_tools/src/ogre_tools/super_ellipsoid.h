@@ -58,12 +58,12 @@ public:
   };
 
   SuperEllipsoid(Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode = NULL);
-  ~SuperEllipsoid();
+  virtual ~SuperEllipsoid();
 
   void Create(int samples, float n1, float n2, const Ogre::Vector3& scale = Ogre::Vector3( 1.0f, 1.0f, 1.0f ));
   void Create(Shape shape, int samples = 60, const Ogre::Vector3& scale = Ogre::Vector3( 1.0f, 1.0f, 1.0f ));
 
-  void SetColor( float r, float g, float b );
+  virtual void SetColor( float r, float g, float b );
   void SetOffset( const Ogre::Vector3&  offset );
 
   virtual void SetPosition( const Ogre::Vector3& position );

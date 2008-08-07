@@ -50,11 +50,11 @@ class Arrow : public Object
 public:
   Arrow( Ogre::SceneManager* manager, Ogre::SceneNode* parentNode = 0, float shaftLength = 1.0f, float shaftRadius = 0.1f,
       float headLength = 0.3f, float headRadius =  0.2f );
-  ~Arrow();
+  virtual ~Arrow();
 
   void Set( float shaftLength, float shaftRadius, float headLength, float headRadius );
 
-  void SetColor( float r, float g, float b );
+  virtual void SetColor( float r, float g, float b );
   void SetHeadColor( float r, float g, float b );
   void SetShaftColor( float r, float g, float b );
 

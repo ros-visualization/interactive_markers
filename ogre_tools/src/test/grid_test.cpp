@@ -120,8 +120,9 @@ public:
         ogre_tools::Arrow* arrow = new ogre_tools::Arrow( m_SceneManager );
         arrow->SetHeadColor( 1.0f, 0.0f, 0.0f );
         arrow->SetShaftColor( 0.0f, 0.0f, 1.0f );
-        arrow->SetOrientation( Ogre::Quaternion( Ogre::Degree( 45 ), Ogre::Vector3::UNIT_X ) );
-        arrow->SetScale( Ogre::Vector3( 1.0f, 1.0f, 3.0f ) );
+        arrow->SetOrientation( Ogre::Quaternion::IDENTITY );
+        //arrow->SetOrientation( Ogre::Quaternion( Ogre::Degree( 45 ), Ogre::Vector3::UNIT_X ) );
+        //arrow->SetScale( Ogre::Vector3( 1.0f, 1.0f, 3.0f ) );
     }
     catch ( Ogre::Exception& e )
     {

@@ -60,8 +60,7 @@ Axes::~Axes()
   delete m_YAxis;
   delete m_ZAxis;
 
-  m_SceneNode->detachAllObjects();
-  m_SceneNode->getParentSceneNode()->removeAndDestroyChild( m_SceneNode->getName() );
+  m_SceneManager->destroySceneNode( m_SceneNode->getName() );
 }
 
 void Axes::Set( float length, float radius )
@@ -94,6 +93,12 @@ void Axes::SetOrientation( const Ogre::Quaternion& orientation )
 void Axes::SetScale( const Ogre::Vector3& scale )
 {
   m_SceneNode->setScale( scale );
+}
+
+void Axes::SetColor( float r, float g, float b )
+{
+  // for now, do nothing
+  // TODO: what should be done here?
 }
 
 } // namespace ogre_tools

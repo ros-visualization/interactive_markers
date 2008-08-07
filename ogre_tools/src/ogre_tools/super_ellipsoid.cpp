@@ -58,7 +58,7 @@ SuperEllipsoid::SuperEllipsoid( Ogre::SceneManager* sceneManager, Ogre::SceneNod
 
   ss << "Material";
   m_MaterialName = ss.str();
-  m_Material = Ogre::MaterialManager::getSingleton().create( m_MaterialName, "General" );
+  m_Material = Ogre::MaterialManager::getSingleton().create( m_MaterialName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
   m_Material->setReceiveShadows(false);
   m_Material->getTechnique(0)->setLightingEnabled(true);
   m_Material->getTechnique(0)->setAmbient( 0.5, 0.5, 0.5 );
@@ -66,9 +66,12 @@ SuperEllipsoid::SuperEllipsoid( Ogre::SceneManager* sceneManager, Ogre::SceneNod
 
 SuperEllipsoid::~SuperEllipsoid()
 {
-  m_SceneNode->detachAllObjects();
+  m_SceneManager->destroySceneNode( m_SceneNode->getName() );
+  m_SceneManager->destroySceneNode( m_OffsetNode->getName() );
+
   m_SceneManager->destroyManualObject( m_ManualObject );
-  m_SceneNode->getParentSceneNode()->removeAndDestroyChild( m_SceneNode->getName() );
+
+  m_Material.setNull();
 }
 
 void SuperEllipsoid::Create(int samples, float n1, float n2, const Ogre::Vector3& scale)

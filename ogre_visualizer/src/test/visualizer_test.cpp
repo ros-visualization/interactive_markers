@@ -36,6 +36,7 @@
 #include "../ogre_visualizer/visualizers/point_cloud_visualizer.h"
 #include "../ogre_visualizer/visualizers/laser_scan_visualizer.h"
 #include "../ogre_visualizer/visualizers/robot_model_visualizer.h"
+#include "../ogre_visualizer/visualizers/marker_visualizer.h"
 
 #include "Ogre.h"
 
@@ -56,24 +57,16 @@ public:
     m_Root->loadPlugin( "Plugin_OctreeSceneManager" );
     m_Root->loadPlugin( "Plugin_CgProgramManager" );
 
-    std::vector<std::string> paths;
     std::string mediaPath = ros::get_package_path( "gazebo_robot_description" );
     mediaPath += "/world/Media/";
-    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath, "FileSystem", "General" );
-    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "fonts", "FileSystem", "General" );
-    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "materials", "FileSystem", "General" );
-    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "materials/scripts", "FileSystem", "General" );
-    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "materials/programs", "FileSystem", "General" );
-    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "materials/textures", "FileSystem", "General" );
-    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "models", "FileSystem", "General" );
-    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "models/pr2", "FileSystem", "General" );
-
-    std::vector<std::string>::iterator dirIt = paths.begin();
-    std::vector<std::string>::iterator dirEnd = paths.end();
-    for ( ; dirIt != dirEnd; ++dirIt )
-    {
-      Ogre::ResourceGroupManager::getSingleton().addResourceLocation( *dirIt, "FileSystem", "General" );
-    }
+    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath, "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
+    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "fonts", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
+    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "materials", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
+    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "materials/scripts", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
+    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "materials/programs", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
+    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "materials/textures", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
+    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "models", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
+    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "models/pr2", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
 
     // Taken from gazebo
     Ogre::RenderSystemList *rsList = m_Root->getAvailableRenderers();
@@ -126,24 +119,31 @@ public:
       exit( 1 );
     }
 
-    m_VisualizationPanel->CreateVisualizer<GridVisualizer>( "Grid 1", true );
-    m_VisualizationPanel->CreateVisualizer<GridVisualizer>( "Grid 2", true );
+    m_VisualizationPanel->CreateVisualizer<GridVisualizer>( "Grid", true );
+    m_VisualizationPanel->CreateVisualizer<AxesVisualizer>( "Origin Axes", true );
 
-    PointCloudVisualizer* pointCloud = m_VisualizationPanel->CreateVisualizer<PointCloudVisualizer>( "Head Full Cloud", true );
+    RobotModelVisualizer* model = m_VisualizationPanel->CreateVisualizer<RobotModelVisualizer>( "Robot Model", false );
+    model->Initialize( "robotdesc/pr2", "transform" );
+
+    PointCloudVisualizer* pointCloud = m_VisualizationPanel->CreateVisualizer<PointCloudVisualizer>( "Stereo Full Cloud", false );
+    pointCloud->SetTopic( "cloudStereo" );
+    pointCloud->SetColor( 1.0, 1.0, 1.0 );
+
+    pointCloud = m_VisualizationPanel->CreateVisualizer<PointCloudVisualizer>( "Head Full Cloud", false );
     pointCloud->SetTopic( "full_cloud" );
     pointCloud->SetColor( 1.0, 1.0, 0.0 );
 
-    LaserScanVisualizer* laserScan = m_VisualizationPanel->CreateVisualizer<LaserScanVisualizer>( "Head Scan", true );
+    LaserScanVisualizer* laserScan = m_VisualizationPanel->CreateVisualizer<LaserScanVisualizer>( "Head Scan", false );
     laserScan->SetScanTopic( "cloud" );
-    laserScan->SetColor( 0.0, 1.0, 0.0 );
+    laserScan->SetShutterTopic( "shutter" );
+    laserScan->SetColor( 1.0, 0.0, 0.0 );
 
-    laserScan = m_VisualizationPanel->CreateVisualizer<LaserScanVisualizer>( "Floor Scan", true );
+    laserScan = m_VisualizationPanel->CreateVisualizer<LaserScanVisualizer>( "Floor Scan", false );
     laserScan->SetScanTopic( "scan" );
+    laserScan->SetShutterTopic( "shutterScan" );
+    laserScan->SetColor( 0.0f, 1.0f, 0.0f );
 
-    m_VisualizationPanel->CreateVisualizer<AxesVisualizer>( "Origin Axes", true );
-
-    RobotModelVisualizer* model = m_VisualizationPanel->CreateVisualizer<RobotModelVisualizer>( "Robot Model", true );
-    model->Initialize( "robotdesc/pr2", "transform" );
+    m_VisualizationPanel->CreateVisualizer<MarkerVisualizer>( "Visualization Markers", true );
   }
 
   ~MyFrame()

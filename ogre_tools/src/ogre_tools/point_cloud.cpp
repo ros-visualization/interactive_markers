@@ -29,9 +29,7 @@
 
 #include "point_cloud.h"
 
-#include "Ogre.h"
-#include "OgreManualObject.h"
-#include "OgreSceneManager.h"
+#include <Ogre.h>
 
 #include <sstream>
 
@@ -56,9 +54,8 @@ PointCloud::PointCloud( Ogre::SceneManager* sceneManager )
 
 PointCloud::~PointCloud()
 {
-  m_SceneNode->detachAllObjects();
+  m_SceneManager->destroySceneNode( m_SceneNode->getName() );
   m_SceneManager->destroyManualObject( m_ManualObject );
-  m_SceneNode->getParentSceneNode()->removeAndDestroyChild( m_SceneNode->getName() );
 }
 
 void PointCloud::Clear()

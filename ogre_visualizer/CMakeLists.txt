@@ -12,6 +12,7 @@ include_directories( ${wxWidgets_INCLUDE_DIRS} )
 rospack_add_library(ogrevisualizer src/ogre_visualizer/visualization_panel.cpp
 				   												 src/ogre_visualizer/visualizer_base.cpp
                                    src/ogre_visualizer/common.cpp
+                                   src/ogre_visualizer/visualizers/marker_visualizer.cpp
                                    src/ogre_visualizer/visualizers/axes_visualizer.cpp
 				   												 src/ogre_visualizer/visualizers/grid_visualizer.cpp
 				   												 src/ogre_visualizer/visualizers/point_cloud_visualizer.cpp
@@ -24,4 +25,6 @@ target_link_libraries(ogrevisualizer ${wxWidgets_LIBRARIES})
 
 rospack_add_executable(bin/visualizer_test src/test/visualizer_test.cpp)
 target_link_libraries(bin/visualizer_test ogrevisualizer ${wxWidgets_LIBRARIES})
+
+rospack_add_executable(bin/marker_test src/test/marker_test.cpp)
  

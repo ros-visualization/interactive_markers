@@ -52,12 +52,14 @@ class Axes : public Object
 {
 public:
   Axes( Ogre::SceneManager* manager, Ogre::SceneNode* parentNode = NULL, float length = 1.0f, float radius = 0.1f );
-  ~Axes();
+  virtual ~Axes();
 
   void Set( float length, float radius );
   virtual void SetOrientation( const Ogre::Quaternion& orientation );
   virtual void SetPosition( const Ogre::Vector3& position );
   virtual void SetScale( const Ogre::Vector3& scale );
+
+  virtual void SetColor( float r, float g, float b );
 
   Ogre::SceneNode* GetSceneNode() { return m_SceneNode; }
 

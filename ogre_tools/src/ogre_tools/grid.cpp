@@ -29,9 +29,8 @@
 
 #include "grid.h"
 
-#include "Ogre.h"
-#include "OgreManualObject.h"
-#include "OgreSceneManager.h"
+#include <Ogre.h>
+
 
 #include <sstream>
 
@@ -55,9 +54,8 @@ Grid::Grid( Ogre::SceneManager* sceneManager, uint32_t gridSize, float cellLengt
 
 Grid::~Grid()
 {
-  m_SceneNode->detachAllObjects();
+  m_SceneManager->destroySceneNode( m_SceneNode->getName() );
   m_SceneManager->destroyManualObject( m_ManualObject );
-  m_SceneNode->getParentSceneNode()->removeAndDestroyChild( m_SceneNode->getName() );
 }
 
 void Grid::Set( uint32_t gridSize, float cellLength, float r, float g, float b )

@@ -132,6 +132,10 @@ void RobotModelVisualizer::Initialize( const std::string& descriptionParam, cons
     OnEnable();
     CauseRender();
   }
+  else
+  {
+    m_RootNode->setVisible( false );
+  }
 }
 
 void RobotModelVisualizer::OnEnable()

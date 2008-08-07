@@ -45,7 +45,7 @@ GridVisualizer::GridVisualizer( Ogre::SceneManager* sceneManager, ros::node* nod
 , m_G( 0.5 )
 , m_B( 0.5 )
 {
-  m_Grid = new ogre_tools::Grid( sceneManager, m_CellCount, m_CellSize, m_R, m_G, m_B );
+  m_Grid = new ogre_tools::Grid( m_SceneManager, m_CellCount, m_CellSize, m_R, m_G, m_B );
 
   m_Grid->GetSceneNode()->setVisible( IsEnabled() );
 }

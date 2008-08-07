@@ -62,8 +62,7 @@ Arrow::~Arrow()
   delete m_Shaft;
   delete m_Head;
 
-  m_SceneNode->detachAllObjects();
-  m_SceneNode->getParentSceneNode()->removeAndDestroyChild( m_SceneNode->getName() );
+  m_SceneManager->destroySceneNode( m_SceneNode->getName() );
 }
 
 void Arrow::Set( float shaftLength, float shaftRadius, float headLength, float headRadius )

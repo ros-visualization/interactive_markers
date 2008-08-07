@@ -27,35 +27,94 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_TOOLS_OBJECT_H
-#define OGRE_TOOLS_OBJECT_H
+#ifndef OGRE_VISUALIZER_MARKER_VISUALIZER_H
+#define OGRE_VISUALIZER_MARKER_VISUALIZER_H
+
+#include "../visualizer_base.h"
+
+#include <map>
+
+#include <std_msgs/VisualizationMarker.h>
 
 namespace Ogre
 {
 class SceneManager;
 class SceneNode;
-class Vector3;
-class Quaternion;
+}
+
+namespace ros
+{
+class node;
 }
 
 namespace ogre_tools
 {
+class Object;
+}
 
-class Object
+class rosTFClient;
+
+namespace ogre_vis
+{
+
+namespace MarkerTypes
+{
+enum MarkerType
+{
+  Arrow,
+  Cube,
+  Sphere,
+};
+}
+typedef MarkerTypes::MarkerType MarkerType;
+
+namespace MarkerActions
+{
+enum MarkerAction
+{
+  Add,
+  Modify,
+  Delete,
+};
+}
+typedef MarkerActions::MarkerAction MarkerAction;
+
+class MarkerVisualizer : public VisualizerBase
 {
 public:
-  Object( Ogre::SceneManager* sceneManager );
-  virtual ~Object() {}
+  MarkerVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
+  virtual ~MarkerVisualizer();
 
-  virtual void SetPosition( const Ogre::Vector3& position ) = 0;
-  virtual void SetOrientation( const Ogre::Quaternion& orientation ) = 0;
-  virtual void SetScale( const Ogre::Vector3& scale ) = 0;
-  virtual void SetColor( float r, float g, float b ) = 0;
+  virtual void Update( float dt );
 
 protected:
-  Ogre::SceneManager* m_SceneManager;
+  virtual void OnEnable();
+  virtual void OnDisable();
+
+  void Subscribe();
+  void Unsubscribe();
+
+  void ClearMarkers();
+
+  void ProcessMessage( const std_msgs::VisualizationMarker& message );
+  void ProcessAdd( const std_msgs::VisualizationMarker& message );
+  void ProcessModify( const std_msgs::VisualizationMarker& message );
+  void ProcessDelete( const std_msgs::VisualizationMarker& message );
+  void SetCommonValues( const std_msgs::VisualizationMarker& message, ogre_tools::Object* object );
+
+  void IncomingMarker();
+
+  typedef std::map<int, ogre_tools::Object*> M_IDToObject;
+  M_IDToObject m_Markers;
+
+  std_msgs::VisualizationMarker m_CurrentMessage;
+
+  typedef std::vector< std_msgs::VisualizationMarker > V_MarkerMessage;
+  V_MarkerMessage m_MessageQueue;
+
+  Ogre::SceneNode* m_SceneNode;
 };
 
-} // namespace ogre_tools
+} // namespace ogre_vis
 
-#endif /* OGRE_TOOLS_OBJECT_H */
+#endif /* OGRE_VISUALIZER_MARKER_VISUALIZER_H */

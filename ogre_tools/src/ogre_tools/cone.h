@@ -49,12 +49,12 @@ class Cone : public Object
 {
 public:
   Cone( Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode = 0, int xTes = 20, int yTes = 20, float r = 1.0f, float g = 1.0f, float b = 1.0f );
-  ~Cone();
+  virtual ~Cone();
 
   void Create( int xTes, int yTes, float r, float g, float b );
 
   void SetOffset( const Ogre::Vector3& offset );
-  void SetColor( float r, float g, float b );
+  virtual void SetColor( float r, float g, float b );
 
   virtual void SetPosition( const Ogre::Vector3& position );
   virtual void SetOrientation( const Ogre::Quaternion& orientation );

@@ -42,13 +42,22 @@ AxesVisualizer::AxesVisualizer( Ogre::SceneManager* sceneManager, ros::node* nod
 , m_Length( 1.0 )
 , m_Radius( 0.1 )
 {
-  m_Axes = new ogre_tools::Axes( sceneManager, NULL, m_Length, m_Radius );
+  m_Axes = new ogre_tools::Axes( m_SceneManager, NULL, m_Length, m_Radius );
 
   m_Axes->GetSceneNode()->setVisible( IsEnabled() );
 
   Ogre::Quaternion orient( Ogre::Quaternion::IDENTITY );
   RobotToOgre( orient );
   m_Axes->SetOrientation( orient );
+
+  if ( IsEnabled() )
+  {
+    OnEnable();
+  }
+  else
+  {
+    OnDisable();
+  }
 }
 
 AxesVisualizer::~AxesVisualizer()
