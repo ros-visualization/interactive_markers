@@ -238,8 +238,8 @@ void Vis3d::enableFloor()
 
 void Vis3d::enableStereo()
 {
-    myNode->subscribe("cloudStereo", ptCldStereo, &Vis3d::addStereoCloud,this);
-    myNode->subscribe("shutterStereo", shutStereo, &Vis3d::shutterStereo,this);
+    myNode->subscribe("videre/cloud", ptCldStereo, &Vis3d::addStereoCloud,this);
+    myNode->subscribe("videre/shutter", shutStereo, &Vis3d::shutterStereo,this);
     pLocalRenderer->enable(ilStereoCloud);
     ilStereoCloud->setVisible(true);
 
@@ -282,8 +282,8 @@ void Vis3d::disableFloor()
 
 void Vis3d::disableStereo()
 {
-    myNode->unsubscribe("cloudStereo");
-    myNode->unsubscribe("shutterStereo");
+    myNode->unsubscribe("videre/cloud");
+    myNode->unsubscribe("videre/shutter");
     shutterStereo();
 	pLocalRenderer->lock();
     ilStereoCloud->setVisible(false);
