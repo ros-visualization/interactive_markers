@@ -59,6 +59,13 @@ PointCloudVisualizer::~PointCloudVisualizer()
 {
   Unsubscribe();
 
+  // block if our callback is still running
+  m_Message.lock();
+  m_Message.unlock();
+
+  // ugh -- race condition, so sleep for a bit
+  usleep( 1000000 );
+
   delete m_Cloud;
 }
 

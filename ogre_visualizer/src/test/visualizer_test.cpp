@@ -166,10 +166,20 @@ private:
 class MyApp : public wxApp
 {
 public:
+  char** localArgv;
 
   bool OnInit()
   {
-    ros::init(argc, (char**)argv);
+    // create our own copy of argv, with regular char*s.
+    localArgv =  new char*[ argc ];
+    for ( int i = 0; i < argc; ++i )
+    {
+      localArgv[ i ] = strdup( wxString( argv[ i ] ).char_str() );
+
+      printf( "argv[%d]: %s\n", i, localArgv[i] );
+    }
+
+    ros::init(argc, localArgv);
 
     wxFrame* frame = new MyFrame(NULL);
     SetTopWindow(frame);
@@ -179,7 +189,13 @@ public:
 
   int OnExit()
   {
-      return 0;
+    for ( int i = 0; i < argc; ++i )
+    {
+      free( localArgv[ i ] );
+    }
+    delete [] localArgv;
+
+    return 0;
   }
 };
 
