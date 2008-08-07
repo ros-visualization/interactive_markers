@@ -37,7 +37,6 @@
 #include <ctype.h>
 #include <cv_yuv_codebook.h>
 
-
 #include "image_utils/cv_bridge.h"
 #include <std_msgs/ImageArray.h>
 #include <ros/node.h>
@@ -83,35 +82,41 @@ class ImgBGSubtr : public ros::node
 public:
   IplImage *frame;
   std_msgs::ImageArray frame_msg;
-  bool hasNewFrameMsg;
-  CvBridge<std_msgs::Image> *bridge;
+  bool hasNewFrameMsg, builtBridge, frameInUse;
+  CvBridge<std_msgs::Image> *bridge_in, *bridge_out;
+  std_msgs::Image labelMask;
 
-  ImgBGSubtr() : ros::node("img_bg_subtr"), hasNewFrameMsg(false), frame(0)
+  ImgBGSubtr() : ros::node("img_bg_subtr"), hasNewFrameMsg(false), frame(0), builtBridge(false)
   {
-    bridge = NULL;
+    bridge_in = NULL;
+    bridge_out = new CvBridge<std_msgs::Image>(&labelMask, CvBridge<std_msgs::Image>::CORRECT_BGR | CvBridge<std_msgs::Image>::MAXDEPTH_8U);
     subscribe("videre/images", frame_msg, &ImgBGSubtr::processFrame, true);
+    advertise<std_msgs::ImageArray>("labeled_images");
+  }
 
+  ~ImgBGSubtr()
+  {
+    delete bridge_out;
+    delete bridge_in;
   }
 
   //Copies the image out of the frame_msg and into frame.
   void processFrame() 
   {
-//     fprintf(stdout, "Got a videre array.   ");
-//     fprintf(stdout, "%d images\n", frame_msg.get_images_size());
-    //fprintf(stdout, "%s colorspace\n", frame_msg.images[0]);
+
+    if(!builtBridge) {
+      bridge_in = new CvBridge<std_msgs::Image>(&frame_msg.images[1], CvBridge<std_msgs::Image>::CORRECT_BGR | CvBridge<std_msgs::Image>::MAXDEPTH_8U);
+      builtBridge = true;
+    }
 
     if(!hasNewFrameMsg) {
-      if(bridge != NULL) {
-	delete bridge;
+      if(frame) {
+	while(frameInUse); //Make sure no one is using frame.
+	cvReleaseImage(&frame);
       }
-      //bridge = new CvBridge<std_msgs::Image>(&frame_msg.images[0], CvBridge<std_msgs::Image>::CORRECT_BGR);
-      bridge = new CvBridge<std_msgs::Image>(&frame_msg.images[0], CvBridge<std_msgs::Image>::CORRECT_BGR | CvBridge<std_msgs::Image>::MAXDEPTH_8U);
-      frame = 0;
-      bridge->to_cv(&frame);
+      bridge_in->to_cv(&frame);
       hasNewFrameMsg = true;
     }
-    //else
-      //      fprintf(stdout, "Deferring..\n");
   }  
 };
 
@@ -298,6 +303,7 @@ void help()
 	  "\t           and expanded box\n"
 	  "\t         Pressing again increments a number:\n"
 	  "\t           obj0.png, obj1.png, obj2.png ...\n"
+	  "\to   - Send labeled image over ROS.\n"
 	  "\n"
 	  "********UTILITY:********\n"
 	  "\te   - Extension -- choice of image format to store. Default=png\n"
@@ -388,7 +394,9 @@ int main( int argc, char** argv )
   }
   IplImage* frame = cvCreateImage(cvGetSize(node.frame), 8, 3);
 
-
+  // -- Set up for sending labeled images over ROS.
+  std_msgs::ImageArray lb;
+  std::vector<std_msgs::Image> v;
 
   /////////////////FRAME PROCESS LOOP////////////////////////////
   for(;;)
@@ -402,7 +410,10 @@ int main( int argc, char** argv )
 	 
 	  // -- Get frame from ROS rather than from the camera directly.
 	  node.hasNewFrameMsg = false;
+
+	  node.frameInUse = true;
 	  cvMerge( node.frame, node.frame, node.frame, NULL, frame ); 
+	  node.frameInUse = false;
 
 	  // -- Continue with normal execution of CaptureObjects.
 	  framecount += 1;
@@ -542,6 +553,17 @@ int main( int argc, char** argv )
       int jj;
       switch( c )
         {
+	case 'o': //Send a labeled imagearray message lb over ROS.
+	  printf("Sending labeled imagearray over ros.\n");
+	  node.frame_msg.get_images_vec(v);
+	  
+	  // -- Add an image to the ImageArray which contains mask.
+	  node.bridge_out->from_cv(mask, 100); //Puts mask into node.labelMask Image ros msg.
+	  node.labelMask.label = string("labeling");
+	  v.push_back(node.labelMask);
+	  lb.set_images_vec(v);
+	  node.publish("labeled_images", lb);
+	  break;
 	case ' ': //Write out object
 	  if(!modelExists)
 	    {
@@ -937,6 +959,7 @@ int main( int argc, char** argv )
   cvReleaseImage( &mask);
   cvReleaseImage( &maskCC);
   cvReleaseImage( &yuv);
+  cvReleaseImage( &frame);
   delete [] cB;
   /*	for(int p=0; p<ptWriteCnt; p++)
 	{
