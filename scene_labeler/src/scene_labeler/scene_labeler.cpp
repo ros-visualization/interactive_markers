@@ -29,13 +29,14 @@ void emptycallback(ros::Time t) {
 }
 
 
-void copyData(string name, ros::msg* m, ros::Time t, void* n)
+template <class T>
+void copyMsg(string name, ros::msg* m, ros::Time t, void* n)
 {
   if (m != 0) {
-    *((std_msgs::PointCloudFloat32*)(n)) = *((std_msgs::PointCloudFloat32*)(m));
-    cout << "Copying data." << endl;
+    *((T*)(n)) = *((T*)(m));
   }
 }
+
 
 class scene_labeler : public ros::node
 {
@@ -48,22 +49,52 @@ public:
     advertise<std_msgs::VisualizationMarker>("visualizationMarker");
   }
 
-  scene_labeler(string file1, string file2) : ros::node("scene_labeler")
+//   // -- For subtracting two point clouds.
+//   scene_labeler(string file1, string file2) : ros::node("scene_labeler")
+//   {
+//     advertise<std_msgs::PointCloudFloat32>("full_cloud");
+//     advertise<std_msgs::Empty>("shutter");
+//     advertise<std_msgs::VisualizationMarker>("visualizationMarker");
+
+//     lp1.open(file1, ros::Time(0));
+//     lp1.addHandler<std_msgs::PointCloudFloat32>(string("full_cloud"), &copyData, (void*)(&cloud1), true);
+//     lp1.nextMsg(); //cloud1 now contains the pointcloud.
+
+//     lp2.open(file2, ros::Time(0));
+//     lp2.addHandler<std_msgs::PointCloudFloat32>(string("full_cloud"), &copyData, (void*)(&cloud2), true);
+//     lp2.nextMsg(); //cloud2 now contains the pointcloud.
+//   }
+
+
+  std_msgs::ImageArray videre_images_msg_;
+  std_msgs::ImageArray labeled_images_msg_;
+  std_msgs::Image intensity_image_msg_;
+  std_msgs::PointCloudFloat32 full_cloud_msg_;
+  std_msgs::PointCloudFloat32 videre_cloud_msg_;
+
+  // -- For the full scene.
+  scene_labeler(string file1) : ros::node("scene_labeler")
   {
     advertise<std_msgs::PointCloudFloat32>("full_cloud");
-    advertise<std_msgs::Empty>("shutter");
+    advertise<std_msgs::PointCloudFloat32>("videre/cloud");
     advertise<std_msgs::VisualizationMarker>("visualizationMarker");
+    advertise<std_msgs::Image>("intensity_image");
+    advertise<std_msgs::ImageArray>("labeled_images");
+    advertise<std_msgs::ImageArray>("videre/images");
 
-    player1.open(file1, ros::Time(0));
-    player1.addHandler<std_msgs::PointCloudFloat32>(string("full_cloud"), &copyData, (void*)(&cloud1), true);
-    player1.nextMsg(); //cloud1 now contains the pointcloud.
-
-    player2.open(file2, ros::Time(0));
-    player2.addHandler<std_msgs::PointCloudFloat32>(string("full_cloud"), &copyData, (void*)(&cloud2), true);
-    player2.nextMsg(); //cloud2 now contains the pointcloud.
+    lp1.open(file1, ros::Time(0));
+    lp1.addHandler<std_msgs::ImageArray>(string("videre/images"), &copyMsg<std_msgs::ImageArray>, (void*)(&videre_images_msg_), true);
+    lp1.addHandler<std_msgs::ImageArray>(string("labeled_images"), &copyMsg<std_msgs::ImageArray>, (void*)(&labeled_images_msg_), true);
+    lp1.addHandler<std_msgs::Image>(string("intensity_image"), &copyMsg<std_msgs::Image>, (void*)(&intensity_image_msg_), true);
+    lp1.addHandler<std_msgs::PointCloudFloat32>(string("full_cloud"), &copyMsg<std_msgs::PointCloudFloat32>, (void*)(&full_cloud_msg_), true);
+    lp1.addHandler<std_msgs::PointCloudFloat32>(string("videre/cloud"), &copyMsg<std_msgs::PointCloudFloat32>, (void*)(&videre_cloud_msg_), true);
+    //lp1.addHandler<std_msgs::ImageArray>(string("videre/images"), &copyMsg<std_msgs::ImageArray>, (void*)(&image_msg), true);
+    while(lp1.nextMsg()); //Load all the messages.
   }
 
-  LogPlayer player1, player2;
+  lp1.addHandler<std_msgs::ImageArray>(string("videre/images"), &copyMsg<std_msgs::ImageArray>, (void*)(&image_msg), true);
+
+  LogPlayer lp1, lp2;
   std_msgs::PointCloudFloat32 cloud1, cloud2;
 
   void subtract(char *fg, char *bg, int label) {

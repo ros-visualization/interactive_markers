@@ -401,9 +401,14 @@ int main( int argc, char** argv )
   /////////////////FRAME PROCESS LOOP////////////////////////////
   for(;;)
     {
-      // -- Check for control-c.
+
+      // -- Wait for a new message and check for control-c.
+      while(!node.hasNewFrameMsg && node.ok()) {
+	usleep(1000);
+      }
       if(!node.ok())
 	break;
+
 
       if(!paused && node.hasNewFrameMsg)
 	{
