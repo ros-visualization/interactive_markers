@@ -38,3 +38,5 @@ target_link_libraries(ogretools ${wxWidgets_LIBRARIES} ${GTK2_LIBRARIES} ${OPENG
 
 rospack_add_executable(grid_test src/test/grid_test.cpp)
 target_link_libraries(grid_test ogretools ${wxWidgets_LIBRARIES})
+
+rospack_add_executable(stl_to_mesh src/stl_to_mesh/stl_to_mesh.cpp)
