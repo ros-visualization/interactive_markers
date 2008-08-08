@@ -204,7 +204,15 @@ void RobotModelVisualizer::UpdateTransforms()
     {
       pose = m_TFClient->transformPose( m_TargetFrame, pose );
     }
-    catch ( libTF::TransformReference::LookupException& e )
+    catch(libTF::TransformReference::LookupException& e)
+    {
+      printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), m_TargetFrame.c_str(), e.what() );
+    }
+    catch(libTF::TransformReference::ConnectivityException& e)
+    {
+      printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), m_TargetFrame.c_str(), e.what() );
+    }
+    catch(libTF::Pose3DCache::ExtrapolateException& e)
     {
       printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), m_TargetFrame.c_str(), e.what() );
     }

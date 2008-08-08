@@ -128,48 +128,9 @@ void PointCloudVisualizer::Update( float dt )
   {
     m_Cloud->Clear();
 
-    // First find the min/max intensity values
-    float minIntensity = 999999.0f;
-    float maxIntensity = -999999.0f;
-
-    uint32_t pointCount = m_Message.get_pts_size();
-    for(uint32_t i = 0; i < pointCount; i++)
+    if ( !m_Points.empty() )
     {
-      float& intensity = m_Message.chan[0].vals[i];
-      // arbitrarily cap to 4096 for now
-      intensity = std::min( intensity, 4096.0f );
-      minIntensity = std::min( minIntensity, intensity );
-      maxIntensity = std::max( maxIntensity, intensity );
-    }
-
-    float diffIntensity = maxIntensity - minIntensity;
-
-    std::vector<ogre_tools::PointCloud::Point> points;
-    points.resize( pointCount );
-    for(uint32_t i = 0; i < pointCount; i++)
-    {
-      Ogre::Vector3 point( m_Message.pts[i].x, m_Message.pts[i].y, m_Message.pts[i].z );
-      RobotToOgre( point );
-
-      float intensity = m_Message.chan[0].vals[i];
-
-      float normalizedIntensity = diffIntensity > 0.0f ? ( intensity - minIntensity ) / diffIntensity : 1.0f;
-
-      Ogre::Vector3 color( m_R, m_G, m_B );
-      color *= normalizedIntensity;
-
-      ogre_tools::PointCloud::Point& currentPoint = points[ i ];
-      currentPoint.m_X = point.x;
-      currentPoint.m_Y = point.y;
-      currentPoint.m_Z = point.z;
-      currentPoint.m_R = color.x;
-      currentPoint.m_G = color.y;
-      currentPoint.m_B = color.z;
-    }
-
-    if ( pointCount > 0 )
-    {
-      m_Cloud->AddPoints( &points.front(), pointCount );
+      m_Cloud->AddPoints( &m_Points.front(), m_Points.size() );
     }
 
     m_RegenerateCloud = false;
@@ -182,6 +143,8 @@ void PointCloudVisualizer::Update( float dt )
 
 void PointCloudVisualizer::IncomingCloudCallback()
 {
+  m_Message.lock();
+
   if ( m_Message.header.frame_id == 0 )
   {
     m_Message.header.frame_id = m_TFClient->lookup( m_TargetFrame );
@@ -193,10 +156,60 @@ void PointCloudVisualizer::IncomingCloudCallback()
   }
   catch(libTF::TransformReference::LookupException& e)
   {
-    //printf( "Failed to transform point cloud %s: %s\n", m_Name.c_str(), e.what() );
+    printf( "Error transforming point cloud '%s': %s\n", m_Name.c_str(), e.what() );
+  }
+  catch(libTF::TransformReference::ConnectivityException& e)
+  {
+    printf( "Error transforming point cloud '%s': %s\n", m_Name.c_str(), e.what() );
+  }
+  catch(libTF::Pose3DCache::ExtrapolateException& e)
+  {
+    printf( "Error transforming point cloud '%s': %s\n", m_Name.c_str(), e.what() );
+  }
+
+  m_Points.clear();
+
+  // First find the min/max intensity values
+  float minIntensity = 999999.0f;
+  float maxIntensity = -999999.0f;
+
+  uint32_t pointCount = m_Message.get_pts_size();
+  for(uint32_t i = 0; i < pointCount; i++)
+  {
+    float& intensity = m_Message.chan[0].vals[i];
+    // arbitrarily cap to 4096 for now
+    intensity = std::min( intensity, 4096.0f );
+    minIntensity = std::min( minIntensity, intensity );
+    maxIntensity = std::max( maxIntensity, intensity );
+  }
+
+  float diffIntensity = maxIntensity - minIntensity;
+
+  m_Points.resize( pointCount );
+  for(uint32_t i = 0; i < pointCount; i++)
+  {
+    Ogre::Vector3 point( m_Message.pts[i].x, m_Message.pts[i].y, m_Message.pts[i].z );
+    RobotToOgre( point );
+
+    float intensity = m_Message.chan[0].vals[i];
+
+    float normalizedIntensity = diffIntensity > 0.0f ? ( intensity - minIntensity ) / diffIntensity : 1.0f;
+
+    Ogre::Vector3 color( m_R, m_G, m_B );
+    color *= normalizedIntensity;
+
+    ogre_tools::PointCloud::Point& currentPoint = m_Points[ i ];
+    currentPoint.m_X = point.x;
+    currentPoint.m_Y = point.y;
+    currentPoint.m_Z = point.z;
+    currentPoint.m_R = color.x;
+    currentPoint.m_G = color.y;
+    currentPoint.m_B = color.z;
   }
 
   m_RegenerateCloud = true;
+
+  m_Message.unlock();
 }
 
 } // namespace ogre_vis

@@ -225,8 +225,17 @@ void MarkerVisualizer::SetCommonValues( const std_msgs::VisualizationMarker& mes
   {
     tfPoint = m_TFClient->transformPoint( m_TargetFrame, tfPoint );
   }
-  catch ( libTF::TransformReference::LookupException& )
+  catch(libTF::TransformReference::LookupException& e)
   {
+    printf( "Error transforming marker '%d': %s\n", message.id, e.what() );
+  }
+  catch(libTF::TransformReference::ConnectivityException& e)
+  {
+    printf( "Error transforming marker '%d': %s\n", message.id, e.what() );
+  }
+  catch(libTF::Pose3DCache::ExtrapolateException& e)
+  {
+    printf( "Error transforming marker '%d': %s\n", message.id, e.what() );
   }
 
   libTF::TFEulerYPR tfEulers;
@@ -239,8 +248,17 @@ void MarkerVisualizer::SetCommonValues( const std_msgs::VisualizationMarker& mes
   {
     tfEulers = m_TFClient->transformEulerYPR( m_TargetFrame, tfEulers );
   }
-  catch ( libTF::TransformReference::LookupException& )
+  catch(libTF::TransformReference::LookupException& e)
   {
+    printf( "Error transforming marker '%d': %s\n", message.id, e.what() );
+  }
+  catch(libTF::TransformReference::ConnectivityException& e)
+  {
+    printf( "Error transforming marker '%d': %s\n", message.id, e.what() );
+  }
+  catch(libTF::Pose3DCache::ExtrapolateException& e)
+  {
+    printf( "Error transforming marker '%d': %s\n", message.id, e.what() );
   }
 
   Ogre::Vector3 position( tfPoint.x, tfPoint.y, tfPoint.z );

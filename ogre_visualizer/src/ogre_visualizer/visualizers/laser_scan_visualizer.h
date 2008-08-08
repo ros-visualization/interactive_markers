@@ -32,6 +32,8 @@
 
 #include "../visualizer_base.h"
 #include "laser_scan_utils/laser_scan.h"
+#include "ogre_tools/point_cloud.h"
+
 #include "std_msgs/LaserScan.h"
 #include "std_msgs/PointCloudFloat32.h"
 #include "std_msgs/Empty.h"
@@ -39,12 +41,6 @@
 namespace ros
 {
   class node;
-}
-
-
-namespace ogre_tools
-{
-  class PointCloud;
 }
 
 class rosTFClient;
@@ -99,6 +95,9 @@ protected:
 
   float m_IntensityMin;
   float m_IntensityMax;
+
+  typedef std::vector< ogre_tools::PointCloud::Point > V_Point;
+  V_Point m_NewPoints;
 };
 
 } // namespace ogre_vis

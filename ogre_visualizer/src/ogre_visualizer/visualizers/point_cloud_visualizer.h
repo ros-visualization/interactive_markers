@@ -31,16 +31,13 @@
 #define OGRE_VISUALIZER_POINT_CLOUD_VISUALIZER_H
 
 #include "../visualizer_base.h"
+#include "ogre_tools/point_cloud.h"
+
 #include "std_msgs/PointCloudFloat32.h"
 
 namespace ros
 {
   class node;
-}
-
-namespace ogre_tools
-{
-  class PointCloud;
 }
 
 class rosTFClient;
@@ -78,6 +75,9 @@ protected:
   float m_R;
   float m_G;
   float m_B;
+
+  typedef std::vector< ogre_tools::PointCloud::Point > V_Point;
+  V_Point m_Points;
 };
 
 } // namespace ogre_vis
