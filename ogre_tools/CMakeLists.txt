@@ -6,6 +6,9 @@ include(FindPkgConfig)
 
 rospack(ogre_tools)
 
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+
 find_package(wxWidgets REQUIRED)
 include(${wxWidgets_USE_FILE})
 include_directories( ${wxWidgets_INCLUDE_DIRS} )
@@ -33,9 +36,5 @@ rospack_add_library(ogretools src/ogre_tools/point_cloud.cpp
 			      src/ogre_tools/wx_ogre_render_window.cpp)
 target_link_libraries(ogretools ${wxWidgets_LIBRARIES} ${GTK2_LIBRARIES} ${OPENGL_gl_LIBRARY})
 
-
-rospack_add_executable(bin/point_cloud_test src/test/point_cloud_test.cpp)
-target_link_libraries(bin/point_cloud_test ogretools ${wxWidgets_LIBRARIES})
-
-rospack_add_executable(bin/grid_test src/test/grid_test.cpp)
-target_link_libraries(bin/grid_test ogretools ${wxWidgets_LIBRARIES})
+rospack_add_executable(grid_test src/test/grid_test.cpp)
+target_link_libraries(grid_test ogretools ${wxWidgets_LIBRARIES})

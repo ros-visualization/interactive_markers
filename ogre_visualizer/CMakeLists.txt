@@ -5,6 +5,9 @@ include(rosbuild)
 
 rospack(ogre_visualizer)
 
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+
 find_package(wxWidgets REQUIRED)
 include(${wxWidgets_USE_FILE})
 include_directories( ${wxWidgets_INCLUDE_DIRS} )
@@ -23,8 +26,8 @@ rospack_add_library(ogrevisualizer src/ogre_visualizer/visualization_panel.cpp
  				   												 src/ogre_visualizer/generated/visualization_panel_generated.cpp)
 target_link_libraries(ogrevisualizer ${wxWidgets_LIBRARIES})
 
-rospack_add_executable(bin/visualizer_test src/test/visualizer_test.cpp)
-target_link_libraries(bin/visualizer_test ogrevisualizer ${wxWidgets_LIBRARIES})
+rospack_add_executable(visualizer_test src/test/visualizer_test.cpp)
+target_link_libraries(visualizer_test ogrevisualizer ${wxWidgets_LIBRARIES})
 
-rospack_add_executable(bin/marker_test src/test/marker_test.cpp)
+rospack_add_executable(marker_test src/test/marker_test.cpp)
  
