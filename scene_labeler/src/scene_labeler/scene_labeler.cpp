@@ -2,6 +2,8 @@
 #include <vector>
 #include <algorithm>
 #include <std_msgs/PointCloudFloat32.h>
+#include <std_msgs/ImageArray.h>
+#include <std_msgs/Image.h>
 #include <ros/node.h>
 #include <std_msgs/Empty.h>
 #include <std_msgs/VisualizationMarker.h>
@@ -42,12 +44,12 @@ class scene_labeler : public ros::node
 {
 public:
   
-  scene_labeler() : ros::node("scene_labeler") 
-  {
-    advertise<std_msgs::PointCloudFloat32>("full_cloud");
-    advertise<std_msgs::Empty>("shutter");
-    advertise<std_msgs::VisualizationMarker>("visualizationMarker");
-  }
+//   scene_labeler() : ros::node("scene_labeler") 
+//   {
+//     advertise<std_msgs::PointCloudFloat32>("full_cloud");
+//     advertise<std_msgs::Empty>("shutter");
+//     advertise<std_msgs::VisualizationMarker>("visualizationMarker");
+//   }
 
 //   // -- For subtracting two point clouds.
 //   scene_labeler(string file1, string file2) : ros::node("scene_labeler")
@@ -64,13 +66,6 @@ public:
 //     lp2.addHandler<std_msgs::PointCloudFloat32>(string("full_cloud"), &copyData, (void*)(&cloud2), true);
 //     lp2.nextMsg(); //cloud2 now contains the pointcloud.
 //   }
-
-
-  std_msgs::ImageArray videre_images_msg_;
-  std_msgs::ImageArray labeled_images_msg_;
-  std_msgs::Image intensity_image_msg_;
-  std_msgs::PointCloudFloat32 full_cloud_msg_;
-  std_msgs::PointCloudFloat32 videre_cloud_msg_;
 
   // -- For the full scene.
   scene_labeler(string file1) : ros::node("scene_labeler")
@@ -92,10 +87,14 @@ public:
     while(lp1.nextMsg()); //Load all the messages.
   }
 
-  lp1.addHandler<std_msgs::ImageArray>(string("videre/images"), &copyMsg<std_msgs::ImageArray>, (void*)(&image_msg), true);
-
   LogPlayer lp1, lp2;
   std_msgs::PointCloudFloat32 cloud1, cloud2;
+  std_msgs::ImageArray videre_images_msg_;
+  std_msgs::ImageArray labeled_images_msg_;
+  std_msgs::Image intensity_image_msg_;
+  std_msgs::PointCloudFloat32 full_cloud_msg_;
+  std_msgs::PointCloudFloat32 videre_cloud_msg_;
+
 
   void subtract(char *fg, char *bg, int label) {
     cout << "Subtracting " << bg << " from " << fg << " and applying label " << label << " to the new points." << endl;
@@ -224,6 +223,11 @@ public:
 };
 
 
+int main(int argc, char **argv) {
+}
+
+
+/*
 int main(int argc, char **argv) {
   int x=0;
   ros::init(x, NULL);
@@ -365,23 +369,6 @@ int main(int argc, char **argv) {
     float support = .1;
     float pixelsPerMeter = 250;
 
-
-      //Do speed testing.
-//       int iters = 1000;
-//       time_t start,end;
-//       time(&start);
-//       scan_utils::Grid2D *psitest = new scan_utils::Grid2D((int)(2*support*pixelsPerMeter), (int)(support*pixelsPerMeter));
-//       for(int iter=0; iter<iters; iter++) {
-// 	srand(time(NULL));
-// 	randId = rand() % foreground.size();
-// 	pt = foreground.getPoint(randId);
-// 	foreground.computeSpinImageFixedOrientation(*psitest, pt.x, pt.y, pt.z, support, pixelsPerMeter);
-//       }
-//       time(&end); double dif = difftime(end,start);
-//       cout << "Computing " << iters << " spin images took " << dif << " seconds." << endl;
-//       delete psitest;
-
-
     int randId;
     cout << " starting while loop" << endl;
     while(sl->ok()) {
@@ -417,96 +404,6 @@ int main(int argc, char **argv) {
       mark.b = 0;
       mark.text = string("");
       sl->publish("visualizationMarker", mark);
-
-
-      // **** DIRTY DEBUG
-//         // -- Get the surface normal.
-//         std_msgs::Point3DFloat32 normal = foreground.computePointNormal(pt.x, pt.y, pt.z, .02, 20);
-// 	cout << "Point normal is " << normal.x << " " << normal.y << " " << normal.z << endl;
-
-// 	// -- Get the nearby points and put them into their own SmartScan.
-// 	std_msgs::PointCloudFloat32* cld = foreground.getPointsWithinRadiusPointCloud(pt.x, pt.y, pt.z, support*sqrt(2));
-// 	SmartScan ss;
-// 	ss.setFromRosCloud(*cld);
-// 	cout << "support has " << ss.size() << " points." << endl;
-	
-// 	cout << "Press Enter to see support . . .\n";
-// 	cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-// 	std_msgs::PointCloudFloat32 ssdisp = ss.getPointCloud();
-// 	sl->publish("full_cloud", ssdisp);
-	
-// 	// -- Setup libTF.
-// 	libTF::TFVector tfn0, tfn1, tfn2;
-// 	libTF::TransformReference tr;
-// 	tfn0.frame = 13;
-// 	tfn0.time = 0; 
-// 	tfn0.x = normal.x;
-// 	tfn0.y = normal.y;
-// 	tfn0.z = normal.z;
-
-// 	// -- Find the transformation that makes the surface normal point up.
-// 	double pitch = atan2(normal.x, normal.z);
-// 	tr.setWithEulers((unsigned int)13, (unsigned int)14, 0.0, 0.0, 0.0, 0.0, -pitch, 0.0, (libTF::TransformReference::ULLtime)0);
-// 	cout << "  pitch is " << pitch << " from x = " << normal.x << " and z = " << normal.z << endl;
-
-// 	tfn1 = tr.transformVector(14, tfn0);
-// 	cout << "New normal is  x: " << tfn1.x << " y: " << tfn1.y << " z: " << tfn1.z << endl;
-// 	float roll = atan2(tfn1.y, tfn1.z);
-// 	cout << "  roll is " << roll << " from y = " << tfn1.y << " and z = " << tfn1.z << endl;
-// 	tr.setWithEulers((unsigned int)14, (unsigned int)15, 0.0, 0.0, 0.0, 0.0, 0.0, roll, (libTF::TransformReference::ULLtime)0);
-// 	tfn2 = tr.transformVector(15, tfn1);
-// 	cout << "Transformed normal is (should be 0,0,1)  x: " << tfn2.x << " y: " << tfn2.y << " z: " << tfn2.z << endl;
-
-// 	// -- Transform the spin image center point.
-// 	libTF::TFPoint center0, center2;
-// 	center0.frame = 13;
-// 	center0.time = 0;
-// 	center0.x = pt.x;
-// 	center0.y = pt.y;
-// 	center0.z = pt.z;
-// 	center2 = tr.transformPoint(15, center0);
-
-// 	// -- Transform the rest of the points in one shot and get the spin image.
-// 	//ss.applyTransform(tr.getMatrix(13, 15, 0));
-// 	libTF::TFPoint ptf, ptf2;
-// 	std_msgs::Point3DFloat32 p;
-// 	std_msgs::PointCloudFloat32 cld2;
-// 	cld2.set_pts_size(ss.size());
-// 	cld2.set_chan_size(1);
-// 	cld2.chan[0].name = "intensities";
-// 	cld2.chan[0].set_vals_size(ss.size());
-// 	for (int j=0; j<ss.size(); j++) {
-// 	  p = ss.getPoint(j);
-// 	  ptf.frame = 13;
-// 	  ptf.time = 0;
-// 	  ptf.x = p.x;
-// 	  ptf.y = p.y;
-// 	  ptf.z = p.z;
-// 	  ptf2 = tr.transformPoint(15, ptf);
-// 	  cld2.pts[j].x = ptf2.x;
-// 	  cld2.pts[j].y = ptf2.y;
-// 	  cld2.pts[j].z = ptf2.z;
-// 	  cld2.chan[0].vals[j] = 0;
-// 	}
-// 	SmartScan ss2;
-// 	ss2.setFromRosCloud(cld2);
-	
-
-// 	// -- Display the new ptcld and marker.
-// 	cout << "Press Enter to see rotated ptcld . . .\n";
-// 	cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-// 	ssdisp = ss.getPointCloud();
-// 	sl->publish("full_cloud", cld2);
-
-// 	mark.action = 1;
-// 	mark.x = center2.x;
-// 	mark.y = center2.y;
-// 	mark.z = center2.z;
-// 	sl->publish("visualizationMarker", mark);
-
-// 	ss2.computeSpinImageFixedOrientation(*psi, center2.x, center2.y, center2.z, support, pixelsPerMeter);
-
-      //*** DONE DEBUG
 
       //Display the spin image with gnuplot.
       char cmd[] = "echo \'set pm3d map; set size ratio -1; splot \"gnuplot_tmp\"\' | gnuplot -persist";
@@ -554,3 +451,6 @@ int main(int argc, char **argv) {
   ros::fini();
   return 0;
 }
+
+
+*/
