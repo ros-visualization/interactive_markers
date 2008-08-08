@@ -126,7 +126,7 @@ public:
     model->Initialize( "robotdesc/pr2", "transform" );
 
     PointCloudVisualizer* pointCloud = m_VisualizationPanel->CreateVisualizer<PointCloudVisualizer>( "Stereo Full Cloud", false );
-    pointCloud->SetTopic( "cloudStereo" );
+    pointCloud->SetTopic( "videre/cloud" );
     pointCloud->SetColor( 1.0, 1.0, 1.0 );
 
     pointCloud = m_VisualizationPanel->CreateVisualizer<PointCloudVisualizer>( "Head Full Cloud", false );

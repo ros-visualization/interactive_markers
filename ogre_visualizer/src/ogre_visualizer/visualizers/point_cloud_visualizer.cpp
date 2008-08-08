@@ -59,13 +59,6 @@ PointCloudVisualizer::~PointCloudVisualizer()
 {
   Unsubscribe();
 
-  // block if our callback is still running
-  m_Message.lock();
-  m_Message.unlock();
-
-  // ugh -- race condition, so sleep for a bit
-  usleep( 100000 );
-
   delete m_Cloud;
 }
 
@@ -117,6 +110,13 @@ void PointCloudVisualizer::Unsubscribe()
   if ( !m_Topic.empty() )
   {
     m_ROSNode->unsubscribe( m_Topic );
+
+    // block if our callback is still running
+    m_Message.lock();
+    m_Message.unlock();
+
+    // ugh -- race condition, so sleep for a bit
+    usleep( 100000 );
   }
 }
 
@@ -193,7 +193,7 @@ void PointCloudVisualizer::IncomingCloudCallback()
   }
   catch(libTF::TransformReference::LookupException& e)
   {
-    printf( "Failed to transform point cloud %s: %s\n", m_Name.c_str(), e.what() );
+    //printf( "Failed to transform point cloud %s: %s\n", m_Name.c_str(), e.what() );
   }
 
   m_RegenerateCloud = true;

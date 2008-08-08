@@ -33,60 +33,173 @@
 
 #include <sstream>
 
-#define MAX_POINTS_PER_SECTION 65535
+#define MAX_POINTS_PER_BBS (65535/4)
 
 namespace ogre_tools
 {
 
+Ogre::String PointCloud::sm_Type = "PointCloud";
+
 PointCloud::PointCloud( Ogre::SceneManager* sceneManager )
     : m_SceneManager( sceneManager )
+    , m_BoundingRadius( 0.0f )
+    , m_PointCount( 0 )
 {
   static uint32_t pointCloudCount = 0;
   std::stringstream ss;
   ss << "PointCloud" << pointCloudCount++;
 
-  m_ManualObject = m_SceneManager->createManualObject( ss.str() );
-  m_ManualObject->setDynamic( true );
-
   m_SceneNode = m_SceneManager->getRootSceneNode()->createChildSceneNode();
-  m_SceneNode->attachObject( m_ManualObject );
+  m_SceneNode->attachObject( this );
+
+
+
+  Clear();
 }
 
 PointCloud::~PointCloud()
 {
+  V_BillboardSet::iterator bbsIt = m_BillboardSets.begin();
+  V_BillboardSet::iterator bbsEnd = m_BillboardSets.end();
+  for ( ; bbsIt != bbsEnd; ++bbsIt )
+  {
+    delete (*bbsIt);
+  }
+  m_BillboardSets.clear();
+
   m_SceneManager->destroySceneNode( m_SceneNode->getName() );
-  m_SceneManager->destroyManualObject( m_ManualObject );
+}
+
+const Ogre::AxisAlignedBox& PointCloud::getBoundingBox() const
+{
+  return m_BoundingBox;
+}
+
+float PointCloud::getBoundingRadius() const
+{
+  return m_BoundingRadius;
 }
 
 void PointCloud::Clear()
 {
-  m_ManualObject->clear();
+  m_PointCount = 0;
+  m_BoundingBox.setExtents( -10000.0f, -10000.0f, -10000.0f, 10000.0f, 10000.0f, 10000.0f );
+  m_BoundingRadius = 30000.0f;
+}
+
+Ogre::BillboardSet* PointCloud::CreateBillboardSet()
+{
+  Ogre::BillboardSet* bbs = new Ogre::BillboardSet( "", 0, true );
+  bbs->setPointRenderingEnabled( false );
+  bbs->setDefaultDimensions( 0.003f, 0.003f );
+  bbs->setBillboardsInWorldSpace(true);
+  bbs->setBillboardOrigin( Ogre::BBO_CENTER );
+  bbs->setBillboardRotationType( Ogre::BBR_VERTEX );
+  bbs->setMaterialName( "BaseWhiteNoLighting" );
+  bbs->setCullIndividually( false );
+  bbs->setPoolSize( MAX_POINTS_PER_BBS );
+
+  return bbs;
 }
 
 void PointCloud::AddPoints( Point* points, uint32_t numPoints )
 {
-  m_ManualObject->estimateVertexCount( numPoints );
-  m_ManualObject->begin( "BaseWhiteNoLighting", Ogre::RenderOperation::OT_POINT_LIST );
-
-  uint32_t pointsInSection = 0;
-
-  Point* currentPoint = points;
-  for ( uint32_t i = 0; i < numPoints; ++i, ++currentPoint )
+  if ( m_Points.size() < m_PointCount + numPoints )
   {
-    if ( pointsInSection >= MAX_POINTS_PER_SECTION )
-    {
-      m_ManualObject->end();
-      m_ManualObject->begin( "BaseWhiteNoLighting", Ogre::RenderOperation::OT_POINT_LIST );
-
-      pointsInSection = 0;
-    }
-
-    m_ManualObject->position( currentPoint->m_X, currentPoint->m_Y, currentPoint->m_Z );
-    m_ManualObject->colour( currentPoint->m_R, currentPoint->m_G, currentPoint->m_B );
-    ++pointsInSection;
+    m_Points.resize( m_PointCount + numPoints );
   }
 
-  m_ManualObject->end();
+  Point* begin = &m_Points.front() + m_PointCount;
+  memcpy( begin, points, sizeof( Point ) * numPoints );
+
+  // update bounding box and radius
+  /*uint32_t totalPoints = m_PointCount + numPoints;
+  for ( uint32_t i = m_PointCount; i < totalPoints; ++i )
+  {
+    Point& p = m_Points[i];
+
+    Ogre::Vector3 pos( p.m_X, p.m_Y, p.m_Z );
+    m_BoundingBox.merge( pos );
+
+    m_BoundingRadius = std::max( m_BoundingRadius, pos.length() );
+  }*/
+
+  m_PointCount += numPoints;
+}
+
+void PointCloud::_notifyCurrentCamera( Ogre::Camera* camera )
+{
+  MovableObject::_notifyCurrentCamera( camera );
+
+
+  V_BillboardSet::iterator bbsIt = m_BillboardSets.begin();
+  V_BillboardSet::iterator bbsEnd = m_BillboardSets.end();
+  for ( ; bbsIt != bbsEnd; ++bbsIt )
+  {
+    (*bbsIt)->_notifyCurrentCamera( camera );
+  }
+}
+
+void PointCloud::_updateRenderQueue( Ogre::RenderQueue* queue )
+{
+  if ( m_PointCount == 0 )
+  {
+    return;
+  }
+
+    // Update billboard set geometry
+  Ogre::Billboard bb;
+  uint32_t pointsInCurrent = 0;
+  uint32_t currentBBS = 0;
+  Ogre::BillboardSet* bbs = NULL;
+  for ( uint32_t i = 0; i < m_PointCount; ++i, ++pointsInCurrent )
+  {
+    bool newBBS = false;
+    if ( pointsInCurrent > MAX_POINTS_PER_BBS )
+    {
+      bbs->endBillboards();
+
+      pointsInCurrent = 0;
+      ++currentBBS;
+
+      newBBS = true;
+    }
+
+    if ( currentBBS >= m_BillboardSets.size() )
+    {
+      bbs = CreateBillboardSet();
+      m_BillboardSets.push_back( bbs );
+
+      newBBS = true;
+    }
+
+    if ( newBBS || !bbs )
+    {
+      bbs = m_BillboardSets[ currentBBS ];
+      bbs->beginBillboards( std::min<uint32_t>( m_PointCount - i, MAX_POINTS_PER_BBS ) );
+    }
+
+    Point& p = m_Points[i];
+
+    bb.mPosition.x = p.m_X;
+    bb.mPosition.y = p.m_Y;
+    bb.mPosition.z = p.m_Z;
+    bb.mColour.r = p.m_R;
+    bb.mColour.g = p.m_G;
+    bb.mColour.b = p.m_B;
+
+    bbs->injectBillboard(bb);
+  }
+
+  bbs->endBillboards();
+
+  // Update the queue
+  V_BillboardSet::iterator bbsIt = m_BillboardSets.begin();
+  V_BillboardSet::iterator bbsEnd = m_BillboardSets.end();
+  for ( ; bbsIt != bbsEnd; ++bbsIt )
+  {
+    (*bbsIt)->_updateRenderQueue( queue );
+  }
 }
 
 void PointCloud::SetVisible( bool visible )

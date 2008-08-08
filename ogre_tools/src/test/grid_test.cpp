@@ -37,6 +37,7 @@
 #include "../ogre_tools/axes.h"
 #include "../ogre_tools/cone.h"
 #include "../ogre_tools/arrow.h"
+#include "../ogre_tools/point_cloud.h"
 
 #include "Ogre.h"
 
@@ -52,8 +53,17 @@ public:
   , m_MouseY( 0 )
   {
     m_Root = new Ogre::Root();
-    m_Root->loadPlugin( "RenderSystem_GL" );
-    m_Root->loadPlugin( "Plugin_OctreeSceneManager" );
+
+    try
+    {
+      m_Root->loadPlugin( "RenderSystem_GL" );
+      m_Root->loadPlugin( "Plugin_OctreeSceneManager" );
+    }
+    catch ( Ogre::Exception& e )
+    {
+      printf( "Error: %s\n", e.what() );
+      exit( 1 );
+    }
 
     Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
 
@@ -108,21 +118,41 @@ public:
 
         m_WXRenderWindow->GetViewport()->setCamera( m_Camera->GetOgreCamera() );
 
-        m_Grid = new ogre_tools::Grid( m_SceneManager, 10, 1.0f, 1.0f, 0.0f, 0.0f );
-        //m_Grid->GetSceneNode()->pitch( Ogre::Degree( 90 ) );
+        ogre_tools::Grid* grid = new ogre_tools::Grid( m_SceneManager, 10, 1.0f, 1.0f, 0.0f, 0.0f );
+        //grid->GetSceneNode()->pitch( Ogre::Degree( 90 ) );
 
-        //ogre_tools::Axes* axes = new ogre_tools::Axes( m_SceneManager );
+        ogre_tools::Axes* axes = new ogre_tools::Axes( m_SceneManager );
         //axes->SetScale( Ogre::Vector3( 2.0f, 2.0f, 2.0f ) );
 
         /*ogre_tools::Cone* cone = new ogre_tools::Cone( m_SceneManager, NULL );
         cone->SetScale( Ogre::Vector3( 0.3f, 2.0f, 0.3f ) );*/
 
-        ogre_tools::Arrow* arrow = new ogre_tools::Arrow( m_SceneManager );
+        /*ogre_tools::Arrow* arrow = new ogre_tools::Arrow( m_SceneManager );
         arrow->SetHeadColor( 1.0f, 0.0f, 0.0f );
         arrow->SetShaftColor( 0.0f, 0.0f, 1.0f );
-        arrow->SetOrientation( Ogre::Quaternion::IDENTITY );
+        arrow->SetOrientation( Ogre::Quaternion::IDENTITY );*/
         //arrow->SetOrientation( Ogre::Quaternion( Ogre::Degree( 45 ), Ogre::Vector3::UNIT_X ) );
         //arrow->SetScale( Ogre::Vector3( 1.0f, 1.0f, 3.0f ) );
+
+        ogre_tools::PointCloud* pointCloud = new ogre_tools::PointCloud( m_SceneManager );
+        std::vector<ogre_tools::PointCloud::Point> points;
+        points.resize( 1000000 );
+        for ( int32_t i = 0; i < 1000; ++i )
+        {
+            for ( int32_t j = 0; j < 1000; ++j )
+            {
+                ogre_tools::PointCloud::Point& point = points[ 1000*j + i ];
+                point.m_X = j / 10.0f;
+                point.m_Y = i / 10.0f;
+                point.m_Z = 0;
+
+                point.m_R = abs(i) % 3 == 0 ? 1.0f : 0.0f;
+                point.m_G = abs(i) % 3 == 1 ? 1.0f : 0.0f;
+                point.m_B = abs(i) % 3 == 2 ? 1.0f : 0.0f;
+            }
+        }
+
+        pointCloud->AddPoints( &points.front(), 1000000 );
     }
     catch ( Ogre::Exception& e )
     {
@@ -144,10 +174,6 @@ public:
     m_WXRenderWindow->Disconnect( wxEVT_MOTION, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
     m_WXRenderWindow->Disconnect( wxEVT_LEFT_UP, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
     m_WXRenderWindow->Disconnect( wxEVT_RIGHT_UP, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
-
-    delete m_Grid;
-
-    delete m_RenderTimer;
 
     m_WXRenderWindow->Destroy();
     delete m_Root;
@@ -209,8 +235,6 @@ private:
   Ogre::SceneManager* m_SceneManager;
 
   ogre_tools::wxOgreRenderWindow* m_WXRenderWindow;
-
-  wxTimer* m_RenderTimer;
 
   ogre_tools::Grid* m_Grid;
   ogre_tools::CameraBase* m_Camera;

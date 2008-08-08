@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 2.6)
 include(rosbuild)
 
-rospack(ogre_visualizer)
-
 #set(ROS_BUILD_TYPE Debug)
+
+rospack(ogre_visualizer)
 
 find_package(wxWidgets REQUIRED)
 include(${wxWidgets_USE_FILE})

@@ -94,19 +94,19 @@ public:
         m_WXRenderWindow->SetSize( this->GetSize() );
 
         m_Camera = m_SceneManager->createCamera( "TestCam" );
-        m_Camera->setPosition( Ogre::Vector3( 500, 0, 1000 ) );
+        m_Camera->setPosition( Ogre::Vector3( 0, 0, 30 ) );
         m_Camera->lookAt( Ogre::Vector3( 0, 0, 0 ) );
         m_Camera->setNearClipDistance( 1 );
         m_WXRenderWindow->GetViewport()->setCamera( m_Camera );
 
         m_PointCloud = new ogre_tools::PointCloud( m_SceneManager );
         std::vector<ogre_tools::PointCloud::Point> points;
-        points.resize( 10000000 );
-        for ( int32_t i =-500; i < 500; ++i )
+        points.resize( 100 );
+        for ( int32_t i =-5; i < 5; ++i )
         {
-            for ( int32_t j = -500; j < 500; ++j )
+            for ( int32_t j = -5; j < 5; ++j )
             {
-                ogre_tools::PointCloud::Point& point = points[ 1000*(i+500) + (j+500) ];
+                ogre_tools::PointCloud::Point& point = points[ 10*(i+5) + (j+5) ];
                 point.m_X = j;
                 point.m_Y = i;
                 point.m_Z = 0;
@@ -117,8 +117,7 @@ public:
             }
         }
 
-        m_PointCloud->AddPoints( &points.front(), 500000 );
-        m_PointCloud->AddPoints( &points.front() + 500000, 500000 );
+        m_PointCloud->AddPoints( &points.front(), 200 );
     }
     catch ( Ogre::Exception& e )
     {

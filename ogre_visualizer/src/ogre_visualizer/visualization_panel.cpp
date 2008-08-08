@@ -111,7 +111,7 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent, Ogre::Root* root )
   m_RenderPanel->SetPostRenderCallback( new functor<VisualizationPanel>( this, &VisualizationPanel::UnlockRender ) );
 
   m_UpdateTimer = new wxTimer( this );
-  m_UpdateTimer->Start( 10 );
+  m_UpdateTimer->Start( 100 );
   m_UpdateStopwatch.Start();
   Connect( m_UpdateTimer->GetId(), wxEVT_TIMER, wxTimerEventHandler( VisualizationPanel::OnUpdate ), NULL, this );
 }

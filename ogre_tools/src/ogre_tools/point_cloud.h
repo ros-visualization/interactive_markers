@@ -30,6 +30,10 @@
 #ifndef OGRE_TOOLS_OGRE_POINT_CLOUD_H
 #define OGRE_TOOLS_OGRE_POINT_CLOUD_H
 
+#include <OgreMovableObject.h>
+#include <OgreString.h>
+#include <OgreAxisAlignedBox.h>
+
 #include <stdint.h>
 
 #include <vector>
@@ -37,15 +41,17 @@
 namespace Ogre
 {
 class SceneManager;
-
 class ManualObject;
 class SceneNode;
+class BillboardSet;
+class RenderQueue;
+class Camera;
 }
 
 namespace ogre_tools
 {
 
-class PointCloud
+class PointCloud : public Ogre::MovableObject
 {
 public:
   PointCloud( Ogre::SceneManager* manager );
@@ -71,10 +77,29 @@ public:
 
   void SetVisible( bool visible );
 
+  // overrides from MovableObject
+  virtual const Ogre::String& getMovableType() const { return sm_Type; }
+  virtual const Ogre::AxisAlignedBox& getBoundingBox() const;
+  virtual float getBoundingRadius() const;
+  virtual void _updateRenderQueue( Ogre::RenderQueue* queue );
+  virtual void _notifyCurrentCamera( Ogre::Camera* camera );
+
 private:
+  Ogre::BillboardSet* CreateBillboardSet();
+
   Ogre::SceneManager* m_SceneManager;
   Ogre::SceneNode* m_SceneNode;
-  Ogre::ManualObject* m_ManualObject;
+  Ogre::AxisAlignedBox m_BoundingBox;
+  float m_BoundingRadius;
+
+  typedef std::vector<Ogre::BillboardSet*> V_BillboardSet;
+  V_BillboardSet m_BillboardSets;
+
+  typedef std::vector<Point> V_Point;
+  V_Point m_Points;
+  uint32_t m_PointCount;
+
+  static Ogre::String sm_Type;
 };
 
 } // namespace ogre_tools
