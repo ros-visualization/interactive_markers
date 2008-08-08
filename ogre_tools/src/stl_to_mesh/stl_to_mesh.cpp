@@ -51,7 +51,7 @@ int main( int argc, char** argv )
       pos = outputFile.rfind( "/" );
       if ( pos != std::string::npos )
       {
-        outputFile.erase( 0, pos - 1 );
+        outputFile.erase( 0, pos );
       }
 
       outputFile = outputDirectory + "/" + outputFile;
