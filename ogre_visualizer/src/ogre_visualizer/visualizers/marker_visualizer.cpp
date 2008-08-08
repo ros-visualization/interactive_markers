@@ -233,7 +233,7 @@ void MarkerVisualizer::SetCommonValues( const std_msgs::VisualizationMarker& mes
   {
     printf( "Error transforming marker '%d': %s\n", message.id, e.what() );
   }
-  catch(libTF::Pose3DCache::ExtrapolateException& e)
+  catch(libTF::TransformReference::ExtrapolateException& e)
   {
     printf( "Error transforming marker '%d': %s\n", message.id, e.what() );
   }
@@ -256,7 +256,7 @@ void MarkerVisualizer::SetCommonValues( const std_msgs::VisualizationMarker& mes
   {
     printf( "Error transforming marker '%d': %s\n", message.id, e.what() );
   }
-  catch(libTF::Pose3DCache::ExtrapolateException& e)
+  catch(libTF::TransformReference::ExtrapolateException& e)
   {
     printf( "Error transforming marker '%d': %s\n", message.id, e.what() );
   }

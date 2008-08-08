@@ -162,7 +162,7 @@ void PointCloudVisualizer::IncomingCloudCallback()
   {
     printf( "Error transforming point cloud '%s': %s\n", m_Name.c_str(), e.what() );
   }
-  catch(libTF::Pose3DCache::ExtrapolateException& e)
+  catch(libTF::TransformReference::ExtrapolateException& e)
   {
     printf( "Error transforming point cloud '%s': %s\n", m_Name.c_str(), e.what() );
   }

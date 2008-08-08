@@ -199,7 +199,7 @@ void LaserScanVisualizer::TransformCloud()
   {
     printf( "Error transforming laser scan '%s': %s\n", m_Name.c_str(), e.what() );
   }
-  catch(libTF::Pose3DCache::ExtrapolateException& e)
+  catch(libTF::TransformReference::ExtrapolateException& e)
   {
     printf( "Error transforming laser scan '%s': %s\n", m_Name.c_str(), e.what() );
   }

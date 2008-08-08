@@ -212,7 +212,7 @@ void RobotModelVisualizer::UpdateTransforms()
     {
       printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), m_TargetFrame.c_str(), e.what() );
     }
-    catch(libTF::Pose3DCache::ExtrapolateException& e)
+    catch(libTF::TransformReference::ExtrapolateException& e)
     {
       printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), m_TargetFrame.c_str(), e.what() );
     }
