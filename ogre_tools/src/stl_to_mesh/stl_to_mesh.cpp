@@ -8,7 +8,9 @@ int main( int argc, char** argv )
   if ( argc < 3 )
   {
     printf( "Usage: stl_to_mesh <stl files> <output directory>\n" );
-    printf( "of     stl_to_mesh <stl file> <output file>\n" );
+    printf( "or     stl_to_mesh <stl file> <output file>\n" );
+
+    return 0;
   }
 
   typedef std::vector<std::string> V_string;
