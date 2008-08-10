@@ -11,6 +11,8 @@
 <depend package="opencv"/>
 <depend package="ffmpeg"/>
 <depend package="image_utils"/>
+<depend package="rosTF"/>
+<depend package="newmat10"/>
 <export>
   <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib"/>
 </export>
