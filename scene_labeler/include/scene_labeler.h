@@ -102,7 +102,7 @@ public:
     cout << "labeling videre with frame id " << videre_cloud_msg_.header.frame_id << endl;
     labelCloud(&videre_cloud_msg_);
     cout << "labeling hokuyo with frame id " << full_cloud_msg_.header.frame_id << endl;
-    full_cloud_labeled_ = labelCloud(&full_cloud_msg_);
+    labelCloud(&full_cloud_msg_);
 
   }
 
@@ -124,7 +124,7 @@ public:
 
 
   
-  std_msgs::PointCloudFloat32 labelCloud(std_msgs::PointCloudFloat32 *ptcld) {
+  void labelCloud(std_msgs::PointCloudFloat32 *ptcld) {
  
     //Define transformation from FRAMEID_STEREO_BLOCK to FRAMEID_SMALLV
 /*     cout << rtf.lookup("FRAMEID_STEREO_BLOCK") << endl; */
@@ -151,7 +151,7 @@ public:
       cout << "failure to find parent of frame id" << endl;
       cout << "frame id is "  << ptcld->header.frame_id << endl;
       cout << rtf.viewFrames() << endl;
-      return *ptcld;
+      return;
     }
       
 
@@ -192,14 +192,14 @@ public:
     tmp.set_pts_size(n);
     tmp.set_chan_size(2);
     tmp.chan[0] = ptcld->chan[0];
+    tmp.header = ptcld->header;
     //tmp.chan[0].set_vals_size(n);
     tmp.chan[1].set_vals_size(n);
     //tmp.chan[0].name = "intensities";
     tmp.chan[1].name = "labels";
     cout << "hxw " << mask->height << " " << mask->width << endl;
     for (unsigned int i=1; i<=n; i++) {
-      //tmp.pts[i-1] = chan.
-
+      tmp.pts[i-1] = ptcld->pts[i-1];
       int c = floor(projected(1, i)+.5);
       int r = floor(projected(2, i)+.5);
       if(r >= 0 && r < mask->height && //
@@ -209,12 +209,10 @@ public:
       else
         tmp.chan[1].vals[i-1] = 0;
     }
-    
-    return tmp;
 
-    //    ptcld->set_chan_size(2);
-    //*ptcld = tmp;
-    //cout << "label: chan size is " << ptcld->get_chan_size() << " and npts is " << ptcld->get_pts_size() << endl;
+    ptcld->set_chan_size(2);
+    *ptcld = tmp;
+    cout << "label: chan size is " << ptcld->get_chan_size() << " and npts is " << ptcld->get_pts_size() << endl;
   }
 
   std_msgs::PointCloudFloat32 colorPointCloud(std_msgs::PointCloudFloat32 ptcld) {
@@ -262,19 +260,16 @@ public:
 /*     cvWaitKey(); */
 
     cout << "Publishing... " << endl;
-    full_cloud_colored_ = colorPointCloud(full_cloud_labeled_);
-    publish("full_cloud", full_cloud_msg_);
-    usleep(1000000);
+    full_cloud_colored_ = colorPointCloud(full_cloud_msg_);
     publish("full_cloud", full_cloud_colored_);
-    usleep(1000000);
-    //videre_cloud_colored_ = colorPointCloud(videre_cloud_msg_); 
-    
-    //publish("videre/cloud", videre_cloud_msg_);
-    //usleep(2000000);
-    //publish("labeled_images", labeled_images_msg_);
-    /* publish("videre/images", videre_images_msg_); */
-/*     publish("intensity_image", intensity_image_msg_); */
-    //publish("videre/cloud", videre_cloud_colored_);
+    //usleep(1000000);
+    videre_cloud_colored_ = colorPointCloud(videre_cloud_msg_); 
+    publish("videre/cloud", videre_cloud_msg_);
+    //usleep(1000000);
+    publish("labeled_images", labeled_images_msg_);
+    publish("videre/images", videre_images_msg_);
+    publish("intensity_image", intensity_image_msg_);
+    publish("videre/cloud", videre_cloud_colored_);
   }
 };
 #endif
