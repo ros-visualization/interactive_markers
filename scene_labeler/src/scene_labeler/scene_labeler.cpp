@@ -13,8 +13,6 @@ int main(int argc, char **argv) {
   usleep(500000);
 
   scene_labeler *sl = new scene_labeler(string(argv[1]));
-
-  sl->labelVidereCloud();
   sl->publishAll();
 
   usleep(500000);
