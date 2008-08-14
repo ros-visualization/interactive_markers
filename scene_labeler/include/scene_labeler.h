@@ -40,15 +40,24 @@ void copyMsg(string name, ros::msg* m, ros::Time t, void* n)
   }
 }
 
-
 class scene_labeler : public ros::node
 {
 public:
+  std_msgs::ImageArray videre_images_msg_;
+  std_msgs::ImageArray labeled_images_msg_;
+  std_msgs::Image intensity_image_msg_;
+  std_msgs::PointCloudFloat32 full_cloud_msg_;
+  std_msgs::PointCloudFloat32 videre_cloud_msg_;
+
+  std_msgs::PointCloudFloat32 full_cloud_colored_;
+  std_msgs::PointCloudFloat32 videre_cloud_colored_;
+
+  IplImage *mask_;
 
   scene_labeler(string file1) 
     : ros::node("scene_labeler"),
-    rtf(*this),
-    mask(0)
+    mask_(0),
+    rtf(*this)
   {
     advertise<std_msgs::PointCloudFloat32>("full_cloud");
     advertise<std_msgs::PointCloudFloat32>("videre/cloud");
@@ -72,14 +81,14 @@ public:
     // -- Get the labeled mask out of the labeled images array.
     cout << "Making new bridge...";
     bridge = new CvBridge<std_msgs::Image>(&labeled_images_msg_.images[2], CvBridge<std_msgs::Image>::CORRECT_BGR | CvBridge<std_msgs::Image>::MAXDEPTH_8U);
-    assert(bridge->to_cv(&mask));
+    assert(bridge->to_cv(&mask_));
     cout << "Done." << endl;
 
     // -- Get transformations over ros.
-    cout << "Waiting for transformations from frameServer... "; flush(cout);
+    cout << "Waiting for transformations from rosTF/frameServer... "; flush(cout);
     while(true) {
       try {
-	rtf.getMatrix(rtf.lookup("FRAMEID_SMALLV"), rtf.lookup("FRAMEID_TILT_BASE"), ros::Time::now().to_ull());
+	rtf.getMatrix(rtf.nameClient.lookup("FRAMEID_SMALLV"), rtf.nameClient.lookup("FRAMEID_TILT_BASE"), ros::Time::now().to_ull());
 	break;
       }
       catch (libTF::TransformReference::LookupException & ex) {
@@ -90,9 +99,9 @@ public:
 
     // -- Apply a default frame for old logs that don't have it in the header.
     if(videre_cloud_msg_.header.frame_id == 0)
-      videre_cloud_msg_.header.frame_id = rtf.lookup("FRAMEID_STEREO_BLOCK");
+      videre_cloud_msg_.header.frame_id = rtf.nameClient.lookup("FRAMEID_STEREO_BLOCK");
     if(full_cloud_msg_.header.frame_id == 0)
-      full_cloud_msg_.header.frame_id = rtf.lookup("FRAMEID_TILT_BASE");
+      full_cloud_msg_.header.frame_id = rtf.nameClient.lookup("FRAMEID_TILT_BASE");
   
     // -- Old time stamps anger rostf.
     full_cloud_msg_.header.stamp = ros::Time::now();
@@ -106,40 +115,70 @@ public:
 
   }
 
+
+  void publishAll() {
+
+/*     // -- Put the points from the cloud into the mask image. */
+/*     for (unsigned int i=0; i<n; i++) { */
+/*       int c = floor(projected(1, i+1)+.5); */
+/*       int r = floor(projected(2, i+1)+.5); */
+/*       if(r >= 0 && r < mask_->height && // */
+/* 	 c >= 0 && c < mask_->width) { */
+/* 	CvScalar s=cvGet2D(mask_,r,c); */
+/* 	s.val[0] = 100; */
+/* 	cvSet2D(mask_, r, c, s); */
+/*       } */
+/*     } */
+/*     cvNamedWindow( "mask_", CV_WINDOW_AUTOSIZE); */
+/*     cvShowImage("mask_", mask_); */
+/*     cout << " waiting for keypress..." << endl; */
+/*     cvWaitKey(); */
+
+    // -- Display the mask for debugging.
+/*     cout << "trying to show,," << endl; */
+/*     cvNamedWindow( "mask_", CV_WINDOW_AUTOSIZE); */
+/*     //mask_=cvLoadImage("/u/teichman/data/08-08-08_calib2/000-L.png"); */
+/*     if(!mask_) */
+/*       cout << "couldn't load" << endl; */
+/*     cvShowImage("mask_", mask_); */
+/*     cout << " waiting for keypress..." << endl; */
+/*     cvWaitKey(); */
+
+    cout << "Publishing... " << endl;
+    full_cloud_colored_ = colorPointCloud(full_cloud_msg_);
+    publish("full_cloud", full_cloud_colored_);
+    videre_cloud_colored_ = colorPointCloud(videre_cloud_msg_); 
+    publish("videre/cloud", videre_cloud_msg_);
+    publish("labeled_images", labeled_images_msg_);
+    publish("videre/images", videre_images_msg_);
+    publish("intensity_image", intensity_image_msg_);
+    publish("videre/cloud", videre_cloud_colored_);
+  }
+
+
+
+ private:
+
   rosTFClient rtf;
-
-  LogPlayer lp;
-  std_msgs::ImageArray videre_images_msg_;
-  std_msgs::ImageArray labeled_images_msg_;
-  std_msgs::Image intensity_image_msg_;
-  std_msgs::PointCloudFloat32 full_cloud_msg_;
-  std_msgs::PointCloudFloat32 videre_cloud_msg_;
-
-  std_msgs::PointCloudFloat32 full_cloud_labeled_;
-  std_msgs::PointCloudFloat32 full_cloud_colored_;
-  std_msgs::PointCloudFloat32 videre_cloud_colored_;
-
   CvBridge<std_msgs::Image> *bridge;
-  IplImage *mask;
-
-
+  LogPlayer lp;
   
   void labelCloud(std_msgs::PointCloudFloat32 *ptcld) {
  
     //Define transformation from FRAMEID_STEREO_BLOCK to FRAMEID_SMALLV
-/*     cout << rtf.lookup("FRAMEID_STEREO_BLOCK") << endl; */
-/*     cout << rtf.lookup("FRAMEID_SMALLV") << endl; */
-/*     cout << rtf.lookup("FRAMEID_TILT_BASE") << endl; */
-/*     cout << rtf.lookup("FRAMEID_VIDERE_LEFT_IMG") << endl;     */
+/*     cout << rtf.nameClient.lookup("FRAMEID_STEREO_BLOCK") << endl; */
+/*     cout << rtf.nameClient.lookup("FRAMEID_SMALLV") << endl; */
+/*     cout << rtf.nameClient.lookup("FRAMEID_TILT_BASE") << endl; */
+/*     cout << rtf.nameClient.lookup("FRAMEID_VIDERE_LEFT_IMG") << endl;     */
 /*     cout << rtf.viewFrames() << endl; */
 
     // -- Debugging information.
 /*     cout << "transform from tilt to smallv" << endl; */
-/*     cout << rtf.getMatrix(rtf.lookup("FRAMEID_SMALLV"), rtf.lookup("FRAMEID_TILT_BASE"), ros::Time::now().to_ull()) << endl; */
+/*     cout << rtf.getMatrix(rtf.nameClient.lookup("FRAMEID_SMALLV"), rtf.nameClient.lookup("FRAMEID_TILT_BASE"), ros::Time::now().to_ull()) << endl; */
 /*     cout << "transform from stereo block to smallv" << endl; */
-/*     cout << rtf.getMatrix(rtf.lookup("FRAMEID_SMALLV"), rtf.lookup("FRAMEID_STEREO_BLOCK"), ros::Time::now().to_ull()) << endl; */
-/*     NEWMAT::Matrix id =       rtf.getMatrix(rtf.lookup("FRAMEID_SMALLV"), rtf.lookup("FRAMEID_STEREO_BLOCK"), ros::Time::now().to_ull()) * // */
-/*       rtf.getMatrix(rtf.lookup("FRAMEID_STEREO_BLOCK"), rtf.lookup("FRAMEID_TILT_BASE"), ros::Time::now().to_ull()); */
+/*     cout << rtf.getMatrix(rtf.nameClient.lookup("FRAMEID_SMALLV"), rtf.nameClient.lookup("FRAMEID_STEREO_BLOCK"), ros::Time::now().to_ull()) << endl; */
+/*     NEWMAT::Matrix id =       rtf.getMatrix(rtf.nameClient.lookup("FRAMEID_SMALLV"), rtf.nameClient.lookup("FRAMEID_STEREO_BLOCK"), ros::Time::now().to_ull()) * // */
+/*       rtf.getMatrix(rtf.nameClient.lookup("FRAMEID_STEREO_BLOCK"), rtf.nameClient.lookup("FRAMEID_TILT_BASE"), ros::Time::now().to_ull()); */
 /*     cout << "tilt to smallv" << endl << id << endl; */
 /*     cout << "cloud frameid is " << ptcld->header.frame_id << endl; //0.  wtf? */
 
@@ -154,7 +193,6 @@ public:
       return;
     }
       
-
     // -- Set up smallv to image plane transformation.
     //Assumes the points are in mm:
     NEWMAT::Real trnsele[] = {  7.290000e+002, 0.000000e+000, 3.239809e+002, 0.000000e+000, //
@@ -197,15 +235,15 @@ public:
     tmp.chan[1].set_vals_size(n);
     //tmp.chan[0].name = "intensities";
     tmp.chan[1].name = "labels";
-    cout << "hxw " << mask->height << " " << mask->width << endl;
+    cout << "hxw " << mask_->height << " " << mask_->width << endl;
     for (unsigned int i=1; i<=n; i++) {
       tmp.pts[i-1] = ptcld->pts[i-1];
       int c = floor(projected(1, i)+.5);
       int r = floor(projected(2, i)+.5);
-      if(r >= 0 && r < mask->height && //
-	 c >= 0 && c < mask->width && //
-	 cvGet2D(mask, r, c).val[0] != 0)
-	tmp.chan[1].vals[i-1] = cvGet2D(mask, r, c).val[0];
+      if(r >= 0 && r < mask_->height && //
+	 c >= 0 && c < mask_->width && //
+	 cvGet2D(mask_, r, c).val[0] != 0)
+	tmp.chan[1].vals[i-1] = cvGet2D(mask_, r, c).val[0];
       else
         tmp.chan[1].vals[i-1] = 0;
     }
@@ -229,47 +267,5 @@ public:
 
   }
 
-
-  void publishAll() {
-
-
-/*     // -- Put the points from the cloud into the mask image. */
-/*     for (unsigned int i=0; i<n; i++) { */
-/*       int c = floor(projected(1, i+1)+.5); */
-/*       int r = floor(projected(2, i+1)+.5); */
-/*       if(r >= 0 && r < mask->height && // */
-/* 	 c >= 0 && c < mask->width) { */
-/* 	CvScalar s=cvGet2D(mask,r,c); */
-/* 	s.val[0] = 100; */
-/* 	cvSet2D(mask, r, c, s); */
-/*       } */
-/*     } */
-/*     cvNamedWindow( "mask", CV_WINDOW_AUTOSIZE); */
-/*     cvShowImage("mask", mask); */
-/*     cout << " waiting for keypress..." << endl; */
-/*     cvWaitKey(); */
-
-    // -- Display the mask for debugging.
-/*     cout << "trying to show,," << endl; */
-/*     cvNamedWindow( "mask", CV_WINDOW_AUTOSIZE); */
-/*     //mask=cvLoadImage("/u/teichman/data/08-08-08_calib2/000-L.png"); */
-/*     if(!mask) */
-/*       cout << "couldn't load" << endl; */
-/*     cvShowImage("mask", mask); */
-/*     cout << " waiting for keypress..." << endl; */
-/*     cvWaitKey(); */
-
-    cout << "Publishing... " << endl;
-    full_cloud_colored_ = colorPointCloud(full_cloud_msg_);
-    publish("full_cloud", full_cloud_colored_);
-    //usleep(1000000);
-    videre_cloud_colored_ = colorPointCloud(videre_cloud_msg_); 
-    publish("videre/cloud", videre_cloud_msg_);
-    //usleep(1000000);
-    publish("labeled_images", labeled_images_msg_);
-    publish("videre/images", videre_images_msg_);
-    publish("intensity_image", intensity_image_msg_);
-    publish("videre/cloud", videre_cloud_colored_);
-  }
 };
 #endif
