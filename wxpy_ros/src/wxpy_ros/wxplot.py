@@ -425,6 +425,7 @@ class WXSlidingPlot(wx.Panel):
         print 'create content'
         self.cached_datax = []  
         self.cached_datay = []
+        print self.channels
         for c in self.channels:
             self.cached_datax.append([])
             self.cached_datay.append([])
