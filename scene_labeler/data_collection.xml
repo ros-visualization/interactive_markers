@@ -1,0 +1,8 @@
+<launch>
+
+  <node pkg="rosTF" type="frameServer"/>
+  <node pkg="scene_labeler" type="smallv_transformer"/>
+  <node pkg="ogre_visualizer" type="visualizer_test"/>
+  <node pkg="scene_labeler" type="guide" output="screen" args="defaultDataset"/>
+  <!--include file="$(find sensor_cart)/sensors.xml"/-->
+</launch>
