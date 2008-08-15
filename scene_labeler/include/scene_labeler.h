@@ -7,6 +7,7 @@
 #include <std_msgs/PointCloudFloat32.h>
 #include <std_msgs/ImageArray.h>
 #include <std_msgs/Image.h>
+#include <std_msgs/String.h>
 #include <ros/node.h>
 #include <std_msgs/Empty.h>
 #include <std_msgs/VisualizationMarker.h>
@@ -48,6 +49,7 @@ public:
   std_msgs::Image intensity_image_msg_;
   std_msgs::PointCloudFloat32 full_cloud_msg_;
   std_msgs::PointCloudFloat32 videre_cloud_msg_;
+  std_msgs::String cal_params_msg_;
 
   std_msgs::PointCloudFloat32 full_cloud_colored_;
   std_msgs::PointCloudFloat32 videre_cloud_colored_;
@@ -74,10 +76,10 @@ public:
     lp.addHandler<std_msgs::Image>(string("intensity_image"), &copyMsg<std_msgs::Image>, (void*)(&intensity_image_msg_), true);
     lp.addHandler<std_msgs::PointCloudFloat32>(string("full_cloud"), &copyMsg<std_msgs::PointCloudFloat32>, (void*)(&full_cloud_msg_), true);
     lp.addHandler<std_msgs::PointCloudFloat32>(string("videre/cloud"), &copyMsg<std_msgs::PointCloudFloat32>, (void*)(&videre_cloud_msg_), true);
+    lp.addHandler<std_msgs::String>(string("videre/cal_params"), &copyMsg<std_msgs::String>, (void*)(&cal_params_msg_), true);
     while(lp.nextMsg()); //Load all the messages.
     cout << "Done." << endl;
-    publish("videre/cloud", videre_cloud_msg_);
-    usleep(1000000);
+
     // -- Get the labeled mask out of the labeled images array.
     cout << "Making new bridge...";
     bridge = new CvBridge<std_msgs::Image>(&labeled_images_msg_.images[2], CvBridge<std_msgs::Image>::CORRECT_BGR | CvBridge<std_msgs::Image>::MAXDEPTH_8U);
@@ -97,11 +99,11 @@ public:
     }
     cout << "Done." << endl; 
 
-    // -- Apply a default frame for old logs that don't have it in the header.
+    // -- Apply a default frame for old logs that don't have it in the header.  Assume we're using smallv_transformer.
     if(videre_cloud_msg_.header.frame_id == 0)
-      videre_cloud_msg_.header.frame_id = rtf.nameClient.lookup("FRAMEID_STEREO_BLOCK");
+      videre_cloud_msg_.header.frame_id = rtf.nameClient.lookup("FRAMEID_SMALLV");
     if(full_cloud_msg_.header.frame_id == 0)
-      full_cloud_msg_.header.frame_id = rtf.nameClient.lookup("FRAMEID_TILT_BASE");
+      full_cloud_msg_.header.frame_id = rtf.nameClient.lookup("FRAMEID_SMALLV");
   
     // -- Old time stamps anger rostf.
     full_cloud_msg_.header.stamp = ros::Time::now();
@@ -114,7 +116,6 @@ public:
     labelCloud(&full_cloud_msg_);
 
   }
-
 
   void publishAll() {
 
@@ -195,6 +196,7 @@ public:
       
     // -- Set up smallv to image plane transformation.
     //Assumes the points are in mm:
+    //TODO: make this read from cal_params_msg_.
     NEWMAT::Real trnsele[] = {  7.290000e+002, 0.000000e+000, 3.239809e+002, 0.000000e+000, //
 				0.000000e+000, 7.290000e+002, 2.478744e+002, 0.000000e+000, //
 				0.000000e+000, 0.000000e+000, 1.000000e+000, 0.000000e+000};
