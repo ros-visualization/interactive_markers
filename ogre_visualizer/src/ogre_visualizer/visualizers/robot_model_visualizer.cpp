@@ -87,13 +87,13 @@ void RobotModelVisualizer::Initialize( const std::string& descriptionParam, cons
   for ( ; linkIt != linkEnd; ++linkIt )
   {
     robot_desc::URDF::Link* link = *linkIt;
-
-    if ( link->visual->geometry->filename.empty() )
+    robot_desc::URDF::Link::Geometry::Mesh* mesh = static_cast<robot_desc::URDF::Link::Geometry::Mesh*>(link->visual->geometry->shape);
+    if ( mesh->filename.empty() )
     {
       continue;
     }
 
-    std::string modelName = link->visual->geometry->filename + ".mesh";
+    std::string modelName = mesh->filename + ".mesh";
 
     Ogre::SceneNode* node = m_RootNode->createChildSceneNode();
     try
@@ -112,7 +112,16 @@ void RobotModelVisualizer::Initialize( const std::string& descriptionParam, cons
       for ( uint16_t i = 0; i < numSubEntities; ++i )
       {
         Ogre::SubEntity* subEntity = entity->getSubEntity( i );
-        subEntity->setMaterialName( link->visual->material );
+
+        std::vector<std::string> gazebo_names;
+        link->visual->data.getMapTagNames("gazebo", gazebo_names);
+        for (unsigned int k = 0 ; k < gazebo_names.size() ; ++k)
+        {
+          std::map<std::string, std::string> m = link->visual->data.getMapTagValues("gazebo", gazebo_names[k]);
+          if (m.find("material") != m.end() )
+            subEntity->setMaterialName( m["matrials"] );
+        }
+
       }
 
       node->attachObject( entity );
