@@ -69,7 +69,7 @@ public:
     advertise<std_msgs::ImageArray>("videre/images");
 
 
-    cout << "Loading messages... ";
+    cout << "Loading messages... "; flush(cout);
     lp.open(file1, ros::Time(0));
     lp.addHandler<std_msgs::ImageArray>(string("videre/images"), &copyMsg<std_msgs::ImageArray>, (void*)(&videre_images_msg_), true);
     lp.addHandler<std_msgs::ImageArray>(string("labeled_images"), &copyMsg<std_msgs::ImageArray>, (void*)(&labeled_images_msg_), true);
@@ -149,11 +149,10 @@ public:
     full_cloud_colored_ = colorPointCloud(full_cloud_msg_);
     publish("full_cloud", full_cloud_colored_);
     videre_cloud_colored_ = colorPointCloud(videre_cloud_msg_); 
-    publish("videre/cloud", videre_cloud_msg_);
+    publish("videre/cloud", videre_cloud_colored_);
     publish("labeled_images", labeled_images_msg_);
     publish("videre/images", videre_images_msg_);
     publish("intensity_image", intensity_image_msg_);
-    publish("videre/cloud", videre_cloud_colored_);
   }
 
 
@@ -231,6 +230,7 @@ public:
     std_msgs::PointCloudFloat32 tmp;
     tmp.set_pts_size(n);
     tmp.set_chan_size(2);
+    //cout << "copying " << ptcld->chan[0].name.data << endl;
     tmp.chan[0] = ptcld->chan[0];
     tmp.header = ptcld->header;
     //tmp.chan[0].set_vals_size(n);
@@ -256,7 +256,12 @@ public:
   }
 
   std_msgs::PointCloudFloat32 colorPointCloud(std_msgs::PointCloudFloat32 ptcld) {
-    cout << "chan size is " << ptcld.get_chan_size() << endl;
+    if(ptcld.get_chan_size() == 1) {
+      cout << "chan size is " << ptcld.get_chan_size() << endl;
+      cout << "Not coloring..." << endl;
+      return ptcld;
+    }
+
     for (unsigned int i=0; i<ptcld.get_pts_size(); i++) {
       if(ptcld.chan[1].vals[i] != 0) 
 	ptcld.chan[0].vals[i] = 255;
