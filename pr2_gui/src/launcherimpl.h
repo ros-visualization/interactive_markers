@@ -1,33 +1,41 @@
+/*
+ * Copyright (c) 2008, Willow Garage, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the Willow Garage, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived from
+ *       this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #ifndef __launcherimpl__
 #define __launcherimpl__
 
-///////////////////////////////////////////////////////////////////////////////
-//
-// Copyright (C) 2008, Willow Garage Inc.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-//   * Redistributions of source code must retain the above copyright notice,
-//     this list of conditions and the following disclaimer.
-//   * Redistributions in binary form must reproduce the above copyright
-//     notice, this list of conditions and the following disclaimer in the
-//     documentation and/or other materials provided with the distribution.
-//   * Neither the name of Stanford University nor the names of its
-//     contributors may be used to endorse or promote products derived from
-//     this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//////////////////////////////////////////////////////////////////////////////
+/*
+ * (deprecated) GUI designed specifically for the PR2.  Use the individual wx panels instead.
+ *
+ * Written by Matthew Piccoli
+ */
+
 /**
 @mainpage
 
@@ -37,8 +45,14 @@
 
 <hr>
 
+@section usage
+Run make on the included Makefile.
+Ensure that a botherder, namelookup_server, and something to visualize is open.
+Command line arguments are NOT passed to ROS!
+
 @section topic ROS topics
 
+@image html wx.png "Wx GUI with visualization"
 Subscribes to (name/type):
 - @b "PTZL_image"/std_msgs::Image : Image received from the left PTZ
 - @b "PTZR_image"/std_msgs::Image : Image received from the right PTZ
@@ -46,6 +60,15 @@ Subscribes to (name/type):
 - @b "WristR_image"/std_msgs::Image : Image received from the right wrist camera
 - @b "PTZL_state"/std_msgs::PTZActuatorState : Receives state from the left PTZ
 - @b "PTZR_state"/std_msgs::PTZActuatorState : Receives state from the right PTZ
+- @b "/roserr"/rostools::log : Receives roserr messages
+- @b "cloud"/std_msgs::PointCloudFloat32 : Point cloud received from head Hokuyo
+- @b "scan"/std_msgs::LaserScan : Laser cloud received from base Hokuyo
+- @b "cloudStereo"/std_msgs::PointCloudFloat32 : Point cloud received from stereo vision (type may be changed soon)
+- @b "shutter"/std_msgs::Empty : Cue to erase "cloud" information
+- @b "shutterScan"/std_msgs::Empty : Cue to erase "cloudFloor" information
+- @b "shutterStereo"/std_msgs::Empty : Cue to erase "cloudStereo" information
+- @b "visualizationMarker"/std_msgs::VisualizationMarker : User defined object in the 3d world
+- @b "transform"/std_msgs::Empty : Cue to update model (new transform is available)
 
 Publishes to (name/type):
 - @b "PTZR_cmd"/std_msgs::std_msgs::PTZActuatorCmd : Moves the right PTZ to the given position
@@ -53,7 +76,7 @@ Publishes to (name/type):
 
 
 @todo
-- Turn me into subclasses and change widgets to the ros panels
+- stop using me, use the individual panels
 **/
 
 /**

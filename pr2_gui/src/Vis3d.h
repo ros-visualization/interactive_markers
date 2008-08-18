@@ -1,55 +1,40 @@
 #ifndef VIS3D_H
 #define VIS3D_H
 
-///////////////////////////////////////////////////////////////////////////////
-//
-// Copyright (C) 2008, Willow Garage Inc.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-//   * Redistributions of source code must retain the above copyright notice,
-//     this list of conditions and the following disclaimer.
-//   * Redistributions in binary form must reproduce the above copyright
-//     notice, this list of conditions and the following disclaimer in the
-//     documentation and/or other materials provided with the distribution.
-//   * Neither the name of Stanford University nor the names of its
-//     contributors may be used to endorse or promote products derived from
-//     this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//////////////////////////////////////////////////////////////////////////////
-/**
-@mainpage
+/*
+ * Copyright (c) 2008, Willow Garage, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the Willow Garage, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived from
+ *       this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
-@b Vis3d is a 3D visualization of the robot's current state and sensor feedback using the Irrlicht rendering engine.
-
-<hr>
-
-@section topic ROS topics
-
-Subscribes to (name/type):
-- @b "cloud"/std_msgs::PointCloudFloat32 : Point cloud received from head Hokuyo
-- @b "scan"/std_msgs::LaserScan : Laser cloud received from base Hokuyo
-- @b "cloudStereo"/std_msgs::PointCloudFloat32 : Point cloud received from stereo vision (type may be changed soon)
-- @b "shutter"/std_msgs::Empty : Cue to erase "cloud" information
-- @b "shutterScan"/std_msgs::Empty : Cue to erase "cloudFloor" information
-- @b "shutterStereo"/std_msgs::Empty : Cue to erase "cloudStereo" information
-- @b "visualizationMarker"/std_msgs::VisualizationMarker : User defined object in the 3d world
-- @b "transform"/std_msgs::Empty : Cue to update model (new transform is available)
-
-@todo
-- Please put some stuff here
-**/
+/*
+ * (deprecated) 3D visualization written specifically for the PR2.  Use the ogre visualization panel instead.
+ *
+ * Written by Matthew Piccoli
+ */
 
 #define intensityRange 16.0
 #include <rosthread/member_thread.h>
@@ -69,6 +54,7 @@ Subscribes to (name/type):
 #include <std_msgs/VisualizationMarker.h>
 #include <pr2Core/pr2Core.h> /* Contains enumeration definitions for PR2 bodies and joints, must also include ros package pr2Core in manifest.xml */
 
+///Vis3d is a 3D visualization of the robot's current state and sensor feedback using the Irrlicht rendering engine.
 class Vis3d
 {
 	public:
@@ -181,7 +167,6 @@ class Vis3d
 		bool objectsVisibility;
 
 		std::map<std::string, ILModel*> m_modelMap;
-		//std::map<std::string, std::string> m_nameMap;
 };
 
 #endif // VIS3D_H

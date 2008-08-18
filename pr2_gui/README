@@ -1,3 +1,14 @@
-This package depends on wxWidgets 2.8, which you must already have installed.
+This package depends on wxWidgets 2.8.
 On Ubuntu, install the libwxgtk2.8-dev.  On other systems, install the
 appropriate package.
+
+In order to run this package, you must also be running a botherder as well as a namelookup_server and 
+a robot description file must be loaded into the parameter server.
+A roslaunch script is included in this directory that will load the necessary packages with the exception of botherder.
+The script will also run rosgazebo in order to provide a test for this package.
+If you do not want to run rosgazebo, delete the following lines:
+
+    <node pkg="gazebo" type="run-gazebo.sh" args="$(find gazebo_robot_description)/world/robot_rosgazebo.world" respawn="true" />
+    <node pkg="pr2_gazebo" type="run-pr2_gazebo.sh" args="" respawn="true" />
+    
+

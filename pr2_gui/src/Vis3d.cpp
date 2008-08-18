@@ -166,14 +166,14 @@ void Vis3d::enableModel()
 		aPose.pitch = 0;
 		aPose.yaw = 0;
 		aPose.time = 0;
-		//aPose.frame = this->tfClient.lookup(PR2::PR2_FRAMEID[i]);// + i
-		aPose.frame = this->tfClient.lookup(links[i]->name);
+		//aPose.frame = this->tfClient.nameClient.lookup(PR2::PR2_FRAMEID[i]);// + i
+		aPose.frame = this->tfClient.nameClient.lookup(links[i]->name);
 		libTF::TFPose inBaseFrame;
 		try
 		{
 			inBaseFrame = this->tfClient.transformPose("base", aPose);
 		}
-		catch(libTF::TransformReference::LookupException e)
+		catch(libTF::TransformReference::LookupException &e)
 		{
 			inBaseFrame.x = 0;
 			inBaseFrame.y = 0;
@@ -182,13 +182,13 @@ void Vis3d::enableModel()
 			inBaseFrame.pitch = 0;
 			inBaseFrame.yaw = 0;
 			inBaseFrame.time = 0;
-			inBaseFrame.frame = this->tfClient.lookup("base");
+			inBaseFrame.frame = this->tfClient.nameClient.lookup("base");
 		}
 		std::cout << "Coordinates for : " << i << "; "<<inBaseFrame.x << ", " <<  inBaseFrame.y << ", " << inBaseFrame.z << "; "<<inBaseFrame.roll << ", " <<  inBaseFrame.pitch << ", " << inBaseFrame.yaw <<std::endl;
 		try{
 			if(links[i]->visual->geometry->filename != "")
 			{
-				ILModel *tempModel = new ILModel(pLocalRenderer->manager(), intermediate, (irr::c8*)(pathnamePrefix + links[i]->visual->geometry->filename + pathnameSuffix).c_str(), this->tfClient.lookup(links[i]->name), (float)inBaseFrame.x,(float)inBaseFrame.y, (float)inBaseFrame.z, (float)inBaseFrame.roll,(float)(inBaseFrame.pitch), (float)(inBaseFrame.yaw));
+				ILModel *tempModel = new ILModel(pLocalRenderer->manager(), intermediate, (irr::c8*)(pathnamePrefix + links[i]->visual->geometry->filename + pathnameSuffix).c_str(), this->tfClient.nameClient.lookup(links[i]->name), (float)inBaseFrame.x,(float)inBaseFrame.y, (float)inBaseFrame.z, (float)inBaseFrame.roll,(float)(inBaseFrame.pitch), (float)(inBaseFrame.yaw));
 				if(tempModel->getNode() != NULL)
 				{
 					tempModel->getNode()->getMaterial(0).AmbientColor.set(255,100+int(155.0*rand()/(RAND_MAX + 1.0)),100+int(155.0*rand()/(RAND_MAX + 1.0)),100+int(155.0*rand()/(RAND_MAX + 1.0)));
@@ -230,7 +230,7 @@ void Vis3d::enableGrid()
 
 void Vis3d::enableFloor()
 {
-    myNode->subscribe("scan", ptCldFloor, &Vis3d::addFloorCloud,this);
+    myNode->subscribe("base_scan", ptCldFloor, &Vis3d::addFloorCloud,this);
     myNode->subscribe("shutterScan", shutFloor, &Vis3d::shutterFloor,this);
     pLocalRenderer->enable(ilFloorCloud);
     ilFloorCloud->setVisible(true);
@@ -382,13 +382,13 @@ void Vis3d::addHeadCloud()
 	aPose.pitch = 0;
 	aPose.yaw = 0;
 	aPose.time = 0;
-	aPose.frame = this->tfClient.lookup("FRAMEID_TILT_LASER_BLOCK"); //TODO: put me in pr2.xml and change my string
+	aPose.frame = this->tfClient.nameClient.lookup("FRAMEID_TILT_LASER_BLOCK"); //TODO: put me in pr2.xml and change my string
 	libTF::TFPose inBaseFrame;
 	try
 	{
 		inBaseFrame = this->tfClient.transformPose("base", aPose);
 	}
-	catch(libTF::TransformReference::LookupException e)
+	catch(libTF::TransformReference::LookupException &e)
 	{
 		inBaseFrame.x = 0;
 		inBaseFrame.y = 0;
@@ -397,7 +397,7 @@ void Vis3d::addHeadCloud()
 		inBaseFrame.pitch = 0;
 		inBaseFrame.yaw = 0;
 		inBaseFrame.time = 0;
-		inBaseFrame.frame = this->tfClient.lookup("base");
+		inBaseFrame.frame = this->tfClient.nameClient.lookup("base");
 	}
     switch(scanT)
     {
@@ -431,13 +431,13 @@ void Vis3d::addFloorCloud()
 	aPose.pitch = 0;
 	aPose.yaw = 0;
 	aPose.time = 0;
-	aPose.frame = this->tfClient.lookup("FRAMEID_BASE_LASER_BLOCK"); //TODO: put me in pr2.xml and change my string
+	aPose.frame = this->tfClient.nameClient.lookup("FRAMEID_BASE_LASER_BLOCK"); //TODO: put me in pr2.xml and change my string
 	libTF::TFPose inBaseFrame;
 	try
 	{
 		inBaseFrame = this->tfClient.transformPose("base", aPose);
 	}
-	catch(libTF::TransformReference::LookupException e)
+	catch(libTF::TransformReference::LookupException &e)
 	{
 		inBaseFrame.x = 0;
 		inBaseFrame.y = 0;
@@ -446,7 +446,7 @@ void Vis3d::addFloorCloud()
 		inBaseFrame.pitch = 0;
 		inBaseFrame.yaw = 0;
 		inBaseFrame.time = 0;
-		inBaseFrame.frame = this->tfClient.lookup("base");
+		inBaseFrame.frame = this->tfClient.nameClient.lookup("base");
 	}
 	shutterFloor();
     pLocalRenderer->lock();
@@ -470,13 +470,13 @@ void Vis3d::addStereoCloud()
 	aPose.pitch = 0;
 	aPose.yaw = 0;
 	aPose.time = 0;
-	aPose.frame = this->tfClient.lookup("FRAMEID_STEREO_BLOCK"); //TODO: put me in pr2.xml and change my string
+	aPose.frame = this->tfClient.nameClient.lookup("FRAMEID_STEREO_BLOCK"); //TODO: put me in pr2.xml and change my string
 	libTF::TFPose inBaseFrame;
 	try
 	{
 		inBaseFrame = this->tfClient.transformPose("base", aPose);
 	}
-	catch(libTF::TransformReference::LookupException e)
+	catch(libTF::TransformReference::LookupException &e)
 	{
 		inBaseFrame.x = 0;
 		inBaseFrame.y = 0;
@@ -485,7 +485,7 @@ void Vis3d::addStereoCloud()
 		inBaseFrame.pitch = 0;
 		inBaseFrame.yaw = 0;
 		inBaseFrame.time = 0;
-		inBaseFrame.frame = this->tfClient.lookup("base");
+		inBaseFrame.frame = this->tfClient.nameClient.lookup("base");
 	}
     pLocalRenderer->lock();
     /*for(int i = 0; i < ilStereoCloud.size(); i++)
@@ -562,13 +562,13 @@ void Vis3d::newTransform()
 			aPose.pitch = 0;
 			aPose.yaw = 0;
 			aPose.time = 0;
-			aPose.frame = this->tfClient.lookup((*iter).first);
+			aPose.frame = this->tfClient.nameClient.lookup((*iter).first);
 			libTF::TFPose inBaseFrame;
 			try
 			{
 				inBaseFrame = this->tfClient.transformPose("base", aPose);
 			}
-			catch(libTF::TransformReference::LookupException e)
+			catch(libTF::TransformReference::LookupException &e)
 			{
 				inBaseFrame;
 				inBaseFrame.x = 0;
@@ -578,7 +578,7 @@ void Vis3d::newTransform()
 				inBaseFrame.pitch = 0;
 				inBaseFrame.yaw = 0;
 				inBaseFrame.time = 0;
-				inBaseFrame.frame = this->tfClient.lookup("base");
+				inBaseFrame.frame = this->tfClient.nameClient.lookup("base");
 			}
 			if((*iter).second != NULL)
 			{
