@@ -75,6 +75,37 @@ int lbuttondown = 0, lbuttonrelease = 0;
 CvPoint ptNow,ptD,ptU;
 codeBook *cB;
 
+static void 
+imagesc(const char* wname, const IplImage* image) {
+  double imin = HUGE_VAL, imax = -HUGE_VAL;
+  cvMinMaxLoc(image, &imin, &imax);
+  double range = imax - imin;
+
+  std::cout << "RANGE = " << range << std::endl;
+    
+  IplImage* hsv = cvCreateImage(cvGetSize(image), IPL_DEPTH_8U, 3);
+
+  for (int xx = 0; xx < hsv->width; xx++) {
+    for (int yy = 0; yy < hsv->height; yy++) {
+      unsigned char* prIn = 
+	(unsigned char*)(hsv->imageData + yy*hsv->widthStep);
+      unsigned char* prOut = 
+	(unsigned char*)(hsv->imageData + yy*hsv->widthStep);
+      prOut[3*xx] = 255.0 * (prIn[xx] - imin) / range;
+      prOut[3*xx+1] = 255.0;
+      prOut[3*xx+2] = 255.0;
+    }
+  }
+
+  IplImage* rgb = cvCreateImage(cvGetSize(image), IPL_DEPTH_8U, 3);
+
+  cvCvtColor(hsv, rgb, CV_HSV2RGB);
+
+  cvShowImage(wname, rgb);
+
+  cvReleaseImage(&hsv);
+  cvReleaseImage(&rgb);
+}
 
 // -- ROS Node class for getting Videre images.
 class ImgBGSubtr : public ros::node
@@ -242,6 +273,13 @@ int writeThresholds()
   return 0;
 }
 
+// superimposes new object mask on top of previous labeled image
+// fgbgMask is nonzero iff. that pixel should be labeled with label
+void updateLabeledImage(const IplImage* fgbgMask, 
+			IplImage* labeledim,
+			int label) {
+  cvSet(labeledim, cvScalar(label), fgbgMask);
+}
 
 // COMMAND LINE HELP FUNCTION //
 void help()
@@ -334,6 +372,9 @@ int main( int argc, char** argv )
   sprintf(ObjectLabel,"DefaultObject");
   sprintf(ext,"png");
   int ii = (int)strlen(ObjectLabel);
+  int ObjectID = 0;
+  IplImage* MultiClassSegmentedImage = NULL;
+
 //   //From Camera
 //   if( argc == 1 || (argc == 2 && strlen(argv[1]) == 1 && isdigit(argv[1][0])))
 //     {
@@ -357,6 +398,7 @@ int main( int argc, char** argv )
   help();
 
   //Create Window
+  cvNamedWindow("Multiclass segmentation", 0);
   cvNamedWindow( "CaptureObjects", 0 );
   //Create Mouse Handler
   //	CVAPI(void) cvSetMouseCallback( const char* window_name, CvMouseCallback on_mouse,
@@ -546,7 +588,20 @@ int main( int argc, char** argv )
 	  mw.paint(maskCC,1,0,0); //Segment with bounding box
 	}
 
+      // FIXME: generalize to non-8-bit images
+      // update the multiclass segmented image
+      if (MultiClassSegmentedImage == NULL) {
+	MultiClassSegmentedImage =
+	  cvCreateImage(cvGetSize(mask), IPL_DEPTH_8U, 1);
+	cvSet(MultiClassSegmentedImage, cvScalar(0));
+      }
+
+      updateLabeledImage(mask, MultiClassSegmentedImage, ObjectID);
+
       cvShowImage( "CaptureObjects", image );
+
+      imagesc("Multiclass segmentation", MultiClassSegmentedImage);
+
       mw.paint(markedImage,0,1,1);  //Raw image with marked bounding boxes
 
       //Get keyboard input
@@ -720,7 +775,7 @@ int main( int argc, char** argv )
 	  printf("\nExtension is .%s\n",ext);
 	  break;
 	case 'C': //Clear codebook
-	  printf("\nDeleating codebook!\n");
+	  printf("\nDeleting codebook!\n");
 	  delete [] cB;
 	  printf("Reallocate new ... \n");
 	  cB = new codeBook [imageLen];
@@ -737,7 +792,11 @@ int main( int argc, char** argv )
 	  learn = 0;        //Not learning
 	  printf("you need to learn\n");
 	  break;
-	case 'l': //Learn for 120 frames
+	case 'l': { //Learn for 120 frames
+	  printf("Enter the id of the next object to be placed: ");
+	  scanf("%d", &ObjectID);
+	  printf("Next object is %d\n", ObjectID);
+
 	  if(modelExists)
 	    { //Kill old codebook
 	      printf("\nKilling old codebook!\n");
@@ -757,6 +816,7 @@ int main( int argc, char** argv )
 	  printf("Learning on for 120 frames, use \"L\" if you want to manually toggle on and off...\n");
 	  learn = 1;
 	  learnTarget = learnCnt + 120;
+	}
 	  break;
 	case 'L': //Toggle learning
 	  if(learn) 
