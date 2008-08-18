@@ -50,6 +50,12 @@ import numpy
 import time
 import copy
 
+# We want to check if the user has a different version of matplotlib installed on the computer
+__mpl_proper__ = ['0.98.2','0.98.1']
+
+if not matplotlib.__version__ in __mpl_proper__ :
+  print "*** Wrong version of matplotlib detected ***\n The following version was found : %s and it is not a supported version (the supported versions are: %s). I cannot continue.\n This usually happens when a different version was packaged and installed with your operating system. In this case, uninstall the package \'matplotlib\' and try again." % (matplotlib.__version__, __mpl_proper__ )
+assert matplotlib.__version__ == __mpl_proper__ 
 __all__ = ['Channel','WXPlot','WXSlidingPlot']
 
 
