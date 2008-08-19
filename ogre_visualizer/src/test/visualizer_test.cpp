@@ -66,7 +66,7 @@ public:
     Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "materials/programs", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
     Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "materials/textures", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
     Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "models", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
-    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "models/pr2", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
+    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "models/pr2_new", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
 
     // Taken from gazebo
     Ogre::RenderSystemList *rsList = m_Root->getAvailableRenderers();
@@ -92,7 +92,6 @@ public:
 
     renderSystem->setConfigOption("Full Screen","No");
     renderSystem->setConfigOption("FSAA","2");
-    renderSystem->setConfigOption("RTT Preferred Mode", "PBuffer");
 
     m_Root->setRenderSystem( renderSystem );
 

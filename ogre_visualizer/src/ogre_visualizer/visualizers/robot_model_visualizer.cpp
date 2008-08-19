@@ -119,7 +119,7 @@ void RobotModelVisualizer::Load()
       continue;
     }
 
-    std::string modelName = mesh->filename + ".mesh";
+    std::string modelName = mesh->filename + "_hi.mesh";
 
     Ogre::SceneNode* node = m_RootNode->createChildSceneNode();
     try
