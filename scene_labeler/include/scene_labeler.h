@@ -56,7 +56,7 @@ public:
 
   IplImage *mask_;
 
-  scene_labeler(string file1) 
+  scene_labeler() 
     : ros::node("scene_labeler"),
     mask_(0),
     rtf(*this)
@@ -69,13 +69,31 @@ public:
     advertise<std_msgs::ImageArray>("videre/images");
 
 
+    // -- Get transformations over ros.
+    int nWaits = 0;
+    cout << "Waiting for transformations from rosTF/frameServer... "; flush(cout);
+    while(true) {
+      try {
+	rtf.getMatrix(rtf.nameClient.lookup("FRAMEID_SMALLV"), rtf.nameClient.lookup("FRAMEID_TILT_BASE"), ros::Time::now().to_ull());
+	break;
+      }
+      catch (libTF::TransformReference::LookupException & ex) {
+	cout << "Waiting " << nWaits++ << endl;
+	usleep(500000);
+      }
+    }
+    cout << "Done." << endl; 
+  }
+
+
+  void processMsgs(string file1) {
     cout << "Loading messages... "; flush(cout);
     lp.open(file1, ros::Time(0));
     lp.addHandler<std_msgs::ImageArray>(string("videre/images"), &copyMsg<std_msgs::ImageArray>, (void*)(&videre_images_msg_), true);
     lp.addHandler<std_msgs::ImageArray>(string("labeled_images"), &copyMsg<std_msgs::ImageArray>, (void*)(&labeled_images_msg_), true);
     lp.addHandler<std_msgs::Image>(string("intensity_image"), &copyMsg<std_msgs::Image>, (void*)(&intensity_image_msg_), true);
-    lp.addHandler<std_msgs::PointCloudFloat32>(string("full_cloud"), &copyMsg<std_msgs::PointCloudFloat32>, (void*)(&full_cloud_msg_), true);
-    lp.addHandler<std_msgs::PointCloudFloat32>(string("videre/cloud"), &copyMsg<std_msgs::PointCloudFloat32>, (void*)(&videre_cloud_msg_), true);
+    lp.addHandler<std_msgs::PointCloudFloat32>(string("full_cloud_smallv"), &copyMsg<std_msgs::PointCloudFloat32>, (void*)(&full_cloud_msg_), true);
+    lp.addHandler<std_msgs::PointCloudFloat32>(string("videre/cloud_smallv"), &copyMsg<std_msgs::PointCloudFloat32>, (void*)(&videre_cloud_msg_), true);
     lp.addHandler<std_msgs::String>(string("videre/cal_params"), &copyMsg<std_msgs::String>, (void*)(&cal_params_msg_), true);
     while(lp.nextMsg()); //Load all the messages.
     cout << "Done." << endl;
@@ -85,19 +103,6 @@ public:
     bridge = new CvBridge<std_msgs::Image>(&labeled_images_msg_.images[2], CvBridge<std_msgs::Image>::CORRECT_BGR | CvBridge<std_msgs::Image>::MAXDEPTH_8U);
     assert(bridge->to_cv(&mask_));
     cout << "Done." << endl;
-
-    // -- Get transformations over ros.
-    cout << "Waiting for transformations from rosTF/frameServer... "; flush(cout);
-    while(true) {
-      try {
-	rtf.getMatrix(rtf.nameClient.lookup("FRAMEID_SMALLV"), rtf.nameClient.lookup("FRAMEID_TILT_BASE"), ros::Time::now().to_ull());
-	break;
-      }
-      catch (libTF::TransformReference::LookupException & ex) {
-	usleep(100000);
-      }
-    }
-    cout << "Done." << endl; 
 
     // -- Apply a default frame for old logs that don't have it in the header.  Assume we're using smallv_transformer.
     if(videre_cloud_msg_.header.frame_id == 0)
@@ -183,15 +188,15 @@ public:
 /*     cout << "cloud frameid is " << ptcld->header.frame_id << endl; //0.  wtf? */
 
     
-    try {
-      *ptcld = rtf.transformPointCloud("FRAMEID_SMALLV", *ptcld);
-    }
-    catch  (libTF::TransformReference::LookupException & ex) {
-      cout << "failure to find parent of frame id" << endl;
-      cout << "frame id is "  << ptcld->header.frame_id << endl;
-      cout << rtf.viewFrames() << endl;
-      return;
-    }
+/*     try { */
+/*       *ptcld = rtf.transformPointCloud("FRAMEID_SMALLV", *ptcld); */
+/*     } */
+/*     catch  (libTF::TransformReference::LookupException & ex) { */
+/*       cout << "failure to find parent of frame id" << endl; */
+/*       cout << "frame id is "  << ptcld->header.frame_id << endl; */
+/*       cout << rtf.viewFrames() << endl; */
+/*       return; */
+/*     } */
       
     // -- Set up smallv to image plane transformation.
     //Assumes the points are in mm:
@@ -199,6 +204,7 @@ public:
     NEWMAT::Real trnsele[] = {  7.290000e+002, 0.000000e+000, 3.239809e+002, 0.000000e+000, //
 				0.000000e+000, 7.290000e+002, 2.478744e+002, 0.000000e+000, //
 				0.000000e+000, 0.000000e+000, 1.000000e+000, 0.000000e+000};
+
     NEWMAT::Matrix trns(3,4);
     trns << trnsele;
 

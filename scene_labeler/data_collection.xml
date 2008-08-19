@@ -1,6 +1,7 @@
 <launch>
   <node pkg="rosTF" type="frameServer"/>
   <node pkg="scene_labeler" type="smallv_transformer"/>
-  <node pkg="scene_labeler" type="guide" output="screen" args="defaultDataset"/>
+  <node pkg="scene_labeler" type="guide_stereo" output="screen" args="defaultDataset"/>
+  <include file="$(find scene_labeler)/vis.xml"/>
   <!--include file="$(find sensor_cart)/sensors.xml"/-->
 </launch>

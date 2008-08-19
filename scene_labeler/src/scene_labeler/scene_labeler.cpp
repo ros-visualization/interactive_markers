@@ -1,19 +1,21 @@
-
+#include <stdio.h>
 #include <scene_labeler.h>
 
 using namespace std;
-
-#define MINPTS 50
-#define CCTHRESH .01 //In meters.
-#define BOXSIZE 3 //In meters.
-
 
 int main(int argc, char **argv) {
   ros::init(argc, argv);
   usleep(500000);
 
-  scene_labeler *sl = new scene_labeler(string(argv[1]));
-  sl->publishAll();
+  for(int i=1; i<argc; i++) {
+    scene_labeler sl;
+    sl.processMsgs(string(argv[i]));
+    sl.publishAll();
+    cout << "Press Enter to continue . . .\n";
+    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    sl.shutdown();
+
+  }
 
   usleep(500000);
   ros::fini();
