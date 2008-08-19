@@ -76,6 +76,8 @@ public:
   void AddPoints( Point* points, uint32_t numPoints );
 
   void SetVisible( bool visible );
+  void SetUsePoints( bool usePoints );
+  void SetBillboardDimensions( float width, float height );
 
   // overrides from MovableObject
   virtual const Ogre::String& getMovableType() const { return sm_Type; }
@@ -98,6 +100,11 @@ private:
   typedef std::vector<Point> V_Point;
   V_Point m_Points;
   uint32_t m_PointCount;
+  uint32_t m_PointsPerBBS;
+
+  bool m_UsePoints;
+  float m_BillboardWidth;
+  float m_BillboardHeight;
 
   static Ogre::String sm_Type;
 };

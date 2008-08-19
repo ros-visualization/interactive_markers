@@ -33,7 +33,8 @@
 
 #include <sstream>
 
-#define MAX_POINTS_PER_BBS (65535/4)
+#define MAX_POINTS_PER_BBS (65535)
+#define MAX_BILLBOARDS_PER_BBS (65535/4)
 
 namespace ogre_tools
 {
@@ -41,9 +42,13 @@ namespace ogre_tools
 Ogre::String PointCloud::sm_Type = "PointCloud";
 
 PointCloud::PointCloud( Ogre::SceneManager* sceneManager )
-    : m_SceneManager( sceneManager )
-    , m_BoundingRadius( 0.0f )
-    , m_PointCount( 0 )
+: m_SceneManager( sceneManager )
+, m_BoundingRadius( 0.0f )
+, m_PointCount( 0 )
+, m_PointsPerBBS( MAX_BILLBOARDS_PER_BBS )
+, m_UsePoints( false )
+, m_BillboardWidth( 0.003f )
+, m_BillboardHeight( 0.003f )
 {
   static uint32_t pointCloudCount = 0;
   std::stringstream ss;
@@ -87,17 +92,56 @@ void PointCloud::Clear()
   m_BoundingRadius = 30000.0f;
 }
 
+void PointCloud::SetUsePoints( bool usePoints )
+{
+  m_UsePoints = usePoints;
+
+  if ( usePoints )
+  {
+    m_PointsPerBBS = MAX_POINTS_PER_BBS;
+  }
+  else
+  {
+    m_PointsPerBBS = MAX_BILLBOARDS_PER_BBS;
+  }
+
+  V_BillboardSet::iterator bbsIt = m_BillboardSets.begin();
+  V_BillboardSet::iterator bbsEnd = m_BillboardSets.end();
+  for ( ; bbsIt != bbsEnd; ++bbsIt )
+  {
+    Ogre::BillboardSet* bbs = *bbsIt;
+
+    bbs->setPointRenderingEnabled( usePoints );
+
+    bbs->setPoolSize( m_PointsPerBBS );
+  }
+}
+
+void PointCloud::SetBillboardDimensions( float width, float height )
+{
+  m_BillboardWidth = width;
+  m_BillboardHeight = height;
+  V_BillboardSet::iterator bbsIt = m_BillboardSets.begin();
+  V_BillboardSet::iterator bbsEnd = m_BillboardSets.end();
+  for ( ; bbsIt != bbsEnd; ++bbsIt )
+  {
+    Ogre::BillboardSet* bbs = *bbsIt;
+
+    bbs->setDefaultDimensions( width, height );
+  }
+}
+
 Ogre::BillboardSet* PointCloud::CreateBillboardSet()
 {
   Ogre::BillboardSet* bbs = new Ogre::BillboardSet( "", 0, true );
-  bbs->setPointRenderingEnabled( false );
-  bbs->setDefaultDimensions( 0.003f, 0.003f );
+  bbs->setPointRenderingEnabled( m_UsePoints );
+  bbs->setDefaultDimensions( m_BillboardWidth, m_BillboardHeight );
   bbs->setBillboardsInWorldSpace(true);
   bbs->setBillboardOrigin( Ogre::BBO_CENTER );
   bbs->setBillboardRotationType( Ogre::BBR_VERTEX );
   bbs->setMaterialName( "BaseWhiteNoLighting" );
   bbs->setCullIndividually( false );
-  bbs->setPoolSize( MAX_POINTS_PER_BBS );
+  bbs->setPoolSize( m_PointsPerBBS );
 
   return bbs;
 }
@@ -155,7 +199,7 @@ void PointCloud::_updateRenderQueue( Ogre::RenderQueue* queue )
   for ( uint32_t i = 0; i < m_PointCount; ++i, ++pointsInCurrent )
   {
     bool newBBS = false;
-    if ( pointsInCurrent > MAX_POINTS_PER_BBS )
+    if ( pointsInCurrent > m_PointsPerBBS )
     {
       bbs->endBillboards();
 
@@ -176,7 +220,7 @@ void PointCloud::_updateRenderQueue( Ogre::RenderQueue* queue )
     if ( newBBS || !bbs )
     {
       bbs = m_BillboardSets[ currentBBS ];
-      bbs->beginBillboards( std::min<uint32_t>( m_PointCount - i, MAX_POINTS_PER_BBS ) );
+      bbs->beginBillboards( std::min<uint32_t>( m_PointCount - i, m_PointsPerBBS ) );
     }
 
     Point& p = m_Points[i];
