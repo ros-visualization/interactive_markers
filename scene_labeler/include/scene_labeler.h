@@ -105,10 +105,10 @@ public:
     cout << "Done." << endl;
 
     // -- Apply a default frame for old logs that don't have it in the header.  Assume we're using smallv_transformer.
-    if(videre_cloud_msg_.header.frame_id == 0)
-      videre_cloud_msg_.header.frame_id = "FRAMEID_SMALLV";
-    if(full_cloud_msg_.header.frame_id == 0)
-      full_cloud_msg_.header.frame_id = "FRAMEID_SMALLV";
+/*     if(videre_cloud_msg_.header.frame_id == 0) */
+/*       videre_cloud_msg_.header.frame_id = "FRAMEID_SMALLV"; */
+/*     if(full_cloud_msg_.header.frame_id == 0) */
+/*       full_cloud_msg_.header.frame_id = "FRAMEID_SMALLV"; */
   
     // -- Old time stamps anger rostf.
     full_cloud_msg_.header.stamp = ros::Time::now();
