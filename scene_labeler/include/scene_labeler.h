@@ -74,7 +74,6 @@ public:
     cout << "Waiting for transformations from rosTF/frameServer... "; flush(cout);
     while(true) {
       try {
-	//rtf.getMatrix(rtf.nameClient.lookup("FRAMEID_SMALLV"), rtf.nameClient.lookup("FRAMEID_TILT_BASE"), ros::Time::now().to_ull());
 	rtf.getMatrix("FRAMEID_SMALLV", "FRAMEID_TILT_BASE", ros::Time::now().to_ull());
 	break;
       }
@@ -106,10 +105,10 @@ public:
     cout << "Done." << endl;
 
     // -- Apply a default frame for old logs that don't have it in the header.  Assume we're using smallv_transformer.
-/*     if(videre_cloud_msg_.header.frame_id == 0) */
-/*       videre_cloud_msg_.header.frame_id = rtf.nameClient.lookup("FRAMEID_SMALLV"); */
-/*     if(full_cloud_msg_.header.frame_id == 0) */
-/*       full_cloud_msg_.header.frame_id = rtf.nameClient.lookup("FRAMEID_SMALLV"); */
+    if(videre_cloud_msg_.header.frame_id == 0)
+      videre_cloud_msg_.header.frame_id = "FRAMEID_SMALLV";
+    if(full_cloud_msg_.header.frame_id == 0)
+      full_cloud_msg_.header.frame_id = "FRAMEID_SMALLV";
   
     // -- Old time stamps anger rostf.
     full_cloud_msg_.header.stamp = ros::Time::now();
