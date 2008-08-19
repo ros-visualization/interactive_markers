@@ -15,7 +15,7 @@ public:
     cout << "Waiting for transformations from rosTF/frameServer... "; flush(cout);
     while(true) {
       try {
-	rtf_.getMatrix(rtf_.nameClient.lookup("FRAMEID_SMALLV"), rtf_.nameClient.lookup("FRAMEID_TILT_BASE"), ros::Time::now().to_ull());
+	rtf_.getMatrix("FRAMEID_SMALLV", "FRAMEID_TILT_BASE", ros::Time::now().to_ull());
 	break;
       }
       catch (libTF::TransformReference::LookupException & ex) {
