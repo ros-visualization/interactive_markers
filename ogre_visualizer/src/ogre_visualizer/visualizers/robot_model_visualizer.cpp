@@ -52,6 +52,13 @@ RobotModelVisualizer::~RobotModelVisualizer()
 {
   Unsubscribe();
 
+  Clear();
+
+  m_SceneManager->destroySceneNode( m_RootNode->getName() );
+}
+
+void RobotModelVisualizer::Clear()
+{
   M_StringToEntity::iterator modelIt = m_Models.begin();
   M_StringToEntity::iterator modelEnd = m_Models.end();
   for ( ; modelIt != modelEnd; ++modelIt )
@@ -63,16 +70,35 @@ RobotModelVisualizer::~RobotModelVisualizer()
     m_SceneManager->destroyEntity( entity );
   }
 
+  m_Models.clear();
+
   m_RootNode->removeAndDestroyAllChildren();
-  m_SceneManager->destroySceneNode( m_RootNode->getName() );
 }
 
 void RobotModelVisualizer::Initialize( const std::string& descriptionParam, const std::string& transformTopic )
 {
   m_TransformTopic = transformTopic;
+  m_DescriptionParam = descriptionParam;
+
+  m_Initialized = true;
+
+  if ( IsEnabled() )
+  {
+    OnEnable();
+    CauseRender();
+  }
+  else
+  {
+    m_RootNode->setVisible( false );
+  }
+}
+
+void RobotModelVisualizer::Load()
+{
+  Clear();
 
   std::string content;
-  m_ROSNode->get_param(descriptionParam, content);
+  m_ROSNode->get_param(m_DescriptionParam, content);
   robot_desc::URDF* file = new robot_desc::URDF();
   std::auto_ptr<robot_desc::URDF> file_ptr( file );
 
@@ -113,13 +139,22 @@ void RobotModelVisualizer::Initialize( const std::string& descriptionParam, cons
       {
         Ogre::SubEntity* subEntity = entity->getSubEntity( i );
 
-        std::vector<std::string> gazebo_names;
+        typedef std::vector<std::string> V_string;
+        V_string gazebo_names;
         link->visual->data.getMapTagNames("gazebo", gazebo_names);
-        for (unsigned int k = 0 ; k < gazebo_names.size() ; ++k)
+
+        V_string::iterator nameIt = gazebo_names.begin();
+        V_string::iterator nameEnd = gazebo_names.end();
+        for ( ; nameIt != nameEnd; ++nameIt )
         {
-          std::map<std::string, std::string> m = link->visual->data.getMapTagValues("gazebo", gazebo_names[k]);
-          if (m.find("material") != m.end() )
-            subEntity->setMaterialName( m["matrials"] );
+          typedef std::map<std::string, std::string> M_string;
+          M_string m = link->visual->data.getMapTagValues("gazebo", *nameIt);
+
+          M_string::iterator it = m.find( "material" );
+          if ( it != m.end() )
+          {
+            subEntity->setMaterialName( it->second );
+          }
         }
 
       }
@@ -133,18 +168,6 @@ void RobotModelVisualizer::Initialize( const std::string& descriptionParam, cons
   }
 
   UpdateTransforms();
-
-  m_Initialized = true;
-
-  if ( IsEnabled() )
-  {
-    OnEnable();
-    CauseRender();
-  }
-  else
-  {
-    m_RootNode->setVisible( false );
-  }
 }
 
 void RobotModelVisualizer::OnEnable()
@@ -156,6 +179,8 @@ void RobotModelVisualizer::OnEnable()
 
   Subscribe();
   m_RootNode->setVisible( true );
+
+  Load();
 }
 
 void RobotModelVisualizer::OnDisable()
@@ -205,9 +230,9 @@ void RobotModelVisualizer::UpdateTransforms()
     Ogre::Entity* entity = modelIt->second;
     Ogre::SceneNode* node = entity->getParentSceneNode();
 
-    libTF::TFPose pose = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0, 0 };
+    libTF::TFPose pose = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0, "" };
 
-    pose.frame = m_TFClient->lookup( name );
+    pose.frame = name;
 
     try
     {

@@ -145,9 +145,9 @@ void PointCloudVisualizer::IncomingCloudCallback()
 {
   m_Message.lock();
 
-  if ( m_Message.header.frame_id == 0 )
+  if ( m_Message.header.frame_id.empty() )
   {
-    m_Message.header.frame_id = m_TFClient->lookup( m_TargetFrame );
+    m_Message.header.frame_id = m_TargetFrame;
   }
 
   try

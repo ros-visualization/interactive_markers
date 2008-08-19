@@ -182,9 +182,9 @@ void LaserScanVisualizer::Update( float dt )
 
 void LaserScanVisualizer::TransformCloud()
 {
-  if ( m_CloudMessage.header.frame_id == 0 )
+  if ( m_CloudMessage.header.frame_id.empty() )
   {
-    m_CloudMessage.header.frame_id = m_TFClient->lookup( "FRAMEID_BASE" );
+    m_CloudMessage.header.frame_id = m_TargetFrame;
   }
 
   try
@@ -254,9 +254,9 @@ void LaserScanVisualizer::IncomingScanCallback()
 {
   m_CloudMessage.lock();
 
-  if ( m_ScanMessage.header.frame_id == 0 )
+  if ( m_ScanMessage.header.frame_id.empty() )
   {
-    m_ScanMessage.header.frame_id = m_TFClient->lookup( "FRAMEID_BASE" );
+    m_ScanMessage.header.frame_id = m_TargetFrame;
   }
 
   m_LaserProjection.projectLaser( m_ScanMessage, m_CloudMessage );

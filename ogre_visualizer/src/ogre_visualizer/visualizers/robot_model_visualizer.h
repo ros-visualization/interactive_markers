@@ -66,8 +66,12 @@ protected:
   void IncomingTransform();
   void UpdateTransforms();
 
+  void Clear();
+  void Load();
+
   std_msgs::Empty m_Message;
   std::string m_TransformTopic;
+  std::string m_DescriptionParam;
 
   typedef std::map< std::string, Ogre::Entity* > M_StringToEntity;
   M_StringToEntity m_Models;

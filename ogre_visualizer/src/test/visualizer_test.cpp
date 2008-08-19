@@ -139,7 +139,7 @@ public:
     laserScan->SetColor( 1.0, 0.0, 0.0 );
 
     laserScan = m_VisualizationPanel->CreateVisualizer<LaserScanVisualizer>( "Floor Scan", false );
-    laserScan->SetScanTopic( "scan" );
+    laserScan->SetScanTopic( "base_scan" );
     laserScan->SetShutterTopic( "shutterScan" );
     laserScan->SetColor( 0.0f, 1.0f, 0.0f );
 
