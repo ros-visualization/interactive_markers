@@ -6,6 +6,7 @@ ros::node *m_rosNode;
 ///Message used for viewing ros error messages
 rostools::Log rosErrMsg;
 
+///Sends roserr messages for testing purposes
 int main( int argc, char** argv )
 {
 	ros::init(argc,argv);
@@ -21,10 +22,10 @@ int main( int argc, char** argv )
 			rosErrMsg.name = "roserrTester";
 			rosErrMsg.msg = "I'm testing roserr.  Does wordwrap work?  I don't know, hopefully this long string will find out.\n";
 			m_rosNode->publish("/roserr",rosErrMsg);
-			/*for(double a = -9999;a < 9999; a = a+.0001)
+			for(double a = -9999;a < 9999; a = a+.01)
 			{
 
-			}*/
+			}
 		}
 		if(input == "quit")
 			break;

@@ -20,6 +20,7 @@
 #include <wx/textctrl.h>
 #include <wx/panel.h>
 #include <wx/statbox.h>
+#include <wx/stattext.h>
 #include <wx/dialog.h>
 
 ///////////////////////////////////////////////////////////////////////////
@@ -58,19 +59,22 @@ class RoserrSetupDialogBase : public wxDialog
 	private:
 	
 	protected:
-		wxCheckBox* m_WordWrapCB;
 		wxCheckBox* m_MonochromeCB;
+		wxStaticText* m_staticText1;
+		wxTextCtrl* m_rostopicL;
+		wxButton* m_roserrB;
 		wxStdDialogButtonSizer* m_sdbSizer1;
 		wxButton* m_sdbSizer1OK;
 		wxButton* m_sdbSizer1Cancel;
 		
 		// Virtual event handlers, overide them in your derived class
+		virtual void OnClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnCancel( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnOk( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:
-		RoserrSetupDialogBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Roserr Setup"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 219,150 ), long style = wxDEFAULT_DIALOG_STYLE );
+		RoserrSetupDialogBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Roserr Setup"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 333,207 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~RoserrSetupDialogBase();
 	
 };

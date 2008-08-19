@@ -52,7 +52,7 @@ RoserrPanelBase::RoserrPanelBase( wxWindow* parent, wxWindowID id, const wxPoint
 	
 	bSizer2->Add( bSizer3, 0, wxEXPAND, 5 );
 	
-	m_roserrTC = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_LEFT|wxTE_MULTILINE );
+	m_roserrTC = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_LEFT|wxTE_MULTILINE|wxTE_READONLY );
 	bSizer2->Add( m_roserrTC, 1, wxALL|wxEXPAND, 5 );
 	
 	this->SetSizer( bSizer2 );
@@ -82,15 +82,36 @@ RoserrSetupDialogBase::RoserrSetupDialogBase( wxWindow* parent, wxWindowID id, c
 	wxStaticBoxSizer* TCOptionsSBS;
 	TCOptionsSBS = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Textbox Options") ), wxVERTICAL );
 	
-	m_WordWrapCB = new wxCheckBox( this, wxID_ANY, wxT("Word Wrap"), wxDefaultPosition, wxDefaultSize, 0 );
-	
-	TCOptionsSBS->Add( m_WordWrapCB, 0, wxALL, 5 );
-	
 	m_MonochromeCB = new wxCheckBox( this, wxID_ANY, wxT("Monochrome"), wxDefaultPosition, wxDefaultSize, 0 );
 	
 	TCOptionsSBS->Add( m_MonochromeCB, 0, wxALL, 5 );
 	
 	bSizer8->Add( TCOptionsSBS, 1, wxEXPAND, 5 );
+	
+	wxStaticBoxSizer* sbSizer2;
+	sbSizer2 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Ros Topic") ), wxVERTICAL );
+	
+	wxBoxSizer* bSizer10;
+	bSizer10 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_staticText1 = new wxStaticText( this, wxID_ANY, wxT("Subscription"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText1->Wrap( -1 );
+	bSizer10->Add( m_staticText1, 1, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	wxBoxSizer* bSizer91;
+	bSizer91 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_rostopicL = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
+	bSizer91->Add( m_rostopicL, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
+	
+	m_roserrB = new wxButton( this, wxID_ANY, wxT(" ... "), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	bSizer91->Add( m_roserrB, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	bSizer10->Add( bSizer91, 1, wxEXPAND, 5 );
+	
+	sbSizer2->Add( bSizer10, 0, wxEXPAND, 5 );
+	
+	bSizer8->Add( sbSizer2, 0, wxEXPAND, 5 );
 	
 	wxBoxSizer* bSizer9;
 	bSizer9 = new wxBoxSizer( wxHORIZONTAL );
@@ -109,6 +130,7 @@ RoserrSetupDialogBase::RoserrSetupDialogBase( wxWindow* parent, wxWindowID id, c
 	this->Layout();
 	
 	// Connect Events
+	m_roserrB->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( RoserrSetupDialogBase::OnClick ), NULL, this );
 	m_sdbSizer1Cancel->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( RoserrSetupDialogBase::OnCancel ), NULL, this );
 	m_sdbSizer1OK->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( RoserrSetupDialogBase::OnOk ), NULL, this );
 }
@@ -116,6 +138,7 @@ RoserrSetupDialogBase::RoserrSetupDialogBase( wxWindow* parent, wxWindowID id, c
 RoserrSetupDialogBase::~RoserrSetupDialogBase()
 {
 	// Disconnect Events
+	m_roserrB->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( RoserrSetupDialogBase::OnClick ), NULL, this );
 	m_sdbSizer1Cancel->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( RoserrSetupDialogBase::OnCancel ), NULL, this );
 	m_sdbSizer1OK->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( RoserrSetupDialogBase::OnOk ), NULL, this );
 }

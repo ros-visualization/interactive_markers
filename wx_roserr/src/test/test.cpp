@@ -34,6 +34,7 @@
 
 #include "ros/node.h"
 
+///Puts the RoserrPanel into a window
 class MyFrame : public wxFrame
 {
 public:
