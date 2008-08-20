@@ -113,7 +113,6 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent, Ogre::Root* root )
   m_RenderPanel->Connect( wxEVT_MIDDLE_UP, wxMouseEventHandler( VisualizationPanel::OnRenderWindowMouseEvents ), NULL, this );
   m_RenderPanel->Connect( wxEVT_RIGHT_UP, wxMouseEventHandler( VisualizationPanel::OnRenderWindowMouseEvents ), NULL, this );
 
-  // HACK HACK HACK until single threaded ROS
   m_RenderPanel->SetPreRenderCallback( new functor<VisualizationPanel>( this, &VisualizationPanel::LockRender ) );
   m_RenderPanel->SetPostRenderCallback( new functor<VisualizationPanel>( this, &VisualizationPanel::UnlockRender ) );
 
@@ -129,7 +128,7 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent, Ogre::Root* root )
 
   m_PropertyGrid->SetExtraStyle( wxPG_EX_HELP_AS_TOOLTIPS );
 
-  m_PropertyGrid->Connect( wxEVT_PG_CHANGING, wxPropertyGridEventHandler( VisualizationPanel::OnPropertyChanged ), NULL, this );
+  m_PropertyGrid->Connect( wxEVT_PG_CHANGING, wxPropertyGridEventHandler( VisualizationPanel::OnPropertyChanging ), NULL, this );
   m_PropertyGrid->Connect( wxEVT_PG_CHANGED, wxPropertyGridEventHandler( VisualizationPanel::OnPropertyChanged ), NULL, this );
 }
 
@@ -153,7 +152,7 @@ VisualizationPanel::~VisualizationPanel()
 
   Disconnect( EVT_RENDER, wxCommandEventHandler( VisualizationPanel::OnRender ), NULL, this );
 
-  m_PropertyGrid->Disconnect( wxEVT_PG_CHANGING, wxPropertyGridEventHandler( VisualizationPanel::OnPropertyChanged ), NULL, this );
+  m_PropertyGrid->Disconnect( wxEVT_PG_CHANGING, wxPropertyGridEventHandler( VisualizationPanel::OnPropertyChanging ), NULL, this );
   m_PropertyGrid->Disconnect( wxEVT_PG_CHANGED, wxPropertyGridEventHandler( VisualizationPanel::OnPropertyChanged ), NULL, this );
   m_PropertyGrid->Destroy();
 

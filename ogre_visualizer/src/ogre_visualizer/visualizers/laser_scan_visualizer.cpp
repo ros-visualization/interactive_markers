@@ -29,6 +29,7 @@
 
 #include "laser_scan_visualizer.h"
 #include "../common.h"
+#include "../ros_topic_property.h"
 
 #include "ros/node.h"
 #include "ogre_tools/point_cloud.h"
@@ -36,20 +37,35 @@
 #include <rosTF/rosTF.h>
 
 #include <Ogre.h>
+#include <wx/wx.h>
+#include <wx/propgrid/propgrid.h>
+#include <wx/propgrid/advprops.h>
+
+#define SCAN_TOPIC_PROPERTY wxT("Scan Topic")
+#define CLOUD_TOPIC_PROPERTY wxT("Cloud Topic")
+#define COLOR_PROPERTY wxT("Color")
+#define DECAY_TIME_PROPERTY wxT("Decay Time")
+#define STYLE_PROPERTY wxT("Style")
+#define BILLBOARD_SIZE_PROPERTY wxT("Billboard Size")
 
 namespace ogre_vis
 {
 
 LaserScanVisualizer::LaserScanVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled )
-    : VisualizerBase( sceneManager, node, tfClient, name, enabled )
-    , m_R( 1.0 )
-    , m_G( 0.0 )
-    , m_B( 0.0 )
-    , m_IntensityMin( 999999.0f )
-    , m_IntensityMax( -999999.0f )
-    , m_PointDecayTime( 20.0f )
+: VisualizerBase( sceneManager, node, tfClient, name, enabled )
+, m_R( 1.0 )
+, m_G( 0.0 )
+, m_B( 0.0 )
+, m_IntensityMin( 999999.0f )
+, m_IntensityMax( -999999.0f )
+, m_PointDecayTime( 20.0f )
+, m_Style( Billboards )
+, m_BillboardSize( 0.003 )
 {
   m_Cloud = new ogre_tools::PointCloud( m_SceneManager );
+
+  SetStyle( m_Style );
+  SetBillboardSize( m_BillboardSize );
 
   if ( IsEnabled() )
   {
@@ -89,6 +105,30 @@ void LaserScanVisualizer::SetColor( float r, float g, float b )
   m_B = b;
 }
 
+void LaserScanVisualizer::SetStyle( Style style )
+{
+  {
+    RenderAutoLock renderLock( this );
+
+    m_Style = style;
+    m_Cloud->SetUsePoints( style == Points );
+  }
+
+  CauseRender();
+}
+
+void LaserScanVisualizer::SetBillboardSize( float size )
+{
+  {
+    RenderAutoLock renderLock( this );
+
+    m_BillboardSize = size;
+    m_Cloud->SetBillboardDimensions( size, size );
+  }
+
+  CauseRender();
+}
+
 void LaserScanVisualizer::OnEnable()
 {
   m_Cloud->SetVisible( true );
@@ -97,8 +137,12 @@ void LaserScanVisualizer::OnEnable()
 
 void LaserScanVisualizer::OnDisable()
 {
-  m_Cloud->SetVisible( false );
   Unsubscribe();
+
+  m_Cloud->SetVisible( false );
+  m_Cloud->Clear();
+  m_Points.clear();
+  m_PointTimes.clear();
 }
 
 void LaserScanVisualizer::Subscribe()
@@ -276,6 +320,69 @@ void LaserScanVisualizer::IncomingScanCallback()
   TransformCloud();
 
   m_CloudMessage.unlock();
+}
+
+void LaserScanVisualizer::FillPropertyGrid( wxPropertyGrid* propertyGrid )
+{
+  wxArrayString styleNames;
+  styleNames.Add( wxT("Billboards") );
+  styleNames.Add( wxT("Points") );
+  wxArrayInt styleIds;
+  styleIds.Add( Billboards );
+  styleIds.Add( Points );
+
+  propertyGrid->Append( new wxEnumProperty( STYLE_PROPERTY, wxPG_LABEL, styleNames, styleIds, m_Style ) );
+
+  propertyGrid->Append( new ROSTopicProperty( m_ROSNode, SCAN_TOPIC_PROPERTY, wxPG_LABEL, wxString::FromAscii( m_ScanTopic.c_str() ) ) );
+  propertyGrid->Append( new ROSTopicProperty( m_ROSNode, CLOUD_TOPIC_PROPERTY, wxPG_LABEL, wxString::FromAscii( m_CloudTopic.c_str() ) ) );
+  propertyGrid->Append( new wxColourProperty( COLOR_PROPERTY, wxPG_LABEL, wxColour( m_R * 255, m_G * 255, m_B * 255 ) ) );
+  wxPGId prop = propertyGrid->Append( new wxFloatProperty( DECAY_TIME_PROPERTY, wxPG_LABEL, m_PointDecayTime ) );
+
+  propertyGrid->SetPropertyAttribute( prop, wxT("Min"), 0.0 );
+
+  prop = propertyGrid->Append( new wxFloatProperty( BILLBOARD_SIZE_PROPERTY, wxPG_LABEL, m_BillboardSize ) );
+  propertyGrid->SetPropertyAttribute( prop, wxT("Min"), 0.0 );
+}
+
+void LaserScanVisualizer::PropertyChanged( wxPropertyGridEvent& event )
+{
+  wxPGProperty* property = event.GetProperty();
+
+  const wxString& name = property->GetName();
+  wxVariant value = property->GetValue();
+
+  if ( name == SCAN_TOPIC_PROPERTY )
+  {
+    wxString topic = value.GetString();
+    SetScanTopic( std::string(topic.char_str()) );
+  }
+  else if ( name == CLOUD_TOPIC_PROPERTY )
+  {
+    wxString topic = value.GetString();
+    SetCloudTopic( std::string(topic.char_str()) );
+  }
+  else if ( name == COLOR_PROPERTY )
+  {
+    wxColour color;
+    color << value;
+
+    SetColor( color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f );
+  }
+  else if ( name == DECAY_TIME_PROPERTY )
+  {
+    float val = value.GetDouble();
+    SetDecayTime( val );
+  }
+  else if ( name == STYLE_PROPERTY )
+  {
+    int val = value.GetLong();
+    SetStyle( (Style)val );
+  }
+  else if ( name == BILLBOARD_SIZE_PROPERTY )
+  {
+    float val = value.GetDouble();
+    SetBillboardSize( val );
+  }
 }
 
 } // namespace ogre_vis

@@ -109,12 +109,18 @@ void VisualizerBase::CauseRender()
 
 void VisualizerBase::LockRender()
 {
-  m_RenderLock->call();
+  if ( m_RenderLock )
+  {
+    m_RenderLock->call();
+  }
 }
 
 void VisualizerBase::UnlockRender()
 {
-  m_RenderUnlock->call();
+  if ( m_RenderUnlock )
+  {
+    m_RenderUnlock->call();
+  }
 }
 
 } // namespace ogre_vis

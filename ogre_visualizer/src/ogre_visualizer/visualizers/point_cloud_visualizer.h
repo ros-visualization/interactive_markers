@@ -48,11 +48,23 @@ namespace ogre_vis
 class PointCloudVisualizer : public VisualizerBase
 {
 public:
+  enum Style
+  {
+    Points,
+    Billboards,
+  };
+
   PointCloudVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
   ~PointCloudVisualizer();
 
   void SetTopic( const std::string& topic );
   void SetColor( float r, float g, float b );
+  void SetStyle( Style style );
+  void SetBillboardSize( float size );
+
+  // Overrides from VisualizerBase
+  virtual void FillPropertyGrid( wxPropertyGrid* propertyGrid );
+  virtual void PropertyChanged( wxPropertyGridEvent& event );
 
 protected:
   virtual void OnEnable();
@@ -74,6 +86,9 @@ protected:
 
   typedef std::vector< ogre_tools::PointCloud::Point > V_Point;
   V_Point m_Points;
+
+  Style m_Style;
+  float m_BillboardSize;
 };
 
 } // namespace ogre_vis

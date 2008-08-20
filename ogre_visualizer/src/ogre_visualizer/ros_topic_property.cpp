@@ -27,43 +27,44 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_VISUALIZER_AXES_VISUALIZER_H
-#define OGRE_VISUALIZER_AXES_VISUALIZER_H
-
-#include "../visualizer_base.h"
-
-namespace ogre_tools
-{
-class Axes;
-}
+#include "ros_topic_property.h"
+#include <wx_topic_display/TopicDisplayDialog.h>
 
 namespace ogre_vis
 {
 
-class AxesVisualizer : public VisualizerBase
+IMPLEMENT_DYNAMIC_CLASS(ROSTopicProperty, wxLongStringProperty)
+
+bool ROSTopicDialogAdapter::DoShowDialog( wxPropertyGrid* WXUNUSED(propGrid), wxPGProperty* WXUNUSED(property) )
 {
-public:
-  AxesVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
-  virtual ~AxesVisualizer();
+  TopicDisplayDialog dialog(NULL, m_ROSNode, false);
 
-  void Set( float length, float radius );
+  if (dialog.ShowModal() == wxID_OK)
+  {
+    std::vector<std::string> selection;
+    dialog.getSelection(selection);
 
-  // Overrides from VisualizerBase
-  virtual void FillPropertyGrid( wxPropertyGrid* propertyGrid );
-  virtual void PropertyChanged( wxPropertyGridEvent& event );
+    if (!selection.empty())
+    {
+      SetValue( wxString::FromAscii( selection[0].c_str() ) );
+      return true;
+    }
+  }
 
-protected:
-  void Create();
+  return false;
+}
 
-  // overrides from VisualizerBase
-  virtual void OnEnable();
-  virtual void OnDisable();
+ROSTopicProperty::ROSTopicProperty()
+: m_ROSNode( NULL )
+{
 
-  float m_Length;
-  float m_Radius;
-  ogre_tools::Axes* m_Axes;
-};
+}
+
+ROSTopicProperty::ROSTopicProperty( ros::node* node, const wxString& label, const wxString& name, const wxString& value )
+: wxLongStringProperty( label, name, value )
+, m_ROSNode( node )
+{
+}
 
 } // namespace ogre_vis
 
- #endif

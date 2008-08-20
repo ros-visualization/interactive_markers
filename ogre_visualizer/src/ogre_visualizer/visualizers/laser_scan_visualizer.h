@@ -50,9 +50,17 @@ class rosTFClient;
 namespace ogre_vis
 {
 
+// TODO: find out some way to share most of this code with PointCloudVisualizer
+
 class LaserScanVisualizer : public VisualizerBase
 {
 public:
+  enum Style
+  {
+    Points,
+    Billboards,
+  };
+
   LaserScanVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
   ~LaserScanVisualizer();
 
@@ -61,8 +69,14 @@ public:
 
   void SetColor( float r, float g, float b );
   void SetDecayTime( float time ) { m_PointDecayTime = time; }
+  void SetStyle( Style style );
+  void SetBillboardSize( float size );
 
   virtual void Update( float dt );
+
+  // Overrides from VisualizerBase
+  virtual void FillPropertyGrid( wxPropertyGrid* propertyGrid );
+  virtual void PropertyChanged( wxPropertyGridEvent& event );
 
 protected:
   virtual void OnEnable();
@@ -100,6 +114,9 @@ protected:
   typedef std::deque< float > D_float;
   D_float m_PointTimes;
   float m_PointDecayTime;
+
+  Style m_Style;
+  float m_BillboardSize;
 };
 
 } // namespace ogre_vis

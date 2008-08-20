@@ -33,6 +33,12 @@
 #include "ogre_tools/axes.h"
 
 #include <Ogre.h>
+#include <wx/wx.h>
+#include <wx/propgrid/propgrid.h>
+#include <wx/propgrid/advprops.h>
+
+#define LENGTH_PROPERTY wxT("Length")
+#define RADIUS_PROPERTY wxT("Radius")
 
 namespace ogre_vis
 {
@@ -87,6 +93,34 @@ void AxesVisualizer::Set( float length, float radius )
   m_Radius = radius;
 
   Create();
+}
+
+void AxesVisualizer::FillPropertyGrid( wxPropertyGrid* propertyGrid )
+{
+  wxPGId prop = propertyGrid->Append( new wxFloatProperty( LENGTH_PROPERTY, wxPG_LABEL, m_Length ) );
+  propertyGrid->SetPropertyAttribute( prop, wxT("Min"), 0.0001 );
+
+  prop = propertyGrid->Append( new wxFloatProperty( RADIUS_PROPERTY, wxPG_LABEL, m_Radius ) );
+  propertyGrid->SetPropertyAttribute( prop, wxT("Min"), 0.0001 );
+}
+
+void AxesVisualizer::PropertyChanged( wxPropertyGridEvent& event )
+{
+  wxPGProperty* property = event.GetProperty();
+
+  const wxString& name = property->GetName();
+  wxVariant value = property->GetValue();
+
+  if ( name == LENGTH_PROPERTY )
+  {
+    float length = value.GetDouble();
+    Set( length, m_Radius );
+  }
+  else if ( name == RADIUS_PROPERTY )
+  {
+    float radius = value.GetDouble();
+    Set( m_Length, radius );
+  }
 }
 
 } // namespace ogre_vis

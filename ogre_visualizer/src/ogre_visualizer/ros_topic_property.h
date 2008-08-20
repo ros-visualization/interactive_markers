@@ -27,43 +27,62 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_VISUALIZER_AXES_VISUALIZER_H
-#define OGRE_VISUALIZER_AXES_VISUALIZER_H
+#ifndef OGRE_VISUALIZER_ROS_TOPIC_PROPERTY_H
+#define OGRE_VISUALIZER_ROS_TOPIC_PROPERTY_H
 
-#include "../visualizer_base.h"
+#include <wx/wx.h>
+#include <wx/propgrid/propgrid.h>
+#include <wx/propgrid/propdev.h>
 
-namespace ogre_tools
+namespace ros
 {
-class Axes;
+class node;
 }
 
 namespace ogre_vis
 {
-
-class AxesVisualizer : public VisualizerBase
+class ROSTopicDialogAdapter : public wxPGEditorDialogAdapter
 {
 public:
-  AxesVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
-  virtual ~AxesVisualizer();
 
-  void Set( float length, float radius );
+  ROSTopicDialogAdapter( ros::node* node )
+  : wxPGEditorDialogAdapter()
+  , m_ROSNode( node )
+  {
+  }
 
-  // Overrides from VisualizerBase
-  virtual void FillPropertyGrid( wxPropertyGrid* propertyGrid );
-  virtual void PropertyChanged( wxPropertyGridEvent& event );
+  virtual bool DoShowDialog( wxPropertyGrid* WXUNUSED(propGrid), wxPGProperty* WXUNUSED(property) );
 
 protected:
-  void Create();
+  ros::node* m_ROSNode;
+};
 
-  // overrides from VisualizerBase
-  virtual void OnEnable();
-  virtual void OnDisable();
+//
+// wxLongStringProperty has wxString as value type and TextCtrlAndButton as editor.
+// Here we will derive a new property class that will show single choice dialog
+// on button click.
+//
 
-  float m_Length;
-  float m_Radius;
-  ogre_tools::Axes* m_Axes;
+class ROSTopicProperty : public wxLongStringProperty
+{
+  DECLARE_DYNAMIC_CLASS(ROSTopicProperty)
+public:
+
+  // Normal property constructor.
+  ROSTopicProperty(ros::node* node, const wxString& label, const wxString& name = wxPG_LABEL, const wxString& value = wxEmptyString);
+
+  // Do something special when button is clicked.
+  virtual wxPGEditorDialogAdapter* GetEditorDialog() const
+  {
+    return new ROSTopicDialogAdapter( m_ROSNode );
+  }
+
+protected:
+  ROSTopicProperty();
+
+  ros::node* m_ROSNode;
 };
 
 } // namespace ogre_vis
 
- #endif
+#endif
