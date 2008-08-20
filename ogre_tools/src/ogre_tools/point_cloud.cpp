@@ -112,7 +112,6 @@ void PointCloud::SetUsePoints( bool usePoints )
     Ogre::BillboardSet* bbs = *bbsIt;
 
     bbs->setPointRenderingEnabled( usePoints );
-
     bbs->setPoolSize( m_PointsPerBBS );
   }
 }
@@ -196,6 +195,7 @@ void PointCloud::_updateRenderQueue( Ogre::RenderQueue* queue )
   uint32_t pointsInCurrent = 0;
   uint32_t currentBBS = 0;
   Ogre::BillboardSet* bbs = NULL;
+  V_BillboardSet used;
   for ( uint32_t i = 0; i < m_PointCount; ++i, ++pointsInCurrent )
   {
     bool newBBS = false;
@@ -221,6 +221,8 @@ void PointCloud::_updateRenderQueue( Ogre::RenderQueue* queue )
     {
       bbs = m_BillboardSets[ currentBBS ];
       bbs->beginBillboards( std::min<uint32_t>( m_PointCount - i, m_PointsPerBBS ) );
+
+      used.push_back( bbs );
     }
 
     Point& p = m_Points[i];
@@ -238,8 +240,8 @@ void PointCloud::_updateRenderQueue( Ogre::RenderQueue* queue )
   bbs->endBillboards();
 
   // Update the queue
-  V_BillboardSet::iterator bbsIt = m_BillboardSets.begin();
-  V_BillboardSet::iterator bbsEnd = m_BillboardSets.end();
+  V_BillboardSet::iterator bbsIt = used.begin();
+  V_BillboardSet::iterator bbsEnd = used.end();
   for ( ; bbsIt != bbsEnd; ++bbsIt )
   {
     (*bbsIt)->_updateRenderQueue( queue );
