@@ -47,7 +47,7 @@ public:
 	float defaultZRotation;
 	irr::s32 ID;
 
-///Constructor, does not include an id
+///Constructor, takes a filename and loads the mesh/node
 ILModel(irr::scene::ISceneManager *mngr, irr::scene::ISceneNode *prnt, irr::c8 *fName, irr::s32 id, float x, float y, float z, float roll, float pitch, float yaw)
 {
 	parent = prnt;
@@ -69,7 +69,7 @@ ILModel(irr::scene::ISceneManager *mngr, irr::scene::ISceneNode *prnt, irr::c8 *
 		}
 	}
 }
-///Constructor, does includes an id
+///Constructor, takes in a node
 ILModel(irr::scene::ISceneManager *mngr, irr::scene::ISceneNode *prnt, irr::scene::ISceneNode *inNode, irr::s32 id, float x, float y, float z, float roll, float pitch, float yaw)
 {
 	parent = prnt;

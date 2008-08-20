@@ -150,7 +150,16 @@ void Vis3d::enableModel()
 	for(unsigned int i = 0; i < links.size(); i++)
 	{
 		//m_nameMap[links[i]->name] = pathnamePrefix + links[i]->visual->geometry->filename + pathnameSuffix;
-		std::cout << links[i]->name << ": " << pathnamePrefix + links[i]->visual->geometry->filename + pathnameSuffix << std::endl;
+		//std::cout << links[i]->name << ": " << pathnamePrefix + links[i]->visual->geometry->filename + pathnameSuffix << std::endl;
+
+        std::string mesh_filename;
+        if (links[i]->visual->geometry->type == robot_desc::URDF::Link::Geometry::MESH)
+		{
+		    robot_desc::URDF::Link::Geometry::Mesh* mesh = static_cast<robot_desc::URDF::Link::Geometry::Mesh*>(links[i]->visual->geometry->shape);
+		    /* set mesh file */
+		    mesh_filename = mesh->filename;
+		}
+
 	//}
 
 
@@ -186,9 +195,9 @@ void Vis3d::enableModel()
 		}
 		std::cout << "Coordinates for : " << i << "; "<<inBaseFrame.x << ", " <<  inBaseFrame.y << ", " << inBaseFrame.z << "; "<<inBaseFrame.roll << ", " <<  inBaseFrame.pitch << ", " << inBaseFrame.yaw <<std::endl;
 		try{
-			if(links[i]->visual->geometry->filename != "")
+			if(!mesh_filename.empty())
 			{
-				ILModel *tempModel = new ILModel(pLocalRenderer->manager(), intermediate, (irr::c8*)(pathnamePrefix + links[i]->visual->geometry->filename + pathnameSuffix).c_str(), links[i]->name, (float)inBaseFrame.x,(float)inBaseFrame.y, (float)inBaseFrame.z, (float)inBaseFrame.roll,(float)(inBaseFrame.pitch), (float)(inBaseFrame.yaw));
+				ILModel *tempModel = new ILModel(pLocalRenderer->manager(), intermediate, (irr::c8*)(pathnamePrefix + mesh_filename + pathnameSuffix).c_str(), -1, (float)inBaseFrame.x,(float)inBaseFrame.y, (float)inBaseFrame.z, (float)inBaseFrame.roll,(float)(inBaseFrame.pitch), (float)(inBaseFrame.yaw));
 				if(tempModel->getNode() != NULL)
 				{
 					tempModel->getNode()->getMaterial(0).AmbientColor.set(255,100+int(155.0*rand()/(RAND_MAX + 1.0)),100+int(155.0*rand()/(RAND_MAX + 1.0)),100+int(155.0*rand()/(RAND_MAX + 1.0)));
