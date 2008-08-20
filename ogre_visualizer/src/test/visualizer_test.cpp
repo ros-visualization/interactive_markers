@@ -133,14 +133,14 @@ public:
     pointCloud->SetColor( 1.0, 1.0, 0.0 );
 
     LaserScanVisualizer* laserScan = m_VisualizationPanel->CreateVisualizer<LaserScanVisualizer>( "Head Scan", false );
-    laserScan->SetScanTopic( "cloud" );
-    laserScan->SetShutterTopic( "shutter" );
+    laserScan->SetScanTopic( "tilt_scan" );
     laserScan->SetColor( 1.0, 0.0, 0.0 );
+    laserScan->SetDecayTime( 30.0f );
 
     laserScan = m_VisualizationPanel->CreateVisualizer<LaserScanVisualizer>( "Floor Scan", false );
     laserScan->SetScanTopic( "base_scan" );
-    laserScan->SetShutterTopic( "shutterScan" );
     laserScan->SetColor( 0.0f, 1.0f, 0.0f );
+    laserScan->SetDecayTime( 0.0f );
 
     m_VisualizationPanel->CreateVisualizer<MarkerVisualizer>( "Visualization Markers", true );
   }

@@ -107,6 +107,24 @@ protected:
   rosTFClient* m_TFClient;
 };
 
+class RenderAutoLock
+{
+public:
+  RenderAutoLock( VisualizerBase* visualizer )
+  : m_Visualizer( visualizer )
+  {
+    m_Visualizer->LockRender();
+  }
+
+  ~RenderAutoLock()
+  {
+    m_Visualizer->UnlockRender();
+  }
+
+private:
+  VisualizerBase* m_Visualizer;
+};
+
 } // namespace ogre_vis
 
 #endif

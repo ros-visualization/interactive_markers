@@ -38,6 +38,8 @@
 #include "std_msgs/PointCloudFloat32.h"
 #include "std_msgs/Empty.h"
 
+#include <deque>
+
 namespace ros
 {
   class node;
@@ -56,9 +58,9 @@ public:
 
   void SetCloudTopic( const std::string& topic );
   void SetScanTopic( const std::string& topic );
-  void SetShutterTopic( const std::string& topic );
 
   void SetColor( float r, float g, float b );
+  void SetDecayTime( float time ) { m_PointDecayTime = time; }
 
   virtual void Update( float dt );
 
@@ -70,24 +72,19 @@ protected:
   void Unsubscribe();
 
   void TransformCloud();
+  void CullPoints();
 
   void IncomingCloudCallback();
   void IncomingScanCallback();
-  void IncomingShutterCallback();
 
   ogre_tools::PointCloud* m_Cloud;
 
   std::string m_CloudTopic;
   std::string m_ScanTopic;
-  std::string m_ShutterTopic;
   std_msgs::PointCloudFloat32 m_CloudMessage;
   std_msgs::LaserScan m_ScanMessage;
-  std_msgs::Empty m_ShutterMessage;
 
   laser_scan::LaserProjection m_LaserProjection;
-
-  bool m_RegenerateCloud;
-  bool m_ClearNextFrame;
 
   float m_R;
   float m_G;
@@ -97,7 +94,12 @@ protected:
   float m_IntensityMax;
 
   typedef std::vector< ogre_tools::PointCloud::Point > V_Point;
-  V_Point m_NewPoints;
+  typedef std::deque< V_Point > DV_Point;
+  DV_Point m_Points;
+
+  typedef std::deque< float > D_float;
+  D_float m_PointTimes;
+  float m_PointDecayTime;
 };
 
 } // namespace ogre_vis

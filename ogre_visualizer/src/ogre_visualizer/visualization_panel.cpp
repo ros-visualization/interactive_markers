@@ -45,15 +45,21 @@
 namespace ogre_vis
 {
 
-namespace ViewTools
+namespace IDs
 {
-enum ViewTool
+enum ID
 {
   FPS = wxID_HIGHEST + 1,
   Orbit,
 };
 }
-typedef ViewTools::ViewTool ViewTool;
+typedef IDs::ID ID;
+
+BEGIN_DECLARE_EVENT_TYPES()
+DECLARE_EVENT_TYPE(EVT_RENDER, wxID_ANY)
+END_DECLARE_EVENT_TYPES()
+
+DEFINE_EVENT_TYPE(EVT_RENDER)
 
 VisualizationPanel::VisualizationPanel( wxWindow* parent, Ogre::Root* root )
     : VisualizationPanelGenerated( parent )
@@ -90,8 +96,8 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent, Ogre::Root* root )
 
   m_RenderPanel->GetViewport()->setCamera( m_CurrentCamera->GetOgreCamera() );
 
-  m_Views->AddRadioTool( ViewTools::Orbit, wxT("Orbit"), wxNullBitmap, wxNullBitmap, wxT("Orbit Camera Controls") );
-  m_Views->AddRadioTool( ViewTools::FPS, wxT("FPS"), wxNullBitmap, wxNullBitmap, wxT("FPS Camera Controls") );
+  m_Views->AddRadioTool( IDs::Orbit, wxT("Orbit"), wxNullBitmap, wxNullBitmap, wxT("Orbit Camera Controls") );
+  m_Views->AddRadioTool( IDs::FPS, wxT("FPS"), wxNullBitmap, wxNullBitmap, wxT("FPS Camera Controls") );
 
   m_Views->Connect( wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( VisualizationPanel::OnViewClicked ), NULL, this );
 
@@ -114,6 +120,8 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent, Ogre::Root* root )
   m_UpdateTimer->Start( 10 );
   m_UpdateStopwatch.Start();
   Connect( m_UpdateTimer->GetId(), wxEVT_TIMER, wxTimerEventHandler( VisualizationPanel::OnUpdate ), NULL, this );
+
+  Connect( EVT_RENDER, wxCommandEventHandler( VisualizationPanel::OnRender ), NULL, this );
 }
 
 VisualizationPanel::~VisualizationPanel()
@@ -133,6 +141,8 @@ VisualizationPanel::~VisualizationPanel()
 
   Disconnect( wxEVT_TIMER, m_UpdateTimer->GetId(), wxTimerEventHandler( VisualizationPanel::OnUpdate ), NULL, this );
   delete m_UpdateTimer;
+
+  Disconnect( EVT_RENDER, wxCommandEventHandler( VisualizationPanel::OnRender ), NULL, this );
 
   V_Visualizer::iterator visIt = m_Visualizers.begin();
   V_Visualizer::iterator visEnd = m_Visualizers.end();
@@ -161,6 +171,12 @@ VisualizationPanel::~VisualizationPanel()
 
 void VisualizationPanel::Render()
 {
+  wxCommandEvent event( EVT_RENDER, GetId() );
+  wxPostEvent( this, event );
+}
+
+void VisualizationPanel::OnRender( wxCommandEvent& event )
+{
   m_RenderPanel->Refresh();
 }
 
@@ -168,13 +184,13 @@ void VisualizationPanel::OnViewClicked( wxCommandEvent& event )
 {
   switch ( event.GetId() )
   {
-  case ViewTools::FPS:
+  case IDs::FPS:
     {
       m_CurrentCamera = m_FPSCamera;
     }
     break;
 
-  case ViewTools::Orbit:
+  case IDs::Orbit:
     {
       m_CurrentCamera = m_OrbitCamera;
     }

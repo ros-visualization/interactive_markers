@@ -42,7 +42,6 @@ namespace ogre_vis
 
 PointCloudVisualizer::PointCloudVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled )
     : VisualizerBase( sceneManager, node, tfClient, name, enabled )
-    , m_RegenerateCloud( false )
     , m_R( 1.0 )
     , m_G( 1.0 )
     , m_B( 1.0 )
@@ -76,8 +75,6 @@ void PointCloudVisualizer::SetColor( float r, float g, float b )
   m_R = r;
   m_G = g;
   m_B = b;
-
-  m_RegenerateCloud = true;
 }
 
 void PointCloudVisualizer::OnEnable()
@@ -120,31 +117,8 @@ void PointCloudVisualizer::Unsubscribe()
   }
 }
 
-void PointCloudVisualizer::Update( float dt )
-{
-  m_Message.lock();
-
-  if ( m_RegenerateCloud )
-  {
-    m_Cloud->Clear();
-
-    if ( !m_Points.empty() )
-    {
-      m_Cloud->AddPoints( &m_Points.front(), m_Points.size() );
-    }
-
-    m_RegenerateCloud = false;
-
-    CauseRender();
-  }
-
-  m_Message.unlock();
-}
-
 void PointCloudVisualizer::IncomingCloudCallback()
 {
-  m_Message.lock();
-
   if ( m_Message.header.frame_id.empty() )
   {
     m_Message.header.frame_id = m_TargetFrame;
@@ -207,9 +181,18 @@ void PointCloudVisualizer::IncomingCloudCallback()
     currentPoint.m_B = color.z;
   }
 
-  m_RegenerateCloud = true;
+  {
+    RenderAutoLock renderLock( this );
 
-  m_Message.unlock();
+    m_Cloud->Clear();
+
+    if ( !m_Points.empty() )
+    {
+      m_Cloud->AddPoints( &m_Points.front(), m_Points.size() );
+    }
+  }
+
+  CauseRender();
 }
 
 } // namespace ogre_vis

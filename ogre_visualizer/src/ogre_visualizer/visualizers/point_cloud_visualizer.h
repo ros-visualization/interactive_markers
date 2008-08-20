@@ -54,8 +54,6 @@ public:
   void SetTopic( const std::string& topic );
   void SetColor( float r, float g, float b );
 
-  virtual void Update( float dt );
-
 protected:
   virtual void OnEnable();
   virtual void OnDisable();
@@ -69,8 +67,6 @@ protected:
 
   std::string m_Topic;
   std_msgs::PointCloudFloat32 m_Message;
-
-  bool m_RegenerateCloud;
 
   float m_R;
   float m_G;

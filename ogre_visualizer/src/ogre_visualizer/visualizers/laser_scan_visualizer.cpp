@@ -42,13 +42,12 @@ namespace ogre_vis
 
 LaserScanVisualizer::LaserScanVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled )
     : VisualizerBase( sceneManager, node, tfClient, name, enabled )
-    , m_RegenerateCloud( false )
-    , m_ClearNextFrame( false )
     , m_R( 1.0 )
     , m_G( 0.0 )
     , m_B( 0.0 )
     , m_IntensityMin( 999999.0f )
     , m_IntensityMax( -999999.0f )
+    , m_PointDecayTime( 20.0f )
 {
   m_Cloud = new ogre_tools::PointCloud( m_SceneManager );
 
@@ -83,22 +82,11 @@ void LaserScanVisualizer::SetScanTopic( const std::string& topic )
   Subscribe();
 }
 
-void LaserScanVisualizer::SetShutterTopic( const std::string& topic )
-{
-  Unsubscribe();
-
-  m_ShutterTopic = topic;
-
-  Subscribe();
-}
-
 void LaserScanVisualizer::SetColor( float r, float g, float b )
 {
   m_R = r;
   m_G = g;
   m_B = b;
-
-  m_RegenerateCloud = true;
 }
 
 void LaserScanVisualizer::OnEnable()
@@ -129,11 +117,6 @@ void LaserScanVisualizer::Subscribe()
   {
     m_ROSNode->subscribe( m_ScanTopic, m_ScanMessage, &LaserScanVisualizer::IncomingScanCallback, this );
   }
-
-  if ( !m_ShutterTopic.empty() )
-  {
-    m_ROSNode->subscribe( m_ShutterTopic, m_ShutterMessage, &LaserScanVisualizer::IncomingShutterCallback, this );
-  }
 }
 
 void LaserScanVisualizer::Unsubscribe()
@@ -147,37 +130,36 @@ void LaserScanVisualizer::Unsubscribe()
   {
     m_ROSNode->unsubscribe( m_ScanTopic );
   }
-
-  if ( !m_ShutterTopic.empty() )
-  {
-    m_ROSNode->unsubscribe( m_ShutterTopic );
-  }
 }
 
 void LaserScanVisualizer::Update( float dt )
 {
   m_CloudMessage.lock();
 
-  if ( m_RegenerateCloud )
+  D_float::iterator it = m_PointTimes.begin();
+  D_float::iterator end = m_PointTimes.end();
+  for ( ; it != end; ++it )
   {
-    if ( m_ClearNextFrame || m_ShutterTopic.empty() )
-    {
-      m_Cloud->Clear();
-
-      m_ClearNextFrame = false;
-    }
-
-    if ( !m_NewPoints.empty() )
-    {
-      m_Cloud->AddPoints( &m_NewPoints.front(), m_NewPoints.size() );
-    }
-
-    m_RegenerateCloud = false;
-
-    CauseRender();
+    *it += dt;
   }
 
+  CullPoints();
+
   m_CloudMessage.unlock();
+}
+
+void LaserScanVisualizer::CullPoints()
+{
+  if ( m_PointDecayTime == 0.0f )
+  {
+    return;
+  }
+
+  while ( !m_PointTimes.empty() && m_PointTimes.front() > m_PointDecayTime )
+  {
+    m_PointTimes.pop_front();
+    m_Points.pop_front();
+  }
 }
 
 void LaserScanVisualizer::TransformCloud()
@@ -216,7 +198,17 @@ void LaserScanVisualizer::TransformCloud()
 
   float diffIntensity = m_IntensityMax - m_IntensityMin;
 
-  m_NewPoints.resize( pointCount );
+  if ( m_PointDecayTime == 0.0f )
+  {
+    m_Points.clear();
+    m_PointTimes.clear();
+  }
+
+  m_Points.push_back( V_Point() );
+  V_Point& points = m_Points.back();
+  points.resize( pointCount );
+
+  m_PointTimes.push_back( 0.0f );
   for(uint32_t i = 0; i < pointCount; i++)
   {
     Ogre::Vector3 point( m_CloudMessage.pts[i].x, m_CloudMessage.pts[i].y, m_CloudMessage.pts[i].z );
@@ -229,7 +221,7 @@ void LaserScanVisualizer::TransformCloud()
     Ogre::Vector3 color( m_R, m_G, m_B );
     color *= normalizedIntensity;
 
-    ogre_tools::PointCloud::Point& currentPoint = m_NewPoints[ i ];
+    ogre_tools::PointCloud::Point& currentPoint = points[ i ];
     currentPoint.m_X = point.x;
     currentPoint.m_Y = point.y;
     currentPoint.m_Z = point.z;
@@ -237,6 +229,29 @@ void LaserScanVisualizer::TransformCloud()
     currentPoint.m_G = color.y;
     currentPoint.m_B = color.z;
   }
+
+  {
+    RenderAutoLock renderLock( this );
+
+    m_Cloud->Clear();
+
+    if ( !m_Points.empty() )
+    {
+      DV_Point::iterator it = m_Points.begin();
+      DV_Point::iterator end = m_Points.end();
+      for ( ; it != end; ++it )
+      {
+        V_Point& points = *it;
+
+        if ( !points.empty() )
+        {
+          m_Cloud->AddPoints( &points.front(), points.size() );
+        }
+      }
+    }
+  }
+
+  CauseRender();
 }
 
 void LaserScanVisualizer::IncomingCloudCallback()
@@ -244,8 +259,6 @@ void LaserScanVisualizer::IncomingCloudCallback()
   m_CloudMessage.lock();
 
   TransformCloud();
-
-  m_RegenerateCloud = true;
 
   m_CloudMessage.unlock();
 }
@@ -263,13 +276,6 @@ void LaserScanVisualizer::IncomingScanCallback()
   TransformCloud();
 
   m_CloudMessage.unlock();
-
-  m_RegenerateCloud = true;
-}
-
-void LaserScanVisualizer::IncomingShutterCallback()
-{
-  m_ClearNextFrame = true;
 }
 
 } // namespace ogre_vis

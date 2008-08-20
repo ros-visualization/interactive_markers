@@ -98,6 +98,7 @@ protected:
   void OnDisplaySelected( wxCommandEvent& event );
   void OnRenderWindowMouseEvents( wxMouseEvent& event );
   void OnUpdate( wxTimerEvent& event );
+  void OnRender( wxCommandEvent& event );
 
   Ogre::Root* m_OgreRoot;
   Ogre::SceneManager* m_SceneManager;
