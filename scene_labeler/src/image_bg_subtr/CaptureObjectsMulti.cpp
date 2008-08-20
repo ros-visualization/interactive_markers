@@ -116,6 +116,8 @@ public:
   bool hasNewFrameMsg, builtBridge, frameInUse;
   CvBridge<std_msgs::Image> *bridge_in, *bridge_out;
   std_msgs::Image labelMask;
+  ros::thread::mutex frame_mutex_;
+
 
   ImgBGSubtr() : ros::node("img_bg_subtr_multi"), hasNewFrameMsg(false), frame(0), builtBridge(false)
   {
@@ -141,13 +143,15 @@ public:
     }
 
     if(!hasNewFrameMsg) {
+      frame_mutex_.lock();
       if(frame) {
-	while(frameInUse); //Make sure no one is using frame.
 	cvReleaseImage(&frame);
       }
       bridge_in->to_cv(&frame);
       hasNewFrameMsg = true;
+      frame_mutex_.unlock();
     }
+
   }  
 };
 
@@ -458,9 +462,9 @@ int main( int argc, char** argv )
 	  // -- Get frame from ROS rather than from the camera directly.
 	  node.hasNewFrameMsg = false;
 
-	  node.frameInUse = true;
+	  node.frame_mutex_.lock();
 	  cvMerge( node.frame, node.frame, node.frame, NULL, frame ); 
-	  node.frameInUse = false;
+	  node.frame_mutex_.unlock();
 
 	  // -- Continue with normal execution of CaptureObjects.
 	  framecount += 1;
