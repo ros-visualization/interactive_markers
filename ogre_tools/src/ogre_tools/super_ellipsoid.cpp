@@ -84,6 +84,7 @@ void SuperEllipsoid::Create(int samples, float n1, float n2, const Ogre::Vector3
 
   phi = -Ogre::Math::HALF_PI;
 
+  m_ManualObject->clear();
   m_ManualObject->begin( m_MaterialName, Ogre::RenderOperation::OT_TRIANGLE_LIST );
 
   float scaleX = scale.x / 2.0f;
