@@ -41,6 +41,7 @@
 
 #include <Ogre.h>
 #include <wx/timer.h>
+#include <wx/propgrid/propgrid.h>
 
 namespace ogre_vis
 {
@@ -64,7 +65,7 @@ DEFINE_EVENT_TYPE(EVT_RENDER)
 VisualizationPanel::VisualizationPanel( wxWindow* parent, Ogre::Root* root )
     : VisualizationPanelGenerated( parent )
     , m_OgreRoot( root )
-    , m_CurrentOptionsPanel( NULL )
+    , m_SelectedVisualizer( NULL )
     , m_LeftMouseDown( false )
     , m_MiddleMouseDown( false )
     , m_RightMouseDown( false )
@@ -122,6 +123,14 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent, Ogre::Root* root )
   Connect( m_UpdateTimer->GetId(), wxEVT_TIMER, wxTimerEventHandler( VisualizationPanel::OnUpdate ), NULL, this );
 
   Connect( EVT_RENDER, wxCommandEventHandler( VisualizationPanel::OnRender ), NULL, this );
+
+  m_PropertyGrid = new wxPropertyGrid( m_PropertiesPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxPG_SPLITTER_AUTO_CENTER | wxTAB_TRAVERSAL | wxPG_DEFAULT_STYLE );
+  m_PropertiesPanelSizer->Add( m_PropertyGrid, 1, wxEXPAND, 5 );
+
+  m_PropertyGrid->SetExtraStyle( wxPG_EX_HELP_AS_TOOLTIPS );
+
+  m_PropertyGrid->Connect( wxEVT_PG_CHANGING, wxPropertyGridEventHandler( VisualizationPanel::OnPropertyChanged ), NULL, this );
+  m_PropertyGrid->Connect( wxEVT_PG_CHANGED, wxPropertyGridEventHandler( VisualizationPanel::OnPropertyChanged ), NULL, this );
 }
 
 VisualizationPanel::~VisualizationPanel()
@@ -144,6 +153,10 @@ VisualizationPanel::~VisualizationPanel()
 
   Disconnect( EVT_RENDER, wxCommandEventHandler( VisualizationPanel::OnRender ), NULL, this );
 
+  m_PropertyGrid->Disconnect( wxEVT_PG_CHANGING, wxPropertyGridEventHandler( VisualizationPanel::OnPropertyChanged ), NULL, this );
+  m_PropertyGrid->Disconnect( wxEVT_PG_CHANGED, wxPropertyGridEventHandler( VisualizationPanel::OnPropertyChanged ), NULL, this );
+  m_PropertyGrid->Destroy();
+
   V_Visualizer::iterator visIt = m_Visualizers.begin();
   V_Visualizer::iterator visEnd = m_Visualizers.end();
   for ( ; visIt != visEnd; ++visIt )
@@ -154,11 +167,6 @@ VisualizationPanel::~VisualizationPanel()
   m_Visualizers.clear();
 
   m_RenderPanel->Destroy();
-
-  if ( m_CurrentOptionsPanel )
-  {
-    m_CurrentOptionsPanel->Destroy();
-  }
 
   delete m_FPSCamera;
   delete m_OrbitCamera;
@@ -222,21 +230,13 @@ void VisualizationPanel::OnDisplaySelected( wxCommandEvent& event )
 {
   int selectionIndex = event.GetSelection();
 
-  VisualizerBase* visualizer = (VisualizerBase*)m_Displays->GetClientData( selectionIndex );
+  m_SelectedVisualizer = (VisualizerBase*)m_Displays->GetClientData( selectionIndex );
 
-  if ( m_CurrentOptionsPanel )
-  {
-    m_PropertiesPanelSizer->Remove( m_CurrentOptionsPanel );
-    m_CurrentOptionsPanel->Destroy();
-  }
-
-  m_CurrentOptionsPanel = visualizer->GetOptionsPanel( m_PropertiesPanel );
-
-  if ( m_CurrentOptionsPanel )
-  {
-    m_CurrentOptionsPanel->SetSize( m_PropertiesPanel->GetSize() );
-    m_PropertiesPanelSizer->Add( m_CurrentOptionsPanel, 1, wxEXPAND, 5 );
-  }
+  m_PropertyGrid->Freeze();
+  m_PropertyGrid->Clear();
+  m_SelectedVisualizer->FillPropertyGrid( m_PropertyGrid );
+  m_PropertyGrid->Refresh();
+  m_PropertyGrid->Thaw();
 
   m_RenderPanel->Refresh();
 }
@@ -258,6 +258,36 @@ void VisualizationPanel::OnUpdate( wxTimerEvent& event )
     {
       visualizer->Update( dt );
     }
+  }
+}
+
+void VisualizationPanel::OnPropertyChanging( wxPropertyGridEvent& event )
+{
+  if ( m_SelectedVisualizer )
+  {
+    wxPGProperty* property = event.GetProperty();
+
+    if ( !property )
+    {
+      return;
+    }
+
+    m_SelectedVisualizer->PropertyChanging( event );
+  }
+}
+
+void VisualizationPanel::OnPropertyChanged( wxPropertyGridEvent& event )
+{
+  if ( m_SelectedVisualizer )
+  {
+    wxPGProperty* property = event.GetProperty();
+
+    if ( !property )
+    {
+      return;
+    }
+
+    m_SelectedVisualizer->PropertyChanged( event );
   }
 }
 

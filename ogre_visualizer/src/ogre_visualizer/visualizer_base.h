@@ -46,6 +46,8 @@ class wxPanel;
 class wxWindow;
 class abstractFunctor;
 class rosTFClient;
+class wxPropertyGrid;
+class wxPropertyGridEvent;
 
 namespace ogre_vis
 {
@@ -73,14 +75,18 @@ public:
   /// Called by the visualization panel to tell set our functor used for causing a render to happen
   void SetRenderCallback( abstractFunctor* func );
 
-  // HACK HACK HACK until single threaded ROS arrives
   void SetLockRenderCallback( abstractFunctor* func );
   void SetUnlockRenderCallback( abstractFunctor* func );
-  void LockRender();
-  void UnlockRender();
 
-  /// Override this to provide an options panel for this visualization.  The panel is owned by the caller, so it must handle any cleanup.
-  virtual wxPanel* GetOptionsPanel( wxWindow* parent ) { return NULL; } // default to no options
+  /// Override this to fill out the property grid when this visualizer is selected
+  virtual void FillPropertyGrid( wxPropertyGrid* propertyGrid ) {} // default to no options
+
+  /// Override this to handle a changing property value.  This provides the opportunity to veto a change if there is an invalid value
+  /// event.Veto() will prevent the change.
+  virtual void PropertyChanging( wxPropertyGridEvent& event ) {}
+  /// Override this to handle a changed property value
+  virtual void PropertyChanged( wxPropertyGridEvent& event ) {}
+
 
   void SetTargetFrame( const std::string& frame ) { m_TargetFrame = frame; }
 
@@ -92,6 +98,9 @@ protected:
 
   /// Called by derived classes to cause the scene we're in to be rendered.
   void CauseRender();
+
+  void LockRender();
+  void UnlockRender();
 
   Ogre::SceneManager* m_SceneManager;
   std::string m_Name;
@@ -105,6 +114,8 @@ protected:
 
   ros::node* m_ROSNode;
   rosTFClient* m_TFClient;
+
+  friend class RenderAutoLock;
 };
 
 class RenderAutoLock

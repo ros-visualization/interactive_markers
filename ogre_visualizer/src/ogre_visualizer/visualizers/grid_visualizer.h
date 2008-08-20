@@ -51,8 +51,6 @@ public:
   GridVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
   virtual ~GridVisualizer();
 
-  virtual wxPanel* GetOptionsPanel( wxWindow* parent );
-
   uint32_t GetCellCount() { return m_CellCount; }
   float GetCellSize() { return m_CellSize; }
   void GetColor( float& r, float& g, float& b );
@@ -61,6 +59,10 @@ public:
   void SetCellCount( uint32_t cellCount );
   void SetCellSize( float cellSize );
   void SetColor( float r, float g, float b );
+
+  // Overrides from VisualizerBase
+  virtual void FillPropertyGrid( wxPropertyGrid* propertyGrid );
+  virtual void PropertyChanged( wxPropertyGridEvent& event );
 
 protected:
   void Create();

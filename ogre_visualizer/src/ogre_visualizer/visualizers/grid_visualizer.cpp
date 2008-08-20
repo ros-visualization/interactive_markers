@@ -28,11 +28,17 @@
  */
 
 #include "grid_visualizer.h"
-#include "grid_options_panel.h"
 
 #include "ogre_tools/grid.h"
 
 #include <Ogre.h>
+#include <wx/wx.h>
+#include <wx/propgrid/propgrid.h>
+#include <wx/propgrid/advprops.h>
+
+#define COLOR_PROPERTY wxT("Color")
+#define CELLSIZE_PROPERTY wxT("CellSize")
+#define CELLCOUNT_PROPERTY wxT("CellCount")
 
 namespace ogre_vis
 {
@@ -97,9 +103,43 @@ void GridVisualizer::SetColor( float r, float g, float b )
   Set( m_CellCount, m_CellSize, r, g, b );
 }
 
-wxPanel* GridVisualizer::GetOptionsPanel( wxWindow* parent )
+void GridVisualizer::FillPropertyGrid( wxPropertyGrid* propertyGrid )
 {
-  return new GridOptionsPanel( parent, this );
+  wxPGId countProp = propertyGrid->Append( new wxIntProperty( CELLCOUNT_PROPERTY, wxPG_LABEL, m_CellCount ) );
+  propertyGrid->SetPropertyAttribute( countProp, wxT("Min"), 1 );
+  propertyGrid->SetPropertyAttribute( countProp, wxT("Step"), 1 );
+  propertyGrid->SetPropertyEditor( countProp, wxPG_EDITOR(SpinCtrl) );
+
+  wxPGId sizeProp = propertyGrid->Append( new wxFloatProperty( CELLSIZE_PROPERTY, wxPG_LABEL, m_CellSize ) );
+  propertyGrid->SetPropertyAttribute( sizeProp, wxT("Min"), 0.0001 );
+
+  propertyGrid->Append( new wxColourProperty( COLOR_PROPERTY, wxPG_LABEL, wxColour( m_R * 255, m_G * 255, m_B * 255 ) ) );
+}
+
+void GridVisualizer::PropertyChanged( wxPropertyGridEvent& event )
+{
+  wxPGProperty* property = event.GetProperty();
+
+  const wxString& name = property->GetName();
+  wxVariant value = property->GetValue();
+
+  if ( name == CELLCOUNT_PROPERTY )
+  {
+    int cellCount = value.GetLong();
+    SetCellCount( cellCount );
+  }
+  else if ( name == CELLSIZE_PROPERTY )
+  {
+    float cellSize = value.GetDouble();
+    SetCellSize( cellSize );
+  }
+  else if ( name == COLOR_PROPERTY )
+  {
+    wxColour color;
+    color << value;
+
+    SetColor( color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f );
+  }
 }
 
 void GridVisualizer::GetColor( float& r, float& g, float& b )

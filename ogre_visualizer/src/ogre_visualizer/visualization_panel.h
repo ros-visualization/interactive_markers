@@ -60,6 +60,8 @@ class node;
 
 class wxTimerEvent;
 class wxTimer;
+class wxPropertyGrid;
+class wxPropertyGridEvent;
 
 class rosTFClient;
 
@@ -76,7 +78,6 @@ public:
 
   void Render();
 
-  // HACK HACK HACK until single threaded ROS
   void LockRender() { m_RenderMutex.lock(); }
   void UnlockRender() { m_RenderMutex.unlock(); }
 
@@ -99,12 +100,16 @@ protected:
   void OnRenderWindowMouseEvents( wxMouseEvent& event );
   void OnUpdate( wxTimerEvent& event );
   void OnRender( wxCommandEvent& event );
+  void OnPropertyChanging( wxPropertyGridEvent& event );
+  void OnPropertyChanged( wxPropertyGridEvent& event );
 
   Ogre::Root* m_OgreRoot;
   Ogre::SceneManager* m_SceneManager;
 
   wxTimer* m_UpdateTimer;
   wxStopWatch m_UpdateStopwatch;
+
+  wxPropertyGrid* m_PropertyGrid;
 
   ogre_tools::wxOgreRenderWindow* m_RenderPanel;
   ogre_tools::CameraBase* m_CurrentCamera;
@@ -116,7 +121,7 @@ protected:
 
   typedef std::vector< VisualizerBase* > V_Visualizer;
   V_Visualizer m_Visualizers;
-  wxPanel* m_CurrentOptionsPanel;
+  VisualizerBase* m_SelectedVisualizer;
 
   // Mouse handling
   bool m_LeftMouseDown;
@@ -125,7 +130,6 @@ protected:
   int m_MouseX;
   int m_MouseY;
 
-  // HACK HACK HACK until single threaded ROS
   ros::thread::mutex m_RenderMutex;
 };
 
