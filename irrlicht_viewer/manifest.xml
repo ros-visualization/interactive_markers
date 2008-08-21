@@ -5,7 +5,7 @@ This is a rendering engine for data visulization which uses the Irrlicht Renderi
 
 </description>
 <author>Tully Foote and Jon Bohren </author>
-<license>bsd</license>
+<license>BSD</license>
 <url>http://pr.willowgarage.com/wiki/ROS</url>
 <depend package="irrlicht"/>
 <depend package="rosthread"/>
