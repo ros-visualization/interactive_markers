@@ -20,20 +20,20 @@ public:
   OrbitCamera( Ogre::SceneManager* sceneManager );
   virtual ~OrbitCamera();
 
-  void Update();
   void Zoom( float amount );
   void SetFocalPoint( const Ogre::Vector3& focalPoint );
-  void NormalizePitch();
+  void SetFrom( CameraBase* camera );
 
   virtual void Yaw( float angle );
   virtual void Pitch( float angle );
   virtual void Roll( float angle );
   virtual void SetOrientation( float x, float y, float z, float w );
+  virtual void SetPosition( float x, float y, float z );
 
-
+  virtual Ogre::Vector3 GetPosition();
+  virtual Ogre::Quaternion GetOrientation();
 
   virtual void Move( float x, float y, float z );
-  virtual void SetPosition( float x, float y, float z );
 
   virtual void MouseLeftDrag( int diffX, int diffY );
   virtual void MouseMiddleDrag( int diffX, int diffY );
@@ -41,6 +41,11 @@ public:
   virtual void ScrollWheel( int diff );
 
 private:
+  void Update();
+  void CalculatePitchYawFromPosition( const Ogre::Vector3& position );
+  void NormalizePitch();
+  void NormalizeYaw();
+
   Ogre::Vector3 m_FocalPoint;
   float m_Yaw;
   float m_Pitch;

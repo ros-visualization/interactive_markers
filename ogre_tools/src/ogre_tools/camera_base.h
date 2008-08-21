@@ -1,6 +1,9 @@
 #ifndef OGRE_TOOLS_CAMERA_BASE_H_
 #define OGRE_TOOLS_CAMERA_BASE_H_
 
+#include <OgreVector3.h>
+#include <OgreQuaternion.h>
+
 namespace Ogre
 {
   class Camera;
@@ -22,10 +25,17 @@ public:
   virtual void Pitch( float angle ) = 0;
   virtual void Roll( float angle ) = 0;
   virtual void SetOrientation( float x, float y, float z, float w ) = 0;
+  virtual void SetPosition( float x, float y, float z ) = 0;
+  virtual void SetFrom( CameraBase* camera ) = 0;
+
+  void SetPosition( const Ogre::Vector3& position );
+  void SetOrientation( const Ogre::Quaternion& orientation );
+
+  virtual Ogre::Vector3 GetPosition() = 0;
+  virtual Ogre::Quaternion GetOrientation() = 0;
 
   /// Move the camera relative to its forward axis
   virtual void Move( float x, float y, float z ) = 0;
-  virtual void SetPosition( float x, float y, float z ) = 0;
 
   Ogre::Camera* GetOgreCamera() { return m_Camera; }
 

@@ -191,6 +191,8 @@ void VisualizationPanel::OnRender( wxCommandEvent& event )
 
 void VisualizationPanel::OnViewClicked( wxCommandEvent& event )
 {
+  ogre_tools::CameraBase* prevCamera = m_CurrentCamera;
+
   switch ( event.GetId() )
   {
   case IDs::FPS:
@@ -205,6 +207,8 @@ void VisualizationPanel::OnViewClicked( wxCommandEvent& event )
     }
     break;
   }
+
+  m_CurrentCamera->SetFrom( prevCamera );
 
   m_RenderPanel->SetCamera( m_CurrentCamera->GetOgreCamera() );
 }

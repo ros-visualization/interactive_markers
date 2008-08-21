@@ -23,10 +23,14 @@ public:
   virtual void Pitch( float angle );
   virtual void Roll( float angle );
   virtual void SetOrientation( float x, float y, float z, float w );
+  virtual void SetPosition( float x, float y, float z );
+  virtual void SetFrom( CameraBase* camera );
+
+  virtual Ogre::Vector3 GetPosition();
+  virtual Ogre::Quaternion GetOrientation();
 
   /// Move the camera relative to its forward axis
   virtual void Move( float x, float y, float z );
-  virtual void SetPosition( float x, float y, float z );
 
   virtual void MouseLeftDrag( int diffX, int diffY );
   virtual void MouseMiddleDrag( int diffX, int diffY );
@@ -34,10 +38,12 @@ public:
   virtual void ScrollWheel( int diff );
 
 protected:
-  Ogre::SceneNode* m_PositionNode;
-  Ogre::SceneNode* m_YawNode;
-  Ogre::SceneNode* m_PitchNode;
-  Ogre::SceneNode* m_RollNode;
+  void Update();
+  void NormalizePitch();
+  void NormalizeYaw();
+
+  float m_Pitch;
+  float m_Yaw;
 };
 
 } // namespace ogre_tools
