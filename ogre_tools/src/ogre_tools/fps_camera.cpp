@@ -7,20 +7,20 @@
 
 namespace ogre_tools
 {
-    
+
 FPSCamera::FPSCamera( Ogre::SceneManager* sceneManager )
 : CameraBase( sceneManager )
-{ 
+{
   m_PositionNode = sceneManager->getRootSceneNode()->createChildSceneNode();
   m_YawNode = m_PositionNode->createChildSceneNode();
   m_PitchNode = m_YawNode->createChildSceneNode();
   m_RollNode = m_PitchNode->createChildSceneNode();
-  
+
   m_RollNode->attachObject( m_Camera );
 }
 
 FPSCamera::~FPSCamera()
-{ 
+{
   m_PositionNode->getParentSceneNode()->removeAndDestroyChild( m_PositionNode->getName() );
 }
 
@@ -44,7 +44,7 @@ void FPSCamera::SetOrientation( float x, float y, float z, float w )
   m_YawNode->setOrientation( Ogre::Quaternion::IDENTITY );
   m_PitchNode->setOrientation( Ogre::Quaternion::IDENTITY );
   m_RollNode->setOrientation( Ogre::Quaternion::IDENTITY );
-  
+
   Ogre::Quaternion quat( w, x, y, z );
   m_YawNode->yaw( quat.getYaw() );
   m_PitchNode->pitch( quat.getPitch() );
@@ -54,11 +54,11 @@ void FPSCamera::SetOrientation( float x, float y, float z, float w )
 void FPSCamera::Move( float x, float y, float z )
 {
   Ogre::Vector3 translate( x, y, z );
-  
-  m_PositionNode->translate( m_YawNode->getOrientation() * m_PitchNode->getOrientation() * m_RollNode->getOrientation() * translate, 
+
+  m_PositionNode->translate( m_YawNode->getOrientation() * m_PitchNode->getOrientation() * m_RollNode->getOrientation() * translate,
                              Ogre::SceneNode::TS_LOCAL );
-  
-  
+
+
 }
 
 void FPSCamera::SetPosition( float x, float y, float z )
@@ -80,6 +80,11 @@ void FPSCamera::MouseMiddleDrag( int diffX, int diffY )
 void FPSCamera::MouseRightDrag( int diffX, int diffY )
 {
   Move( 0.0f, 0.0f, diffY*0.1 );
+}
+
+void FPSCamera::ScrollWheel( int diff )
+{
+
 }
 
 } // namespace ogre_tools

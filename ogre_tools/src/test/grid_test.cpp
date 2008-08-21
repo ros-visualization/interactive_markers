@@ -44,11 +44,11 @@
 class MyFrame : public wxFrame
 {
 public:
-  MyFrame(wxWindow* parent) : wxFrame(parent, -1, _("Grid Test App"),
-                      wxDefaultPosition, wxSize(800,600),
-                      wxDEFAULT_FRAME_STYLE)
-  , m_Orient( false )
-  , m_Translate( false )
+  MyFrame(wxWindow* parent)
+  : wxFrame(parent, -1, _("Grid Test App"), wxDefaultPosition, wxSize(800,600), wxDEFAULT_FRAME_STYLE)
+  , m_LeftMouseDown( false )
+  , m_MiddleMouseDown( false )
+  , m_RightMouseDown( false )
   , m_MouseX( 0 )
   , m_MouseY( 0 )
   {
@@ -114,7 +114,7 @@ public:
 
         m_Camera = new ogre_tools::OrbitCamera( m_SceneManager );
         m_Camera->SetPosition( 0, 0, 15 );
-        m_Camera->GetOgreCamera()->setNearClipDistance( 1 );
+        m_Camera->GetOgreCamera()->setNearClipDistance( 0.1 );
 
         m_WXRenderWindow->GetViewport()->setCamera( m_Camera->GetOgreCamera() );
 
@@ -134,7 +134,7 @@ public:
         //arrow->SetOrientation( Ogre::Quaternion( Ogre::Degree( 45 ), Ogre::Vector3::UNIT_X ) );
         //arrow->SetScale( Ogre::Vector3( 1.0f, 1.0f, 3.0f ) );
 
-        ogre_tools::PointCloud* pointCloud = new ogre_tools::PointCloud( m_SceneManager );
+        /*ogre_tools::PointCloud* pointCloud = new ogre_tools::PointCloud( m_SceneManager );
         std::vector<ogre_tools::PointCloud::Point> points;
         points.resize( 1000000 );
         for ( int32_t i = 0; i < 1000; ++i )
@@ -152,7 +152,7 @@ public:
             }
         }
 
-        pointCloud->AddPoints( &points.front(), 1000000 );
+        pointCloud->AddPoints( &points.front(), 1000000 );*/
     }
     catch ( Ogre::Exception& e )
     {
@@ -161,19 +161,25 @@ public:
     }
 
     m_WXRenderWindow->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
+    m_WXRenderWindow->Connect( wxEVT_MIDDLE_DOWN, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
     m_WXRenderWindow->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
     m_WXRenderWindow->Connect( wxEVT_MOTION, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
     m_WXRenderWindow->Connect( wxEVT_LEFT_UP, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
+    m_WXRenderWindow->Connect( wxEVT_MIDDLE_UP, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
     m_WXRenderWindow->Connect( wxEVT_RIGHT_UP, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
+    m_WXRenderWindow->Connect( wxEVT_MOUSEWHEEL, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
   }
 
   ~MyFrame()
   {
     m_WXRenderWindow->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
+    m_WXRenderWindow->Disconnect( wxEVT_MIDDLE_DOWN, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
     m_WXRenderWindow->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
     m_WXRenderWindow->Disconnect( wxEVT_MOTION, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
     m_WXRenderWindow->Disconnect( wxEVT_LEFT_UP, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
+    m_WXRenderWindow->Disconnect( wxEVT_MIDDLE_UP, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
     m_WXRenderWindow->Disconnect( wxEVT_RIGHT_UP, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
+    m_WXRenderWindow->Disconnect( wxEVT_MOUSEWHEEL, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
 
     m_WXRenderWindow->Destroy();
     delete m_Root;
@@ -191,35 +197,55 @@ private:
 
     if ( event.LeftDown() )
     {
-      m_Orient = true;
-      m_Translate = false;
+      m_LeftMouseDown = true;
+      m_MiddleMouseDown = false;
+      m_RightMouseDown = false;
+    }
+    else if ( event.MiddleDown() )
+    {
+      m_LeftMouseDown = false;
+      m_MiddleMouseDown = true;
+      m_RightMouseDown = false;
     }
     else if ( event.RightDown() )
     {
-      m_Orient = false;
-      m_Translate = true;
+      m_LeftMouseDown = false;
+      m_MiddleMouseDown = false;
+      m_RightMouseDown = true;
     }
-    else if ( event.LeftUp() && m_Orient )
+    else if ( event.LeftUp() )
     {
-      m_Orient = false;
+      m_LeftMouseDown = false;
     }
-    else if ( event.RightUp() && m_Translate )
+    else if ( event.MiddleUp() )
     {
-      m_Translate = false;
+      m_MiddleMouseDown = false;
+    }
+    else if ( event.RightUp() )
+    {
+      m_RightMouseDown = false;
     }
     else if ( event.Dragging() )
     {
+      int32_t diffX = m_MouseX - lastX;
+      int32_t diffY = m_MouseY - lastY;
+
       bool handled = false;
-      if ( m_Orient )
+      if ( m_LeftMouseDown )
       {
-        m_Camera->Yaw( -(m_MouseX - lastX)*0.005 );
-        m_Camera->Pitch( -(m_MouseY - lastY)*0.005 );
+        m_Camera->MouseLeftDrag( diffX, diffY );
 
         handled = true;
       }
-      else if ( m_Translate )
+      else if ( m_MiddleMouseDown )
       {
-        m_Camera->Move( 0.0f, 0.0f, (m_MouseY - lastY)*.1 );
+        m_Camera->MouseMiddleDrag( diffX, diffY );
+
+        handled = true;
+      }
+      else if ( m_RightMouseDown )
+      {
+        m_Camera->MouseRightDrag( diffX, diffY );
 
         handled = true;
       }
@@ -228,6 +254,13 @@ private:
       {
         m_WXRenderWindow->Refresh();
       }
+    }
+
+    if ( event.GetWheelRotation() != 0 )
+    {
+      m_Camera->ScrollWheel( event.GetWheelRotation() );
+
+      m_WXRenderWindow->Refresh();
     }
   }
 
@@ -239,8 +272,10 @@ private:
   ogre_tools::Grid* m_Grid;
   ogre_tools::CameraBase* m_Camera;
 
-  bool m_Orient;
-  bool m_Translate;
+  // Mouse handling
+  bool m_LeftMouseDown;
+  bool m_MiddleMouseDown;
+  bool m_RightMouseDown;
   int m_MouseX;
   int m_MouseY;
 };

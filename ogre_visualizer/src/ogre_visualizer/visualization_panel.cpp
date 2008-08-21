@@ -87,11 +87,11 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent, Ogre::Root* root )
 
   m_FPSCamera = new ogre_tools::FPSCamera( m_SceneManager );
   m_FPSCamera->GetOgreCamera()->setNearClipDistance( 0.1f );
-  m_FPSCamera->SetPosition( 0, 1, 30 );
+  m_FPSCamera->SetPosition( 0, 0, 15 );
 
   m_OrbitCamera = new ogre_tools::OrbitCamera( m_SceneManager );
   m_OrbitCamera->GetOgreCamera()->setNearClipDistance( 0.1f );
-  m_OrbitCamera->SetPosition( 0, 0, 30 );
+  m_OrbitCamera->SetPosition( 0, 0, 15 );
 
   m_CurrentCamera = m_OrbitCamera;
 
@@ -112,6 +112,7 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent, Ogre::Root* root )
   m_RenderPanel->Connect( wxEVT_LEFT_UP, wxMouseEventHandler( VisualizationPanel::OnRenderWindowMouseEvents ), NULL, this );
   m_RenderPanel->Connect( wxEVT_MIDDLE_UP, wxMouseEventHandler( VisualizationPanel::OnRenderWindowMouseEvents ), NULL, this );
   m_RenderPanel->Connect( wxEVT_RIGHT_UP, wxMouseEventHandler( VisualizationPanel::OnRenderWindowMouseEvents ), NULL, this );
+  m_RenderPanel->Connect( wxEVT_MOUSEWHEEL, wxMouseEventHandler( VisualizationPanel::OnRenderWindowMouseEvents ), NULL, this );
 
   m_RenderPanel->SetPreRenderCallback( new functor<VisualizationPanel>( this, &VisualizationPanel::LockRender ) );
   m_RenderPanel->SetPostRenderCallback( new functor<VisualizationPanel>( this, &VisualizationPanel::UnlockRender ) );
@@ -146,6 +147,7 @@ VisualizationPanel::~VisualizationPanel()
   m_RenderPanel->Disconnect( wxEVT_LEFT_UP, wxMouseEventHandler( VisualizationPanel::OnRenderWindowMouseEvents ), NULL, this );
   m_RenderPanel->Disconnect( wxEVT_MIDDLE_UP, wxMouseEventHandler( VisualizationPanel::OnRenderWindowMouseEvents ), NULL, this );
   m_RenderPanel->Disconnect( wxEVT_RIGHT_UP, wxMouseEventHandler( VisualizationPanel::OnRenderWindowMouseEvents ), NULL, this );
+  m_RenderPanel->Disconnect( wxEVT_MOUSEWHEEL, wxMouseEventHandler( VisualizationPanel::OnRenderWindowMouseEvents ), NULL, this );
 
   Disconnect( wxEVT_TIMER, m_UpdateTimer->GetId(), wxTimerEventHandler( VisualizationPanel::OnUpdate ), NULL, this );
   delete m_UpdateTimer;
@@ -369,6 +371,13 @@ void VisualizationPanel::OnRenderWindowMouseEvents( wxMouseEvent& event )
     {
       Render();
     }
+  }
+
+  if ( event.GetWheelRotation() != 0 )
+  {
+    m_CurrentCamera->ScrollWheel( event.GetWheelRotation() );
+
+    Render();
   }
 }
 
