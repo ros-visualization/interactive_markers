@@ -48,10 +48,10 @@ public:
   	@param id The control id.
   	@param pos The default position.
   	@param size The default size.
-  	@param style The default style for this componOgre::SceneManager* sceneManager,ent.
+  	@param style The default style for this componOgre::SceneManager* scene_manager,ent.
   	@param validator A default validator for the component.
    */
-  wxOgreRenderWindow (Ogre::Root* ogreRoot, wxWindow* parent, wxWindowID id = wxID_ANY,
+  wxOgreRenderWindow (Ogre::Root* ogre_root, wxWindow* parent, wxWindowID id = wxID_ANY,
                       const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxDefaultSize,
                       long style = wxSUNKEN_BORDER, const wxValidator &validator = wxDefaultValidator);
 

@@ -40,12 +40,12 @@
 namespace ogre_vis
 {
 
-RobotModelVisualizer::RobotModelVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled )
-: VisualizerBase( sceneManager, node, tfClient, name, enabled )
+RobotModelVisualizer::RobotModelVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name, bool enabled )
+: VisualizerBase( scene_manager, node, tf_client, name, enabled )
 , has_new_transforms_( false )
 , initialized_( false )
 {
-  root_node_ = sceneManager->getRootSceneNode()->createChildSceneNode();
+  root_node_ = scene_manager->getRootSceneNode()->createChildSceneNode();
 }
 
 RobotModelVisualizer::~RobotModelVisualizer()
@@ -75,10 +75,10 @@ void RobotModelVisualizer::clear()
   root_node_->removeAndDestroyAllChildren();
 }
 
-void RobotModelVisualizer::initialize( const std::string& descriptionParam, const std::string& transformTopic )
+void RobotModelVisualizer::initialize( const std::string& description_param, const std::string& transform_topic )
 {
-  transform_topic_ = transformTopic;
-  description_param_ = descriptionParam;
+  transform_topic_ = transform_topic;
+  description_param_ = description_param;
 
   initialized_ = true;
 

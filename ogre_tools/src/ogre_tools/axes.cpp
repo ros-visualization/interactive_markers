@@ -37,15 +37,15 @@
 namespace ogre_tools
 {
 
-Axes::Axes( Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode, float length, float radius )
-    : Object( sceneManager )
+Axes::Axes( Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node, float length, float radius )
+    : Object( scene_manager )
 {
-  if ( !parentNode )
+  if ( !parent_node )
   {
-    parentNode = scene_manager_->getRootSceneNode();
+    parent_node = scene_manager_->getRootSceneNode();
   }
 
-  scene_node_ = parentNode->createChildSceneNode();
+  scene_node_ = parent_node->createChildSceneNode();
 
   x_axis_ = new SuperEllipsoid( scene_manager_, scene_node_ );
   y_axis_ = new SuperEllipsoid( scene_manager_, scene_node_ );

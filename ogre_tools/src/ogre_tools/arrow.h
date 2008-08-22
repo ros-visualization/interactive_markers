@@ -48,11 +48,11 @@ class Cone;
 class Arrow : public Object
 {
 public:
-  Arrow( Ogre::SceneManager* manager, Ogre::SceneNode* parentNode = 0, float shaftLength = 1.0f, float shaftRadius = 0.1f,
-      float headLength = 0.3f, float headRadius =  0.2f );
+  Arrow( Ogre::SceneManager* manager, Ogre::SceneNode* parent_node = 0, float shaft_length = 1.0f, float shaft_radius = 0.1f,
+      float head_length = 0.3f, float head_radius =  0.2f );
   virtual ~Arrow();
 
-  void set( float shaftLength, float shaftRadius, float headLength, float headRadius );
+  void set( float shaft_length, float shaft_radius, float head_length, float head_radius );
 
   virtual void setColor( float r, float g, float b );
   void setHeadColor( float r, float g, float b );

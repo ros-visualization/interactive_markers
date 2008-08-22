@@ -54,7 +54,7 @@ public:
     Billboards,
   };
 
-  PointCloudVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
+  PointCloudVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name, bool enabled );
   ~PointCloudVisualizer();
 
   void setTopic( const std::string& topic );
@@ -63,7 +63,7 @@ public:
   void setBillboardSize( float size );
 
   // Overrides from VisualizerBase
-  virtual void fillPropertyGrid( wxPropertyGrid* propertyGrid );
+  virtual void fillPropertyGrid( wxPropertyGrid* property_grid );
   virtual void propertyChanged( wxPropertyGridEvent& event );
 
 protected:

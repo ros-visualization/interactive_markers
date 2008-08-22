@@ -49,8 +49,8 @@
 namespace ogre_vis
 {
 
-PointCloudVisualizer::PointCloudVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled )
-: VisualizerBase( sceneManager, node, tfClient, name, enabled )
+PointCloudVisualizer::PointCloudVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name, bool enabled )
+: VisualizerBase( scene_manager, node, tf_client, name, enabled )
 , r_( 1.0 )
 , g_( 1.0 )
 , b_( 1.0 )
@@ -236,7 +236,7 @@ void PointCloudVisualizer::incomingCloudCallback()
   causeRender();
 }
 
-void PointCloudVisualizer::fillPropertyGrid( wxPropertyGrid* propertyGrid )
+void PointCloudVisualizer::fillPropertyGrid( wxPropertyGrid* property_grid )
 {
   wxArrayString styleNames;
   styleNames.Add( wxT("Billboards") );
@@ -245,12 +245,12 @@ void PointCloudVisualizer::fillPropertyGrid( wxPropertyGrid* propertyGrid )
   styleIds.Add( Billboards );
   styleIds.Add( Points );
 
-  propertyGrid->Append( new wxEnumProperty( STYLE_PROPERTY, wxPG_LABEL, styleNames, styleIds, style_ ) );
+  property_grid->Append( new wxEnumProperty( STYLE_PROPERTY, wxPG_LABEL, styleNames, styleIds, style_ ) );
 
-  propertyGrid->Append( new ROSTopicProperty( ros_node_, TOPIC_PROPERTY, wxPG_LABEL, wxString::FromAscii( topic_.c_str() ) ) );
-  propertyGrid->Append( new wxColourProperty( COLOR_PROPERTY, wxPG_LABEL, wxColour( r_ * 255, g_ * 255, b_ * 255 ) ) );
-  wxPGId prop = propertyGrid->Append( new wxFloatProperty( BILLBOARD_SIZE_PROPERTY, wxPG_LABEL, billboard_size_ ) );
-  propertyGrid->SetPropertyAttribute( prop, wxT("Min"), 0.0 );
+  property_grid->Append( new ROSTopicProperty( ros_node_, TOPIC_PROPERTY, wxPG_LABEL, wxString::FromAscii( topic_.c_str() ) ) );
+  property_grid->Append( new wxColourProperty( COLOR_PROPERTY, wxPG_LABEL, wxColour( r_ * 255, g_ * 255, b_ * 255 ) ) );
+  wxPGId prop = property_grid->Append( new wxFloatProperty( BILLBOARD_SIZE_PROPERTY, wxPG_LABEL, billboard_size_ ) );
+  property_grid->SetPropertyAttribute( prop, wxT("Min"), 0.0 );
 }
 
 void PointCloudVisualizer::propertyChanged( wxPropertyGridEvent& event )

@@ -353,25 +353,25 @@ void VisualizationPanel::onRenderWindowMouseEvents( wxMouseEvent& event )
   }
   else if ( event.Dragging() )
   {
-    int32_t diffX = mouse_x_ - lastX;
-    int32_t diffY = mouse_y_ - lastY;
+    int32_t diff_x = mouse_x_ - lastX;
+    int32_t diff_y = mouse_y_ - lastY;
 
     bool handled = false;
     if ( left_mouse_down_ )
     {
-      current_camera_->mouseLeftDrag( diffX, diffY );
+      current_camera_->mouseLeftDrag( diff_x, diff_y );
 
       handled = true;
     }
     else if ( middle_mouse_down_ )
     {
-      current_camera_->mouseMiddleDrag( diffX, diffY );
+      current_camera_->mouseMiddleDrag( diff_x, diff_y );
 
       handled = true;
     }
     else if ( right_mouse_down_ )
     {
-      current_camera_->mouseRightDrag( diffX, diffY );
+      current_camera_->mouseRightDrag( diff_x, diff_y );
 
       handled = true;
     }

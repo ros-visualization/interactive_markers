@@ -43,8 +43,8 @@
 namespace ogre_vis
 {
 
-GridVisualizer::GridVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled )
-: VisualizerBase( sceneManager, node, tfClient, name, enabled )
+GridVisualizer::GridVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name, bool enabled )
+: VisualizerBase( scene_manager, node, tf_client, name, enabled )
 , cell_size_( 1.0f )
 , cell_count_( 10 )
 , r_( 0.5 )
@@ -77,10 +77,10 @@ void GridVisualizer::create()
   causeRender();
 }
 
-void GridVisualizer::set( uint32_t cellCount, float cellSize, float r, float g, float b )
+void GridVisualizer::set( uint32_t cell_count, float cell_size, float r, float g, float b )
 {
-  cell_count_ = cellCount;
-  cell_size_ = cellSize;
+  cell_count_ = cell_count;
+  cell_size_ = cell_size;
   r_ = r;
   g_ = g;
   b_ = b;
@@ -103,17 +103,17 @@ void GridVisualizer::setColor( float r, float g, float b )
   set( cell_count_, cell_size_, r, g, b );
 }
 
-void GridVisualizer::fillPropertyGrid( wxPropertyGrid* propertyGrid )
+void GridVisualizer::fillPropertyGrid( wxPropertyGrid* property_grid )
 {
-  wxPGId countProp = propertyGrid->Append( new wxIntProperty( CELLCOUNT_PROPERTY, wxPG_LABEL, cell_count_ ) );
-  propertyGrid->SetPropertyAttribute( countProp, wxT("Min"), 1 );
-  propertyGrid->SetPropertyAttribute( countProp, wxT("Step"), 1 );
-  propertyGrid->SetPropertyEditor( countProp, wxPG_EDITOR(SpinCtrl) );
+  wxPGId countProp = property_grid->Append( new wxIntProperty( CELLCOUNT_PROPERTY, wxPG_LABEL, cell_count_ ) );
+  property_grid->SetPropertyAttribute( countProp, wxT("Min"), 1 );
+  property_grid->SetPropertyAttribute( countProp, wxT("Step"), 1 );
+  property_grid->SetPropertyEditor( countProp, wxPG_EDITOR(SpinCtrl) );
 
-  wxPGId sizeProp = propertyGrid->Append( new wxFloatProperty( CELLSIZE_PROPERTY, wxPG_LABEL, cell_size_ ) );
-  propertyGrid->SetPropertyAttribute( sizeProp, wxT("Min"), 0.0001 );
+  wxPGId sizeProp = property_grid->Append( new wxFloatProperty( CELLSIZE_PROPERTY, wxPG_LABEL, cell_size_ ) );
+  property_grid->SetPropertyAttribute( sizeProp, wxT("Min"), 0.0001 );
 
-  propertyGrid->Append( new wxColourProperty( COLOR_PROPERTY, wxPG_LABEL, wxColour( r_ * 255, g_ * 255, b_ * 255 ) ) );
+  property_grid->Append( new wxColourProperty( COLOR_PROPERTY, wxPG_LABEL, wxColour( r_ * 255, g_ * 255, b_ * 255 ) ) );
 }
 
 void GridVisualizer::propertyChanged( wxPropertyGridEvent& event )
@@ -125,13 +125,13 @@ void GridVisualizer::propertyChanged( wxPropertyGridEvent& event )
 
   if ( name == CELLCOUNT_PROPERTY )
   {
-    int cellCount = value.GetLong();
-    setCellCount( cellCount );
+    int cell_count = value.GetLong();
+    setCellCount( cell_count );
   }
   else if ( name == CELLSIZE_PROPERTY )
   {
-    float cellSize = value.GetDouble();
-    setCellSize( cellSize );
+    float cell_size = value.GetDouble();
+    setCellSize( cell_size );
   }
   else if ( name == COLOR_PROPERTY )
   {

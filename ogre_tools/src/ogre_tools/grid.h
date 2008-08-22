@@ -48,10 +48,10 @@ namespace ogre_tools
 class Grid
 {
 public:
-  Grid( Ogre::SceneManager* manager, uint32_t cellCount, float cellLength, float r, float g, float b );
+  Grid( Ogre::SceneManager* manager, uint32_t cell_count, float cell_length, float r, float g, float b );
   ~Grid();
 
-  void set( uint32_t gridSize, float cellLength, float r, float g, float b );
+  void set( uint32_t gridSize, float cell_length, float r, float g, float b );
 
   Ogre::SceneNode* getSceneNode() { return scene_node_; }
 

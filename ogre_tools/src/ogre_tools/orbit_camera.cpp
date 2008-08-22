@@ -13,8 +13,8 @@ static const float PITCH_LIMIT_HIGH = Ogre::Math::PI - 0.001;
 static const float YAW_START = Ogre::Math::PI;// - 0.001;
 static const float PITCH_START = Ogre::Math::HALF_PI;
 
-OrbitCamera::OrbitCamera( Ogre::SceneManager* sceneManager )
-: CameraBase( sceneManager )
+OrbitCamera::OrbitCamera( Ogre::SceneManager* scene_manager )
+: CameraBase( scene_manager )
 , focal_point_( 0.0f, 0.0f, 0.0f )
 , yaw_( YAW_START )
 , pitch_( PITCH_START )
@@ -150,9 +150,9 @@ void OrbitCamera::zoom( float amount )
   update();
 }
 
-void OrbitCamera::setFocalPoint( const Ogre::Vector3& focalPoint )
+void OrbitCamera::setFocalPoint( const Ogre::Vector3& focal_point )
 {
-  focal_point_ = focalPoint;
+  focal_point_ = focal_point;
 
   update();
 }
@@ -174,20 +174,20 @@ void OrbitCamera::setPosition( float x, float y, float z )
   update();
 }
 
-void OrbitCamera::mouseLeftDrag( int diffX, int diffY )
+void OrbitCamera::mouseLeftDrag( int diff_x, int diff_y )
 {
-  yaw( diffX*0.005 );
-  pitch( -diffY*0.005 );
+  yaw( diff_x*0.005 );
+  pitch( -diff_y*0.005 );
 }
 
-void OrbitCamera::mouseMiddleDrag( int diffX, int diffY )
+void OrbitCamera::mouseMiddleDrag( int diff_x, int diff_y )
 {
-  move( diffX*0.1, -diffY*0.1, 0.0f );
+  move( diff_x*0.1, -diff_y*0.1, 0.0f );
 }
 
-void OrbitCamera::mouseRightDrag( int diffX, int diffY )
+void OrbitCamera::mouseRightDrag( int diff_x, int diff_y )
 {
-  zoom( -diffY * 0.1 );
+  zoom( -diff_y * 0.1 );
 }
 
 void OrbitCamera::scrollWheel( int diff )

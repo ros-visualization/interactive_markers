@@ -48,10 +48,10 @@ namespace ogre_tools
 class Cone : public Object
 {
 public:
-  Cone( Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode = 0, int xTes = 20, int yTes = 20, float r = 1.0f, float g = 1.0f, float b = 1.0f );
+  Cone( Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node = 0, int x_tes = 20, int y_tes = 20, float r = 1.0f, float g = 1.0f, float b = 1.0f );
   virtual ~Cone();
 
-  void create( int xTes, int yTes, float r, float g, float b );
+  void create( int x_tes, int y_tes, float r, float g, float b );
 
   void setOffset( const Ogre::Vector3& offset );
   virtual void setColor( float r, float g, float b );

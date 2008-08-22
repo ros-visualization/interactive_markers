@@ -34,9 +34,9 @@
 namespace ogre_vis
 {
 
-VisualizerBase::VisualizerBase( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient,
+VisualizerBase::VisualizerBase( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client,
                                 const std::string& name, bool enabled )
-: scene_manager_( sceneManager )
+: scene_manager_( scene_manager )
 , name_( name )
 , enabled_( enabled )
 , target_frame_( "base" )
@@ -44,7 +44,7 @@ VisualizerBase::VisualizerBase( Ogre::SceneManager* sceneManager, ros::node* nod
 , render_lock_( NULL )
 , render_unlock_( NULL )
 , ros_node_( node )
-, tf_client_( tfClient )
+, tf_client_( tf_client )
 {
 }
 

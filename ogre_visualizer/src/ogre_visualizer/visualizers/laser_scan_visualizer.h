@@ -61,7 +61,7 @@ public:
     Billboards,
   };
 
-  LaserScanVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
+  LaserScanVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name, bool enabled );
   ~LaserScanVisualizer();
 
   void setCloudTopic( const std::string& topic );
@@ -75,7 +75,7 @@ public:
   virtual void update( float dt );
 
   // Overrides from VisualizerBase
-  virtual void fillPropertyGrid( wxPropertyGrid* propertyGrid );
+  virtual void fillPropertyGrid( wxPropertyGrid* property_grid );
   virtual void propertyChanged( wxPropertyGridEvent& event );
 
 protected:

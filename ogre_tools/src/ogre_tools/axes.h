@@ -51,7 +51,7 @@ class SuperEllipsoid;
 class Axes : public Object
 {
 public:
-  Axes( Ogre::SceneManager* manager, Ogre::SceneNode* parentNode = NULL, float length = 1.0f, float radius = 0.1f );
+  Axes( Ogre::SceneManager* manager, Ogre::SceneNode* parent_node = NULL, float length = 1.0f, float radius = 0.1f );
   virtual ~Axes();
 
   void set( float length, float radius );

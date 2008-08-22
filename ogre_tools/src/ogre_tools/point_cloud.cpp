@@ -41,8 +41,8 @@ namespace ogre_tools
 
 Ogre::String PointCloud::sm_Type = "PointCloud";
 
-PointCloud::PointCloud( Ogre::SceneManager* sceneManager )
-: scene_manager_( sceneManager )
+PointCloud::PointCloud( Ogre::SceneManager* scene_manager )
+: scene_manager_( scene_manager )
 , bounding_radius_( 0.0f )
 , point_count_( 0 )
 , points_per_bbs_( MAX_BILLBOARDS_PER_BBS )
@@ -145,18 +145,18 @@ Ogre::BillboardSet* PointCloud::createBillboardSet()
   return bbs;
 }
 
-void PointCloud::addPoints( Point* points, uint32_t numPoints )
+void PointCloud::addPoints( Point* points, uint32_t num_points )
 {
-  if ( points_.size() < point_count_ + numPoints )
+  if ( points_.size() < point_count_ + num_points )
   {
-    points_.resize( point_count_ + numPoints );
+    points_.resize( point_count_ + num_points );
   }
 
   Point* begin = &points_.front() + point_count_;
-  memcpy( begin, points, sizeof( Point ) * numPoints );
+  memcpy( begin, points, sizeof( Point ) * num_points );
 
   // update bounding box and radius
-  /*uint32_t totalPoints = point_count_ + numPoints;
+  /*uint32_t totalPoints = point_count_ + num_points;
   for ( uint32_t i = point_count_; i < totalPoints; ++i )
   {
     Point& p = points_[i];
@@ -167,7 +167,7 @@ void PointCloud::addPoints( Point* points, uint32_t numPoints )
     bounding_radius_ = std::max( bounding_radius_, pos.length() );
   }*/
 
-  point_count_ += numPoints;
+  point_count_ += num_points;
 }
 
 void PointCloud::_notifyCurrentCamera( Ogre::Camera* camera )

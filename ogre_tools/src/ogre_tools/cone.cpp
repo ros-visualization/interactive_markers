@@ -5,8 +5,8 @@
 namespace ogre_tools
 {
 
-Cone::Cone(Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode, int xTes, int yTes, float r, float g, float b)
-: Object( sceneManager )
+Cone::Cone(Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node, int x_tes, int y_tes, float r, float g, float b)
+: Object( scene_manager )
 {
   static uint32_t count = 0;
   std::stringstream ss;
@@ -14,12 +14,12 @@ Cone::Cone(Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode, int xT
 
   manual_object_ = scene_manager_->createManualObject( ss.str() );
 
-  if ( !parentNode )
+  if ( !parent_node )
   {
-    parentNode = scene_manager_->getRootSceneNode();
+    parent_node = scene_manager_->getRootSceneNode();
   }
 
-  scene_node_ = parentNode->createChildSceneNode();
+  scene_node_ = parent_node->createChildSceneNode();
   offset_node_ = scene_node_->createChildSceneNode();
   offset_node_->attachObject( manual_object_ );
 
@@ -30,7 +30,7 @@ Cone::Cone(Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode, int xT
   material_->getTechnique(0)->setLightingEnabled(true);
   material_->getTechnique(0)->setAmbient( 0.5, 0.5, 0.5 );
 
-  create( xTes, yTes, r, g, b );
+  create( x_tes, y_tes, r, g, b );
 
   // Default the offset so that the base of the cone is at the origin
   setOffset( Ogre::Vector3( 0.0f, 0.5f, 0.0f ) );
@@ -45,20 +45,20 @@ Cone::~Cone()
 }
 
 
-void Cone::create(int xTes, int yTes, float r, float g, float b)
+void Cone::create(int x_tes, int y_tes, float r, float g, float b)
 {
-  x_tes_ = xTes;
-  y_tes_ = yTes;
+  x_tes_ = x_tes;
+  y_tes_ = y_tes;
 
   manual_object_->clear();
   manual_object_->begin( material_name_, Ogre::RenderOperation::OT_TRIANGLE_LIST );
 
-  double stepTheta = 2 * Ogre::Math::PI / xTes;
-  double stepH = 1.0 / yTes;
+  double stepTheta = 2 * Ogre::Math::PI / x_tes;
+  double stepH = 1.0 / y_tes;
 
 
   // the top and bottom
-  for (int j= 0;j < xTes;j++)
+  for (int j= 0;j < x_tes;j++)
   {
     double theta = stepTheta*j;
     double h = 1.0 - stepH;
@@ -111,10 +111,10 @@ void Cone::create(int xTes, int yTes, float r, float g, float b)
   }
 
   //the sides
-  for (int i= 0;i < yTes - 1;i++)
+  for (int i= 0;i < y_tes - 1;i++)
   {
     double h= stepH*i;
-    for (int j= 0;j < xTes;j++)
+    for (int j= 0;j < x_tes;j++)
     {
       double theta= stepTheta*j;
 

@@ -16,7 +16,7 @@ namespace ogre_tools
 class FPSCamera : public CameraBase
 {
 public:
-  FPSCamera( Ogre::SceneManager* sceneManager );
+  FPSCamera( Ogre::SceneManager* scene_manager );
   virtual ~FPSCamera();
 
   virtual void yaw( float angle );
@@ -32,9 +32,9 @@ public:
   /// Move the camera relative to its forward axis
   virtual void move( float x, float y, float z );
 
-  virtual void mouseLeftDrag( int diffX, int diffY );
-  virtual void mouseMiddleDrag( int diffX, int diffY );
-  virtual void mouseRightDrag( int diffX, int diffY );
+  virtual void mouseLeftDrag( int diff_x, int diff_y );
+  virtual void mouseMiddleDrag( int diff_x, int diff_y );
+  virtual void mouseRightDrag( int diff_x, int diff_y );
   virtual void scrollWheel( int diff );
 
 protected:

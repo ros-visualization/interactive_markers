@@ -227,25 +227,25 @@ private:
     }
     else if ( event.Dragging() )
     {
-      int32_t diffX = mouse_x_ - lastX;
-      int32_t diffY = mouse_y_ - lastY;
+      int32_t diff_x = mouse_x_ - lastX;
+      int32_t diff_y = mouse_y_ - lastY;
 
       bool handled = false;
       if ( left_mouse_down_ )
       {
-        camera_->mouseLeftDrag( diffX, diffY );
+        camera_->mouseLeftDrag( diff_x, diff_y );
 
         handled = true;
       }
       else if ( middle_mouse_down_ )
       {
-        camera_->mouseMiddleDrag( diffX, diffY );
+        camera_->mouseMiddleDrag( diff_x, diff_y );
 
         handled = true;
       }
       else if ( right_mouse_down_ )
       {
-        camera_->mouseRightDrag( diffX, diffY );
+        camera_->mouseRightDrag( diff_x, diff_y );
 
         handled = true;
       }

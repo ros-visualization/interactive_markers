@@ -57,7 +57,7 @@ public:
     Sphere,
   };
 
-  SuperEllipsoid(Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode = NULL);
+  SuperEllipsoid(Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node = NULL);
   virtual ~SuperEllipsoid();
 
   void create(int samples, float n1, float n2, const Ogre::Vector3& scale = Ogre::Vector3( 1.0f, 1.0f, 1.0f ));

@@ -44,7 +44,7 @@ namespace ogre_tools
 class Object
 {
 public:
-  Object( Ogre::SceneManager* sceneManager );
+  Object( Ogre::SceneManager* scene_manager );
   virtual ~Object() {}
 
   virtual void setPosition( const Ogre::Vector3& position ) = 0;

@@ -48,20 +48,20 @@ namespace ogre_vis
 class GridVisualizer : public VisualizerBase
 {
 public:
-  GridVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
+  GridVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name, bool enabled );
   virtual ~GridVisualizer();
 
   uint32_t getCellCount() { return cell_count_; }
   float getCellSize() { return cell_size_; }
   void getColor( float& r, float& g, float& b );
 
-  void set( uint32_t cellCount, float cellSize, float r, float g, float b );
-  void setCellCount( uint32_t cellCount );
-  void setCellSize( float cellSize );
+  void set( uint32_t cell_count, float cell_size, float r, float g, float b );
+  void setCellCount( uint32_t cell_count );
+  void setCellSize( float cell_size );
   void setColor( float r, float g, float b );
 
   // Overrides from VisualizerBase
-  virtual void fillPropertyGrid( wxPropertyGrid* propertyGrid );
+  virtual void fillPropertyGrid( wxPropertyGrid* property_grid );
   virtual void propertyChanged( wxPropertyGridEvent& event );
 
 protected:

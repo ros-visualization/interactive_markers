@@ -26,11 +26,11 @@ END_EVENT_TABLE ()
 //------------------------------------------------------------------------------
 unsigned int wxOgreRenderWindow::sm_NextRenderWindowId = 1;
 //------------------------------------------------------------------------------
-wxOgreRenderWindow::wxOgreRenderWindow (Ogre::Root* ogreRoot, wxWindow *parent, wxWindowID id,
+wxOgreRenderWindow::wxOgreRenderWindow (Ogre::Root* ogre_root, wxWindow *parent, wxWindowID id,
                                         const wxPoint &pos, const wxSize &size, long style, const wxValidator &validator)
     : wxControl( parent, id, pos, size, style, validator )
     , render_window_( 0 )
-    , ogre_root_( ogreRoot )
+    , ogre_root_( ogre_root )
     , m_PreRenderCallback( NULL )
     , m_PostRenderCallback( NULL )
 {

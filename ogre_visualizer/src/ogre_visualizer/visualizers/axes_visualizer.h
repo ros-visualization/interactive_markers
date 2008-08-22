@@ -43,13 +43,13 @@ namespace ogre_vis
 class AxesVisualizer : public VisualizerBase
 {
 public:
-  AxesVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
+  AxesVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name, bool enabled );
   virtual ~AxesVisualizer();
 
   void set( float length, float radius );
 
   // Overrides from VisualizerBase
-  virtual void fillPropertyGrid( wxPropertyGrid* propertyGrid );
+  virtual void fillPropertyGrid( wxPropertyGrid* property_grid );
   virtual void propertyChanged( wxPropertyGridEvent& event );
 
 protected:

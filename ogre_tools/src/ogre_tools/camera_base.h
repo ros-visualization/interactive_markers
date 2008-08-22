@@ -17,7 +17,7 @@ namespace ogre_tools
 class CameraBase
 {
 public:
-  CameraBase( Ogre::SceneManager* sceneManager );
+  CameraBase( Ogre::SceneManager* scene_manager );
 
   virtual ~CameraBase();
 
@@ -39,9 +39,9 @@ public:
 
   Ogre::Camera* getOgreCamera() { return camera_; }
 
-  virtual void mouseLeftDrag( int diffX, int diffY ) = 0;
-  virtual void mouseMiddleDrag( int diffX, int diffY ) = 0;
-  virtual void mouseRightDrag( int diffX, int diffY ) = 0;
+  virtual void mouseLeftDrag( int diff_x, int diff_y ) = 0;
+  virtual void mouseMiddleDrag( int diff_x, int diff_y ) = 0;
+  virtual void mouseRightDrag( int diff_x, int diff_y ) = 0;
   virtual void scrollWheel( int diff ) = 0;
 
 protected:

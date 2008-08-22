@@ -11,8 +11,8 @@ namespace ogre_tools
 static const float PITCH_LIMIT_LOW = -Ogre::Math::HALF_PI + 0.001;
 static const float PITCH_LIMIT_HIGH = Ogre::Math::HALF_PI - 0.001;
 
-FPSCamera::FPSCamera( Ogre::SceneManager* sceneManager )
-: CameraBase( sceneManager )
+FPSCamera::FPSCamera( Ogre::SceneManager* scene_manager )
+: CameraBase( scene_manager )
 {
 }
 
@@ -138,20 +138,20 @@ Ogre::Vector3 FPSCamera::getPosition()
   return camera_->getPosition();
 }
 
-void FPSCamera::mouseLeftDrag( int diffX, int diffY )
+void FPSCamera::mouseLeftDrag( int diff_x, int diff_y )
 {
-  yaw( -diffX*0.005 );
-  pitch( -diffY*0.005 );
+  yaw( -diff_x*0.005 );
+  pitch( -diff_y*0.005 );
 }
 
-void FPSCamera::mouseMiddleDrag( int diffX, int diffY )
+void FPSCamera::mouseMiddleDrag( int diff_x, int diff_y )
 {
-  move( diffX*0.1, -diffY*0.1, 0.0f );
+  move( diff_x*0.1, -diff_y*0.1, 0.0f );
 }
 
-void FPSCamera::mouseRightDrag( int diffX, int diffY )
+void FPSCamera::mouseRightDrag( int diff_x, int diff_y )
 {
-  move( 0.0f, 0.0f, diffY*0.1 );
+  move( 0.0f, 0.0f, diff_y*0.1 );
 }
 
 void FPSCamera::scrollWheel( int diff )

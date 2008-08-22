@@ -43,8 +43,8 @@
 namespace ogre_vis
 {
 
-AxesVisualizer::AxesVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled )
-: VisualizerBase( sceneManager, node, tfClient, name, enabled )
+AxesVisualizer::AxesVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name, bool enabled )
+: VisualizerBase( scene_manager, node, tf_client, name, enabled )
 , length_( 1.0 )
 , radius_( 0.1 )
 {
@@ -95,13 +95,13 @@ void AxesVisualizer::set( float length, float radius )
   create();
 }
 
-void AxesVisualizer::fillPropertyGrid( wxPropertyGrid* propertyGrid )
+void AxesVisualizer::fillPropertyGrid( wxPropertyGrid* property_grid )
 {
-  wxPGId prop = propertyGrid->Append( new wxFloatProperty( LENGTH_PROPERTY, wxPG_LABEL, length_ ) );
-  propertyGrid->SetPropertyAttribute( prop, wxT("Min"), 0.0001 );
+  wxPGId prop = property_grid->Append( new wxFloatProperty( LENGTH_PROPERTY, wxPG_LABEL, length_ ) );
+  property_grid->SetPropertyAttribute( prop, wxT("Min"), 0.0001 );
 
-  prop = propertyGrid->Append( new wxFloatProperty( RADIUS_PROPERTY, wxPG_LABEL, radius_ ) );
-  propertyGrid->SetPropertyAttribute( prop, wxT("Min"), 0.0001 );
+  prop = property_grid->Append( new wxFloatProperty( RADIUS_PROPERTY, wxPG_LABEL, radius_ ) );
+  property_grid->SetPropertyAttribute( prop, wxT("Min"), 0.0001 );
 }
 
 void AxesVisualizer::propertyChanged( wxPropertyGridEvent& event )

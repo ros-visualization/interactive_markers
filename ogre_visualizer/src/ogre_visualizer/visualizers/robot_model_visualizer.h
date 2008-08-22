@@ -47,10 +47,10 @@ namespace ogre_vis
 class RobotModelVisualizer : public VisualizerBase
 {
 public:
-  RobotModelVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
+  RobotModelVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name, bool enabled );
   virtual ~RobotModelVisualizer();
 
-  void initialize( const std::string& descriptionParam, const std::string& transformTopic );
+  void initialize( const std::string& description_param, const std::string& transform_topic );
 
   virtual void update( float dt );
 

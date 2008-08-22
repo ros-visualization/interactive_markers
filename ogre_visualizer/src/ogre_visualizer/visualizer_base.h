@@ -58,7 +58,7 @@ namespace ogre_vis
 class VisualizerBase
 {
 public:
-  VisualizerBase( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled = false );
+  VisualizerBase( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name, bool enabled = false );
   virtual ~VisualizerBase();
 
   /// Enable this visualizer
@@ -79,7 +79,7 @@ public:
   void setUnlockRenderCallback( abstractFunctor* func );
 
   /// Override this to fill out the property grid when this visualizer is selected
-  virtual void fillPropertyGrid( wxPropertyGrid* propertyGrid ) {} // default to no options
+  virtual void fillPropertyGrid( wxPropertyGrid* property_grid ) {} // default to no options
 
   /// Override this to handle a changing property value.  This provides the opportunity to veto a change if there is an invalid value
   /// event.Veto() will prevent the change.

@@ -38,8 +38,8 @@
 namespace ogre_tools
 {
 
-SuperEllipsoid::SuperEllipsoid( Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode )
-: Object( sceneManager )
+SuperEllipsoid::SuperEllipsoid( Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node )
+: Object( scene_manager )
 {
   static uint32_t count = 0;
   std::stringstream ss;
@@ -47,12 +47,12 @@ SuperEllipsoid::SuperEllipsoid( Ogre::SceneManager* sceneManager, Ogre::SceneNod
 
   manual_object_ = scene_manager_->createManualObject( ss.str() );
 
-  if ( !parentNode )
+  if ( !parent_node )
   {
-    parentNode = scene_manager_->getRootSceneNode();
+    parent_node = scene_manager_->getRootSceneNode();
   }
 
-  scene_node_ = parentNode->createChildSceneNode();
+  scene_node_ = parent_node->createChildSceneNode();
   offset_node_ = scene_node_->createChildSceneNode();
   offset_node_->attachObject( manual_object_ );
 

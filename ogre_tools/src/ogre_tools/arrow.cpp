@@ -38,21 +38,21 @@
 namespace ogre_tools
 {
 
-Arrow::Arrow( Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode, float shaftLength, float shaftRadius,
-              float headLength, float headRadius )
-: Object( sceneManager )
+Arrow::Arrow( Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node, float shaft_length, float shaft_radius,
+              float head_length, float head_radius )
+: Object( scene_manager )
 {
-  if ( !parentNode )
+  if ( !parent_node )
   {
-    parentNode = scene_manager_->getRootSceneNode();
+    parent_node = scene_manager_->getRootSceneNode();
   }
 
-  scene_node_ = parentNode->createChildSceneNode();
+  scene_node_ = parent_node->createChildSceneNode();
 
   shaft_ = new SuperEllipsoid( scene_manager_, scene_node_ );
   head_ = new Cone( scene_manager_, scene_node_ );
 
-  set( shaftLength, shaftRadius, headLength, headRadius );
+  set( shaft_length, shaft_radius, head_length, head_radius );
 
   setOrientation( Ogre::Quaternion::IDENTITY );
 }
@@ -65,15 +65,15 @@ Arrow::~Arrow()
   scene_manager_->destroySceneNode( scene_node_->getName() );
 }
 
-void Arrow::set( float shaftLength, float shaftRadius, float headLength, float headRadius )
+void Arrow::set( float shaft_length, float shaft_radius, float head_length, float head_radius )
 {
-  shaft_->create( SuperEllipsoid::Cylinder, 20, Ogre::Vector3( shaftRadius, shaftLength, shaftRadius ) );
+  shaft_->create( SuperEllipsoid::Cylinder, 20, Ogre::Vector3( shaft_radius, shaft_length, shaft_radius ) );
   shaft_->setColor( 0.5f, 0.5f, 0.5f );
-  shaft_->setPosition( Ogre::Vector3( 0.0f, shaftLength/2.0f, 0.0f ) );
+  shaft_->setPosition( Ogre::Vector3( 0.0f, shaft_length/2.0f, 0.0f ) );
 
-  head_->setScale( Ogre::Vector3( headRadius, headLength, headRadius ) );
+  head_->setScale( Ogre::Vector3( head_radius, head_length, head_radius ) );
   head_->setColor( 0.5f, 0.5f, 0.5f );
-  head_->setPosition( Ogre::Vector3( 0.0f, shaftLength, 0.0f ) );
+  head_->setPosition( Ogre::Vector3( 0.0f, shaft_length, 0.0f ) );
 }
 
 void Arrow::setColor( float r, float g, float b )

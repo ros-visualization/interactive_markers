@@ -8,8 +8,8 @@
 namespace ogre_tools
 {
 
-CameraBase::CameraBase( Ogre::SceneManager* sceneManager )
-: scene_manager_( sceneManager )
+CameraBase::CameraBase( Ogre::SceneManager* scene_manager )
+: scene_manager_( scene_manager )
 {
   std::stringstream ss;
   static uint32_t count = 0;

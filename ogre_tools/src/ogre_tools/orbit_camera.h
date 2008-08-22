@@ -17,11 +17,11 @@ namespace ogre_tools
 class OrbitCamera : public CameraBase
 {
 public:
-  OrbitCamera( Ogre::SceneManager* sceneManager );
+  OrbitCamera( Ogre::SceneManager* scene_manager );
   virtual ~OrbitCamera();
 
   void zoom( float amount );
-  void setFocalPoint( const Ogre::Vector3& focalPoint );
+  void setFocalPoint( const Ogre::Vector3& focal_point );
   void setFrom( CameraBase* camera );
 
   virtual void yaw( float angle );
@@ -35,9 +35,9 @@ public:
 
   virtual void move( float x, float y, float z );
 
-  virtual void mouseLeftDrag( int diffX, int diffY );
-  virtual void mouseMiddleDrag( int diffX, int diffY );
-  virtual void mouseRightDrag( int diffX, int diffY );
+  virtual void mouseLeftDrag( int diff_x, int diff_y );
+  virtual void mouseMiddleDrag( int diff_x, int diff_y );
+  virtual void mouseRightDrag( int diff_x, int diff_y );
   virtual void scrollWheel( int diff );
 
 private:

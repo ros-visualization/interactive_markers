@@ -37,8 +37,8 @@
 namespace ogre_tools
 {
 
-Grid::Grid( Ogre::SceneManager* sceneManager, uint32_t gridSize, float cellLength, float r, float g, float b )
-    : scene_manager_( sceneManager )
+Grid::Grid( Ogre::SceneManager* scene_manager, uint32_t gridSize, float cell_length, float r, float g, float b )
+    : scene_manager_( scene_manager )
 {
   static uint32_t gridCount = 0;
   std::stringstream ss;
@@ -49,7 +49,7 @@ Grid::Grid( Ogre::SceneManager* sceneManager, uint32_t gridSize, float cellLengt
   scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
   scene_node_->attachObject( manual_object_ );
 
-  set( gridSize, cellLength, r, g, b );
+  set( gridSize, cell_length, r, g, b );
 }
 
 Grid::~Grid()
@@ -58,18 +58,18 @@ Grid::~Grid()
   scene_manager_->destroyManualObject( manual_object_ );
 }
 
-void Grid::set( uint32_t gridSize, float cellLength, float r, float g, float b )
+void Grid::set( uint32_t gridSize, float cell_length, float r, float g, float b )
 {
   manual_object_->clear();
 
   manual_object_->estimateVertexCount( gridSize * 4 );
   manual_object_->begin( "BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_LIST );
 
-  float extent = (cellLength*((double)gridSize))/2;
+  float extent = (cell_length*((double)gridSize))/2;
 
   for( uint32_t i = 0; i <= gridSize; i++ )
   {
-    float inc = extent - ( i * cellLength );
+    float inc = extent - ( i * cell_length );
 
     manual_object_->position( inc, 0, -extent );
     manual_object_->colour( r, g, b );

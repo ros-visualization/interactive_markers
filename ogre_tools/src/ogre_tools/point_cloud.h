@@ -73,7 +73,7 @@ public:
   };
 
   /// Add points to this point cloud
-  void addPoints( Point* points, uint32_t numPoints );
+  void addPoints( Point* points, uint32_t num_points );
 
   void setUsePoints( bool usePoints );
   void setBillboardDimensions( float width, float height );
