@@ -230,8 +230,8 @@ void LaserScanVisualizer::transformCloud()
     printf( "Error transforming laser scan '%s': %s\n", name_.c_str(), e.what() );
   }
 
-  uint32_t pointCount = cloud_message_.get_pts_size();
-  for(uint32_t i = 0; i < pointCount; i++)
+  uint32_t point_count_ = cloud_message_.get_pts_size();
+  for(uint32_t i = 0; i < point_count_; i++)
   {
     float& intensity = cloud_message_.chan[0].vals[i];
     // arbitrarily cap to 4096 for now
@@ -240,7 +240,7 @@ void LaserScanVisualizer::transformCloud()
     intensity_max_ = std::max( intensity_max_, intensity );
   }
 
-  float diffIntensity = intensity_max_ - intensity_min_;
+  float diff_intensity = intensity_max_ - intensity_min_;
 
   if ( point_decay_time_ == 0.0f )
   {
@@ -250,28 +250,28 @@ void LaserScanVisualizer::transformCloud()
 
   points_.push_back( V_Point() );
   V_Point& points = points_.back();
-  points.resize( pointCount );
+  points.resize( point_count_ );
 
   point_times_.push_back( 0.0f );
-  for(uint32_t i = 0; i < pointCount; i++)
+  for(uint32_t i = 0; i < point_count_; i++)
   {
     Ogre::Vector3 point( cloud_message_.pts[i].x, cloud_message_.pts[i].y, cloud_message_.pts[i].z );
     robotToOgre( point );
 
     float intensity = cloud_message_.chan[0].vals[i];
 
-    float normalizedIntensity = (diffIntensity > 0.0f) ? ( intensity - intensity_min_ ) / diffIntensity : 1.0f;
+    float normalized_intensity = (diff_intensity > 0.0f) ? ( intensity - intensity_min_ ) / diff_intensity : 1.0f;
 
     Ogre::Vector3 color( r_, g_, b_ );
-    color *= normalizedIntensity;
+    color *= normalized_intensity;
 
-    ogre_tools::PointCloud::Point& currentPoint = points[ i ];
-    currentPoint.x_ = point.x;
-    currentPoint.y_ = point.y;
-    currentPoint.z_ = point.z;
-    currentPoint.r_ = color.x;
-    currentPoint.g_ = color.y;
-    currentPoint.b_ = color.z;
+    ogre_tools::PointCloud::Point& current_point = points[ i ];
+    current_point.x_ = point.x;
+    current_point.y_ = point.y;
+    current_point.z_ = point.z;
+    current_point.r_ = color.x;
+    current_point.g_ = color.y;
+    current_point.b_ = color.z;
   }
 
   {
@@ -324,14 +324,14 @@ void LaserScanVisualizer::incomingScanCallback()
 
 void LaserScanVisualizer::fillPropertyGrid( wxPropertyGrid* property_grid )
 {
-  wxArrayString styleNames;
-  styleNames.Add( wxT("Billboards") );
-  styleNames.Add( wxT("Points") );
-  wxArrayInt styleIds;
-  styleIds.Add( Billboards );
-  styleIds.Add( Points );
+  wxArrayString style_names;
+  style_names.Add( wxT("Billboards") );
+  style_names.Add( wxT("Points") );
+  wxArrayInt style_ids;
+  style_ids.Add( Billboards );
+  style_ids.Add( Points );
 
-  property_grid->Append( new wxEnumProperty( STYLE_PROPERTY, wxPG_LABEL, styleNames, styleIds, style_ ) );
+  property_grid->Append( new wxEnumProperty( STYLE_PROPERTY, wxPG_LABEL, style_names, style_ids, style_ ) );
 
   property_grid->Append( new ROSTopicProperty( ros_node_, SCAN_TOPIC_PROPERTY, wxPG_LABEL, wxString::FromAscii( scan_topic_.c_str() ) ) );
   property_grid->Append( new ROSTopicProperty( ros_node_, CLOUD_TOPIC_PROPERTY, wxPG_LABEL, wxString::FromAscii( cloud_topic_.c_str() ) ) );
