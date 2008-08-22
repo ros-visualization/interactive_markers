@@ -93,6 +93,11 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent, Ogre::Root* root )
   m_OrbitCamera->GetOgreCamera()->setNearClipDistance( 0.1f );
   m_OrbitCamera->SetPosition( 0, 0, 15 );
 
+  Ogre::Light* directionalLight = m_SceneManager->createLight( "MainDirectional" );
+  directionalLight->setType( Ogre::Light::LT_DIRECTIONAL );
+  directionalLight->setDirection( Ogre::Vector3( 0, -1, 1 ) );
+  directionalLight->setDiffuseColour( Ogre::ColourValue( 1.0f, 1.0f, 1.0f ) );
+
   m_CurrentCamera = m_OrbitCamera;
 
   m_RenderPanel->GetViewport()->setCamera( m_CurrentCamera->GetOgreCamera() );

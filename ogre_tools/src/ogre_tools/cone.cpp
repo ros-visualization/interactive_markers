@@ -179,7 +179,8 @@ void Cone::GetNormal(double theta, double h, Ogre::Vector3 & normal)
 
 void Cone::SetColor( float r, float g, float b )
 {
-  m_Material->getTechnique(0)->setAmbient( r, g, b );
+  m_Material->getTechnique(0)->setAmbient( r*0.5, g*0.5, b*0.5 );
+  m_Material->getTechnique(0)->setDiffuse( r, g, b, 1.0f );
 }
 
 void Cone::SetOffset( const Ogre::Vector3& offset )

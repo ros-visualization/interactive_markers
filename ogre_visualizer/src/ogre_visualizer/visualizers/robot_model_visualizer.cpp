@@ -250,6 +250,10 @@ void RobotModelVisualizer::UpdateTransforms()
     {
       printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), m_TargetFrame.c_str(), e.what() );
     }
+    catch(libTF::TransformReference::MaxDepthException& e)
+    {
+      printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), m_TargetFrame.c_str(), e.what() );
+    }
 
     Ogre::Vector3 position( pose.x, pose.y, pose.z );
     RobotToOgre( position );
