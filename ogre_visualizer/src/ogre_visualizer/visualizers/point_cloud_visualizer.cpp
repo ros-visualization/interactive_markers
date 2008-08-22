@@ -139,7 +139,7 @@ void PointCloudVisualizer::Subscribe()
 
   if ( !m_Topic.empty() )
   {
-    m_ROSNode->subscribe( m_Topic, m_Message, &PointCloudVisualizer::IncomingCloudCallback, this );
+    m_ROSNode->subscribe( m_Topic, m_Message, &PointCloudVisualizer::IncomingCloudCallback, this, 1 );
   }
 }
 

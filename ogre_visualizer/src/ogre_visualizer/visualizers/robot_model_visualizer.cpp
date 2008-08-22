@@ -203,7 +203,7 @@ void RobotModelVisualizer::Subscribe()
 
   if ( m_Initialized && !m_TransformTopic.empty() )
   {
-    m_ROSNode->subscribe( m_TransformTopic, m_Message, &RobotModelVisualizer::IncomingTransform, this );
+    m_ROSNode->subscribe( m_TransformTopic, m_Message, &RobotModelVisualizer::IncomingTransform, this, 5 );
   }
 }
 

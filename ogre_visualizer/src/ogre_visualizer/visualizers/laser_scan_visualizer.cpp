@@ -154,12 +154,12 @@ void LaserScanVisualizer::Subscribe()
 
   if ( !m_CloudTopic.empty() )
   {
-    m_ROSNode->subscribe( m_CloudTopic, m_CloudMessage, &LaserScanVisualizer::IncomingCloudCallback, this );
+    m_ROSNode->subscribe( m_CloudTopic, m_CloudMessage, &LaserScanVisualizer::IncomingCloudCallback, this, 1 );
   }
 
   if ( !m_ScanTopic.empty() )
   {
-    m_ROSNode->subscribe( m_ScanTopic, m_ScanMessage, &LaserScanVisualizer::IncomingScanCallback, this );
+    m_ROSNode->subscribe( m_ScanTopic, m_ScanMessage, &LaserScanVisualizer::IncomingScanCallback, this, 1 );
   }
 }
 

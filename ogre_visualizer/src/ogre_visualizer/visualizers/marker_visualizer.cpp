@@ -92,7 +92,7 @@ void MarkerVisualizer::Subscribe()
     return;
   }
 
-  m_ROSNode->subscribe("visualizationMarker", m_CurrentMessage, &MarkerVisualizer::IncomingMarker,this);
+  m_ROSNode->subscribe("visualizationMarker", m_CurrentMessage, &MarkerVisualizer::IncomingMarker,this, 0);
 }
 
 void MarkerVisualizer::Unsubscribe()

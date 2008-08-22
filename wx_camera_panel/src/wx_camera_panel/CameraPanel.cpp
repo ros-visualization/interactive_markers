@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2008, Willow Garage, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of the Willow Garage, Inc. nor the names of its
  *       contributors may be used to endorse or promote products derived from
  *       this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -99,9 +99,9 @@ CameraPanel::CameraPanel(wxWindow* parent)
 , m_ZoomScrollTimer( this )
 {
   wxInitAllImageHandlers();
-  
+
   Connect( wxEVT_TIMER, wxTimerEventHandler(CameraPanel::OnScrollComplete), NULL, this);
-  
+
   // ensure a unique node name
   static uint32_t count = 0;
   std::stringstream ss;
@@ -246,7 +246,7 @@ void CameraPanel::SubscribeImage()
 {
   if ( IsImageEnabled() )
   {
-    m_ROSNode->subscribe( m_ImageTopic, m_ImageMessage, &CameraPanel::IncomingImage, this );
+    m_ROSNode->subscribe( m_ImageTopic, m_ImageMessage, &CameraPanel::IncomingImage, this, 1 );
   }
 }
 
@@ -262,7 +262,7 @@ void CameraPanel::SubscribePTZState()
 {
   if ( IsPTZStateEnabled() )
   {
-    m_ROSNode->subscribe( m_PTZStateTopic, m_PTZStateMessage, &CameraPanel::IncomingPTZState, this );
+    m_ROSNode->subscribe( m_PTZStateTopic, m_PTZStateMessage, &CameraPanel::IncomingPTZState, this, 0 );
   }
 }
 
@@ -278,7 +278,7 @@ void CameraPanel::AdvertisePTZControl()
 {
   if ( IsPTZControlEnabled() )
   {
-    m_ROSNode->advertise<std_msgs::PTZActuatorCmd>(m_PTZControlTopic);
+    m_ROSNode->advertise<std_msgs::PTZActuatorCmd>(m_PTZControlTopic, 0);
   }
 }
 
@@ -342,7 +342,7 @@ void CameraPanel::IncomingImage()
       return;
   }
 
-  
+
   delete [] m_ImageData;
   const uint32_t dataSize = m_ImageMessage.get_data_size();
   m_ImageData = new uint8_t[ dataSize ];
@@ -416,7 +416,7 @@ void CameraPanel::DrawTilt( wxDC& dc, wxPen& pen, float tilt )
 
   dc.SetPen( pen );
   // draw tilt tick
-  dc.DrawLine( panelWidth, adjustedHeight + padHeight - (int)tilt, 
+  dc.DrawLine( panelWidth, adjustedHeight + padHeight - (int)tilt,
                panelWidth - POSITION_TICK_LENGTH, adjustedHeight + padHeight - (int)tilt );
 }
 
@@ -678,28 +678,28 @@ void CameraPanel::OnMiddleMouseUp( wxMouseEvent& event )
 {
 	if ( !IsPTZControlEnabled() )
 		return;
-	
+
 	wxSize scale = m_ImagePanel->GetSize();
-	
+
 	float pan_mid = ((float)scale.GetWidth())/2.0f;
 	float tilt_mid = ((float)scale.GetHeight())/2.0f;
-	
+
 	float pan_change = (event.m_x - pan_mid)/pan_mid*(21.0f-(m_CurrentZoom)/500.0f);
 	float tilt_change = -(event.m_y - tilt_mid)/tilt_mid*(15.0f-(m_CurrentZoom)/700.0f);
-	
+
 	if( m_HasPanTarget )
 		m_PanTarget = m_PanTarget + pan_change;
 	else
 		m_PanTarget = m_CurrentPan + pan_change;
-		
+
 	if( m_HasTiltTarget )
 		m_TiltTarget = m_TiltTarget + tilt_change;
 	else
 		m_TiltTarget = m_CurrentTilt + tilt_change;
-	
+
 	m_HasPanTarget = true;
 	m_HasTiltTarget = true;
-	
+
 	m_PTZControlMessage.pan.valid = 1;
 	m_PTZControlMessage.pan.cmd = std::min(std::max(m_PanTarget, m_PanMin), m_PanMax);
 	m_PTZControlMessage.tilt.valid = 1;
@@ -707,7 +707,7 @@ void CameraPanel::OnMiddleMouseUp( wxMouseEvent& event )
 	m_PTZControlMessage.zoom.valid = 0;
 
 	m_ROSNode->publish(m_PTZControlTopic, m_PTZControlMessage);
-	
+
 	m_ImagePanel->Refresh();
 }
 
@@ -717,7 +717,7 @@ void CameraPanel::OnMouseWheel( wxMouseEvent& event )
 	{
 		return;
 	}
-	
+
 	float zoom = m_HasZoomTarget ? m_ZoomTarget : m_CurrentZoom;
 	m_HasZoomTarget = true;
 	zoom = std::min(std::max(zoom + (float)event.GetWheelRotation()*(m_ZoomMax-m_ZoomMin)/ZOOM_SCROLL_STEPS/(float)event.GetWheelDelta(), m_ZoomMin), m_ZoomMax);
@@ -737,7 +737,7 @@ void CameraPanel::OnScrollComplete( wxTimerEvent& event )
 
   m_ROSNode->publish(m_PTZControlTopic, m_PTZControlMessage);
 }
-	
+
 void CameraPanel::OnRightMouseDown( wxMouseEvent& event )
 {
   if ( !IsPTZControlEnabled() )
