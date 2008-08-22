@@ -45,7 +45,7 @@ namespace ogre_vis
 MarkerVisualizer::MarkerVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled )
 : VisualizerBase( sceneManager, node, tfClient, name, enabled )
 {
-  m_SceneNode = m_SceneManager->getRootSceneNode()->createChildSceneNode();
+  scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
 
   if ( IsEnabled() )
   {
@@ -60,20 +60,20 @@ MarkerVisualizer::~MarkerVisualizer()
 
 void MarkerVisualizer::ClearMarkers()
 {
-  M_IDToObject::iterator markerIt = m_Markers.begin();
-  M_IDToObject::iterator markerEnd = m_Markers.end();
+  M_IDToObject::iterator markerIt = markers_.begin();
+  M_IDToObject::iterator markerEnd = markers_.end();
   for ( ; markerIt != markerEnd; ++markerIt )
   {
     delete markerIt->second;
   }
-  m_Markers.clear();
+  markers_.clear();
 }
 
 void MarkerVisualizer::OnEnable()
 {
   Subscribe();
 
-  m_SceneNode->setVisible( true );
+  scene_node_->setVisible( true );
 }
 
 void MarkerVisualizer::OnDisable()
@@ -82,7 +82,7 @@ void MarkerVisualizer::OnDisable()
 
   ClearMarkers();
 
-  m_SceneNode->setVisible( false );
+  scene_node_->setVisible( false );
 }
 
 void MarkerVisualizer::Subscribe()
@@ -92,17 +92,17 @@ void MarkerVisualizer::Subscribe()
     return;
   }
 
-  m_ROSNode->subscribe("visualizationMarker", m_CurrentMessage, &MarkerVisualizer::IncomingMarker,this, 0);
+  ros_node_->subscribe("visualizationMarker", current_message_, &MarkerVisualizer::IncomingMarker,this, 0);
 }
 
 void MarkerVisualizer::Unsubscribe()
 {
-  m_ROSNode->unsubscribe( "visualizationMarker" );
+  ros_node_->unsubscribe( "visualizationMarker" );
 }
 
 void MarkerVisualizer::IncomingMarker()
 {
-  m_MessageQueue.push_back( m_CurrentMessage );
+  message_queue_.push_back( current_message_ );
 }
 
 void MarkerVisualizer::ProcessMessage( const std_msgs::VisualizationMarker& message )
@@ -129,13 +129,13 @@ void MarkerVisualizer::ProcessMessage( const std_msgs::VisualizationMarker& mess
 void MarkerVisualizer::ProcessAdd( const std_msgs::VisualizationMarker& message )
 {
   {
-    M_IDToObject::iterator it = m_Markers.find( message.id );
-    if ( it != m_Markers.end() )
+    M_IDToObject::iterator it = markers_.find( message.id );
+    if ( it != markers_.end() )
     {
       printf( "Marker with id %d already exists, replacing...\n", message.id );
 
       delete it->second;
-      m_Markers.erase( it );
+      markers_.erase( it );
     }
   }
 
@@ -145,7 +145,7 @@ void MarkerVisualizer::ProcessAdd( const std_msgs::VisualizationMarker& message 
   {
   case MarkerTypes::Cube:
     {
-      ogre_tools::SuperEllipsoid* cube = new ogre_tools::SuperEllipsoid( m_SceneManager, m_SceneNode );
+      ogre_tools::SuperEllipsoid* cube = new ogre_tools::SuperEllipsoid( scene_manager_, scene_node_ );
       cube->Create( ogre_tools::SuperEllipsoid::Cube, 10, Ogre::Vector3( 1.0f, 1.0f, 1.0f ) );
 
       object = cube;
@@ -154,7 +154,7 @@ void MarkerVisualizer::ProcessAdd( const std_msgs::VisualizationMarker& message 
 
   case MarkerTypes::Sphere:
     {
-      ogre_tools::SuperEllipsoid* sphere = new ogre_tools::SuperEllipsoid( m_SceneManager, m_SceneNode );
+      ogre_tools::SuperEllipsoid* sphere = new ogre_tools::SuperEllipsoid( scene_manager_, scene_node_ );
       sphere->Create( ogre_tools::SuperEllipsoid::Sphere, 20, Ogre::Vector3( 1.0f, 1.0f, 1.0f ) );
 
       object = sphere;
@@ -163,7 +163,7 @@ void MarkerVisualizer::ProcessAdd( const std_msgs::VisualizationMarker& message 
 
   case MarkerTypes::Arrow:
     {
-      object = new ogre_tools::Arrow( m_SceneManager, m_SceneNode, 0.8, 0.5, 0.2, 1.0 );
+      object = new ogre_tools::Arrow( scene_manager_, scene_node_, 0.8, 0.5, 0.2, 1.0 );
     }
     break;
 
@@ -173,7 +173,7 @@ void MarkerVisualizer::ProcessAdd( const std_msgs::VisualizationMarker& message 
 
   if ( object )
   {
-    m_Markers.insert( std::make_pair( message.id, object ) );
+    markers_.insert( std::make_pair( message.id, object ) );
 
     SetCommonValues( message, object );
 
@@ -183,8 +183,8 @@ void MarkerVisualizer::ProcessAdd( const std_msgs::VisualizationMarker& message 
 
 void MarkerVisualizer::ProcessModify( const std_msgs::VisualizationMarker& message )
 {
-  M_IDToObject::iterator it = m_Markers.find( message.id );
-  if ( it == m_Markers.end() )
+  M_IDToObject::iterator it = markers_.find( message.id );
+  if ( it == markers_.end() )
   {
     printf( "Tried to modify marker with id %d that does not exist\n", message.id );
     return;
@@ -197,11 +197,11 @@ void MarkerVisualizer::ProcessModify( const std_msgs::VisualizationMarker& messa
 
 void MarkerVisualizer::ProcessDelete( const std_msgs::VisualizationMarker& message )
 {
-  M_IDToObject::iterator it = m_Markers.find( message.id );
-  if ( it != m_Markers.end() )
+  M_IDToObject::iterator it = markers_.find( message.id );
+  if ( it != markers_.end() )
   {
     delete it->second;
-    m_Markers.erase( it );
+    markers_.erase( it );
   }
 
   CauseRender();
@@ -212,7 +212,7 @@ void MarkerVisualizer::SetCommonValues( const std_msgs::VisualizationMarker& mes
   uint32_t frameId = 1;
   /*if ( !message.frame.empty() )
   {
-    frameId = m_TFClient->lookup( message.frame );
+    frameId = tf_client_->lookup( message.frame );
   }*/
 
   libTF::TFPoint tfPoint;
@@ -223,7 +223,7 @@ void MarkerVisualizer::SetCommonValues( const std_msgs::VisualizationMarker& mes
   tfPoint.frame = frameId;
   try
   {
-    tfPoint = m_TFClient->transformPoint( m_TargetFrame, tfPoint );
+    tfPoint = tf_client_->transformPoint( target_frame_, tfPoint );
   }
   catch(libTF::TransformReference::LookupException& e)
   {
@@ -246,7 +246,7 @@ void MarkerVisualizer::SetCommonValues( const std_msgs::VisualizationMarker& mes
   tfEulers.frame = frameId;
   try
   {
-    tfEulers = m_TFClient->transformEulerYPR( m_TargetFrame, tfEulers );
+    tfEulers = tf_client_->transformEulerYPR( target_frame_, tfEulers );
   }
   catch(libTF::TransformReference::LookupException& e)
   {
@@ -282,12 +282,12 @@ void MarkerVisualizer::SetCommonValues( const std_msgs::VisualizationMarker& mes
 
 void MarkerVisualizer::Update( float dt )
 {
-  m_CurrentMessage.lock();
+  current_message_.lock();
 
-  if ( !m_MessageQueue.empty() )
+  if ( !message_queue_.empty() )
   {
-    V_MarkerMessage::iterator messageIt = m_MessageQueue.begin();
-    V_MarkerMessage::iterator messageEnd = m_MessageQueue.end();
+    V_MarkerMessage::iterator messageIt = message_queue_.begin();
+    V_MarkerMessage::iterator messageEnd = message_queue_.end();
     for ( ; messageIt != messageEnd; ++messageIt )
     {
       std_msgs::VisualizationMarker& marker = *messageIt;
@@ -295,10 +295,10 @@ void MarkerVisualizer::Update( float dt )
       ProcessMessage( marker );
     }
 
-    m_MessageQueue.clear();
+    message_queue_.clear();
   }
 
-  m_CurrentMessage.unlock();
+  current_message_.unlock();
 }
 
 } // namespace ogre_vis

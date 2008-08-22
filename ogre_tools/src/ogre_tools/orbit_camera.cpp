@@ -15,10 +15,10 @@ static const float PITCH_START = Ogre::Math::HALF_PI;
 
 OrbitCamera::OrbitCamera( Ogre::SceneManager* sceneManager )
 : CameraBase( sceneManager )
-, m_FocalPoint( 0.0f, 0.0f, 0.0f )
-, m_Yaw( YAW_START )
-, m_Pitch( PITCH_START )
-, m_Distance( 10.0f )
+, focal_point_( 0.0f, 0.0f, 0.0f )
+, yaw_( YAW_START )
+, pitch_( PITCH_START )
+, distance_( 10.0f )
 {
   Update();
 }
@@ -29,39 +29,39 @@ OrbitCamera::~OrbitCamera()
 
 void OrbitCamera::NormalizePitch()
 {
-  if ( m_Pitch < PITCH_LIMIT_LOW )
+  if ( pitch_ < PITCH_LIMIT_LOW )
   {
-    m_Pitch = PITCH_LIMIT_LOW;
+    pitch_ = PITCH_LIMIT_LOW;
   }
-  else if ( m_Pitch > PITCH_LIMIT_HIGH )
+  else if ( pitch_ > PITCH_LIMIT_HIGH )
   {
-    m_Pitch = PITCH_LIMIT_HIGH;
+    pitch_ = PITCH_LIMIT_HIGH;
   }
 }
 
 void OrbitCamera::NormalizeYaw()
 {
-  m_Yaw = fmod( m_Yaw, Ogre::Math::TWO_PI );
+  yaw_ = fmod( yaw_, Ogre::Math::TWO_PI );
 
-  if ( m_Yaw < 0.0f )
+  if ( yaw_ < 0.0f )
   {
-    m_Yaw = Ogre::Math::TWO_PI + m_Yaw;
+    yaw_ = Ogre::Math::TWO_PI + yaw_;
   }
 }
 
 void OrbitCamera::Update()
 {
-  float x = m_Distance * cos( m_Yaw ) * sin( m_Pitch ) + m_FocalPoint.x;
-  float y = m_Distance * cos( m_Pitch ) + m_FocalPoint.y;
-  float z = m_Distance * sin( m_Yaw ) * sin( m_Pitch ) + m_FocalPoint.z;
+  float x = distance_ * cos( yaw_ ) * sin( pitch_ ) + focal_point_.x;
+  float y = distance_ * cos( pitch_ ) + focal_point_.y;
+  float z = distance_ * sin( yaw_ ) * sin( pitch_ ) + focal_point_.z;
 
-  m_Camera->setPosition( x, y, z );
-  m_Camera->lookAt( m_FocalPoint );
+  camera_->setPosition( x, y, z );
+  camera_->lookAt( focal_point_ );
 }
 
 void OrbitCamera::Yaw( float angle )
 {
-  m_Yaw += angle;
+  yaw_ += angle;
 
   NormalizeYaw();
 
@@ -70,7 +70,7 @@ void OrbitCamera::Yaw( float angle )
 
 void OrbitCamera::Pitch( float angle )
 {
-  m_Pitch += angle;
+  pitch_ += angle;
 
   NormalizePitch();
 
@@ -83,31 +83,31 @@ void OrbitCamera::Roll( float angle )
 
 Ogre::Vector3 OrbitCamera::GetPosition()
 {
-  return m_Camera->getPosition();
+  return camera_->getPosition();
 }
 
 Ogre::Quaternion OrbitCamera::GetOrientation()
 {
-  return m_Camera->getOrientation();
+  return camera_->getOrientation();
 }
 
 void OrbitCamera::CalculatePitchYawFromPosition( const Ogre::Vector3& position )
 {
-  float x = position.x - m_FocalPoint.x;
-  float y = position.y - m_FocalPoint.y;
-  m_Pitch = acos( y / m_Distance );
+  float x = position.x - focal_point_.x;
+  float y = position.y - focal_point_.y;
+  pitch_ = acos( y / distance_ );
 
   NormalizePitch();
 
-  float val = x / ( m_Distance * sin( m_Pitch ) );
+  float val = x / ( distance_ * sin( pitch_ ) );
 
-  m_Yaw = acos( val );
+  yaw_ = acos( val );
 
-  Ogre::Vector3 direction = m_FocalPoint - position;
+  Ogre::Vector3 direction = focal_point_ - position;
 
   if ( direction.dotProduct( Ogre::Vector3::NEGATIVE_UNIT_Z ) < 0 )
   {
-    m_Yaw = Ogre::Math::TWO_PI - m_Yaw;
+    yaw_ = Ogre::Math::TWO_PI - yaw_;
   }
 }
 
@@ -116,8 +116,8 @@ void OrbitCamera::SetFrom( CameraBase* camera )
   Ogre::Vector3 position = camera->GetPosition();
   Ogre::Quaternion orientation = camera->GetOrientation();
 
-  Ogre::Vector3 direction = orientation * (Ogre::Vector3::NEGATIVE_UNIT_Z * m_Distance);
-  m_FocalPoint = position + direction;
+  Ogre::Vector3 direction = orientation * (Ogre::Vector3::NEGATIVE_UNIT_Z * distance_);
+  focal_point_ = position + direction;
 
   CalculatePitchYawFromPosition( position );
 
@@ -127,10 +127,10 @@ void OrbitCamera::SetFrom( CameraBase* camera )
 void OrbitCamera::SetOrientation( float x, float y, float z, float w )
 {
   Ogre::Quaternion quat( w, x, y, z );
-  m_FocalPoint = m_Camera->getPosition() + quat * (Ogre::Vector3::NEGATIVE_UNIT_Z * m_Distance);
+  focal_point_ = camera_->getPosition() + quat * (Ogre::Vector3::NEGATIVE_UNIT_Z * distance_);
 
-  m_Pitch = quat.getPitch( false ).valueRadians();
-  m_Yaw = quat.getYaw( false ).valueRadians();
+  pitch_ = quat.getPitch( false ).valueRadians();
+  yaw_ = quat.getYaw( false ).valueRadians();
 
   NormalizePitch();
   NormalizeYaw();
@@ -140,11 +140,11 @@ void OrbitCamera::SetOrientation( float x, float y, float z, float w )
 
 void OrbitCamera::Zoom( float amount )
 {
-  m_Distance -= amount;
+  distance_ -= amount;
 
-  if ( m_Distance <= 0.1 )
+  if ( distance_ <= 0.1 )
   {
-    m_Distance = 0.1;
+    distance_ = 0.1;
   }
 
   Update();
@@ -152,14 +152,14 @@ void OrbitCamera::Zoom( float amount )
 
 void OrbitCamera::SetFocalPoint( const Ogre::Vector3& focalPoint )
 {
-  m_FocalPoint = focalPoint;
+  focal_point_ = focalPoint;
 
   Update();
 }
 
 void OrbitCamera::Move( float x, float y, float z )
 {
-  m_FocalPoint += m_Camera->getOrientation() * Ogre::Vector3( x, y, z );
+  focal_point_ += camera_->getOrientation() * Ogre::Vector3( x, y, z );
 
   Update();
 }
@@ -167,7 +167,7 @@ void OrbitCamera::Move( float x, float y, float z )
 void OrbitCamera::SetPosition( float x, float y, float z )
 {
   Ogre::Vector3 pos( x, y, z );
-  m_Distance = (pos - m_FocalPoint).length();
+  distance_ = (pos - focal_point_).length();
 
   CalculatePitchYawFromPosition( Ogre::Vector3( x, y, z ) );
 

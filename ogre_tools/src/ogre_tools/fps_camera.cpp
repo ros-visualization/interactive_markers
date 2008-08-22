@@ -24,37 +24,37 @@ void FPSCamera::Update()
 {
   Ogre::Matrix3 pitch, yaw;
 
-  yaw.FromAxisAngle( Ogre::Vector3::UNIT_Y, Ogre::Radian( m_Yaw ) );
-  pitch.FromAxisAngle( Ogre::Vector3::UNIT_X, Ogre::Radian( m_Pitch ) );
+  yaw.FromAxisAngle( Ogre::Vector3::UNIT_Y, Ogre::Radian( yaw_ ) );
+  pitch.FromAxisAngle( Ogre::Vector3::UNIT_X, Ogre::Radian( pitch_ ) );
 
-  m_Camera->setOrientation( yaw * pitch );
+  camera_->setOrientation( yaw * pitch );
 }
 
 void FPSCamera::NormalizePitch()
 {
-  if ( m_Pitch < PITCH_LIMIT_LOW )
+  if ( pitch_ < PITCH_LIMIT_LOW )
   {
-    m_Pitch = PITCH_LIMIT_LOW;
+    pitch_ = PITCH_LIMIT_LOW;
   }
-  else if ( m_Pitch > PITCH_LIMIT_HIGH )
+  else if ( pitch_ > PITCH_LIMIT_HIGH )
   {
-    m_Pitch = PITCH_LIMIT_HIGH;
+    pitch_ = PITCH_LIMIT_HIGH;
   }
 }
 
 void FPSCamera::NormalizeYaw()
 {
-  m_Yaw = fmod( m_Yaw, Ogre::Math::TWO_PI );
+  yaw_ = fmod( yaw_, Ogre::Math::TWO_PI );
 
-  if ( m_Yaw < 0.0f )
+  if ( yaw_ < 0.0f )
   {
-    m_Yaw = Ogre::Math::TWO_PI + m_Yaw;
+    yaw_ = Ogre::Math::TWO_PI + yaw_;
   }
 }
 
 void FPSCamera::Yaw( float angle )
 {
-  m_Yaw += angle;
+  yaw_ += angle;
 
   NormalizeYaw();
 
@@ -63,7 +63,7 @@ void FPSCamera::Yaw( float angle )
 
 void FPSCamera::Pitch( float angle )
 {
-  m_Pitch += angle;
+  pitch_ += angle;
 
   NormalizePitch();
 
@@ -83,30 +83,30 @@ void FPSCamera::SetFrom( CameraBase* camera )
 void FPSCamera::SetOrientation( float x, float y, float z, float w )
 {
   Ogre::Quaternion quat( w, x, y, z );
-  m_Yaw = quat.getYaw( false ).valueRadians();
-  m_Pitch = quat.getPitch( false ).valueRadians();
+  yaw_ = quat.getYaw( false ).valueRadians();
+  pitch_ = quat.getPitch( false ).valueRadians();
 
   Ogre::Vector3 direction = quat * Ogre::Vector3::NEGATIVE_UNIT_Z;
   if ( direction.dotProduct( Ogre::Vector3::NEGATIVE_UNIT_Z ) < 0 )
   {
-    if ( m_Pitch > Ogre::Math::HALF_PI )
+    if ( pitch_ > Ogre::Math::HALF_PI )
     {
-      m_Pitch = -Ogre::Math::HALF_PI + (m_Pitch - Ogre::Math::HALF_PI);
+      pitch_ = -Ogre::Math::HALF_PI + (pitch_ - Ogre::Math::HALF_PI);
     }
-    else if ( m_Pitch < -Ogre::Math::HALF_PI )
+    else if ( pitch_ < -Ogre::Math::HALF_PI )
     {
-      m_Pitch = Ogre::Math::HALF_PI - (-m_Pitch - Ogre::Math::HALF_PI);
+      pitch_ = Ogre::Math::HALF_PI - (-pitch_ - Ogre::Math::HALF_PI);
     }
 
-    m_Yaw = -m_Yaw;
+    yaw_ = -yaw_;
 
     if ( direction.dotProduct( Ogre::Vector3::UNIT_X ) < 0 )
     {
-      m_Yaw -= Ogre::Math::PI;
+      yaw_ -= Ogre::Math::PI;
     }
     else
     {
-      m_Yaw += Ogre::Math::PI;
+      yaw_ += Ogre::Math::PI;
     }
   }
 
@@ -118,24 +118,24 @@ void FPSCamera::SetOrientation( float x, float y, float z, float w )
 
 Ogre::Quaternion FPSCamera::GetOrientation()
 {
-  return m_Camera->getOrientation();
+  return camera_->getOrientation();
 }
 
 void FPSCamera::Move( float x, float y, float z )
 {
   Ogre::Vector3 translate( x, y, z );
 
-  m_Camera->setPosition( m_Camera->getPosition() + GetOrientation() * translate );
+  camera_->setPosition( camera_->getPosition() + GetOrientation() * translate );
 }
 
 void FPSCamera::SetPosition( float x, float y, float z )
 {
-  m_Camera->setPosition( x, y, z );
+  camera_->setPosition( x, y, z );
 }
 
 Ogre::Vector3 FPSCamera::GetPosition()
 {
-  return m_Camera->getPosition();
+  return camera_->getPosition();
 }
 
 void FPSCamera::MouseLeftDrag( int diffX, int diffY )

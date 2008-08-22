@@ -69,17 +69,17 @@ protected:
   void Clear();
   void Load();
 
-  std_msgs::Empty m_Message;
-  std::string m_TransformTopic;
-  std::string m_DescriptionParam;
+  std_msgs::Empty message_;
+  std::string transform_topic_;
+  std::string description_param_;
 
   typedef std::map< std::string, Ogre::Entity* > M_StringToEntity;
-  M_StringToEntity m_Models;
+  M_StringToEntity models_;
 
-  Ogre::SceneNode* m_RootNode;
-  bool m_HasNewTransforms;
+  Ogre::SceneNode* root_node_;
+  bool has_new_transforms_;
 
-  bool m_Initialized;
+  bool initialized_;
 };
 
 } // namespace ogre_vis

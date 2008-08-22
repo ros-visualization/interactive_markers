@@ -47,14 +47,14 @@ public:
 
   ROSTopicDialogAdapter( ros::node* node )
   : wxPGEditorDialogAdapter()
-  , m_ROSNode( node )
+  , ros_node_( node )
   {
   }
 
   virtual bool DoShowDialog( wxPropertyGrid* WXUNUSED(propGrid), wxPGProperty* WXUNUSED(property) );
 
 protected:
-  ros::node* m_ROSNode;
+  ros::node* ros_node_;
 };
 
 //
@@ -74,13 +74,13 @@ public:
   // Do something special when button is clicked.
   virtual wxPGEditorDialogAdapter* GetEditorDialog() const
   {
-    return new ROSTopicDialogAdapter( m_ROSNode );
+    return new ROSTopicDialogAdapter( ros_node_ );
   }
 
 protected:
   ROSTopicProperty();
 
-  ros::node* m_ROSNode;
+  ros::node* ros_node_;
 };
 
 } // namespace ogre_vis

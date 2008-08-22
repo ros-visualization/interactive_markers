@@ -53,12 +53,12 @@ public:
 
   void Set( uint32_t gridSize, float cellLength, float r, float g, float b );
 
-  Ogre::SceneNode* GetSceneNode() { return m_SceneNode; }
+  Ogre::SceneNode* GetSceneNode() { return scene_node_; }
 
 private:
-  Ogre::SceneManager* m_SceneManager;
-  Ogre::SceneNode* m_SceneNode;
-  Ogre::ManualObject* m_ManualObject;
+  Ogre::SceneManager* scene_manager_;
+  Ogre::SceneNode* scene_node_;
+  Ogre::ManualObject* manual_object_;
 
 };
 

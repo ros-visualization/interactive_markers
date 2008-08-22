@@ -46,10 +46,10 @@ private:
   void NormalizePitch();
   void NormalizeYaw();
 
-  Ogre::Vector3 m_FocalPoint;
-  float m_Yaw;
-  float m_Pitch;
-  float m_Distance;
+  Ogre::Vector3 focal_point_;
+  float yaw_;
+  float pitch_;
+  float distance_;
 };
 
 } // namespace ogre_tools

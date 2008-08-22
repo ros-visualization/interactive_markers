@@ -42,20 +42,20 @@ namespace ogre_tools
 Ogre::String PointCloud::sm_Type = "PointCloud";
 
 PointCloud::PointCloud( Ogre::SceneManager* sceneManager )
-: m_SceneManager( sceneManager )
-, m_BoundingRadius( 0.0f )
-, m_PointCount( 0 )
-, m_PointsPerBBS( MAX_BILLBOARDS_PER_BBS )
-, m_UsePoints( false )
-, m_BillboardWidth( 0.003f )
-, m_BillboardHeight( 0.003f )
+: scene_manager_( sceneManager )
+, bounding_radius_( 0.0f )
+, point_count_( 0 )
+, points_per_bbs_( MAX_BILLBOARDS_PER_BBS )
+, use_points_( false )
+, billboard_width_( 0.003f )
+, billboard_height_( 0.003f )
 {
   static uint32_t pointCloudCount = 0;
   std::stringstream ss;
   ss << "PointCloud" << pointCloudCount++;
 
-  m_SceneNode = m_SceneManager->getRootSceneNode()->createChildSceneNode();
-  m_SceneNode->attachObject( this );
+  scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
+  scene_node_->attachObject( this );
 
 
 
@@ -64,64 +64,64 @@ PointCloud::PointCloud( Ogre::SceneManager* sceneManager )
 
 PointCloud::~PointCloud()
 {
-  V_BillboardSet::iterator bbsIt = m_BillboardSets.begin();
-  V_BillboardSet::iterator bbsEnd = m_BillboardSets.end();
+  V_BillboardSet::iterator bbsIt = billboard_sets_.begin();
+  V_BillboardSet::iterator bbsEnd = billboard_sets_.end();
   for ( ; bbsIt != bbsEnd; ++bbsIt )
   {
     delete (*bbsIt);
   }
-  m_BillboardSets.clear();
+  billboard_sets_.clear();
 
-  m_SceneManager->destroySceneNode( m_SceneNode->getName() );
+  scene_manager_->destroySceneNode( scene_node_->getName() );
 }
 
 const Ogre::AxisAlignedBox& PointCloud::getBoundingBox() const
 {
-  return m_BoundingBox;
+  return bounding_box_;
 }
 
 float PointCloud::getBoundingRadius() const
 {
-  return m_BoundingRadius;
+  return bounding_radius_;
 }
 
 void PointCloud::Clear()
 {
-  m_PointCount = 0;
-  m_BoundingBox.setExtents( -10000.0f, -10000.0f, -10000.0f, 10000.0f, 10000.0f, 10000.0f );
-  m_BoundingRadius = 30000.0f;
+  point_count_ = 0;
+  bounding_box_.setExtents( -10000.0f, -10000.0f, -10000.0f, 10000.0f, 10000.0f, 10000.0f );
+  bounding_radius_ = 30000.0f;
 }
 
 void PointCloud::SetUsePoints( bool usePoints )
 {
-  m_UsePoints = usePoints;
+  use_points_ = usePoints;
 
   if ( usePoints )
   {
-    m_PointsPerBBS = MAX_POINTS_PER_BBS;
+    points_per_bbs_ = MAX_POINTS_PER_BBS;
   }
   else
   {
-    m_PointsPerBBS = MAX_BILLBOARDS_PER_BBS;
+    points_per_bbs_ = MAX_BILLBOARDS_PER_BBS;
   }
 
-  V_BillboardSet::iterator bbsIt = m_BillboardSets.begin();
-  V_BillboardSet::iterator bbsEnd = m_BillboardSets.end();
+  V_BillboardSet::iterator bbsIt = billboard_sets_.begin();
+  V_BillboardSet::iterator bbsEnd = billboard_sets_.end();
   for ( ; bbsIt != bbsEnd; ++bbsIt )
   {
     Ogre::BillboardSet* bbs = *bbsIt;
 
     bbs->setPointRenderingEnabled( usePoints );
-    bbs->setPoolSize( m_PointsPerBBS );
+    bbs->setPoolSize( points_per_bbs_ );
   }
 }
 
 void PointCloud::SetBillboardDimensions( float width, float height )
 {
-  m_BillboardWidth = width;
-  m_BillboardHeight = height;
-  V_BillboardSet::iterator bbsIt = m_BillboardSets.begin();
-  V_BillboardSet::iterator bbsEnd = m_BillboardSets.end();
+  billboard_width_ = width;
+  billboard_height_ = height;
+  V_BillboardSet::iterator bbsIt = billboard_sets_.begin();
+  V_BillboardSet::iterator bbsEnd = billboard_sets_.end();
   for ( ; bbsIt != bbsEnd; ++bbsIt )
   {
     Ogre::BillboardSet* bbs = *bbsIt;
@@ -133,41 +133,41 @@ void PointCloud::SetBillboardDimensions( float width, float height )
 Ogre::BillboardSet* PointCloud::CreateBillboardSet()
 {
   Ogre::BillboardSet* bbs = new Ogre::BillboardSet( "", 0, true );
-  bbs->setPointRenderingEnabled( m_UsePoints );
-  bbs->setDefaultDimensions( m_BillboardWidth, m_BillboardHeight );
+  bbs->setPointRenderingEnabled( use_points_ );
+  bbs->setDefaultDimensions( billboard_width_, billboard_height_ );
   bbs->setBillboardsInWorldSpace(true);
   bbs->setBillboardOrigin( Ogre::BBO_CENTER );
   bbs->setBillboardRotationType( Ogre::BBR_VERTEX );
   bbs->setMaterialName( "BaseWhiteNoLighting" );
   bbs->setCullIndividually( false );
-  bbs->setPoolSize( m_PointsPerBBS );
+  bbs->setPoolSize( points_per_bbs_ );
 
   return bbs;
 }
 
 void PointCloud::AddPoints( Point* points, uint32_t numPoints )
 {
-  if ( m_Points.size() < m_PointCount + numPoints )
+  if ( points_.size() < point_count_ + numPoints )
   {
-    m_Points.resize( m_PointCount + numPoints );
+    points_.resize( point_count_ + numPoints );
   }
 
-  Point* begin = &m_Points.front() + m_PointCount;
+  Point* begin = &points_.front() + point_count_;
   memcpy( begin, points, sizeof( Point ) * numPoints );
 
   // update bounding box and radius
-  /*uint32_t totalPoints = m_PointCount + numPoints;
-  for ( uint32_t i = m_PointCount; i < totalPoints; ++i )
+  /*uint32_t totalPoints = point_count_ + numPoints;
+  for ( uint32_t i = point_count_; i < totalPoints; ++i )
   {
-    Point& p = m_Points[i];
+    Point& p = points_[i];
 
     Ogre::Vector3 pos( p.m_X, p.m_Y, p.m_Z );
-    m_BoundingBox.merge( pos );
+    bounding_box_.merge( pos );
 
-    m_BoundingRadius = std::max( m_BoundingRadius, pos.length() );
+    bounding_radius_ = std::max( bounding_radius_, pos.length() );
   }*/
 
-  m_PointCount += numPoints;
+  point_count_ += numPoints;
 }
 
 void PointCloud::_notifyCurrentCamera( Ogre::Camera* camera )
@@ -175,8 +175,8 @@ void PointCloud::_notifyCurrentCamera( Ogre::Camera* camera )
   MovableObject::_notifyCurrentCamera( camera );
 
 
-  V_BillboardSet::iterator bbsIt = m_BillboardSets.begin();
-  V_BillboardSet::iterator bbsEnd = m_BillboardSets.end();
+  V_BillboardSet::iterator bbsIt = billboard_sets_.begin();
+  V_BillboardSet::iterator bbsEnd = billboard_sets_.end();
   for ( ; bbsIt != bbsEnd; ++bbsIt )
   {
     (*bbsIt)->_notifyCurrentCamera( camera );
@@ -185,7 +185,7 @@ void PointCloud::_notifyCurrentCamera( Ogre::Camera* camera )
 
 void PointCloud::_updateRenderQueue( Ogre::RenderQueue* queue )
 {
-  if ( m_PointCount == 0 )
+  if ( point_count_ == 0 )
   {
     return;
   }
@@ -196,10 +196,10 @@ void PointCloud::_updateRenderQueue( Ogre::RenderQueue* queue )
   uint32_t currentBBS = 0;
   Ogre::BillboardSet* bbs = NULL;
   V_BillboardSet used;
-  for ( uint32_t i = 0; i < m_PointCount; ++i, ++pointsInCurrent )
+  for ( uint32_t i = 0; i < point_count_; ++i, ++pointsInCurrent )
   {
     bool newBBS = false;
-    if ( pointsInCurrent > m_PointsPerBBS )
+    if ( pointsInCurrent > points_per_bbs_ )
     {
       bbs->endBillboards();
 
@@ -209,30 +209,30 @@ void PointCloud::_updateRenderQueue( Ogre::RenderQueue* queue )
       newBBS = true;
     }
 
-    if ( currentBBS >= m_BillboardSets.size() )
+    if ( currentBBS >= billboard_sets_.size() )
     {
       bbs = CreateBillboardSet();
-      m_BillboardSets.push_back( bbs );
+      billboard_sets_.push_back( bbs );
 
       newBBS = true;
     }
 
     if ( newBBS || !bbs )
     {
-      bbs = m_BillboardSets[ currentBBS ];
-      bbs->beginBillboards( std::min<uint32_t>( m_PointCount - i, m_PointsPerBBS ) );
+      bbs = billboard_sets_[ currentBBS ];
+      bbs->beginBillboards( std::min<uint32_t>( point_count_ - i, points_per_bbs_ ) );
 
       used.push_back( bbs );
     }
 
-    Point& p = m_Points[i];
+    Point& p = points_[i];
 
     bb.mPosition.x = p.m_X;
     bb.mPosition.y = p.m_Y;
     bb.mPosition.z = p.m_Z;
-    bb.mColour.r = p.m_R;
-    bb.mColour.g = p.m_G;
-    bb.mColour.b = p.m_B;
+    bb.mColour.r = p.r_;
+    bb.mColour.g = p.g_;
+    bb.mColour.b = p.b_;
 
     bbs->injectBillboard(bb);
   }
@@ -250,7 +250,7 @@ void PointCloud::_updateRenderQueue( Ogre::RenderQueue* queue )
 
 void PointCloud::SetVisible( bool visible )
 {
-  m_SceneNode->setVisible( visible );
+  scene_node_->setVisible( visible );
 }
 
 } // namespace ogre_tools

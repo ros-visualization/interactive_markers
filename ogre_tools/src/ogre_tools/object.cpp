@@ -33,7 +33,7 @@ namespace ogre_tools
 {
 
 Object::Object( Ogre::SceneManager* sceneManager )
-: m_SceneManager( sceneManager )
+: scene_manager_( sceneManager )
 {
 }
 

@@ -62,13 +62,13 @@ public:
   virtual void SetPosition( const Ogre::Vector3& position );
   virtual void SetScale( const Ogre::Vector3& scale );
 
-  Ogre::SceneNode* GetSceneNode() { return m_SceneNode; }
+  Ogre::SceneNode* GetSceneNode() { return scene_node_; }
 
 private:
-  Ogre::SceneNode* m_SceneNode;
+  Ogre::SceneNode* scene_node_;
 
-  SuperEllipsoid* m_Shaft;
-  Cone* m_Head;
+  SuperEllipsoid* shaft_;
+  Cone* head_;
 };
 
 } // namespace ogre_tools

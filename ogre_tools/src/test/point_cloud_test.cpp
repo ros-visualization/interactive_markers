@@ -42,14 +42,14 @@ public:
                       wxDefaultPosition, wxSize(800,600),
                       wxDEFAULT_FRAME_STYLE)
   {
-    m_Root = new Ogre::Root();
-    m_Root->loadPlugin( "RenderSystem_GL" );
-    m_Root->loadPlugin( "Plugin_OctreeSceneManager" );
+    root_ = new Ogre::Root();
+    root_->loadPlugin( "RenderSystem_GL" );
+    root_->loadPlugin( "Plugin_OctreeSceneManager" );
 
     Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
 
     // Taken from gazebo
-    Ogre::RenderSystemList *rsList = m_Root->getAvailableRenderers();
+    Ogre::RenderSystemList *rsList = root_->getAvailableRenderers();
 
     Ogre::RenderSystem* renderSystem = NULL;
     Ogre::RenderSystemList::iterator renderIt = rsList->begin();
@@ -74,11 +74,11 @@ public:
     renderSystem->setConfigOption("FSAA","2");
     renderSystem->setConfigOption("RTT Preferred Mode", "PBuffer");
 
-    m_Root->setRenderSystem( renderSystem );
+    root_->setRenderSystem( renderSystem );
 
     try
     {
-        m_Root->initialise( false );
+        root_->initialise( false );
     }
     catch ( Ogre::Exception& e )
     {
@@ -88,18 +88,18 @@ public:
 
     try
     {
-        m_SceneManager = m_Root->createSceneManager( Ogre::ST_GENERIC, "TestSceneManager" );
+        scene_manager_ = root_->createSceneManager( Ogre::ST_GENERIC, "TestSceneManager" );
 
-        m_WXRenderWindow = new ogre_tools::wxOgreRenderWindow( m_Root, this );
+        m_WXRenderWindow = new ogre_tools::wxOgreRenderWindow( root_, this );
         m_WXRenderWindow->SetSize( this->GetSize() );
 
-        m_Camera = m_SceneManager->createCamera( "TestCam" );
-        m_Camera->setPosition( Ogre::Vector3( 0, 0, 30 ) );
-        m_Camera->lookAt( Ogre::Vector3( 0, 0, 0 ) );
-        m_Camera->setNearClipDistance( 1 );
-        m_WXRenderWindow->GetViewport()->setCamera( m_Camera );
+        camera_ = scene_manager_->createCamera( "TestCam" );
+        camera_->setPosition( Ogre::Vector3( 0, 0, 30 ) );
+        camera_->lookAt( Ogre::Vector3( 0, 0, 0 ) );
+        camera_->setNearClipDistance( 1 );
+        m_WXRenderWindow->GetViewport()->setCamera( camera_ );
 
-        m_PointCloud = new ogre_tools::PointCloud( m_SceneManager );
+        m_PointCloud = new ogre_tools::PointCloud( scene_manager_ );
         std::vector<ogre_tools::PointCloud::Point> points;
         points.resize( 100 );
         for ( int32_t i =-5; i < 5; ++i )
@@ -111,9 +111,9 @@ public:
                 point.m_Y = i;
                 point.m_Z = 0;
 
-                point.m_R = abs(i) % 3 == 0 ? 1.0f : 0.0f;
-                point.m_G = abs(i) % 3 == 1 ? 1.0f : 0.0f;
-                point.m_B = abs(i) % 3 == 2 ? 1.0f : 0.0f;
+                point.r_ = abs(i) % 3 == 0 ? 1.0f : 0.0f;
+                point.g_ = abs(i) % 3 == 1 ? 1.0f : 0.0f;
+                point.b_ = abs(i) % 3 == 2 ? 1.0f : 0.0f;
             }
         }
 
@@ -125,37 +125,37 @@ public:
         exit(1);
     }
 
-    m_RenderTimer = new wxTimer( this );
-    m_RenderTimer->Start( 100 );
+    r_enderTimer = new wxTimer( this );
+    r_enderTimer->Start( 100 );
 
-    Connect( m_RenderTimer->GetId(), wxEVT_TIMER, wxTimerEventHandler( MyFrame::RenderCallback ), NULL, this );
+    Connect( r_enderTimer->GetId(), wxEVT_TIMER, wxTimerEventHandler( MyFrame::RenderCallback ), NULL, this );
   }
 
   ~MyFrame()
   {
-    Disconnect( m_RenderTimer->GetId(), wxEVT_TIMER, wxTimerEventHandler( MyFrame::RenderCallback ), NULL, this );
+    Disconnect( r_enderTimer->GetId(), wxEVT_TIMER, wxTimerEventHandler( MyFrame::RenderCallback ), NULL, this );
 
     delete m_PointCloud;
 
-    delete m_RenderTimer;
+    delete r_enderTimer;
 
     m_WXRenderWindow->Destroy();
-    delete m_Root;
+    delete root_;
   }
 
 private:
   void RenderCallback( wxTimerEvent& event )
   {
-    m_Root->renderOneFrame();
+    root_->renderOneFrame();
   }
 
-  Ogre::Root* m_Root;
-  Ogre::Camera* m_Camera;
-  Ogre::SceneManager* m_SceneManager;
+  Ogre::Root* root_;
+  Ogre::Camera* camera_;
+  Ogre::SceneManager* scene_manager_;
 
   ogre_tools::wxOgreRenderWindow* m_WXRenderWindow;
 
-  wxTimer* m_RenderTimer;
+  wxTimer* r_enderTimer;
 
   ogre_tools::PointCloud* m_PointCloud;
 };

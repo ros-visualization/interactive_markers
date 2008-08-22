@@ -78,15 +78,15 @@ public:
 
   void Render();
 
-  void LockRender() { m_RenderMutex.lock(); }
-  void UnlockRender() { m_RenderMutex.unlock(); }
+  void LockRender() { render_mutex_.lock(); }
+  void UnlockRender() { render_mutex_.unlock(); }
 
   void AddVisualizer( VisualizerBase* visualizer );
 
   template< class T >
   T* CreateVisualizer( const std::string& name, bool enabled )
   {
-    T* visualizer = new T( m_SceneManager, m_ROSNode, m_TFClient, name, enabled );
+    T* visualizer = new T( scene_manager_, ros_node_, tf_client_, name, enabled );
 
     AddVisualizer( visualizer );
 
@@ -103,34 +103,34 @@ protected:
   void OnPropertyChanging( wxPropertyGridEvent& event );
   void OnPropertyChanged( wxPropertyGridEvent& event );
 
-  Ogre::Root* m_OgreRoot;
-  Ogre::SceneManager* m_SceneManager;
+  Ogre::Root* ogre_root_;
+  Ogre::SceneManager* scene_manager_;
 
-  wxTimer* m_UpdateTimer;
-  wxStopWatch m_UpdateStopwatch;
+  wxTimer* update_timer_;
+  wxStopWatch update_stopwatch_;
 
-  wxPropertyGrid* m_PropertyGrid;
+  wxPropertyGrid* property_grid_;
 
-  ogre_tools::wxOgreRenderWindow* m_RenderPanel;
-  ogre_tools::CameraBase* m_CurrentCamera;
-  ogre_tools::FPSCamera* m_FPSCamera;
-  ogre_tools::OrbitCamera* m_OrbitCamera;
+  ogre_tools::wxOgreRenderWindow* render_panel_;
+  ogre_tools::CameraBase* current_camera_;
+  ogre_tools::FPSCamera* fps_camera_;
+  ogre_tools::OrbitCamera* orbit_camera_;
 
-  ros::node* m_ROSNode;
-  rosTFClient* m_TFClient;
+  ros::node* ros_node_;
+  rosTFClient* tf_client_;
 
   typedef std::vector< VisualizerBase* > V_Visualizer;
-  V_Visualizer m_Visualizers;
-  VisualizerBase* m_SelectedVisualizer;
+  V_Visualizer visualizers_;
+  VisualizerBase* selected_visualizer_;
 
   // Mouse handling
-  bool m_LeftMouseDown;
-  bool m_MiddleMouseDown;
-  bool m_RightMouseDown;
-  int m_MouseX;
-  int m_MouseY;
+  bool left_mouse_down_;
+  bool middle_mouse_down_;
+  bool right_mouse_down_;
+  int mouse_x_;
+  int mouse_y_;
 
-  ros::thread::mutex m_RenderMutex;
+  ros::thread::mutex render_mutex_;
 };
 
 } // namespace ogre_vis

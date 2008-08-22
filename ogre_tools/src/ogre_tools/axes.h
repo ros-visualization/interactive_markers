@@ -61,14 +61,14 @@ public:
 
   virtual void SetColor( float r, float g, float b );
 
-  Ogre::SceneNode* GetSceneNode() { return m_SceneNode; }
+  Ogre::SceneNode* GetSceneNode() { return scene_node_; }
 
 private:
-  Ogre::SceneNode* m_SceneNode;
+  Ogre::SceneNode* scene_node_;
 
-  SuperEllipsoid* m_XAxis;
-  SuperEllipsoid* m_YAxis;
-  SuperEllipsoid* m_ZAxis;
+  SuperEllipsoid* x_axis_;
+  SuperEllipsoid* y_axis_;
+  SuperEllipsoid* z_axis_;
 };
 
 } // namespace ogre_tools

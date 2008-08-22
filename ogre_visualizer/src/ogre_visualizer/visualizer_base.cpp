@@ -36,90 +36,90 @@ namespace ogre_vis
 
 VisualizerBase::VisualizerBase( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient,
                                 const std::string& name, bool enabled )
-: m_SceneManager( sceneManager )
-, m_Name( name )
-, m_Enabled( enabled )
-, m_TargetFrame( "base" )
-, m_RenderCallback( NULL )
-, m_RenderLock( NULL )
-, m_RenderUnlock( NULL )
-, m_ROSNode( node )
-, m_TFClient( tfClient )
+: scene_manager_( sceneManager )
+, name_( name )
+, enabled_( enabled )
+, target_frame_( "base" )
+, render_callback_( NULL )
+, render_lock_( NULL )
+, render_unlock_( NULL )
+, ros_node_( node )
+, tf_client_( tfClient )
 {
 }
 
 VisualizerBase::~VisualizerBase()
 {
-  delete m_RenderCallback;
+  delete render_callback_;
 }
 
 void VisualizerBase::Enable()
 {
-  if ( m_Enabled )
+  if ( enabled_ )
   {
     return;
   }
 
-  m_Enabled = true;
+  enabled_ = true;
 
   OnEnable();
 }
 
 void VisualizerBase::Disable()
 {
-  if ( !m_Enabled )
+  if ( !enabled_ )
   {
     return;
   }
 
-  m_Enabled = false;
+  enabled_ = false;
 
   OnDisable();
 }
 
 void VisualizerBase::SetRenderCallback( abstractFunctor* func )
 {
-  delete m_RenderCallback;
+  delete render_callback_;
 
-  m_RenderCallback = func;
+  render_callback_ = func;
 }
 
 void VisualizerBase::SetLockRenderCallback( abstractFunctor* func )
 {
-  delete m_RenderLock;
+  delete render_lock_;
 
-  m_RenderLock = func;
+  render_lock_ = func;
 }
 
 void VisualizerBase::SetUnlockRenderCallback( abstractFunctor* func )
 {
-  delete m_RenderUnlock;
+  delete render_unlock_;
 
-  m_RenderUnlock = func;
+  render_unlock_ = func;
 }
 
 
 void VisualizerBase::CauseRender()
 {
-  if ( m_RenderCallback )
+  if ( render_callback_ )
   {
-    m_RenderCallback->call();
+    render_callback_->call();
   }
 }
 
 void VisualizerBase::LockRender()
 {
-  if ( m_RenderLock )
+  if ( render_lock_ )
   {
-    m_RenderLock->call();
+    render_lock_->call();
   }
 }
 
 void VisualizerBase::UnlockRender()
 {
-  if ( m_RenderUnlock )
+  if ( render_unlock_ )
   {
-    m_RenderUnlock->call();
+    render_unlock_->call();
   }
 }
 

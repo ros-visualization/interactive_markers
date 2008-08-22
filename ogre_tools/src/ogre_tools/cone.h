@@ -64,14 +64,14 @@ protected:
   void GetVertex( double theta, double h, Ogre::Vector3& vertex );
   void GetNormal( double theta, double h, Ogre::Vector3& normal );
 
-  Ogre::SceneNode* m_SceneNode;
-  Ogre::SceneNode* m_OffsetNode;
-  Ogre::ManualObject* m_ManualObject;
-  Ogre::MaterialPtr m_Material;
-  std::string m_MaterialName;
+  Ogre::SceneNode* scene_node_;
+  Ogre::SceneNode* offset_node_;
+  Ogre::ManualObject* manual_object_;
+  Ogre::MaterialPtr material_;
+  std::string material_name_;
 
-  int m_XTes;
-  int m_YTes;
+  int x_tes_;
+  int y_tes_;
 };
 
 } // namespace ogre_tools

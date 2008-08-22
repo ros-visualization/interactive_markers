@@ -42,8 +42,8 @@ protected:
   void NormalizePitch();
   void NormalizeYaw();
 
-  float m_Pitch;
-  float m_Yaw;
+  float pitch_;
+  float yaw_;
 };
 
 } // namespace ogre_tools

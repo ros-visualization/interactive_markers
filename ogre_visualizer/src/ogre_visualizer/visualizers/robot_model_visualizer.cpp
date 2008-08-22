@@ -42,10 +42,10 @@ namespace ogre_vis
 
 RobotModelVisualizer::RobotModelVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled )
 : VisualizerBase( sceneManager, node, tfClient, name, enabled )
-, m_HasNewTransforms( false )
-, m_Initialized( false )
+, has_new_transforms_( false )
+, initialized_( false )
 {
-  m_RootNode = sceneManager->getRootSceneNode()->createChildSceneNode();
+  root_node_ = sceneManager->getRootSceneNode()->createChildSceneNode();
 }
 
 RobotModelVisualizer::~RobotModelVisualizer()
@@ -54,33 +54,33 @@ RobotModelVisualizer::~RobotModelVisualizer()
 
   Clear();
 
-  m_SceneManager->destroySceneNode( m_RootNode->getName() );
+  scene_manager_->destroySceneNode( root_node_->getName() );
 }
 
 void RobotModelVisualizer::Clear()
 {
-  M_StringToEntity::iterator modelIt = m_Models.begin();
-  M_StringToEntity::iterator modelEnd = m_Models.end();
+  M_StringToEntity::iterator modelIt = models_.begin();
+  M_StringToEntity::iterator modelEnd = models_.end();
   for ( ; modelIt != modelEnd; ++modelIt )
   {
     Ogre::Entity* entity = modelIt->second;
     Ogre::SceneNode* node = entity->getParentSceneNode();
 
     node->detachObject( entity );
-    m_SceneManager->destroyEntity( entity );
+    scene_manager_->destroyEntity( entity );
   }
 
-  m_Models.clear();
+  models_.clear();
 
-  m_RootNode->removeAndDestroyAllChildren();
+  root_node_->removeAndDestroyAllChildren();
 }
 
 void RobotModelVisualizer::Initialize( const std::string& descriptionParam, const std::string& transformTopic )
 {
-  m_TransformTopic = transformTopic;
-  m_DescriptionParam = descriptionParam;
+  transform_topic_ = transformTopic;
+  description_param_ = descriptionParam;
 
-  m_Initialized = true;
+  initialized_ = true;
 
   if ( IsEnabled() )
   {
@@ -89,7 +89,7 @@ void RobotModelVisualizer::Initialize( const std::string& descriptionParam, cons
   }
   else
   {
-    m_RootNode->setVisible( false );
+    root_node_->setVisible( false );
   }
 }
 
@@ -98,7 +98,7 @@ void RobotModelVisualizer::Load()
   Clear();
 
   std::string content;
-  m_ROSNode->get_param(m_DescriptionParam, content);
+  ros_node_->get_param(description_param_, content);
   robot_desc::URDF* file = new robot_desc::URDF();
   std::auto_ptr<robot_desc::URDF> file_ptr( file );
 
@@ -121,7 +121,7 @@ void RobotModelVisualizer::Load()
 
     std::string modelName = mesh->filename + "_hi.mesh";
 
-    Ogre::SceneNode* node = m_RootNode->createChildSceneNode();
+    Ogre::SceneNode* node = root_node_->createChildSceneNode();
     try
     {
       static int count = 0;
@@ -130,8 +130,8 @@ void RobotModelVisualizer::Load()
 
       printf( "link name: %s\n", link->name.c_str() );
 
-      Ogre::Entity* entity = m_SceneManager->createEntity( ss.str(), modelName );
-      m_Models[ link->name ] = entity;
+      Ogre::Entity* entity = scene_manager_->createEntity( ss.str(), modelName );
+      models_[ link->name ] = entity;
 
       // assign the material from the link
       uint16_t numSubEntities = entity->getNumSubEntities();
@@ -172,26 +172,26 @@ void RobotModelVisualizer::Load()
 
 void RobotModelVisualizer::OnEnable()
 {
-  if ( !m_Initialized )
+  if ( !initialized_ )
   {
     return;
   }
 
   Subscribe();
-  m_RootNode->setVisible( true );
+  root_node_->setVisible( true );
 
   Load();
 }
 
 void RobotModelVisualizer::OnDisable()
 {
-  if ( !m_Initialized )
+  if ( !initialized_ )
   {
     return;
   }
 
   Unsubscribe();
-  m_RootNode->setVisible( false );
+  root_node_->setVisible( false );
 }
 
 void RobotModelVisualizer::Subscribe()
@@ -201,29 +201,29 @@ void RobotModelVisualizer::Subscribe()
     return;
   }
 
-  if ( m_Initialized && !m_TransformTopic.empty() )
+  if ( initialized_ && !transform_topic_.empty() )
   {
-    m_ROSNode->subscribe( m_TransformTopic, m_Message, &RobotModelVisualizer::IncomingTransform, this, 5 );
+    ros_node_->subscribe( transform_topic_, message_, &RobotModelVisualizer::IncomingTransform, this, 5 );
   }
 }
 
 void RobotModelVisualizer::Unsubscribe()
 {
-  if ( m_Initialized && !m_TransformTopic.empty() )
+  if ( initialized_ && !transform_topic_.empty() )
   {
-    m_ROSNode->unsubscribe( m_TransformTopic );
+    ros_node_->unsubscribe( transform_topic_ );
   }
 }
 
 void RobotModelVisualizer::IncomingTransform()
 {
-  m_HasNewTransforms = true;
+  has_new_transforms_ = true;
 }
 
 void RobotModelVisualizer::UpdateTransforms()
 {
-  M_StringToEntity::iterator modelIt = m_Models.begin();
-  M_StringToEntity::iterator modelEnd = m_Models.end();
+  M_StringToEntity::iterator modelIt = models_.begin();
+  M_StringToEntity::iterator modelEnd = models_.end();
   for ( ; modelIt != modelEnd; ++modelIt )
   {
     const std::string& name = modelIt->first;
@@ -236,23 +236,23 @@ void RobotModelVisualizer::UpdateTransforms()
 
     try
     {
-      pose = m_TFClient->transformPose( m_TargetFrame, pose );
+      pose = tf_client_->transformPose( target_frame_, pose );
     }
     catch(libTF::TransformReference::LookupException& e)
     {
-      printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), m_TargetFrame.c_str(), e.what() );
+      printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), target_frame_.c_str(), e.what() );
     }
     catch(libTF::TransformReference::ConnectivityException& e)
     {
-      printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), m_TargetFrame.c_str(), e.what() );
+      printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), target_frame_.c_str(), e.what() );
     }
     catch(libTF::TransformReference::ExtrapolateException& e)
     {
-      printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), m_TargetFrame.c_str(), e.what() );
+      printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), target_frame_.c_str(), e.what() );
     }
     catch(libTF::TransformReference::MaxDepthException& e)
     {
-      printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), m_TargetFrame.c_str(), e.what() );
+      printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), target_frame_.c_str(), e.what() );
     }
 
     Ogre::Vector3 position( pose.x, pose.y, pose.z );
@@ -265,17 +265,17 @@ void RobotModelVisualizer::UpdateTransforms()
 
 void RobotModelVisualizer::Update( float dt )
 {
-  m_Message.lock();
+  message_.lock();
 
-  if ( m_HasNewTransforms )
+  if ( has_new_transforms_ )
   {
     UpdateTransforms();
     CauseRender();
 
-    m_HasNewTransforms = false;
+    has_new_transforms_ = false;
   }
 
-  m_Message.unlock();
+  message_.unlock();
 }
 
 } // namespace ogre_vis

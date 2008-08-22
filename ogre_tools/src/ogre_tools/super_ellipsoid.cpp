@@ -45,33 +45,33 @@ SuperEllipsoid::SuperEllipsoid( Ogre::SceneManager* sceneManager, Ogre::SceneNod
   std::stringstream ss;
   ss << "SuperEllipsoid" << count++;
 
-  m_ManualObject = m_SceneManager->createManualObject( ss.str() );
+  manual_object_ = scene_manager_->createManualObject( ss.str() );
 
   if ( !parentNode )
   {
-    parentNode = m_SceneManager->getRootSceneNode();
+    parentNode = scene_manager_->getRootSceneNode();
   }
 
-  m_SceneNode = parentNode->createChildSceneNode();
-  m_OffsetNode = m_SceneNode->createChildSceneNode();
-  m_OffsetNode->attachObject( m_ManualObject );
+  scene_node_ = parentNode->createChildSceneNode();
+  offset_node_ = scene_node_->createChildSceneNode();
+  offset_node_->attachObject( manual_object_ );
 
   ss << "Material";
-  m_MaterialName = ss.str();
-  m_Material = Ogre::MaterialManager::getSingleton().create( m_MaterialName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
-  m_Material->setReceiveShadows(false);
-  m_Material->getTechnique(0)->setLightingEnabled(true);
-  m_Material->getTechnique(0)->setAmbient( 0.5, 0.5, 0.5 );
+  material_name_ = ss.str();
+  material_ = Ogre::MaterialManager::getSingleton().create( material_name_, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
+  material_->setReceiveShadows(false);
+  material_->getTechnique(0)->setLightingEnabled(true);
+  material_->getTechnique(0)->setAmbient( 0.5, 0.5, 0.5 );
 }
 
 SuperEllipsoid::~SuperEllipsoid()
 {
-  m_SceneManager->destroySceneNode( m_SceneNode->getName() );
-  m_SceneManager->destroySceneNode( m_OffsetNode->getName() );
+  scene_manager_->destroySceneNode( scene_node_->getName() );
+  scene_manager_->destroySceneNode( offset_node_->getName() );
 
-  m_SceneManager->destroyManualObject( m_ManualObject );
+  scene_manager_->destroyManualObject( manual_object_ );
 
-  m_Material.setNull();
+  material_.setNull();
 }
 
 void SuperEllipsoid::Create(int samples, float n1, float n2, const Ogre::Vector3& scale)
@@ -84,8 +84,8 @@ void SuperEllipsoid::Create(int samples, float n1, float n2, const Ogre::Vector3
 
   phi = -Ogre::Math::HALF_PI;
 
-  m_ManualObject->clear();
-  m_ManualObject->begin( m_MaterialName, Ogre::RenderOperation::OT_TRIANGLE_LIST );
+  manual_object_->clear();
+  manual_object_->begin( material_name_, Ogre::RenderOperation::OT_TRIANGLE_LIST );
 
   float scaleX = scale.x / 2.0f;
   float scaleY = scale.y / 2.0f;
@@ -98,20 +98,20 @@ void SuperEllipsoid::Create(int samples, float n1, float n2, const Ogre::Vector3
     for(int i=0; i<=samples; i++)
     {
       //Triangle #1
-      m_ManualObject->position(Sample(phi+dP, beta, n1, n2, scaleX, scaleY, scaleZ));
-      m_ManualObject->normal(CalculateNormal(phi+dP, beta, n1, n2, scaleX, scaleY, scaleZ));
-      m_ManualObject->position(Sample(phi, beta, n1, n2, scaleX, scaleY, scaleZ));
-      m_ManualObject->normal(CalculateNormal(phi, beta, n1, n2, scaleX, scaleY, scaleZ));
-      m_ManualObject->position(Sample(phi+dP, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
-      m_ManualObject->normal(CalculateNormal(phi+dP, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
+      manual_object_->position(Sample(phi+dP, beta, n1, n2, scaleX, scaleY, scaleZ));
+      manual_object_->normal(CalculateNormal(phi+dP, beta, n1, n2, scaleX, scaleY, scaleZ));
+      manual_object_->position(Sample(phi, beta, n1, n2, scaleX, scaleY, scaleZ));
+      manual_object_->normal(CalculateNormal(phi, beta, n1, n2, scaleX, scaleY, scaleZ));
+      manual_object_->position(Sample(phi+dP, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
+      manual_object_->normal(CalculateNormal(phi+dP, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
 
       //Triangle #2
-      m_ManualObject->position(Sample(phi+dP, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
-      m_ManualObject->normal(CalculateNormal(phi+dP, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
-      m_ManualObject->position(Sample(phi, beta, n1, n2, scaleX, scaleY, scaleZ));
-      m_ManualObject->normal(CalculateNormal(phi, beta, n1, n2, scaleX, scaleY, scaleZ));
-      m_ManualObject->position(Sample(phi, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
-      m_ManualObject->normal(CalculateNormal(phi, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
+      manual_object_->position(Sample(phi+dP, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
+      manual_object_->normal(CalculateNormal(phi+dP, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
+      manual_object_->position(Sample(phi, beta, n1, n2, scaleX, scaleY, scaleZ));
+      manual_object_->normal(CalculateNormal(phi, beta, n1, n2, scaleX, scaleY, scaleZ));
+      manual_object_->position(Sample(phi, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
+      manual_object_->normal(CalculateNormal(phi, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
 
       beta += dB;
     }
@@ -119,7 +119,7 @@ void SuperEllipsoid::Create(int samples, float n1, float n2, const Ogre::Vector3
     phi += dP;
   }
 
-  m_ManualObject->end();
+  manual_object_->end();
 }
 
 void SuperEllipsoid::Create(Shape shape, int samples, const Ogre::Vector3& scale)
@@ -185,28 +185,28 @@ Ogre::Vector3 SuperEllipsoid::CalculateNormal(float phi, float beta, float n1, f
 
 void SuperEllipsoid::SetColor( float r, float g, float b )
 {
-  m_Material->getTechnique(0)->setAmbient( r*0.5, g*0.5, b*0.5 );
-  m_Material->getTechnique(0)->setDiffuse( r, g, b, 1.0f );
+  material_->getTechnique(0)->setAmbient( r*0.5, g*0.5, b*0.5 );
+  material_->getTechnique(0)->setDiffuse( r, g, b, 1.0f );
 }
 
 void SuperEllipsoid::SetOffset( const Ogre::Vector3& offset )
 {
-  m_OffsetNode->setPosition( offset );
+  offset_node_->setPosition( offset );
 }
 
 void SuperEllipsoid::SetPosition( const Ogre::Vector3& position )
 {
-  m_SceneNode->setPosition( position );
+  scene_node_->setPosition( position );
 }
 
 void SuperEllipsoid::SetOrientation( const Ogre::Quaternion& orientation )
 {
-  m_SceneNode->setOrientation( orientation );
+  scene_node_->setOrientation( orientation );
 }
 
 void SuperEllipsoid::SetScale( const Ogre::Vector3& scale )
 {
-  m_SceneNode->setScale( scale );
+  scene_node_->setScale( scale );
 }
 
 } // namespace ogre_tools

@@ -59,9 +59,9 @@ protected:
   virtual void OnEnable();
   virtual void OnDisable();
 
-  float m_Length;
-  float m_Radius;
-  ogre_tools::Axes* m_Axes;
+  float length_;
+  float radius_;
+  ogre_tools::Axes* axes_;
 };
 
 } // namespace ogre_vis

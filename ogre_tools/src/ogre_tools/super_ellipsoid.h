@@ -70,7 +70,7 @@ public:
   virtual void SetOrientation( const Ogre::Quaternion& orientation );
   virtual void SetScale( const Ogre::Vector3& scale );
 
-  Ogre::SceneNode* GetRootNode() { return m_SceneNode; }
+  Ogre::SceneNode* GetRootNode() { return scene_node_; }
 
 private:
   Ogre::Vector3 Sample(float phi, float beta, float n1, float n2,
@@ -78,11 +78,11 @@ private:
   Ogre::Vector3 CalculateNormal(float phi, float beta, float n1, float n2,
                                 float scaleX, float scaleY, float scaleZ);
 
-  Ogre::SceneNode* m_SceneNode;
-  Ogre::SceneNode* m_OffsetNode;
-  Ogre::ManualObject* m_ManualObject;
-  Ogre::MaterialPtr m_Material;
-  std::string m_MaterialName;
+  Ogre::SceneNode* scene_node_;
+  Ogre::SceneNode* offset_node_;
+  Ogre::ManualObject* manual_object_;
+  Ogre::MaterialPtr material_;
+  std::string material_name_;
 };
 
 } // namespace ogre_tools

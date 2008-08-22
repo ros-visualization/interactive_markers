@@ -32,19 +32,19 @@
 namespace ogre_vis
 {
 
-Ogre::Matrix3 g_OgreToRobotMatrix;
-Ogre::Matrix3 g_RobotToOgreMatrix;
+Ogre::Matrix3 g_ogre_to_robot_matrix;
+Ogre::Matrix3 g_robot_to_ogre_matrix;
 
-Ogre::Quaternion g_OgreToRobotQuat;
-Ogre::Quaternion g_RobotToOgreQuat;
+Ogre::Quaternion g_ogre_to_robot_quat;
+Ogre::Quaternion g_robot_to_ogre_quat;
 
 void InitializeCommon()
 {
-  g_OgreToRobotMatrix.FromEulerAnglesXYZ( Ogre::Degree( 90 ), Ogre::Degree( -90 ), Ogre::Degree( 0 ) );
-  g_RobotToOgreMatrix = g_OgreToRobotMatrix.Inverse();
+  g_ogre_to_robot_matrix.FromEulerAnglesXYZ( Ogre::Degree( 90 ), Ogre::Degree( -90 ), Ogre::Degree( 0 ) );
+  g_robot_to_ogre_matrix = g_ogre_to_robot_matrix.Inverse();
 
-  g_OgreToRobotQuat.FromRotationMatrix( g_OgreToRobotMatrix );
-  g_RobotToOgreQuat.FromRotationMatrix( g_RobotToOgreMatrix );
+  g_ogre_to_robot_quat.FromRotationMatrix( g_ogre_to_robot_matrix );
+  g_robot_to_ogre_quat.FromRotationMatrix( g_robot_to_ogre_matrix );
 }
 
 }

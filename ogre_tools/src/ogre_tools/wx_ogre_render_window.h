@@ -30,13 +30,13 @@ class wxOgreRenderWindow : public wxControl {
   // Attributes ------------------------------------------------------------------
 protected:
   /// This control's own render window reference.
-  Ogre::RenderWindow* m_RenderWindow;
+  Ogre::RenderWindow* render_window_;
 
   /// This control's pointer to the global Ogre::Root
-  Ogre::Root* m_OgreRoot;
+  Ogre::Root* ogre_root_;
   
   /// This control's Viewport
-  Ogre::Viewport* m_Viewport;
+  Ogre::Viewport* viewport_;
 
   /// The Id of the next render window
   static unsigned int sm_NextRenderWindowId;

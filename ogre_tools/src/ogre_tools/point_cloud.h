@@ -63,13 +63,13 @@ public:
   struct Point
   {
     Point() {}
-    Point( float x, float y, float z, float r, float g, float b ) : m_X( x ), m_Y( y ), m_Z( z ), m_R( r ), m_G( g ), m_B( b ) {}
+    Point( float x, float y, float z, float r, float g, float b ) : m_X( x ), m_Y( y ), m_Z( z ), r_( r ), g_( g ), b_( b ) {}
     float m_X;
     float m_Y;
     float m_Z;
-    float m_R;
-    float m_G;
-    float m_B;
+    float r_;
+    float g_;
+    float b_;
   };
 
   /// Add points to this point cloud
@@ -89,22 +89,22 @@ public:
 private:
   Ogre::BillboardSet* CreateBillboardSet();
 
-  Ogre::SceneManager* m_SceneManager;
-  Ogre::SceneNode* m_SceneNode;
-  Ogre::AxisAlignedBox m_BoundingBox;
-  float m_BoundingRadius;
+  Ogre::SceneManager* scene_manager_;
+  Ogre::SceneNode* scene_node_;
+  Ogre::AxisAlignedBox bounding_box_;
+  float bounding_radius_;
 
   typedef std::vector<Ogre::BillboardSet*> V_BillboardSet;
-  V_BillboardSet m_BillboardSets;
+  V_BillboardSet billboard_sets_;
 
   typedef std::vector<Point> V_Point;
-  V_Point m_Points;
-  uint32_t m_PointCount;
-  uint32_t m_PointsPerBBS;
+  V_Point points_;
+  uint32_t point_count_;
+  uint32_t points_per_bbs_;
 
-  bool m_UsePoints;
-  float m_BillboardWidth;
-  float m_BillboardHeight;
+  bool use_points_;
+  float billboard_width_;
+  float billboard_height_;
 
   static Ogre::String sm_Type;
 };

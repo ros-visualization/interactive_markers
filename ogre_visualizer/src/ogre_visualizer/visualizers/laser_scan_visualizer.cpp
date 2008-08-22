@@ -53,19 +53,19 @@ namespace ogre_vis
 
 LaserScanVisualizer::LaserScanVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled )
 : VisualizerBase( sceneManager, node, tfClient, name, enabled )
-, m_R( 1.0 )
-, m_G( 0.0 )
-, m_B( 0.0 )
-, m_IntensityMin( 999999.0f )
-, m_IntensityMax( -999999.0f )
-, m_PointDecayTime( 20.0f )
-, m_Style( Billboards )
-, m_BillboardSize( 0.003 )
+, r_( 1.0 )
+, g_( 0.0 )
+, b_( 0.0 )
+, intensity_min_( 999999.0f )
+, intensity_max_( -999999.0f )
+, point_decay_time_( 20.0f )
+, style_( Billboards )
+, billboard_size_( 0.003 )
 {
-  m_Cloud = new ogre_tools::PointCloud( m_SceneManager );
+  cloud_ = new ogre_tools::PointCloud( scene_manager_ );
 
-  SetStyle( m_Style );
-  SetBillboardSize( m_BillboardSize );
+  SetStyle( style_ );
+  SetBillboardSize( billboard_size_ );
 
   if ( IsEnabled() )
   {
@@ -77,14 +77,14 @@ LaserScanVisualizer::~LaserScanVisualizer()
 {
   Unsubscribe();
 
-  delete m_Cloud;
+  delete cloud_;
 }
 
 void LaserScanVisualizer::SetCloudTopic( const std::string& topic )
 {
   Unsubscribe();
 
-  m_CloudTopic = topic;
+  cloud_topic_ = topic;
 
   Subscribe();
 }
@@ -93,16 +93,16 @@ void LaserScanVisualizer::SetScanTopic( const std::string& topic )
 {
   Unsubscribe();
 
-  m_ScanTopic = topic;
+  scan_topic_ = topic;
 
   Subscribe();
 }
 
 void LaserScanVisualizer::SetColor( float r, float g, float b )
 {
-  m_R = r;
-  m_G = g;
-  m_B = b;
+  r_ = r;
+  g_ = g;
+  b_ = b;
 }
 
 void LaserScanVisualizer::SetStyle( Style style )
@@ -110,8 +110,8 @@ void LaserScanVisualizer::SetStyle( Style style )
   {
     RenderAutoLock renderLock( this );
 
-    m_Style = style;
-    m_Cloud->SetUsePoints( style == Points );
+    style_ = style;
+    cloud_->SetUsePoints( style == Points );
   }
 
   CauseRender();
@@ -122,8 +122,8 @@ void LaserScanVisualizer::SetBillboardSize( float size )
   {
     RenderAutoLock renderLock( this );
 
-    m_BillboardSize = size;
-    m_Cloud->SetBillboardDimensions( size, size );
+    billboard_size_ = size;
+    cloud_->SetBillboardDimensions( size, size );
   }
 
   CauseRender();
@@ -131,7 +131,7 @@ void LaserScanVisualizer::SetBillboardSize( float size )
 
 void LaserScanVisualizer::OnEnable()
 {
-  m_Cloud->SetVisible( true );
+  cloud_->SetVisible( true );
   Subscribe();
 }
 
@@ -139,10 +139,10 @@ void LaserScanVisualizer::OnDisable()
 {
   Unsubscribe();
 
-  m_Cloud->SetVisible( false );
-  m_Cloud->Clear();
-  m_Points.clear();
-  m_PointTimes.clear();
+  cloud_->SetVisible( false );
+  cloud_->Clear();
+  points_.clear();
+  point_times_.clear();
 }
 
 void LaserScanVisualizer::Subscribe()
@@ -152,36 +152,36 @@ void LaserScanVisualizer::Subscribe()
     return;
   }
 
-  if ( !m_CloudTopic.empty() )
+  if ( !cloud_topic_.empty() )
   {
-    m_ROSNode->subscribe( m_CloudTopic, m_CloudMessage, &LaserScanVisualizer::IncomingCloudCallback, this, 1 );
+    ros_node_->subscribe( cloud_topic_, cloud_message_, &LaserScanVisualizer::IncomingCloudCallback, this, 1 );
   }
 
-  if ( !m_ScanTopic.empty() )
+  if ( !scan_topic_.empty() )
   {
-    m_ROSNode->subscribe( m_ScanTopic, m_ScanMessage, &LaserScanVisualizer::IncomingScanCallback, this, 1 );
+    ros_node_->subscribe( scan_topic_, scan_message_, &LaserScanVisualizer::IncomingScanCallback, this, 1 );
   }
 }
 
 void LaserScanVisualizer::Unsubscribe()
 {
-  if ( !m_CloudTopic.empty() )
+  if ( !cloud_topic_.empty() )
   {
-    m_ROSNode->unsubscribe( m_CloudTopic );
+    ros_node_->unsubscribe( cloud_topic_ );
   }
 
-  if ( !m_ScanTopic.empty() )
+  if ( !scan_topic_.empty() )
   {
-    m_ROSNode->unsubscribe( m_ScanTopic );
+    ros_node_->unsubscribe( scan_topic_ );
   }
 }
 
 void LaserScanVisualizer::Update( float dt )
 {
-  m_CloudMessage.lock();
+  cloud_message_.lock();
 
-  D_float::iterator it = m_PointTimes.begin();
-  D_float::iterator end = m_PointTimes.end();
+  D_float::iterator it = point_times_.begin();
+  D_float::iterator end = point_times_.end();
   for ( ; it != end; ++it )
   {
     *it += dt;
@@ -189,107 +189,107 @@ void LaserScanVisualizer::Update( float dt )
 
   CullPoints();
 
-  m_CloudMessage.unlock();
+  cloud_message_.unlock();
 }
 
 void LaserScanVisualizer::CullPoints()
 {
-  if ( m_PointDecayTime == 0.0f )
+  if ( point_decay_time_ == 0.0f )
   {
     return;
   }
 
-  while ( !m_PointTimes.empty() && m_PointTimes.front() > m_PointDecayTime )
+  while ( !point_times_.empty() && point_times_.front() > point_decay_time_ )
   {
-    m_PointTimes.pop_front();
-    m_Points.pop_front();
+    point_times_.pop_front();
+    points_.pop_front();
   }
 }
 
 void LaserScanVisualizer::TransformCloud()
 {
-  if ( m_CloudMessage.header.frame_id.empty() )
+  if ( cloud_message_.header.frame_id.empty() )
   {
-    m_CloudMessage.header.frame_id = m_TargetFrame;
+    cloud_message_.header.frame_id = target_frame_;
   }
 
   try
   {
-    m_TFClient->transformPointCloud(m_TargetFrame, m_CloudMessage, m_CloudMessage);
+    tf_client_->transformPointCloud(target_frame_, cloud_message_, cloud_message_);
   }
   catch(libTF::TransformReference::LookupException& e)
   {
-    printf( "Error transforming laser scan '%s': %s\n", m_Name.c_str(), e.what() );
+    printf( "Error transforming laser scan '%s': %s\n", name_.c_str(), e.what() );
   }
   catch(libTF::TransformReference::ConnectivityException& e)
   {
-    printf( "Error transforming laser scan '%s': %s\n", m_Name.c_str(), e.what() );
+    printf( "Error transforming laser scan '%s': %s\n", name_.c_str(), e.what() );
   }
   catch(libTF::TransformReference::ExtrapolateException& e)
   {
-    printf( "Error transforming laser scan '%s': %s\n", m_Name.c_str(), e.what() );
+    printf( "Error transforming laser scan '%s': %s\n", name_.c_str(), e.what() );
   }
 
-  uint32_t pointCount = m_CloudMessage.get_pts_size();
+  uint32_t pointCount = cloud_message_.get_pts_size();
   for(uint32_t i = 0; i < pointCount; i++)
   {
-    float& intensity = m_CloudMessage.chan[0].vals[i];
+    float& intensity = cloud_message_.chan[0].vals[i];
     // arbitrarily cap to 4096 for now
     intensity = std::min( intensity, 4096.0f );
-    m_IntensityMin = std::min( m_IntensityMin, intensity );
-    m_IntensityMax = std::max( m_IntensityMax, intensity );
+    intensity_min_ = std::min( intensity_min_, intensity );
+    intensity_max_ = std::max( intensity_max_, intensity );
   }
 
-  float diffIntensity = m_IntensityMax - m_IntensityMin;
+  float diffIntensity = intensity_max_ - intensity_min_;
 
-  if ( m_PointDecayTime == 0.0f )
+  if ( point_decay_time_ == 0.0f )
   {
-    m_Points.clear();
-    m_PointTimes.clear();
+    points_.clear();
+    point_times_.clear();
   }
 
-  m_Points.push_back( V_Point() );
-  V_Point& points = m_Points.back();
+  points_.push_back( V_Point() );
+  V_Point& points = points_.back();
   points.resize( pointCount );
 
-  m_PointTimes.push_back( 0.0f );
+  point_times_.push_back( 0.0f );
   for(uint32_t i = 0; i < pointCount; i++)
   {
-    Ogre::Vector3 point( m_CloudMessage.pts[i].x, m_CloudMessage.pts[i].y, m_CloudMessage.pts[i].z );
+    Ogre::Vector3 point( cloud_message_.pts[i].x, cloud_message_.pts[i].y, cloud_message_.pts[i].z );
     RobotToOgre( point );
 
-    float intensity = m_CloudMessage.chan[0].vals[i];
+    float intensity = cloud_message_.chan[0].vals[i];
 
-    float normalizedIntensity = (diffIntensity > 0.0f) ? ( intensity - m_IntensityMin ) / diffIntensity : 1.0f;
+    float normalizedIntensity = (diffIntensity > 0.0f) ? ( intensity - intensity_min_ ) / diffIntensity : 1.0f;
 
-    Ogre::Vector3 color( m_R, m_G, m_B );
+    Ogre::Vector3 color( r_, g_, b_ );
     color *= normalizedIntensity;
 
     ogre_tools::PointCloud::Point& currentPoint = points[ i ];
     currentPoint.m_X = point.x;
     currentPoint.m_Y = point.y;
     currentPoint.m_Z = point.z;
-    currentPoint.m_R = color.x;
-    currentPoint.m_G = color.y;
-    currentPoint.m_B = color.z;
+    currentPoint.r_ = color.x;
+    currentPoint.g_ = color.y;
+    currentPoint.b_ = color.z;
   }
 
   {
     RenderAutoLock renderLock( this );
 
-    m_Cloud->Clear();
+    cloud_->Clear();
 
-    if ( !m_Points.empty() )
+    if ( !points_.empty() )
     {
-      DV_Point::iterator it = m_Points.begin();
-      DV_Point::iterator end = m_Points.end();
+      DV_Point::iterator it = points_.begin();
+      DV_Point::iterator end = points_.end();
       for ( ; it != end; ++it )
       {
         V_Point& points = *it;
 
         if ( !points.empty() )
         {
-          m_Cloud->AddPoints( &points.front(), points.size() );
+          cloud_->AddPoints( &points.front(), points.size() );
         }
       }
     }
@@ -300,26 +300,26 @@ void LaserScanVisualizer::TransformCloud()
 
 void LaserScanVisualizer::IncomingCloudCallback()
 {
-  m_CloudMessage.lock();
+  cloud_message_.lock();
 
   TransformCloud();
 
-  m_CloudMessage.unlock();
+  cloud_message_.unlock();
 }
 
 void LaserScanVisualizer::IncomingScanCallback()
 {
-  m_CloudMessage.lock();
+  cloud_message_.lock();
 
-  if ( m_ScanMessage.header.frame_id.empty() )
+  if ( scan_message_.header.frame_id.empty() )
   {
-    m_ScanMessage.header.frame_id = m_TargetFrame;
+    scan_message_.header.frame_id = target_frame_;
   }
 
-  m_LaserProjection.projectLaser( m_ScanMessage, m_CloudMessage );
+  laser_projection_.projectLaser( scan_message_, cloud_message_ );
   TransformCloud();
 
-  m_CloudMessage.unlock();
+  cloud_message_.unlock();
 }
 
 void LaserScanVisualizer::FillPropertyGrid( wxPropertyGrid* propertyGrid )
@@ -331,16 +331,16 @@ void LaserScanVisualizer::FillPropertyGrid( wxPropertyGrid* propertyGrid )
   styleIds.Add( Billboards );
   styleIds.Add( Points );
 
-  propertyGrid->Append( new wxEnumProperty( STYLE_PROPERTY, wxPG_LABEL, styleNames, styleIds, m_Style ) );
+  propertyGrid->Append( new wxEnumProperty( STYLE_PROPERTY, wxPG_LABEL, styleNames, styleIds, style_ ) );
 
-  propertyGrid->Append( new ROSTopicProperty( m_ROSNode, SCAN_TOPIC_PROPERTY, wxPG_LABEL, wxString::FromAscii( m_ScanTopic.c_str() ) ) );
-  propertyGrid->Append( new ROSTopicProperty( m_ROSNode, CLOUD_TOPIC_PROPERTY, wxPG_LABEL, wxString::FromAscii( m_CloudTopic.c_str() ) ) );
-  propertyGrid->Append( new wxColourProperty( COLOR_PROPERTY, wxPG_LABEL, wxColour( m_R * 255, m_G * 255, m_B * 255 ) ) );
-  wxPGId prop = propertyGrid->Append( new wxFloatProperty( DECAY_TIME_PROPERTY, wxPG_LABEL, m_PointDecayTime ) );
+  propertyGrid->Append( new ROSTopicProperty( ros_node_, SCAN_TOPIC_PROPERTY, wxPG_LABEL, wxString::FromAscii( scan_topic_.c_str() ) ) );
+  propertyGrid->Append( new ROSTopicProperty( ros_node_, CLOUD_TOPIC_PROPERTY, wxPG_LABEL, wxString::FromAscii( cloud_topic_.c_str() ) ) );
+  propertyGrid->Append( new wxColourProperty( COLOR_PROPERTY, wxPG_LABEL, wxColour( r_ * 255, g_ * 255, b_ * 255 ) ) );
+  wxPGId prop = propertyGrid->Append( new wxFloatProperty( DECAY_TIME_PROPERTY, wxPG_LABEL, point_decay_time_ ) );
 
   propertyGrid->SetPropertyAttribute( prop, wxT("Min"), 0.0 );
 
-  prop = propertyGrid->Append( new wxFloatProperty( BILLBOARD_SIZE_PROPERTY, wxPG_LABEL, m_BillboardSize ) );
+  prop = propertyGrid->Append( new wxFloatProperty( BILLBOARD_SIZE_PROPERTY, wxPG_LABEL, billboard_size_ ) );
   propertyGrid->SetPropertyAttribute( prop, wxT("Min"), 0.0 );
 }
 

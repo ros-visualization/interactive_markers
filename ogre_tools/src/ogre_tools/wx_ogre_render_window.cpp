@@ -29,8 +29,8 @@ unsigned int wxOgreRenderWindow::sm_NextRenderWindowId = 1;
 wxOgreRenderWindow::wxOgreRenderWindow (Ogre::Root* ogreRoot, wxWindow *parent, wxWindowID id,
                                         const wxPoint &pos, const wxSize &size, long style, const wxValidator &validator)
     : wxControl( parent, id, pos, size, style, validator )
-    , m_RenderWindow( 0 )
-    , m_OgreRoot( ogreRoot )
+    , render_window_( 0 )
+    , ogre_root_( ogreRoot )
     , m_PreRenderCallback( NULL )
     , m_PostRenderCallback( NULL )
 {
@@ -38,19 +38,19 @@ wxOgreRenderWindow::wxOgreRenderWindow (Ogre::Root* ogreRoot, wxWindow *parent, 
 
   CreateRenderWindow();
   
-  m_Viewport = m_RenderWindow->addViewport( NULL );
+  viewport_ = render_window_->addViewport( NULL );
 }
 
 //------------------------------------------------------------------------------
 wxOgreRenderWindow::~wxOgreRenderWindow ()
 { 
-  if (m_RenderWindow)
+  if (render_window_)
   {
-    m_RenderWindow->removeViewport( 0 );
-    m_OgreRoot->detachRenderTarget(m_RenderWindow);
+    render_window_->removeViewport( 0 );
+    ogre_root_->detachRenderTarget(render_window_);
   }
 
-  m_RenderWindow = 0;
+  render_window_ = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -61,18 +61,18 @@ inline wxSize wxOgreRenderWindow::DoGetBestSize () const
 //------------------------------------------------------------------------------
 Ogre::RenderWindow* wxOgreRenderWindow::GetRenderWindow () const
 {
-  return m_RenderWindow;
+  return render_window_;
 }
 
 //------------------------------------------------------------------------------
 Ogre::Viewport* wxOgreRenderWindow::GetViewport () const
 {
-  return m_Viewport;
+  return viewport_;
 }
 
 void wxOgreRenderWindow::SetCamera( Ogre::Camera* camera )
 {
-  m_Viewport->setCamera( camera );
+  viewport_->setCamera( camera );
   
   SetCameraAspectRatio();
   
@@ -81,7 +81,7 @@ void wxOgreRenderWindow::SetCamera( Ogre::Camera* camera )
 
 void wxOgreRenderWindow::SetCameraAspectRatio()
 {
-  Ogre::Camera* camera = m_Viewport->getCamera();
+  Ogre::Camera* camera = viewport_->getCamera();
   if ( camera )
   {
     int width;
@@ -113,7 +113,7 @@ void wxOgreRenderWindow::OnPaint (wxPaintEvent &evt)
     m_PreRenderCallback->call();
   }
   
-  m_RenderWindow->update();
+  render_window_->update();
   
   if ( m_PostRenderCallback )
   {
@@ -124,7 +124,7 @@ void wxOgreRenderWindow::OnPaint (wxPaintEvent &evt)
 //------------------------------------------------------------------------------
 void wxOgreRenderWindow::OnSize (wxSizeEvent &evt)
 {
-  if (m_RenderWindow)
+  if (render_window_)
   {
     // Setting new size;
     int width;
@@ -133,9 +133,9 @@ void wxOgreRenderWindow::OnSize (wxSizeEvent &evt)
     width = size.GetWidth ();
     height = size.GetHeight ();
 
-    m_RenderWindow->resize (width, height);
+    render_window_->resize (width, height);
     // Letting Ogre know the window has been resized;
-    m_RenderWindow->windowMovedOrResized ();
+    render_window_->windowMovedOrResized ();
     
     SetCameraAspectRatio();
     
@@ -160,11 +160,11 @@ void wxOgreRenderWindow::CreateRenderWindow ()
   int height;
   GetSize (&width, &height);
   // Create the render window
-  m_RenderWindow = m_OgreRoot->createRenderWindow (
+  render_window_ = ogre_root_->createRenderWindow (
                      Ogre::String ("OgreRenderWindow") + Ogre::StringConverter::toString (sm_NextRenderWindowId++),
                      width, height, false, &params);
 
-  m_RenderWindow->setActive (true);
+  render_window_->setActive (true);
 }
 //------------------------------------------------------------------------------
 std::string wxOgreRenderWindow::GetOgreHandle () const

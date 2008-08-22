@@ -53,7 +53,7 @@ public:
   virtual void SetColor( float r, float g, float b ) = 0;
 
 protected:
-  Ogre::SceneManager* m_SceneManager;
+  Ogre::SceneManager* scene_manager_;
 };
 
 } // namespace ogre_tools

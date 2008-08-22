@@ -68,7 +68,7 @@ public:
   void SetScanTopic( const std::string& topic );
 
   void SetColor( float r, float g, float b );
-  void SetDecayTime( float time ) { m_PointDecayTime = time; }
+  void SetDecayTime( float time ) { point_decay_time_ = time; }
   void SetStyle( Style style );
   void SetBillboardSize( float size );
 
@@ -91,32 +91,32 @@ protected:
   void IncomingCloudCallback();
   void IncomingScanCallback();
 
-  ogre_tools::PointCloud* m_Cloud;
+  ogre_tools::PointCloud* cloud_;
 
-  std::string m_CloudTopic;
-  std::string m_ScanTopic;
-  std_msgs::PointCloudFloat32 m_CloudMessage;
-  std_msgs::LaserScan m_ScanMessage;
+  std::string cloud_topic_;
+  std::string scan_topic_;
+  std_msgs::PointCloudFloat32 cloud_message_;
+  std_msgs::LaserScan scan_message_;
 
-  laser_scan::LaserProjection m_LaserProjection;
+  laser_scan::LaserProjection laser_projection_;
 
-  float m_R;
-  float m_G;
-  float m_B;
+  float r_;
+  float g_;
+  float b_;
 
-  float m_IntensityMin;
-  float m_IntensityMax;
+  float intensity_min_;
+  float intensity_max_;
 
   typedef std::vector< ogre_tools::PointCloud::Point > V_Point;
   typedef std::deque< V_Point > DV_Point;
-  DV_Point m_Points;
+  DV_Point points_;
 
   typedef std::deque< float > D_float;
-  D_float m_PointTimes;
-  float m_PointDecayTime;
+  D_float point_times_;
+  float point_decay_time_;
 
-  Style m_Style;
-  float m_BillboardSize;
+  Style style_;
+  float billboard_size_;
 };
 
 } // namespace ogre_vis

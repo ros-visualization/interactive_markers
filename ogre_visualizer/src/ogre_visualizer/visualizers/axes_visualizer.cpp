@@ -45,16 +45,16 @@ namespace ogre_vis
 
 AxesVisualizer::AxesVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled )
 : VisualizerBase( sceneManager, node, tfClient, name, enabled )
-, m_Length( 1.0 )
-, m_Radius( 0.1 )
+, length_( 1.0 )
+, radius_( 0.1 )
 {
-  m_Axes = new ogre_tools::Axes( m_SceneManager, NULL, m_Length, m_Radius );
+  axes_ = new ogre_tools::Axes( scene_manager_, NULL, length_, radius_ );
 
-  m_Axes->GetSceneNode()->setVisible( IsEnabled() );
+  axes_->GetSceneNode()->setVisible( IsEnabled() );
 
   Ogre::Quaternion orient( Ogre::Quaternion::IDENTITY );
   RobotToOgre( orient );
-  m_Axes->SetOrientation( orient );
+  axes_->SetOrientation( orient );
 
   if ( IsEnabled() )
   {
@@ -72,35 +72,35 @@ AxesVisualizer::~AxesVisualizer()
 
 void AxesVisualizer::OnEnable()
 {
-  m_Axes->GetSceneNode()->setVisible( true );
+  axes_->GetSceneNode()->setVisible( true );
 }
 
 void AxesVisualizer::OnDisable()
 {
-  m_Axes->GetSceneNode()->setVisible( false );
+  axes_->GetSceneNode()->setVisible( false );
 }
 
 void AxesVisualizer::Create()
 {
-  m_Axes->Set( m_Length, m_Radius );
+  axes_->Set( length_, radius_ );
 
   CauseRender();
 }
 
 void AxesVisualizer::Set( float length, float radius )
 {
-  m_Length = length;
-  m_Radius = radius;
+  length_ = length;
+  radius_ = radius;
 
   Create();
 }
 
 void AxesVisualizer::FillPropertyGrid( wxPropertyGrid* propertyGrid )
 {
-  wxPGId prop = propertyGrid->Append( new wxFloatProperty( LENGTH_PROPERTY, wxPG_LABEL, m_Length ) );
+  wxPGId prop = propertyGrid->Append( new wxFloatProperty( LENGTH_PROPERTY, wxPG_LABEL, length_ ) );
   propertyGrid->SetPropertyAttribute( prop, wxT("Min"), 0.0001 );
 
-  prop = propertyGrid->Append( new wxFloatProperty( RADIUS_PROPERTY, wxPG_LABEL, m_Radius ) );
+  prop = propertyGrid->Append( new wxFloatProperty( RADIUS_PROPERTY, wxPG_LABEL, radius_ ) );
   propertyGrid->SetPropertyAttribute( prop, wxT("Min"), 0.0001 );
 }
 
@@ -114,12 +114,12 @@ void AxesVisualizer::PropertyChanged( wxPropertyGridEvent& event )
   if ( name == LENGTH_PROPERTY )
   {
     float length = value.GetDouble();
-    Set( length, m_Radius );
+    Set( length, radius_ );
   }
   else if ( name == RADIUS_PROPERTY )
   {
     float radius = value.GetDouble();
-    Set( m_Length, radius );
+    Set( length_, radius );
   }
 }
 

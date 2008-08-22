@@ -9,17 +9,17 @@ namespace ogre_tools
 {
 
 CameraBase::CameraBase( Ogre::SceneManager* sceneManager )
-: m_SceneManager( sceneManager )
+: scene_manager_( sceneManager )
 {
   std::stringstream ss;
   static uint32_t count = 0;
   ss << "FPSCamera" << count++;
-  m_Camera = m_SceneManager->createCamera( ss.str() );
+  camera_ = scene_manager_->createCamera( ss.str() );
 }
 
 CameraBase::~CameraBase()
 {
-  m_SceneManager->destroyCamera( m_Camera );
+  scene_manager_->destroyCamera( camera_ );
 }
 
 void CameraBase::SetPosition( const Ogre::Vector3& position )

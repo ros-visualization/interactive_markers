@@ -38,32 +38,32 @@ namespace ogre_tools
 {
 
 Grid::Grid( Ogre::SceneManager* sceneManager, uint32_t gridSize, float cellLength, float r, float g, float b )
-    : m_SceneManager( sceneManager )
+    : scene_manager_( sceneManager )
 {
   static uint32_t gridCount = 0;
   std::stringstream ss;
   ss << "Grid" << gridCount++;
 
-  m_ManualObject = m_SceneManager->createManualObject( ss.str() );
+  manual_object_ = scene_manager_->createManualObject( ss.str() );
 
-  m_SceneNode = m_SceneManager->getRootSceneNode()->createChildSceneNode();
-  m_SceneNode->attachObject( m_ManualObject );
+  scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
+  scene_node_->attachObject( manual_object_ );
 
   Set( gridSize, cellLength, r, g, b );
 }
 
 Grid::~Grid()
 {
-  m_SceneManager->destroySceneNode( m_SceneNode->getName() );
-  m_SceneManager->destroyManualObject( m_ManualObject );
+  scene_manager_->destroySceneNode( scene_node_->getName() );
+  scene_manager_->destroyManualObject( manual_object_ );
 }
 
 void Grid::Set( uint32_t gridSize, float cellLength, float r, float g, float b )
 {
-  m_ManualObject->clear();
+  manual_object_->clear();
 
-  m_ManualObject->estimateVertexCount( gridSize * 4 );
-  m_ManualObject->begin( "BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_LIST );
+  manual_object_->estimateVertexCount( gridSize * 4 );
+  manual_object_->begin( "BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_LIST );
 
   float extent = (cellLength*((double)gridSize))/2;
 
@@ -71,18 +71,18 @@ void Grid::Set( uint32_t gridSize, float cellLength, float r, float g, float b )
   {
     float inc = extent - ( i * cellLength );
 
-    m_ManualObject->position( inc, 0, -extent );
-    m_ManualObject->colour( r, g, b );
-    m_ManualObject->position( inc, 0, extent );
-    m_ManualObject->colour( r, g, b );
+    manual_object_->position( inc, 0, -extent );
+    manual_object_->colour( r, g, b );
+    manual_object_->position( inc, 0, extent );
+    manual_object_->colour( r, g, b );
 
-    m_ManualObject->position( -extent, 0, inc );
-    m_ManualObject->colour( r, g, b );
-    m_ManualObject->position( extent, 0, inc );
-    m_ManualObject->colour( r, g, b );
+    manual_object_->position( -extent, 0, inc );
+    manual_object_->colour( r, g, b );
+    manual_object_->position( extent, 0, inc );
+    manual_object_->colour( r, g, b );
   }
 
-  m_ManualObject->end();
+  manual_object_->end();
 }
 
 } // namespace ogre_tools

@@ -66,8 +66,8 @@ public:
   /// Disable this visualizer
   void Disable();
 
-  bool IsEnabled() { return m_Enabled; }
-  const std::string& GetName() { return m_Name; }
+  bool IsEnabled() { return enabled_; }
+  const std::string& GetName() { return name_; }
 
   /// Called periodically by the visualization panel
   virtual void Update( float dt ) {}
@@ -88,7 +88,7 @@ public:
   virtual void PropertyChanged( wxPropertyGridEvent& event ) {}
 
 
-  void SetTargetFrame( const std::string& frame ) { m_TargetFrame = frame; }
+  void SetTargetFrame( const std::string& frame ) { target_frame_ = frame; }
 
 protected:
   /// Derived classes override this to do the actual work of enabling themselves
@@ -102,18 +102,18 @@ protected:
   void LockRender();
   void UnlockRender();
 
-  Ogre::SceneManager* m_SceneManager;
-  std::string m_Name;
-  bool m_Enabled;
+  Ogre::SceneManager* scene_manager_;
+  std::string name_;
+  bool enabled_;
 
-  std::string m_TargetFrame;
+  std::string target_frame_;
 
-  abstractFunctor* m_RenderCallback;
-  abstractFunctor* m_RenderLock;
-  abstractFunctor* m_RenderUnlock;
+  abstractFunctor* render_callback_;
+  abstractFunctor* render_lock_;
+  abstractFunctor* render_unlock_;
 
-  ros::node* m_ROSNode;
-  rosTFClient* m_TFClient;
+  ros::node* ros_node_;
+  rosTFClient* tf_client_;
 
   friend class RenderAutoLock;
 };
@@ -122,18 +122,18 @@ class RenderAutoLock
 {
 public:
   RenderAutoLock( VisualizerBase* visualizer )
-  : m_Visualizer( visualizer )
+  : visualizer_( visualizer )
   {
-    m_Visualizer->LockRender();
+    visualizer_->LockRender();
   }
 
   ~RenderAutoLock()
   {
-    m_Visualizer->UnlockRender();
+    visualizer_->UnlockRender();
   }
 
 private:
-  VisualizerBase* m_Visualizer;
+  VisualizerBase* visualizer_;
 };
 
 } // namespace ogre_vis

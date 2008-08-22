@@ -46,18 +46,18 @@ class MyFrame : public wxFrame
 public:
   MyFrame(wxWindow* parent)
   : wxFrame(parent, -1, _("Grid Test App"), wxDefaultPosition, wxSize(800,600), wxDEFAULT_FRAME_STYLE)
-  , m_LeftMouseDown( false )
-  , m_MiddleMouseDown( false )
-  , m_RightMouseDown( false )
-  , m_MouseX( 0 )
-  , m_MouseY( 0 )
+  , left_mouse_down_( false )
+  , middle_mouse_down_( false )
+  , right_mouse_down_( false )
+  , mouse_x_( 0 )
+  , mouse_y_( 0 )
   {
-    m_Root = new Ogre::Root();
+    root_ = new Ogre::Root();
 
     try
     {
-      m_Root->loadPlugin( "RenderSystem_GL" );
-      m_Root->loadPlugin( "Plugin_OctreeSceneManager" );
+      root_->loadPlugin( "RenderSystem_GL" );
+      root_->loadPlugin( "Plugin_OctreeSceneManager" );
     }
     catch ( Ogre::Exception& e )
     {
@@ -68,7 +68,7 @@ public:
     Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
 
     // Taken from gazebo
-    Ogre::RenderSystemList *rsList = m_Root->getAvailableRenderers();
+    Ogre::RenderSystemList *rsList = root_->getAvailableRenderers();
 
     Ogre::RenderSystem* renderSystem = NULL;
     Ogre::RenderSystemList::iterator renderIt = rsList->begin();
@@ -93,11 +93,11 @@ public:
     renderSystem->setConfigOption("FSAA","2");
     renderSystem->setConfigOption("RTT Preferred Mode", "PBuffer");
 
-    m_Root->setRenderSystem( renderSystem );
+    root_->setRenderSystem( renderSystem );
 
     try
     {
-        m_Root->initialise( false );
+        root_->initialise( false );
     }
     catch ( Ogre::Exception& e )
     {
@@ -107,34 +107,34 @@ public:
 
     try
     {
-        m_SceneManager = m_Root->createSceneManager( Ogre::ST_GENERIC, "TestSceneManager" );
+        scene_manager_ = root_->createSceneManager( Ogre::ST_GENERIC, "TestSceneManager" );
 
-        m_WXRenderWindow = new ogre_tools::wxOgreRenderWindow( m_Root, this );
+        m_WXRenderWindow = new ogre_tools::wxOgreRenderWindow( root_, this );
         m_WXRenderWindow->SetSize( this->GetSize() );
 
-        m_Camera = new ogre_tools::OrbitCamera( m_SceneManager );
-        m_Camera->SetPosition( 0, 0, 15 );
-        m_Camera->GetOgreCamera()->setNearClipDistance( 0.1 );
+        camera_ = new ogre_tools::OrbitCamera( scene_manager_ );
+        camera_->SetPosition( 0, 0, 15 );
+        camera_->GetOgreCamera()->setNearClipDistance( 0.1 );
 
-        m_WXRenderWindow->GetViewport()->setCamera( m_Camera->GetOgreCamera() );
+        m_WXRenderWindow->GetViewport()->setCamera( camera_->GetOgreCamera() );
 
-        ogre_tools::Grid* grid = new ogre_tools::Grid( m_SceneManager, 10, 1.0f, 1.0f, 0.0f, 0.0f );
+        ogre_tools::Grid* grid = new ogre_tools::Grid( scene_manager_, 10, 1.0f, 1.0f, 0.0f, 0.0f );
         //grid->GetSceneNode()->pitch( Ogre::Degree( 90 ) );
 
-        ogre_tools::Axes* axes = new ogre_tools::Axes( m_SceneManager );
+        ogre_tools::Axes* axes = new ogre_tools::Axes( scene_manager_ );
         //axes->SetScale( Ogre::Vector3( 2.0f, 2.0f, 2.0f ) );
 
-        /*ogre_tools::Cone* cone = new ogre_tools::Cone( m_SceneManager, NULL );
+        /*ogre_tools::Cone* cone = new ogre_tools::Cone( scene_manager_, NULL );
         cone->SetScale( Ogre::Vector3( 0.3f, 2.0f, 0.3f ) );*/
 
-        /*ogre_tools::Arrow* arrow = new ogre_tools::Arrow( m_SceneManager );
+        /*ogre_tools::Arrow* arrow = new ogre_tools::Arrow( scene_manager_ );
         arrow->SetHeadColor( 1.0f, 0.0f, 0.0f );
         arrow->SetShaftColor( 0.0f, 0.0f, 1.0f );
         arrow->SetOrientation( Ogre::Quaternion::IDENTITY );*/
         //arrow->SetOrientation( Ogre::Quaternion( Ogre::Degree( 45 ), Ogre::Vector3::UNIT_X ) );
         //arrow->SetScale( Ogre::Vector3( 1.0f, 1.0f, 3.0f ) );
 
-        /*ogre_tools::PointCloud* pointCloud = new ogre_tools::PointCloud( m_SceneManager );
+        /*ogre_tools::PointCloud* pointCloud = new ogre_tools::PointCloud( scene_manager_ );
         std::vector<ogre_tools::PointCloud::Point> points;
         points.resize( 1000000 );
         for ( int32_t i = 0; i < 1000; ++i )
@@ -146,9 +146,9 @@ public:
                 point.m_Y = i / 10.0f;
                 point.m_Z = 0;
 
-                point.m_R = abs(i) % 3 == 0 ? 1.0f : 0.0f;
-                point.m_G = abs(i) % 3 == 1 ? 1.0f : 0.0f;
-                point.m_B = abs(i) % 3 == 2 ? 1.0f : 0.0f;
+                point.r_ = abs(i) % 3 == 0 ? 1.0f : 0.0f;
+                point.g_ = abs(i) % 3 == 1 ? 1.0f : 0.0f;
+                point.b_ = abs(i) % 3 == 2 ? 1.0f : 0.0f;
             }
         }
 
@@ -182,70 +182,70 @@ public:
     m_WXRenderWindow->Disconnect( wxEVT_MOUSEWHEEL, wxMouseEventHandler( MyFrame::OnMouseEvents ), NULL, this );
 
     m_WXRenderWindow->Destroy();
-    delete m_Root;
+    delete root_;
   }
 
 private:
 
   void OnMouseEvents( wxMouseEvent& event )
   {
-    int lastX = m_MouseX;
-    int lastY = m_MouseY;
+    int lastX = mouse_x_;
+    int lastY = mouse_y_;
 
-    m_MouseX = event.GetX();
-    m_MouseY = event.GetY();
+    mouse_x_ = event.GetX();
+    mouse_y_ = event.GetY();
 
     if ( event.LeftDown() )
     {
-      m_LeftMouseDown = true;
-      m_MiddleMouseDown = false;
-      m_RightMouseDown = false;
+      left_mouse_down_ = true;
+      middle_mouse_down_ = false;
+      right_mouse_down_ = false;
     }
     else if ( event.MiddleDown() )
     {
-      m_LeftMouseDown = false;
-      m_MiddleMouseDown = true;
-      m_RightMouseDown = false;
+      left_mouse_down_ = false;
+      middle_mouse_down_ = true;
+      right_mouse_down_ = false;
     }
     else if ( event.RightDown() )
     {
-      m_LeftMouseDown = false;
-      m_MiddleMouseDown = false;
-      m_RightMouseDown = true;
+      left_mouse_down_ = false;
+      middle_mouse_down_ = false;
+      right_mouse_down_ = true;
     }
     else if ( event.LeftUp() )
     {
-      m_LeftMouseDown = false;
+      left_mouse_down_ = false;
     }
     else if ( event.MiddleUp() )
     {
-      m_MiddleMouseDown = false;
+      middle_mouse_down_ = false;
     }
     else if ( event.RightUp() )
     {
-      m_RightMouseDown = false;
+      right_mouse_down_ = false;
     }
     else if ( event.Dragging() )
     {
-      int32_t diffX = m_MouseX - lastX;
-      int32_t diffY = m_MouseY - lastY;
+      int32_t diffX = mouse_x_ - lastX;
+      int32_t diffY = mouse_y_ - lastY;
 
       bool handled = false;
-      if ( m_LeftMouseDown )
+      if ( left_mouse_down_ )
       {
-        m_Camera->MouseLeftDrag( diffX, diffY );
+        camera_->MouseLeftDrag( diffX, diffY );
 
         handled = true;
       }
-      else if ( m_MiddleMouseDown )
+      else if ( middle_mouse_down_ )
       {
-        m_Camera->MouseMiddleDrag( diffX, diffY );
+        camera_->MouseMiddleDrag( diffX, diffY );
 
         handled = true;
       }
-      else if ( m_RightMouseDown )
+      else if ( right_mouse_down_ )
       {
-        m_Camera->MouseRightDrag( diffX, diffY );
+        camera_->MouseRightDrag( diffX, diffY );
 
         handled = true;
       }
@@ -258,26 +258,26 @@ private:
 
     if ( event.GetWheelRotation() != 0 )
     {
-      m_Camera->ScrollWheel( event.GetWheelRotation() );
+      camera_->ScrollWheel( event.GetWheelRotation() );
 
       m_WXRenderWindow->Refresh();
     }
   }
 
-  Ogre::Root* m_Root;
-  Ogre::SceneManager* m_SceneManager;
+  Ogre::Root* root_;
+  Ogre::SceneManager* scene_manager_;
 
   ogre_tools::wxOgreRenderWindow* m_WXRenderWindow;
 
-  ogre_tools::Grid* m_Grid;
-  ogre_tools::CameraBase* m_Camera;
+  ogre_tools::Grid* grid_;
+  ogre_tools::CameraBase* camera_;
 
   // Mouse handling
-  bool m_LeftMouseDown;
-  bool m_MiddleMouseDown;
-  bool m_RightMouseDown;
-  int m_MouseX;
-  int m_MouseY;
+  bool left_mouse_down_;
+  bool middle_mouse_down_;
+  bool right_mouse_down_;
+  int mouse_x_;
+  int mouse_y_;
 };
 
 // our normal wxApp-derived class, as usual

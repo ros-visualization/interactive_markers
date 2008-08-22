@@ -75,20 +75,20 @@ protected:
 
   void IncomingCloudCallback();
 
-  ogre_tools::PointCloud* m_Cloud;
+  ogre_tools::PointCloud* cloud_;
 
-  std::string m_Topic;
-  std_msgs::PointCloudFloat32 m_Message;
+  std::string topic_;
+  std_msgs::PointCloudFloat32 message_;
 
-  float m_R;
-  float m_G;
-  float m_B;
+  float r_;
+  float g_;
+  float b_;
 
   typedef std::vector< ogre_tools::PointCloud::Point > V_Point;
-  V_Point m_Points;
+  V_Point points_;
 
-  Style m_Style;
-  float m_BillboardSize;
+  Style style_;
+  float billboard_size_;
 };
 
 } // namespace ogre_vis

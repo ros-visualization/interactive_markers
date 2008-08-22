@@ -105,14 +105,14 @@ protected:
   void IncomingMarker();
 
   typedef std::map<int, ogre_tools::Object*> M_IDToObject;
-  M_IDToObject m_Markers;
+  M_IDToObject markers_;
 
-  std_msgs::VisualizationMarker m_CurrentMessage;
+  std_msgs::VisualizationMarker current_message_;
 
   typedef std::vector< std_msgs::VisualizationMarker > V_MarkerMessage;
-  V_MarkerMessage m_MessageQueue;
+  V_MarkerMessage message_queue_;
 
-  Ogre::SceneNode* m_SceneNode;
+  Ogre::SceneNode* scene_node_;
 };
 
 } // namespace ogre_vis

@@ -12,23 +12,23 @@ Cone::Cone(Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode, int xT
   std::stringstream ss;
   ss << "Cone" << count++;
 
-  m_ManualObject = m_SceneManager->createManualObject( ss.str() );
+  manual_object_ = scene_manager_->createManualObject( ss.str() );
 
   if ( !parentNode )
   {
-    parentNode = m_SceneManager->getRootSceneNode();
+    parentNode = scene_manager_->getRootSceneNode();
   }
 
-  m_SceneNode = parentNode->createChildSceneNode();
-  m_OffsetNode = m_SceneNode->createChildSceneNode();
-  m_OffsetNode->attachObject( m_ManualObject );
+  scene_node_ = parentNode->createChildSceneNode();
+  offset_node_ = scene_node_->createChildSceneNode();
+  offset_node_->attachObject( manual_object_ );
 
   ss << "Material";
-  m_MaterialName = ss.str();
-  m_Material = Ogre::MaterialManager::getSingleton().create( m_MaterialName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
-  m_Material->setReceiveShadows(false);
-  m_Material->getTechnique(0)->setLightingEnabled(true);
-  m_Material->getTechnique(0)->setAmbient( 0.5, 0.5, 0.5 );
+  material_name_ = ss.str();
+  material_ = Ogre::MaterialManager::getSingleton().create( material_name_, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
+  material_->setReceiveShadows(false);
+  material_->getTechnique(0)->setLightingEnabled(true);
+  material_->getTechnique(0)->setAmbient( 0.5, 0.5, 0.5 );
 
   Create( xTes, yTes, r, g, b );
 
@@ -38,20 +38,20 @@ Cone::Cone(Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode, int xT
 
 Cone::~Cone()
 {
-  m_SceneManager->destroySceneNode( m_OffsetNode->getName() );
-  m_SceneManager->destroySceneNode( m_SceneNode->getName() );
+  scene_manager_->destroySceneNode( offset_node_->getName() );
+  scene_manager_->destroySceneNode( scene_node_->getName() );
 
-  m_SceneManager->destroyManualObject( m_ManualObject );
+  scene_manager_->destroyManualObject( manual_object_ );
 }
 
 
 void Cone::Create(int xTes, int yTes, float r, float g, float b)
 {
-  m_XTes = xTes;
-  m_YTes = yTes;
+  x_tes_ = xTes;
+  y_tes_ = yTes;
 
-  m_ManualObject->clear();
-  m_ManualObject->begin( m_MaterialName, Ogre::RenderOperation::OT_TRIANGLE_LIST );
+  manual_object_->clear();
+  manual_object_->begin( material_name_, Ogre::RenderOperation::OT_TRIANGLE_LIST );
 
   double stepTheta = 2 * Ogre::Math::PI / xTes;
   double stepH = 1.0 / yTes;
@@ -71,17 +71,17 @@ void Cone::Create(int xTes, int yTes, float r, float g, float b)
       GetVertex( theta, 0.0, v2 );
       GetVertex( theta + stepTheta, 0.0, v3 );
 
-      m_ManualObject->position( v1 );
-      m_ManualObject->normal( n );
-      m_ManualObject->colour( r, g, b );
+      manual_object_->position( v1 );
+      manual_object_->normal( n );
+      manual_object_->colour( r, g, b );
 
-      m_ManualObject->position( v2 );
-      m_ManualObject->normal( n );
-      m_ManualObject->colour( r, g, b );
+      manual_object_->position( v2 );
+      manual_object_->normal( n );
+      manual_object_->colour( r, g, b );
 
-      m_ManualObject->position( v3 );
-      m_ManualObject->normal( n );
-      m_ManualObject->colour( r, g, b );
+      manual_object_->position( v3 );
+      manual_object_->normal( n );
+      manual_object_->colour( r, g, b );
     }
 
     //top
@@ -96,17 +96,17 @@ void Cone::Create(int xTes, int yTes, float r, float g, float b)
       n2 = n1;
       GetNormal( theta + stepTheta, h, n3 );
 
-      m_ManualObject->position( v1 );
-      m_ManualObject->normal( n1 );
-      m_ManualObject->colour( r, g, b );
+      manual_object_->position( v1 );
+      manual_object_->normal( n1 );
+      manual_object_->colour( r, g, b );
 
-      m_ManualObject->position( v3 );
-      m_ManualObject->normal( n3 );
-      m_ManualObject->colour( r, g, b );
+      manual_object_->position( v3 );
+      manual_object_->normal( n3 );
+      manual_object_->colour( r, g, b );
 
-      m_ManualObject->position( v2 );
-      m_ManualObject->normal( n2 );
-      m_ManualObject->colour( r, g, b );
+      manual_object_->position( v2 );
+      manual_object_->normal( n2 );
+      manual_object_->colour( r, g, b );
     }
   }
 
@@ -132,34 +132,34 @@ void Cone::Create(int xTes, int yTes, float r, float g, float b)
       GetNormal( theta + stepTheta, h, n4 );
 
       // 1st triangle
-      m_ManualObject->position( v1 );
-      m_ManualObject->normal( n1 );
-      m_ManualObject->colour( r, g, b );
+      manual_object_->position( v1 );
+      manual_object_->normal( n1 );
+      manual_object_->colour( r, g, b );
 
-      m_ManualObject->position( v2 );
-      m_ManualObject->normal( n2 );
-      m_ManualObject->colour( r, g, b );
+      manual_object_->position( v2 );
+      manual_object_->normal( n2 );
+      manual_object_->colour( r, g, b );
 
-      m_ManualObject->position( v3 );
-      m_ManualObject->normal( n3 );
-      m_ManualObject->colour( r, g, b );
+      manual_object_->position( v3 );
+      manual_object_->normal( n3 );
+      manual_object_->colour( r, g, b );
 
       // 2nd triangle
-      m_ManualObject->position( v1 );
-      m_ManualObject->normal( n1 );
-      m_ManualObject->colour( r, g, b );
+      manual_object_->position( v1 );
+      manual_object_->normal( n1 );
+      manual_object_->colour( r, g, b );
 
-      m_ManualObject->position( v3 );
-      m_ManualObject->normal( n3 );
-      m_ManualObject->colour( r, g, b );
+      manual_object_->position( v3 );
+      manual_object_->normal( n3 );
+      manual_object_->colour( r, g, b );
 
-      m_ManualObject->position( v4 );
-      m_ManualObject->normal( n4 );
-      m_ManualObject->colour( r, g, b );
+      manual_object_->position( v4 );
+      manual_object_->normal( n4 );
+      manual_object_->colour( r, g, b );
     }
   }
 
-  m_ManualObject->end();
+  manual_object_->end();
 }
 
 void Cone::GetVertex(double theta, double h, Ogre::Vector3 & vertex)
@@ -179,28 +179,28 @@ void Cone::GetNormal(double theta, double h, Ogre::Vector3 & normal)
 
 void Cone::SetColor( float r, float g, float b )
 {
-  m_Material->getTechnique(0)->setAmbient( r*0.5, g*0.5, b*0.5 );
-  m_Material->getTechnique(0)->setDiffuse( r, g, b, 1.0f );
+  material_->getTechnique(0)->setAmbient( r*0.5, g*0.5, b*0.5 );
+  material_->getTechnique(0)->setDiffuse( r, g, b, 1.0f );
 }
 
 void Cone::SetOffset( const Ogre::Vector3& offset )
 {
-  m_OffsetNode->setPosition( offset );
+  offset_node_->setPosition( offset );
 }
 
 void Cone::SetPosition( const Ogre::Vector3& position )
 {
-  m_SceneNode->setPosition( position );
+  scene_node_->setPosition( position );
 }
 
 void Cone::SetOrientation( const Ogre::Quaternion& orientation )
 {
-  m_SceneNode->setOrientation( orientation );
+  scene_node_->setOrientation( orientation );
 }
 
 void Cone::SetScale( const Ogre::Vector3& scale )
 {
-  m_SceneNode->setScale( scale );
+  scene_node_->setScale( scale );
 }
 
 } // namespace ogre_tools

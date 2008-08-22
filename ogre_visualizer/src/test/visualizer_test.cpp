@@ -52,10 +52,10 @@ public:
                       wxDefaultPosition, wxSize(800,600),
                       wxDEFAULT_FRAME_STYLE)
   {
-    m_Root = new Ogre::Root();
-    m_Root->loadPlugin( "RenderSystem_GL" );
-    m_Root->loadPlugin( "Plugin_OctreeSceneManager" );
-    m_Root->loadPlugin( "Plugin_CgProgramManager" );
+    root_ = new Ogre::Root();
+    root_->loadPlugin( "RenderSystem_GL" );
+    root_->loadPlugin( "Plugin_OctreeSceneManager" );
+    root_->loadPlugin( "Plugin_CgProgramManager" );
 
     std::string mediaPath = ros::get_package_path( "gazebo_robot_description" );
     mediaPath += "/world/Media/";
@@ -69,7 +69,7 @@ public:
     Ogre::ResourceGroupManager::getSingleton().addResourceLocation( mediaPath + "models/pr2_new", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
 
     // Taken from gazebo
-    Ogre::RenderSystemList *rsList = m_Root->getAvailableRenderers();
+    Ogre::RenderSystemList *rsList = root_->getAvailableRenderers();
 
     Ogre::RenderSystem* renderSystem = NULL;
     Ogre::RenderSystemList::iterator renderIt = rsList->begin();
@@ -93,11 +93,11 @@ public:
     renderSystem->setConfigOption("Full Screen","No");
     renderSystem->setConfigOption("FSAA","2");
 
-    m_Root->setRenderSystem( renderSystem );
+    root_->setRenderSystem( renderSystem );
 
     try
     {
-        m_Root->initialise( false );
+        root_->initialise( false );
     }
     catch ( Ogre::Exception& e )
     {
@@ -105,7 +105,7 @@ public:
         exit(1);
     }
 
-    m_VisualizationPanel = new VisualizationPanel( this, m_Root );
+    visualization_panel_ = new VisualizationPanel( this, root_ );
 
     // TODO: figure out how we can move this back to before panel (renderwindow) creation (manually creating a GpuProgramManager?)
     try
@@ -118,47 +118,47 @@ public:
       exit( 1 );
     }
 
-    m_VisualizationPanel->CreateVisualizer<GridVisualizer>( "Grid", true );
-    m_VisualizationPanel->CreateVisualizer<AxesVisualizer>( "Origin Axes", true );
+    visualization_panel_->CreateVisualizer<GridVisualizer>( "Grid", true );
+    visualization_panel_->CreateVisualizer<AxesVisualizer>( "Origin Axes", true );
 
-    RobotModelVisualizer* model = m_VisualizationPanel->CreateVisualizer<RobotModelVisualizer>( "Robot Model", false );
+    RobotModelVisualizer* model = visualization_panel_->CreateVisualizer<RobotModelVisualizer>( "Robot Model", false );
     model->Initialize( "robotdesc/pr2", "transform" );
 
-    PointCloudVisualizer* pointCloud = m_VisualizationPanel->CreateVisualizer<PointCloudVisualizer>( "Stereo Full Cloud", false );
+    PointCloudVisualizer* pointCloud = visualization_panel_->CreateVisualizer<PointCloudVisualizer>( "Stereo Full Cloud", false );
     pointCloud->SetTopic( "videre/cloud" );
     pointCloud->SetColor( 1.0, 1.0, 1.0 );
 
-    pointCloud = m_VisualizationPanel->CreateVisualizer<PointCloudVisualizer>( "Head Full Cloud", false );
+    pointCloud = visualization_panel_->CreateVisualizer<PointCloudVisualizer>( "Head Full Cloud", false );
     pointCloud->SetTopic( "full_cloud" );
     pointCloud->SetColor( 1.0, 1.0, 0.0 );
 
-    LaserScanVisualizer* laserScan = m_VisualizationPanel->CreateVisualizer<LaserScanVisualizer>( "Head Scan", false );
+    LaserScanVisualizer* laserScan = visualization_panel_->CreateVisualizer<LaserScanVisualizer>( "Head Scan", false );
     laserScan->SetScanTopic( "tilt_scan" );
     laserScan->SetColor( 1.0, 0.0, 0.0 );
     laserScan->SetDecayTime( 30.0f );
 
-    laserScan = m_VisualizationPanel->CreateVisualizer<LaserScanVisualizer>( "Floor Scan", false );
+    laserScan = visualization_panel_->CreateVisualizer<LaserScanVisualizer>( "Floor Scan", false );
     laserScan->SetScanTopic( "base_scan" );
     laserScan->SetColor( 0.0f, 1.0f, 0.0f );
     laserScan->SetDecayTime( 0.0f );
 
-    m_VisualizationPanel->CreateVisualizer<MarkerVisualizer>( "Visualization Markers", true );
+    visualization_panel_->CreateVisualizer<MarkerVisualizer>( "Visualization Markers", true );
   }
 
   ~MyFrame()
   {
-    m_VisualizationPanel->Destroy();
+    visualization_panel_->Destroy();
 
-    delete m_Root;
+    delete root_;
   }
 
 private:
 
-  Ogre::Root* m_Root;
-  Ogre::Camera* m_Camera;
-  Ogre::SceneManager* m_SceneManager;
+  Ogre::Root* root_;
+  Ogre::Camera* camera_;
+  Ogre::SceneManager* scene_manager_;
 
-  VisualizationPanel* m_VisualizationPanel;
+  VisualizationPanel* visualization_panel_;
 };
 
 // our normal wxApp-derived class, as usual

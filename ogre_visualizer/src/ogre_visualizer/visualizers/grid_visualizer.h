@@ -51,8 +51,8 @@ public:
   GridVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
   virtual ~GridVisualizer();
 
-  uint32_t GetCellCount() { return m_CellCount; }
-  float GetCellSize() { return m_CellSize; }
+  uint32_t GetCellCount() { return cell_count_; }
+  float GetCellSize() { return cell_size_; }
   void GetColor( float& r, float& g, float& b );
 
   void Set( uint32_t cellCount, float cellSize, float r, float g, float b );
@@ -71,12 +71,12 @@ protected:
   virtual void OnEnable();
   virtual void OnDisable();
 
-  float m_CellSize;
-  uint32_t m_CellCount;
-  float m_R;
-  float m_G;
-  float m_B;
-  ogre_tools::Grid* m_Grid;
+  float cell_size_;
+  uint32_t cell_count_;
+  float r_;
+  float g_;
+  float b_;
+  ogre_tools::Grid* grid_;
 };
 
 } // namespace ogre_vis

@@ -37,44 +37,44 @@
 namespace ogre_vis
 {
 
-extern Ogre::Matrix3 g_OgreToRobotMatrix;
-extern Ogre::Matrix3 g_RobotToOgreMatrix;
+extern Ogre::Matrix3 g_ogre_to_robot_matrix;
+extern Ogre::Matrix3 g_robot_to_ogre_matrix;
 
-extern Ogre::Quaternion g_OgreToRobotQuat;
-extern Ogre::Quaternion g_RobotToOgreQuat;
+extern Ogre::Quaternion g_ogre_to_robot_quat;
+extern Ogre::Quaternion g_robot_to_ogre_quat;
 
 void InitializeCommon();
 
 inline void RobotToOgre( Ogre::Vector3& point )
 {
-  point = g_RobotToOgreMatrix * point;
+  point = g_robot_to_ogre_matrix * point;
 }
 
 inline void RobotToOgre( Ogre::Quaternion& quat )
 {
-  quat = g_RobotToOgreQuat * quat;
+  quat = g_robot_to_ogre_quat * quat;
 }
 
 inline void RobotToOgre( Ogre::Matrix3& mat )
 {
-  mat = g_RobotToOgreMatrix * mat;
+  mat = g_robot_to_ogre_matrix * mat;
 }
 
 
 
 inline void OgreToRobot( Ogre::Vector3& point )
 {
-  point = g_OgreToRobotMatrix * point;
+  point = g_ogre_to_robot_matrix * point;
 }
 
 inline void OgreToRobot( Ogre::Quaternion& quat )
 {
-  quat = g_OgreToRobotQuat * quat;
+  quat = g_ogre_to_robot_quat * quat;
 }
 
 inline void OgreToRobot( Ogre::Matrix3& mat )
 {
-  mat = g_OgreToRobotMatrix * mat;
+  mat = g_ogre_to_robot_matrix * mat;
 }
 
 
