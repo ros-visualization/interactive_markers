@@ -11,7 +11,7 @@ int main( int argc, char** argv )
 {
 	ros::init(argc,argv);
 	m_rosNode = new ros::node("roserr_send_test");
-	m_rosNode->advertise<rostools::Log>("/roserr");
+	m_rosNode->advertise<rostools::Log>("/rosout",4);
 	std::string input;
 	while(true)
 	{
@@ -20,8 +20,8 @@ int main( int argc, char** argv )
 		{
 			rosErrMsg.level = i;
 			rosErrMsg.name = "roserrTester";
-			rosErrMsg.msg = "I'm testing roserr.  Does wordwrap work?  I don't know, hopefully this long string will find out.\n";
-			m_rosNode->publish("/roserr",rosErrMsg);
+			rosErrMsg.msg = "I'm testing rosout.  Does wordwrap work?  I don't know, hopefully this long string will find out.\n";
+			m_rosNode->publish("/rosout",rosErrMsg);
 			for(double a = -9999;a < 9999; a = a+.01)
 			{
 

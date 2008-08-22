@@ -14,7 +14,7 @@ RoserrPanelBase( parent ),
 m_Enabled(false),
 m_Monochrome(false),
 m_messageIncomplete(true),
-m_subscription("/roserr")
+m_subscription("/rosout")
 {
 	Connect( EVT_FAKE_REFRESH, wxCommandEventHandler( RoserrPanel::WriteError ), NULL, this );
 	// ensure a unique node name
