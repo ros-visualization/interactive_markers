@@ -1,6 +1,7 @@
 <package>
-  <description brief="python utilities for wx">
+  <description brief="python utilities for ros using the wx environment">
      Provides a collection of frames and widgets that can be embedded in a wxpython program. It depends on MatplotLib to generate nice plots.
+     A standalone application for querying and displaying plots from botherder can be found in demos.
      Note: you need WxPython to be installed on your machine
   </description>
   <author>Timothy Hunter/tjhunter@willowgarage.com</author>
@@ -9,4 +10,5 @@
   <depend package="rospy" />
   <depend package="std_msgs" />
   <depend package="matplotlib"/>
+  <depend package="numpy"/>
 </package>

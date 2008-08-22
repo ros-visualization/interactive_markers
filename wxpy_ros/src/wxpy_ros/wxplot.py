@@ -77,7 +77,7 @@ class Channel:
         self.dataChanged = False
         return (x,y)
     
-    def addPoint(self,x,y):
+    def addPointXY(self,x,y):
         """Adds a point to be plotted.
         x,y: floats"""
         self.x.append(x)
