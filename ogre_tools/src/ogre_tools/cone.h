@@ -51,18 +51,18 @@ public:
   Cone( Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode = 0, int xTes = 20, int yTes = 20, float r = 1.0f, float g = 1.0f, float b = 1.0f );
   virtual ~Cone();
 
-  void Create( int xTes, int yTes, float r, float g, float b );
+  void create( int xTes, int yTes, float r, float g, float b );
 
-  void SetOffset( const Ogre::Vector3& offset );
-  virtual void SetColor( float r, float g, float b );
+  void setOffset( const Ogre::Vector3& offset );
+  virtual void setColor( float r, float g, float b );
 
-  virtual void SetPosition( const Ogre::Vector3& position );
-  virtual void SetOrientation( const Ogre::Quaternion& orientation );
-  virtual void SetScale( const Ogre::Vector3& scale );
+  virtual void setPosition( const Ogre::Vector3& position );
+  virtual void setOrientation( const Ogre::Quaternion& orientation );
+  virtual void setScale( const Ogre::Vector3& scale );
 
 protected:
-  void GetVertex( double theta, double h, Ogre::Vector3& vertex );
-  void GetNormal( double theta, double h, Ogre::Vector3& normal );
+  void getVertex( double theta, double h, Ogre::Vector3& vertex );
+  void getNormal( double theta, double h, Ogre::Vector3& normal );
 
   Ogre::SceneNode* scene_node_;
   Ogre::SceneNode* offset_node_;

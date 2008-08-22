@@ -58,26 +58,25 @@ public:
   ~PointCloud();
 
   /// Clear this point cloud
-  void Clear();
+  void clear();
 
   struct Point
   {
     Point() {}
-    Point( float x, float y, float z, float r, float g, float b ) : m_X( x ), m_Y( y ), m_Z( z ), r_( r ), g_( g ), b_( b ) {}
-    float m_X;
-    float m_Y;
-    float m_Z;
+    Point( float x, float y, float z, float r, float g, float b ) : x_( x ), y_( y ), z_( z ), r_( r ), g_( g ), b_( b ) {}
+    float x_;
+    float y_;
+    float z_;
     float r_;
     float g_;
     float b_;
   };
 
   /// Add points to this point cloud
-  void AddPoints( Point* points, uint32_t numPoints );
+  void addPoints( Point* points, uint32_t numPoints );
 
-  void SetVisible( bool visible );
-  void SetUsePoints( bool usePoints );
-  void SetBillboardDimensions( float width, float height );
+  void setUsePoints( bool usePoints );
+  void setBillboardDimensions( float width, float height );
 
   // overrides from MovableObject
   virtual const Ogre::String& getMovableType() const { return sm_Type; }
@@ -87,7 +86,7 @@ public:
   virtual void _notifyCurrentCamera( Ogre::Camera* camera );
 
 private:
-  Ogre::BillboardSet* CreateBillboardSet();
+  Ogre::BillboardSet* createBillboardSet();
 
   Ogre::SceneManager* scene_manager_;
   Ogre::SceneNode* scene_node_;

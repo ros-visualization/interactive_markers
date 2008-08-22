@@ -47,18 +47,18 @@ MarkerVisualizer::MarkerVisualizer( Ogre::SceneManager* sceneManager, ros::node*
 {
   scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
 
-  if ( IsEnabled() )
+  if ( isEnabled() )
   {
-    OnEnable();
+    onEnable();
   }
 }
 
 MarkerVisualizer::~MarkerVisualizer()
 {
-  Unsubscribe();
+  unsubscribe();
 }
 
-void MarkerVisualizer::ClearMarkers()
+void MarkerVisualizer::clearMarkers()
 {
   M_IDToObject::iterator markerIt = markers_.begin();
   M_IDToObject::iterator markerEnd = markers_.end();
@@ -69,56 +69,56 @@ void MarkerVisualizer::ClearMarkers()
   markers_.clear();
 }
 
-void MarkerVisualizer::OnEnable()
+void MarkerVisualizer::onEnable()
 {
-  Subscribe();
+  subscribe();
 
   scene_node_->setVisible( true );
 }
 
-void MarkerVisualizer::OnDisable()
+void MarkerVisualizer::onDisable()
 {
-  Unsubscribe();
+  unsubscribe();
 
-  ClearMarkers();
+  clearMarkers();
 
   scene_node_->setVisible( false );
 }
 
-void MarkerVisualizer::Subscribe()
+void MarkerVisualizer::subscribe()
 {
-  if ( !IsEnabled() )
+  if ( !isEnabled() )
   {
     return;
   }
 
-  ros_node_->subscribe("visualizationMarker", current_message_, &MarkerVisualizer::IncomingMarker,this, 0);
+  ros_node_->subscribe("visualizationMarker", current_message_, &MarkerVisualizer::incomingMarker,this, 0);
 }
 
-void MarkerVisualizer::Unsubscribe()
+void MarkerVisualizer::unsubscribe()
 {
   ros_node_->unsubscribe( "visualizationMarker" );
 }
 
-void MarkerVisualizer::IncomingMarker()
+void MarkerVisualizer::incomingMarker()
 {
   message_queue_.push_back( current_message_ );
 }
 
-void MarkerVisualizer::ProcessMessage( const std_msgs::VisualizationMarker& message )
+void MarkerVisualizer::processMessage( const std_msgs::VisualizationMarker& message )
 {
   switch ( message.action )
   {
   case MarkerActions::Add:
-    ProcessAdd( message );
+    processAdd( message );
     break;
 
   case MarkerActions::Modify:
-    ProcessModify( message );
+    processModify( message );
     break;
 
   case MarkerActions::Delete:
-    ProcessDelete( message );
+    processDelete( message );
     break;
 
   default:
@@ -126,7 +126,7 @@ void MarkerVisualizer::ProcessMessage( const std_msgs::VisualizationMarker& mess
   }
 }
 
-void MarkerVisualizer::ProcessAdd( const std_msgs::VisualizationMarker& message )
+void MarkerVisualizer::processAdd( const std_msgs::VisualizationMarker& message )
 {
   {
     M_IDToObject::iterator it = markers_.find( message.id );
@@ -146,7 +146,7 @@ void MarkerVisualizer::ProcessAdd( const std_msgs::VisualizationMarker& message 
   case MarkerTypes::Cube:
     {
       ogre_tools::SuperEllipsoid* cube = new ogre_tools::SuperEllipsoid( scene_manager_, scene_node_ );
-      cube->Create( ogre_tools::SuperEllipsoid::Cube, 10, Ogre::Vector3( 1.0f, 1.0f, 1.0f ) );
+      cube->create( ogre_tools::SuperEllipsoid::Cube, 10, Ogre::Vector3( 1.0f, 1.0f, 1.0f ) );
 
       object = cube;
     }
@@ -155,7 +155,7 @@ void MarkerVisualizer::ProcessAdd( const std_msgs::VisualizationMarker& message 
   case MarkerTypes::Sphere:
     {
       ogre_tools::SuperEllipsoid* sphere = new ogre_tools::SuperEllipsoid( scene_manager_, scene_node_ );
-      sphere->Create( ogre_tools::SuperEllipsoid::Sphere, 20, Ogre::Vector3( 1.0f, 1.0f, 1.0f ) );
+      sphere->create( ogre_tools::SuperEllipsoid::Sphere, 20, Ogre::Vector3( 1.0f, 1.0f, 1.0f ) );
 
       object = sphere;
     }
@@ -175,13 +175,13 @@ void MarkerVisualizer::ProcessAdd( const std_msgs::VisualizationMarker& message 
   {
     markers_.insert( std::make_pair( message.id, object ) );
 
-    SetCommonValues( message, object );
+    setCommonValues( message, object );
 
-    CauseRender();
+    causeRender();
   }
 }
 
-void MarkerVisualizer::ProcessModify( const std_msgs::VisualizationMarker& message )
+void MarkerVisualizer::processModify( const std_msgs::VisualizationMarker& message )
 {
   M_IDToObject::iterator it = markers_.find( message.id );
   if ( it == markers_.end() )
@@ -190,12 +190,12 @@ void MarkerVisualizer::ProcessModify( const std_msgs::VisualizationMarker& messa
     return;
   }
 
-  SetCommonValues( message, it->second );
+  setCommonValues( message, it->second );
 
-  CauseRender();
+  causeRender();
 }
 
-void MarkerVisualizer::ProcessDelete( const std_msgs::VisualizationMarker& message )
+void MarkerVisualizer::processDelete( const std_msgs::VisualizationMarker& message )
 {
   M_IDToObject::iterator it = markers_.find( message.id );
   if ( it != markers_.end() )
@@ -204,10 +204,10 @@ void MarkerVisualizer::ProcessDelete( const std_msgs::VisualizationMarker& messa
     markers_.erase( it );
   }
 
-  CauseRender();
+  causeRender();
 }
 
-void MarkerVisualizer::SetCommonValues( const std_msgs::VisualizationMarker& message, ogre_tools::Object* object )
+void MarkerVisualizer::setCommonValues( const std_msgs::VisualizationMarker& message, ogre_tools::Object* object )
 {
   uint32_t frameId = 1;
   /*if ( !message.frame.empty() )
@@ -262,25 +262,25 @@ void MarkerVisualizer::SetCommonValues( const std_msgs::VisualizationMarker& mes
   }
 
   Ogre::Vector3 position( tfPoint.x, tfPoint.y, tfPoint.z );
-  RobotToOgre( position );
+  robotToOgre( position );
 
   Ogre::Matrix3 orientation;
   orientation.FromEulerAnglesYXZ( Ogre::Radian( tfEulers.yaw ), Ogre::Radian( tfEulers.pitch ), Ogre::Radian( tfEulers.roll ) );
   //Ogre::Matrix3 orientation( OgreMatrixFromRobotEulers( tfEulers.yaw, tfEulers.pitch, tfEulers.roll ) );
   Ogre::Vector3 scale( message.xScale, message.yScale, message.zScale );
-  RobotToOgre( scale );
+  robotToOgre( scale );
 
   scale.x = fabsf( scale.x );
   scale.y = fabsf( scale.y );
   scale.z = fabsf( scale.z );
 
-  object->SetPosition( position );
-  object->SetOrientation( orientation );
-  object->SetScale( scale );
-  object->SetColor( message.r / 255.0f, message.g / 255.0f, message.b / 255.0f );
+  object->setPosition( position );
+  object->setOrientation( orientation );
+  object->setScale( scale );
+  object->setColor( message.r / 255.0f, message.g / 255.0f, message.b / 255.0f );
 }
 
-void MarkerVisualizer::Update( float dt )
+void MarkerVisualizer::update( float dt )
 {
   current_message_.lock();
 
@@ -292,7 +292,7 @@ void MarkerVisualizer::Update( float dt )
     {
       std_msgs::VisualizationMarker& marker = *messageIt;
 
-      ProcessMessage( marker );
+      processMessage( marker );
     }
 
     message_queue_.clear();

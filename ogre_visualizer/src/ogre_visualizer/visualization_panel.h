@@ -76,32 +76,32 @@ public:
   VisualizationPanel( wxWindow* parent, Ogre::Root* root );
   virtual ~VisualizationPanel();
 
-  void Render();
+  void render();
 
-  void LockRender() { render_mutex_.lock(); }
-  void UnlockRender() { render_mutex_.unlock(); }
+  void lockRender() { render_mutex_.lock(); }
+  void unlockRender() { render_mutex_.unlock(); }
 
-  void AddVisualizer( VisualizerBase* visualizer );
+  void addVisualizer( VisualizerBase* visualizer );
 
   template< class T >
-  T* CreateVisualizer( const std::string& name, bool enabled )
+  T* createVisualizer( const std::string& name, bool enabled )
   {
     T* visualizer = new T( scene_manager_, ros_node_, tf_client_, name, enabled );
 
-    AddVisualizer( visualizer );
+    addVisualizer( visualizer );
 
     return visualizer;
   }
 
 protected:
-  void OnViewClicked( wxCommandEvent& event );
-  void OnDisplayToggled( wxCommandEvent& event );
-  void OnDisplaySelected( wxCommandEvent& event );
-  void OnRenderWindowMouseEvents( wxMouseEvent& event );
-  void OnUpdate( wxTimerEvent& event );
-  void OnRender( wxCommandEvent& event );
-  void OnPropertyChanging( wxPropertyGridEvent& event );
-  void OnPropertyChanged( wxPropertyGridEvent& event );
+  void onViewClicked( wxCommandEvent& event );
+  void onDisplayToggled( wxCommandEvent& event );
+  void onDisplaySelected( wxCommandEvent& event );
+  void onRenderWindowMouseEvents( wxMouseEvent& event );
+  void onUpdate( wxTimerEvent& event );
+  void onRender( wxCommandEvent& event );
+  void onPropertyChanging( wxPropertyGridEvent& event );
+  void onpropertyChanged( wxPropertyGridEvent& event );
 
   Ogre::Root* ogre_root_;
   Ogre::SceneManager* scene_manager_;

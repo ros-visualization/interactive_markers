@@ -52,9 +52,9 @@ Arrow::Arrow( Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode, flo
   shaft_ = new SuperEllipsoid( scene_manager_, scene_node_ );
   head_ = new Cone( scene_manager_, scene_node_ );
 
-  Set( shaftLength, shaftRadius, headLength, headRadius );
+  set( shaftLength, shaftRadius, headLength, headRadius );
 
-  SetOrientation( Ogre::Quaternion::IDENTITY );
+  setOrientation( Ogre::Quaternion::IDENTITY );
 }
 
 Arrow::~Arrow()
@@ -65,45 +65,45 @@ Arrow::~Arrow()
   scene_manager_->destroySceneNode( scene_node_->getName() );
 }
 
-void Arrow::Set( float shaftLength, float shaftRadius, float headLength, float headRadius )
+void Arrow::set( float shaftLength, float shaftRadius, float headLength, float headRadius )
 {
-  shaft_->Create( SuperEllipsoid::Cylinder, 20, Ogre::Vector3( shaftRadius, shaftLength, shaftRadius ) );
-  shaft_->SetColor( 0.5f, 0.5f, 0.5f );
-  shaft_->SetPosition( Ogre::Vector3( 0.0f, shaftLength/2.0f, 0.0f ) );
+  shaft_->create( SuperEllipsoid::Cylinder, 20, Ogre::Vector3( shaftRadius, shaftLength, shaftRadius ) );
+  shaft_->setColor( 0.5f, 0.5f, 0.5f );
+  shaft_->setPosition( Ogre::Vector3( 0.0f, shaftLength/2.0f, 0.0f ) );
 
-  head_->SetScale( Ogre::Vector3( headRadius, headLength, headRadius ) );
-  head_->SetColor( 0.5f, 0.5f, 0.5f );
-  head_->SetPosition( Ogre::Vector3( 0.0f, shaftLength, 0.0f ) );
+  head_->setScale( Ogre::Vector3( headRadius, headLength, headRadius ) );
+  head_->setColor( 0.5f, 0.5f, 0.5f );
+  head_->setPosition( Ogre::Vector3( 0.0f, shaftLength, 0.0f ) );
 }
 
-void Arrow::SetColor( float r, float g, float b )
+void Arrow::setColor( float r, float g, float b )
 {
-  shaft_->SetColor( r, g, b );
-  head_->SetColor( r, g, b );
+  shaft_->setColor( r, g, b );
+  head_->setColor( r, g, b );
 }
 
-void Arrow::SetShaftColor( float r, float g, float b )
+void Arrow::setShaftColor( float r, float g, float b )
 {
-  shaft_->SetColor( r, g, b );
+  shaft_->setColor( r, g, b );
 }
 
-void Arrow::SetHeadColor( float r, float g, float b )
+void Arrow::setHeadColor( float r, float g, float b )
 {
-  head_->SetColor( r, g, b );
+  head_->setColor( r, g, b );
 }
 
-void Arrow::SetPosition( const Ogre::Vector3& position )
+void Arrow::setPosition( const Ogre::Vector3& position )
 {
   scene_node_->setPosition( position );
 }
 
-void Arrow::SetOrientation( const Ogre::Quaternion& orientation )
+void Arrow::setOrientation( const Ogre::Quaternion& orientation )
 {
   // "forward" (negative z) should always be our identity orientation
   scene_node_->setOrientation( orientation * Ogre::Quaternion( Ogre::Degree( -90 ), Ogre::Vector3::UNIT_X ) );
 }
 
-void Arrow::SetScale( const Ogre::Vector3& scale )
+void Arrow::setScale( const Ogre::Vector3& scale )
 {
   scene_node_->setScale( Ogre::Vector3( scale.x, scale.z, scale.y ) );
 }

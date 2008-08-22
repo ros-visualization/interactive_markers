@@ -30,10 +30,10 @@ Cone::Cone(Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode, int xT
   material_->getTechnique(0)->setLightingEnabled(true);
   material_->getTechnique(0)->setAmbient( 0.5, 0.5, 0.5 );
 
-  Create( xTes, yTes, r, g, b );
+  create( xTes, yTes, r, g, b );
 
   // Default the offset so that the base of the cone is at the origin
-  SetOffset( Ogre::Vector3( 0.0f, 0.5f, 0.0f ) );
+  setOffset( Ogre::Vector3( 0.0f, 0.5f, 0.0f ) );
 }
 
 Cone::~Cone()
@@ -45,7 +45,7 @@ Cone::~Cone()
 }
 
 
-void Cone::Create(int xTes, int yTes, float r, float g, float b)
+void Cone::create(int xTes, int yTes, float r, float g, float b)
 {
   x_tes_ = xTes;
   y_tes_ = yTes;
@@ -68,8 +68,8 @@ void Cone::Create(int xTes, int yTes, float r, float g, float b)
       Ogre::Vector3 v1, v2, v3;
       Ogre::Vector3 n(0.0, -1.0, 0.0);
       v1 = Ogre::Vector3( 0.0, -0.5, 0.0 );
-      GetVertex( theta, 0.0, v2 );
-      GetVertex( theta + stepTheta, 0.0, v3 );
+      getVertex( theta, 0.0, v2 );
+      getVertex( theta + stepTheta, 0.0, v3 );
 
       manual_object_->position( v1 );
       manual_object_->normal( n );
@@ -88,13 +88,13 @@ void Cone::Create(int xTes, int yTes, float r, float g, float b)
     {
       Ogre::Vector3 v1, v2, v3;
       v1 = Ogre::Vector3( 0.0, 0.5, 0.0 );
-      GetVertex( theta, h, v2 );
-      GetVertex( theta + stepTheta, h, v3 );
+      getVertex( theta, h, v2 );
+      getVertex( theta + stepTheta, h, v3 );
 
       Ogre::Vector3 n1, n2, n3;
-      GetNormal( theta, h, n1 );
+      getNormal( theta, h, n1 );
       n2 = n1;
-      GetNormal( theta + stepTheta, h, n3 );
+      getNormal( theta + stepTheta, h, n3 );
 
       manual_object_->position( v1 );
       manual_object_->normal( n1 );
@@ -121,15 +121,15 @@ void Cone::Create(int xTes, int yTes, float r, float g, float b)
       Ogre::Vector3 v1, v2, v3, v4;
       Ogre::Vector3 n1, n2, n3, n4;
 
-      GetVertex( theta, h, v1 );
-      GetVertex( theta, h + stepH, v2 );
-      GetVertex( theta + stepTheta, h + stepH, v3 );
-      GetVertex( theta + stepTheta, h, v4 );
+      getVertex( theta, h, v1 );
+      getVertex( theta, h + stepH, v2 );
+      getVertex( theta + stepTheta, h + stepH, v3 );
+      getVertex( theta + stepTheta, h, v4 );
 
-      GetNormal( theta, h, n1 );
-      GetNormal( theta, h + stepH, n2 );
-      GetNormal( theta + stepTheta, h + stepH, n3 );
-      GetNormal( theta + stepTheta, h, n4 );
+      getNormal( theta, h, n1 );
+      getNormal( theta, h + stepH, n2 );
+      getNormal( theta + stepTheta, h + stepH, n3 );
+      getNormal( theta + stepTheta, h, n4 );
 
       // 1st triangle
       manual_object_->position( v1 );
@@ -162,7 +162,7 @@ void Cone::Create(int xTes, int yTes, float r, float g, float b)
   manual_object_->end();
 }
 
-void Cone::GetVertex(double theta, double h, Ogre::Vector3 & vertex)
+void Cone::getVertex(double theta, double h, Ogre::Vector3 & vertex)
 {
   vertex.x = (1 - h)*0.5*cos(theta);
   vertex.y = h - 0.5;
@@ -170,35 +170,35 @@ void Cone::GetVertex(double theta, double h, Ogre::Vector3 & vertex)
 
 }
 
-void Cone::GetNormal(double theta, double h, Ogre::Vector3 & normal)
+void Cone::getNormal(double theta, double h, Ogre::Vector3 & normal)
 {
   normal.x = 0.5*cos(theta);
   normal.y = 0.5;
   normal.z = 0.5*sin(theta);
 }
 
-void Cone::SetColor( float r, float g, float b )
+void Cone::setColor( float r, float g, float b )
 {
   material_->getTechnique(0)->setAmbient( r*0.5, g*0.5, b*0.5 );
   material_->getTechnique(0)->setDiffuse( r, g, b, 1.0f );
 }
 
-void Cone::SetOffset( const Ogre::Vector3& offset )
+void Cone::setOffset( const Ogre::Vector3& offset )
 {
   offset_node_->setPosition( offset );
 }
 
-void Cone::SetPosition( const Ogre::Vector3& position )
+void Cone::setPosition( const Ogre::Vector3& position )
 {
   scene_node_->setPosition( position );
 }
 
-void Cone::SetOrientation( const Ogre::Quaternion& orientation )
+void Cone::setOrientation( const Ogre::Quaternion& orientation )
 {
   scene_node_->setOrientation( orientation );
 }
 
-void Cone::SetScale( const Ogre::Vector3& scale )
+void Cone::setScale( const Ogre::Vector3& scale )
 {
   scene_node_->setScale( scale );
 }

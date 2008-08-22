@@ -53,7 +53,7 @@ VisualizerBase::~VisualizerBase()
   delete render_callback_;
 }
 
-void VisualizerBase::Enable()
+void VisualizerBase::enable()
 {
   if ( enabled_ )
   {
@@ -62,10 +62,10 @@ void VisualizerBase::Enable()
 
   enabled_ = true;
 
-  OnEnable();
+  onEnable();
 }
 
-void VisualizerBase::Disable()
+void VisualizerBase::disable()
 {
   if ( !enabled_ )
   {
@@ -74,24 +74,24 @@ void VisualizerBase::Disable()
 
   enabled_ = false;
 
-  OnDisable();
+  onDisable();
 }
 
-void VisualizerBase::SetRenderCallback( abstractFunctor* func )
+void VisualizerBase::setRenderCallback( abstractFunctor* func )
 {
   delete render_callback_;
 
   render_callback_ = func;
 }
 
-void VisualizerBase::SetLockRenderCallback( abstractFunctor* func )
+void VisualizerBase::setLockRenderCallback( abstractFunctor* func )
 {
   delete render_lock_;
 
   render_lock_ = func;
 }
 
-void VisualizerBase::SetUnlockRenderCallback( abstractFunctor* func )
+void VisualizerBase::setUnlockRenderCallback( abstractFunctor* func )
 {
   delete render_unlock_;
 
@@ -99,7 +99,7 @@ void VisualizerBase::SetUnlockRenderCallback( abstractFunctor* func )
 }
 
 
-void VisualizerBase::CauseRender()
+void VisualizerBase::causeRender()
 {
   if ( render_callback_ )
   {
@@ -107,7 +107,7 @@ void VisualizerBase::CauseRender()
   }
 }
 
-void VisualizerBase::LockRender()
+void VisualizerBase::lockRender()
 {
   if ( render_lock_ )
   {
@@ -115,7 +115,7 @@ void VisualizerBase::LockRender()
   }
 }
 
-void VisualizerBase::UnlockRender()
+void VisualizerBase::unlockRender()
 {
   if ( render_unlock_ )
   {

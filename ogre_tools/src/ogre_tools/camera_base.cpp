@@ -22,14 +22,14 @@ CameraBase::~CameraBase()
   scene_manager_->destroyCamera( camera_ );
 }
 
-void CameraBase::SetPosition( const Ogre::Vector3& position )
+void CameraBase::setPosition( const Ogre::Vector3& position )
 {
-  SetPosition( position.x, position.y, position.z );
+  setPosition( position.x, position.y, position.z );
 }
 
-void CameraBase::SetOrientation( const Ogre::Quaternion& orientation )
+void CameraBase::setOrientation( const Ogre::Quaternion& orientation )
 {
-  SetOrientation( orientation.x, orientation.y, orientation.z, orientation.w );
+  setOrientation( orientation.x, orientation.y, orientation.z, orientation.w );
 }
 
 } // namespace ogre_tools

@@ -85,24 +85,24 @@ public:
   MarkerVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
   virtual ~MarkerVisualizer();
 
-  virtual void Update( float dt );
+  virtual void update( float dt );
 
 protected:
-  virtual void OnEnable();
-  virtual void OnDisable();
+  virtual void onEnable();
+  virtual void onDisable();
 
-  void Subscribe();
-  void Unsubscribe();
+  void subscribe();
+  void unsubscribe();
 
-  void ClearMarkers();
+  void clearMarkers();
 
-  void ProcessMessage( const std_msgs::VisualizationMarker& message );
-  void ProcessAdd( const std_msgs::VisualizationMarker& message );
-  void ProcessModify( const std_msgs::VisualizationMarker& message );
-  void ProcessDelete( const std_msgs::VisualizationMarker& message );
-  void SetCommonValues( const std_msgs::VisualizationMarker& message, ogre_tools::Object* object );
+  void processMessage( const std_msgs::VisualizationMarker& message );
+  void processAdd( const std_msgs::VisualizationMarker& message );
+  void processModify( const std_msgs::VisualizationMarker& message );
+  void processDelete( const std_msgs::VisualizationMarker& message );
+  void setCommonValues( const std_msgs::VisualizationMarker& message, ogre_tools::Object* object );
 
-  void IncomingMarker();
+  void incomingMarker();
 
   typedef std::map<int, ogre_tools::Object*> M_IDToObject;
   M_IDToObject markers_;

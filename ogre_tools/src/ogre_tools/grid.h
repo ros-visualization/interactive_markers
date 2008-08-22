@@ -51,9 +51,9 @@ public:
   Grid( Ogre::SceneManager* manager, uint32_t cellCount, float cellLength, float r, float g, float b );
   ~Grid();
 
-  void Set( uint32_t gridSize, float cellLength, float r, float g, float b );
+  void set( uint32_t gridSize, float cellLength, float r, float g, float b );
 
-  Ogre::SceneNode* GetSceneNode() { return scene_node_; }
+  Ogre::SceneNode* getSceneNode() { return scene_node_; }
 
 private:
   Ogre::SceneManager* scene_manager_;

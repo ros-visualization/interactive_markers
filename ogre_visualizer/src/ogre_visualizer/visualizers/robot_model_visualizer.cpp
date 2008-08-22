@@ -50,14 +50,14 @@ RobotModelVisualizer::RobotModelVisualizer( Ogre::SceneManager* sceneManager, ro
 
 RobotModelVisualizer::~RobotModelVisualizer()
 {
-  Unsubscribe();
+  unsubscribe();
 
-  Clear();
+  clear();
 
   scene_manager_->destroySceneNode( root_node_->getName() );
 }
 
-void RobotModelVisualizer::Clear()
+void RobotModelVisualizer::clear()
 {
   M_StringToEntity::iterator modelIt = models_.begin();
   M_StringToEntity::iterator modelEnd = models_.end();
@@ -75,17 +75,17 @@ void RobotModelVisualizer::Clear()
   root_node_->removeAndDestroyAllChildren();
 }
 
-void RobotModelVisualizer::Initialize( const std::string& descriptionParam, const std::string& transformTopic )
+void RobotModelVisualizer::initialize( const std::string& descriptionParam, const std::string& transformTopic )
 {
   transform_topic_ = transformTopic;
   description_param_ = descriptionParam;
 
   initialized_ = true;
 
-  if ( IsEnabled() )
+  if ( isEnabled() )
   {
-    OnEnable();
-    CauseRender();
+    onEnable();
+    causeRender();
   }
   else
   {
@@ -93,9 +93,9 @@ void RobotModelVisualizer::Initialize( const std::string& descriptionParam, cons
   }
 }
 
-void RobotModelVisualizer::Load()
+void RobotModelVisualizer::load()
 {
-  Clear();
+  clear();
 
   std::string content;
   ros_node_->get_param(description_param_, content);
@@ -170,44 +170,44 @@ void RobotModelVisualizer::Load()
   UpdateTransforms();
 }
 
-void RobotModelVisualizer::OnEnable()
+void RobotModelVisualizer::onEnable()
 {
   if ( !initialized_ )
   {
     return;
   }
 
-  Subscribe();
+  subscribe();
   root_node_->setVisible( true );
 
-  Load();
+  load();
 }
 
-void RobotModelVisualizer::OnDisable()
+void RobotModelVisualizer::onDisable()
 {
   if ( !initialized_ )
   {
     return;
   }
 
-  Unsubscribe();
+  unsubscribe();
   root_node_->setVisible( false );
 }
 
-void RobotModelVisualizer::Subscribe()
+void RobotModelVisualizer::subscribe()
 {
-  if ( !IsEnabled() )
+  if ( !isEnabled() )
   {
     return;
   }
 
   if ( initialized_ && !transform_topic_.empty() )
   {
-    ros_node_->subscribe( transform_topic_, message_, &RobotModelVisualizer::IncomingTransform, this, 5 );
+    ros_node_->subscribe( transform_topic_, message_, &RobotModelVisualizer::incomingTransform, this, 5 );
   }
 }
 
-void RobotModelVisualizer::Unsubscribe()
+void RobotModelVisualizer::unsubscribe()
 {
   if ( initialized_ && !transform_topic_.empty() )
   {
@@ -215,7 +215,7 @@ void RobotModelVisualizer::Unsubscribe()
   }
 }
 
-void RobotModelVisualizer::IncomingTransform()
+void RobotModelVisualizer::incomingTransform()
 {
   has_new_transforms_ = true;
 }
@@ -256,21 +256,21 @@ void RobotModelVisualizer::UpdateTransforms()
     }
 
     Ogre::Vector3 position( pose.x, pose.y, pose.z );
-    RobotToOgre( position );
+    robotToOgre( position );
     node->setPosition( position );
 
-    node->setOrientation( OgreMatrixFromRobotEulers( pose.yaw, pose.pitch, pose.roll ) );
+    node->setOrientation( ogreMatrixFromRobotEulers( pose.yaw, pose.pitch, pose.roll ) );
   }
 }
 
-void RobotModelVisualizer::Update( float dt )
+void RobotModelVisualizer::update( float dt )
 {
   message_.lock();
 
   if ( has_new_transforms_ )
   {
     UpdateTransforms();
-    CauseRender();
+    causeRender();
 
     has_new_transforms_ = false;
   }

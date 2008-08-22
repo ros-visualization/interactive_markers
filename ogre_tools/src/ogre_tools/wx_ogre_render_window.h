@@ -60,8 +60,8 @@ public:
   virtual ~wxOgreRenderWindow ();
   
   /** Set the pre-render callback. */
-  virtual void SetPreRenderCallback( abstractFunctor* func );
-  virtual void SetPostRenderCallback( abstractFunctor* func );
+  virtual void setPreRenderCallback( abstractFunctor* func );
+  virtual void setPostRenderCallback( abstractFunctor* func );
 
   /** Overrides the default implementation.
   	This override is here for convenience. Returns a symbolic 320x240px size.
@@ -72,45 +72,45 @@ public:
   /** Gets the associated Ogre render window.
   	@return The render window used to paint this control.
    */
-  Ogre::RenderWindow* GetRenderWindow () const;
+  Ogre::RenderWindow* getRenderWindow () const;
   
   /** Gets the associated Ogre viewport.
     @return The viewport used to render this window.
    */
-  Ogre::Viewport* GetViewport() const;
+  Ogre::Viewport* getViewport() const;
   
   /** Set the camera associated with this render window's viewport.
    */
-  void SetCamera( Ogre::Camera* camera );
+  void setCamera( Ogre::Camera* camera );
 
   /** Painting event callback.
   	@param evt Data regarding the painting event.
    */
-  virtual void OnPaint (wxPaintEvent &evt);
+  virtual void onPaint (wxPaintEvent &evt);
 
   /** Resizing events callback.
   	@param evt Data regarding the resize event.
    */
-  virtual void OnSize (wxSizeEvent &evt);
+  virtual void onSize (wxSizeEvent &evt);
 
   /** Mouse events callback.
   	@remarks Note this will call the specified callback function to process
   		the event.
   	@param evt Data regarding the mouse event.
    */
-  virtual void OnMouseEvents (wxMouseEvent &evt);
+  virtual void onMouseEvents (wxMouseEvent &evt);
 
 protected:
   /** Creates an Ogre render window for this widget.
    */
-  virtual void CreateRenderWindow ();
+  virtual void createRenderWindow ();
 
   /** Gets the handle for the render window.
   	@return The render window handle.
    */
-  virtual std::string GetOgreHandle () const;
+  virtual std::string getOgreHandle () const;
   
-  void SetCameraAspectRatio();
+  void setCameraAspectRatio();
 
   abstractFunctor* m_PreRenderCallback;
   abstractFunctor* m_PostRenderCallback;

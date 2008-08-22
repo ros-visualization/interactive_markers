@@ -118,31 +118,31 @@ public:
       exit( 1 );
     }
 
-    visualization_panel_->CreateVisualizer<GridVisualizer>( "Grid", true );
-    visualization_panel_->CreateVisualizer<AxesVisualizer>( "Origin Axes", true );
+    visualization_panel_->createVisualizer<GridVisualizer>( "Grid", true );
+    visualization_panel_->createVisualizer<AxesVisualizer>( "Origin Axes", true );
 
-    RobotModelVisualizer* model = visualization_panel_->CreateVisualizer<RobotModelVisualizer>( "Robot Model", false );
-    model->Initialize( "robotdesc/pr2", "transform" );
+    RobotModelVisualizer* model = visualization_panel_->createVisualizer<RobotModelVisualizer>( "Robot Model", false );
+    model->initialize( "robotdesc/pr2", "transform" );
 
-    PointCloudVisualizer* pointCloud = visualization_panel_->CreateVisualizer<PointCloudVisualizer>( "Stereo Full Cloud", false );
-    pointCloud->SetTopic( "videre/cloud" );
-    pointCloud->SetColor( 1.0, 1.0, 1.0 );
+    PointCloudVisualizer* pointCloud = visualization_panel_->createVisualizer<PointCloudVisualizer>( "Stereo Full Cloud", false );
+    pointCloud->setTopic( "videre/cloud" );
+    pointCloud->setColor( 1.0, 1.0, 1.0 );
 
-    pointCloud = visualization_panel_->CreateVisualizer<PointCloudVisualizer>( "Head Full Cloud", false );
-    pointCloud->SetTopic( "full_cloud" );
-    pointCloud->SetColor( 1.0, 1.0, 0.0 );
+    pointCloud = visualization_panel_->createVisualizer<PointCloudVisualizer>( "Head Full Cloud", false );
+    pointCloud->setTopic( "full_cloud" );
+    pointCloud->setColor( 1.0, 1.0, 0.0 );
 
-    LaserScanVisualizer* laserScan = visualization_panel_->CreateVisualizer<LaserScanVisualizer>( "Head Scan", false );
-    laserScan->SetScanTopic( "tilt_scan" );
-    laserScan->SetColor( 1.0, 0.0, 0.0 );
-    laserScan->SetDecayTime( 30.0f );
+    LaserScanVisualizer* laserScan = visualization_panel_->createVisualizer<LaserScanVisualizer>( "Head Scan", false );
+    laserScan->setScanTopic( "tilt_scan" );
+    laserScan->setColor( 1.0, 0.0, 0.0 );
+    laserScan->setDecayTime( 30.0f );
 
-    laserScan = visualization_panel_->CreateVisualizer<LaserScanVisualizer>( "Floor Scan", false );
-    laserScan->SetScanTopic( "base_scan" );
-    laserScan->SetColor( 0.0f, 1.0f, 0.0f );
-    laserScan->SetDecayTime( 0.0f );
+    laserScan = visualization_panel_->createVisualizer<LaserScanVisualizer>( "Floor Scan", false );
+    laserScan->setScanTopic( "base_scan" );
+    laserScan->setColor( 0.0f, 1.0f, 0.0f );
+    laserScan->setDecayTime( 0.0f );
 
-    visualization_panel_->CreateVisualizer<MarkerVisualizer>( "Visualization Markers", true );
+    visualization_panel_->createVisualizer<MarkerVisualizer>( "Visualization Markers", true );
   }
 
   ~MyFrame()

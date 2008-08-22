@@ -57,23 +57,23 @@ public:
   PointCloudVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
   ~PointCloudVisualizer();
 
-  void SetTopic( const std::string& topic );
-  void SetColor( float r, float g, float b );
-  void SetStyle( Style style );
-  void SetBillboardSize( float size );
+  void setTopic( const std::string& topic );
+  void setColor( float r, float g, float b );
+  void setStyle( Style style );
+  void setBillboardSize( float size );
 
   // Overrides from VisualizerBase
-  virtual void FillPropertyGrid( wxPropertyGrid* propertyGrid );
-  virtual void PropertyChanged( wxPropertyGridEvent& event );
+  virtual void fillPropertyGrid( wxPropertyGrid* propertyGrid );
+  virtual void propertyChanged( wxPropertyGridEvent& event );
 
 protected:
-  virtual void OnEnable();
-  virtual void OnDisable();
+  virtual void onEnable();
+  virtual void onDisable();
 
-  void Subscribe();
-  void Unsubscribe();
+  void subscribe();
+  void unsubscribe();
 
-  void IncomingCloudCallback();
+  void incomingCloudCallback();
 
   ogre_tools::PointCloud* cloud_;
 

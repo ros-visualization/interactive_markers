@@ -20,7 +20,7 @@ FPSCamera::~FPSCamera()
 {
 }
 
-void FPSCamera::Update()
+void FPSCamera::update()
 {
   Ogre::Matrix3 pitch, yaw;
 
@@ -30,7 +30,7 @@ void FPSCamera::Update()
   camera_->setOrientation( yaw * pitch );
 }
 
-void FPSCamera::NormalizePitch()
+void FPSCamera::normalizePitch()
 {
   if ( pitch_ < PITCH_LIMIT_LOW )
   {
@@ -42,7 +42,7 @@ void FPSCamera::NormalizePitch()
   }
 }
 
-void FPSCamera::NormalizeYaw()
+void FPSCamera::normalizeYaw()
 {
   yaw_ = fmod( yaw_, Ogre::Math::TWO_PI );
 
@@ -52,35 +52,35 @@ void FPSCamera::NormalizeYaw()
   }
 }
 
-void FPSCamera::Yaw( float angle )
+void FPSCamera::yaw( float angle )
 {
   yaw_ += angle;
 
-  NormalizeYaw();
+  normalizeYaw();
 
-  Update();
+  update();
 }
 
-void FPSCamera::Pitch( float angle )
+void FPSCamera::pitch( float angle )
 {
   pitch_ += angle;
 
-  NormalizePitch();
+  normalizePitch();
 
-  Update();
+  update();
 }
 
-void FPSCamera::Roll( float angle )
+void FPSCamera::roll( float angle )
 {
 }
 
-void FPSCamera::SetFrom( CameraBase* camera )
+void FPSCamera::setFrom( CameraBase* camera )
 {
-  CameraBase::SetPosition( camera->GetPosition() );
-  CameraBase::SetOrientation( camera->GetOrientation() );
+  CameraBase::setPosition( camera->getPosition() );
+  CameraBase::setOrientation( camera->getOrientation() );
 }
 
-void FPSCamera::SetOrientation( float x, float y, float z, float w )
+void FPSCamera::setOrientation( float x, float y, float z, float w )
 {
   Ogre::Quaternion quat( w, x, y, z );
   yaw_ = quat.getYaw( false ).valueRadians();
@@ -110,51 +110,51 @@ void FPSCamera::SetOrientation( float x, float y, float z, float w )
     }
   }
 
-  NormalizePitch();
-  NormalizeYaw();
+  normalizePitch();
+  normalizeYaw();
 
-  Update();
+  update();
 }
 
-Ogre::Quaternion FPSCamera::GetOrientation()
+Ogre::Quaternion FPSCamera::getOrientation()
 {
   return camera_->getOrientation();
 }
 
-void FPSCamera::Move( float x, float y, float z )
+void FPSCamera::move( float x, float y, float z )
 {
   Ogre::Vector3 translate( x, y, z );
 
-  camera_->setPosition( camera_->getPosition() + GetOrientation() * translate );
+  camera_->setPosition( camera_->getPosition() + getOrientation() * translate );
 }
 
-void FPSCamera::SetPosition( float x, float y, float z )
+void FPSCamera::setPosition( float x, float y, float z )
 {
   camera_->setPosition( x, y, z );
 }
 
-Ogre::Vector3 FPSCamera::GetPosition()
+Ogre::Vector3 FPSCamera::getPosition()
 {
   return camera_->getPosition();
 }
 
-void FPSCamera::MouseLeftDrag( int diffX, int diffY )
+void FPSCamera::mouseLeftDrag( int diffX, int diffY )
 {
-  Yaw( -diffX*0.005 );
-  Pitch( -diffY*0.005 );
+  yaw( -diffX*0.005 );
+  pitch( -diffY*0.005 );
 }
 
-void FPSCamera::MouseMiddleDrag( int diffX, int diffY )
+void FPSCamera::mouseMiddleDrag( int diffX, int diffY )
 {
-  Move( diffX*0.1, -diffY*0.1, 0.0f );
+  move( diffX*0.1, -diffY*0.1, 0.0f );
 }
 
-void FPSCamera::MouseRightDrag( int diffX, int diffY )
+void FPSCamera::mouseRightDrag( int diffX, int diffY )
 {
-  Move( 0.0f, 0.0f, diffY*0.1 );
+  move( 0.0f, 0.0f, diffY*0.1 );
 }
 
-void FPSCamera::ScrollWheel( int diff )
+void FPSCamera::scrollWheel( int diff )
 {
 
 }

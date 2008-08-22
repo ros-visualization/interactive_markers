@@ -46,18 +46,18 @@ public:
   AxesVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
   virtual ~AxesVisualizer();
 
-  void Set( float length, float radius );
+  void set( float length, float radius );
 
   // Overrides from VisualizerBase
-  virtual void FillPropertyGrid( wxPropertyGrid* propertyGrid );
-  virtual void PropertyChanged( wxPropertyGridEvent& event );
+  virtual void fillPropertyGrid( wxPropertyGrid* propertyGrid );
+  virtual void propertyChanged( wxPropertyGridEvent& event );
 
 protected:
-  void Create();
+  void create();
 
   // overrides from VisualizerBase
-  virtual void OnEnable();
-  virtual void OnDisable();
+  virtual void onEnable();
+  virtual void onDisable();
 
   float length_;
   float radius_;

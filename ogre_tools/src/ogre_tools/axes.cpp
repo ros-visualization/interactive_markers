@@ -51,7 +51,7 @@ Axes::Axes( Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode, float
   y_axis_ = new SuperEllipsoid( scene_manager_, scene_node_ );
   z_axis_ = new SuperEllipsoid( scene_manager_, scene_node_ );
 
-  Set( length, radius );
+  set( length, radius );
 }
 
 Axes::~Axes()
@@ -63,39 +63,39 @@ Axes::~Axes()
   scene_manager_->destroySceneNode( scene_node_->getName() );
 }
 
-void Axes::Set( float length, float radius )
+void Axes::set( float length, float radius )
 {
-  x_axis_->Create( SuperEllipsoid::Cylinder, 20, Ogre::Vector3( radius, length, radius ) );
-  y_axis_->Create( SuperEllipsoid::Cylinder, 20, Ogre::Vector3( radius, length, radius ) );
-  z_axis_->Create( SuperEllipsoid::Cylinder, 20, Ogre::Vector3( radius, length, radius ) );
+  x_axis_->create( SuperEllipsoid::Cylinder, 20, Ogre::Vector3( radius, length, radius ) );
+  y_axis_->create( SuperEllipsoid::Cylinder, 20, Ogre::Vector3( radius, length, radius ) );
+  z_axis_->create( SuperEllipsoid::Cylinder, 20, Ogre::Vector3( radius, length, radius ) );
 
-  x_axis_->SetPosition( Ogre::Vector3( length/2.0f, 0.0f, 0.0f ) );
-  x_axis_->SetOrientation( Ogre::Quaternion( Ogre::Degree( -90 ), Ogre::Vector3::UNIT_Z ) );
-  y_axis_->SetPosition( Ogre::Vector3( 0.0f, length/2.0f, 0.0f ) );
-  z_axis_->SetPosition( Ogre::Vector3( 0.0, 0.0f, length/2.0f ) );
-  z_axis_->SetOrientation( Ogre::Quaternion( Ogre::Degree( 90 ), Ogre::Vector3::UNIT_X ) );
+  x_axis_->setPosition( Ogre::Vector3( length/2.0f, 0.0f, 0.0f ) );
+  x_axis_->setOrientation( Ogre::Quaternion( Ogre::Degree( -90 ), Ogre::Vector3::UNIT_Z ) );
+  y_axis_->setPosition( Ogre::Vector3( 0.0f, length/2.0f, 0.0f ) );
+  z_axis_->setPosition( Ogre::Vector3( 0.0, 0.0f, length/2.0f ) );
+  z_axis_->setOrientation( Ogre::Quaternion( Ogre::Degree( 90 ), Ogre::Vector3::UNIT_X ) );
 
-  x_axis_->SetColor( 1.0f, 0.0f, 0.0f );
-  y_axis_->SetColor( 0.0f, 1.0f, 0.0f );
-  z_axis_->SetColor( 0.0f, 0.0f, 1.0f );
+  x_axis_->setColor( 1.0f, 0.0f, 0.0f );
+  y_axis_->setColor( 0.0f, 1.0f, 0.0f );
+  z_axis_->setColor( 0.0f, 0.0f, 1.0f );
 }
 
-void Axes::SetPosition( const Ogre::Vector3& position )
+void Axes::setPosition( const Ogre::Vector3& position )
 {
   scene_node_->setPosition( position );
 }
 
-void Axes::SetOrientation( const Ogre::Quaternion& orientation )
+void Axes::setOrientation( const Ogre::Quaternion& orientation )
 {
   scene_node_->setOrientation( orientation );
 }
 
-void Axes::SetScale( const Ogre::Vector3& scale )
+void Axes::setScale( const Ogre::Vector3& scale )
 {
   scene_node_->setScale( scale );
 }
 
-void Axes::SetColor( float r, float g, float b )
+void Axes::setColor( float r, float g, float b )
 {
   // for now, do nothing
   // TODO: what should be done here?

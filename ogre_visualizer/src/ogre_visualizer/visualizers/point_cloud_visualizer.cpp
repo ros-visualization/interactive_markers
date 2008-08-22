@@ -59,91 +59,91 @@ PointCloudVisualizer::PointCloudVisualizer( Ogre::SceneManager* sceneManager, ro
 {
   cloud_ = new ogre_tools::PointCloud( scene_manager_ );
 
-  SetStyle( style_ );
-  SetBillboardSize( billboard_size_ );
+  setStyle( style_ );
+  setBillboardSize( billboard_size_ );
 
-  if ( IsEnabled() )
+  if ( isEnabled() )
   {
-    OnEnable();
+    onEnable();
   }
 }
 
 PointCloudVisualizer::~PointCloudVisualizer()
 {
-  Unsubscribe();
+  unsubscribe();
 
   delete cloud_;
 }
 
-void PointCloudVisualizer::SetTopic( const std::string& topic )
+void PointCloudVisualizer::setTopic( const std::string& topic )
 {
-  Unsubscribe();
+  unsubscribe();
 
   topic_ = topic;
 
-  Subscribe();
+  subscribe();
 }
 
-void PointCloudVisualizer::SetColor( float r, float g, float b )
+void PointCloudVisualizer::setColor( float r, float g, float b )
 {
   r_ = r;
   g_ = g;
   b_ = b;
 }
 
-void PointCloudVisualizer::SetStyle( Style style )
+void PointCloudVisualizer::setStyle( Style style )
 {
   {
     RenderAutoLock renderLock( this );
 
     style_ = style;
-    cloud_->SetUsePoints( style == Points );
+    cloud_->setUsePoints( style == Points );
   }
 
-  CauseRender();
+  causeRender();
 }
 
-void PointCloudVisualizer::SetBillboardSize( float size )
+void PointCloudVisualizer::setBillboardSize( float size )
 {
   {
     RenderAutoLock renderLock( this );
 
     billboard_size_ = size;
-    cloud_->SetBillboardDimensions( size, size );
+    cloud_->setBillboardDimensions( size, size );
   }
 
-  CauseRender();
+  causeRender();
 }
 
-void PointCloudVisualizer::OnEnable()
+void PointCloudVisualizer::onEnable()
 {
-  cloud_->SetVisible( true );
-  Subscribe();
+  cloud_->setVisible( true );
+  subscribe();
 }
 
-void PointCloudVisualizer::OnDisable()
+void PointCloudVisualizer::onDisable()
 {
-  Unsubscribe();
+  unsubscribe();
 
-  cloud_->Clear();
-  cloud_->SetVisible( false );
+  cloud_->clear();
+  cloud_->setVisible( false );
   points_.clear();
 }
 
-void PointCloudVisualizer::Subscribe()
+void PointCloudVisualizer::subscribe()
 {
-  if ( !IsEnabled() )
+  if ( !isEnabled() )
   {
     return;
   }
 
   if ( !topic_.empty() )
   {
-    ros_node_->subscribe( topic_, message_, &PointCloudVisualizer::IncomingCloudCallback, this, 1 );
+    ros_node_->subscribe( topic_, message_, &PointCloudVisualizer::incomingCloudCallback, this, 1 );
   }
 }
 
-void PointCloudVisualizer::Unsubscribe()
+void PointCloudVisualizer::unsubscribe()
 {
   if ( !topic_.empty() )
   {
@@ -158,7 +158,7 @@ void PointCloudVisualizer::Unsubscribe()
   }
 }
 
-void PointCloudVisualizer::IncomingCloudCallback()
+void PointCloudVisualizer::incomingCloudCallback()
 {
   if ( message_.header.frame_id.empty() )
   {
@@ -204,7 +204,7 @@ void PointCloudVisualizer::IncomingCloudCallback()
   for(uint32_t i = 0; i < pointCount; i++)
   {
     Ogre::Vector3 point( message_.pts[i].x, message_.pts[i].y, message_.pts[i].z );
-    RobotToOgre( point );
+    robotToOgre( point );
 
     float intensity = message_.chan[0].vals[i];
 
@@ -214,9 +214,9 @@ void PointCloudVisualizer::IncomingCloudCallback()
     color *= normalizedIntensity;
 
     ogre_tools::PointCloud::Point& currentPoint = points_[ i ];
-    currentPoint.m_X = point.x;
-    currentPoint.m_Y = point.y;
-    currentPoint.m_Z = point.z;
+    currentPoint.x_ = point.x;
+    currentPoint.y_ = point.y;
+    currentPoint.z_ = point.z;
     currentPoint.r_ = color.x;
     currentPoint.g_ = color.y;
     currentPoint.b_ = color.z;
@@ -225,18 +225,18 @@ void PointCloudVisualizer::IncomingCloudCallback()
   {
     RenderAutoLock renderLock( this );
 
-    cloud_->Clear();
+    cloud_->clear();
 
     if ( !points_.empty() )
     {
-      cloud_->AddPoints( &points_.front(), points_.size() );
+      cloud_->addPoints( &points_.front(), points_.size() );
     }
   }
 
-  CauseRender();
+  causeRender();
 }
 
-void PointCloudVisualizer::FillPropertyGrid( wxPropertyGrid* propertyGrid )
+void PointCloudVisualizer::fillPropertyGrid( wxPropertyGrid* propertyGrid )
 {
   wxArrayString styleNames;
   styleNames.Add( wxT("Billboards") );
@@ -253,7 +253,7 @@ void PointCloudVisualizer::FillPropertyGrid( wxPropertyGrid* propertyGrid )
   propertyGrid->SetPropertyAttribute( prop, wxT("Min"), 0.0 );
 }
 
-void PointCloudVisualizer::PropertyChanged( wxPropertyGridEvent& event )
+void PointCloudVisualizer::propertyChanged( wxPropertyGridEvent& event )
 {
   wxPGProperty* property = event.GetProperty();
 
@@ -263,24 +263,24 @@ void PointCloudVisualizer::PropertyChanged( wxPropertyGridEvent& event )
   if ( name == TOPIC_PROPERTY )
   {
     wxString topic = value.GetString();
-    SetTopic( std::string(topic.char_str()) );
+    setTopic( std::string(topic.char_str()) );
   }
   else if ( name == COLOR_PROPERTY )
   {
     wxColour color;
     color << value;
 
-    SetColor( color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f );
+    setColor( color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f );
   }
   else if ( name == STYLE_PROPERTY )
   {
     int val = value.GetLong();
-    SetStyle( (Style)val );
+    setStyle( (Style)val );
   }
   else if ( name == BILLBOARD_SIZE_PROPERTY )
   {
     float val = value.GetDouble();
-    SetBillboardSize( val );
+    setBillboardSize( val );
   }
 }
 

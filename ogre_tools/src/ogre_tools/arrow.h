@@ -52,17 +52,17 @@ public:
       float headLength = 0.3f, float headRadius =  0.2f );
   virtual ~Arrow();
 
-  void Set( float shaftLength, float shaftRadius, float headLength, float headRadius );
+  void set( float shaftLength, float shaftRadius, float headLength, float headRadius );
 
-  virtual void SetColor( float r, float g, float b );
-  void SetHeadColor( float r, float g, float b );
-  void SetShaftColor( float r, float g, float b );
+  virtual void setColor( float r, float g, float b );
+  void setHeadColor( float r, float g, float b );
+  void setShaftColor( float r, float g, float b );
 
-  virtual void SetOrientation( const Ogre::Quaternion& orientation );
-  virtual void SetPosition( const Ogre::Vector3& position );
-  virtual void SetScale( const Ogre::Vector3& scale );
+  virtual void setOrientation( const Ogre::Quaternion& orientation );
+  virtual void setPosition( const Ogre::Vector3& position );
+  virtual void setScale( const Ogre::Vector3& scale );
 
-  Ogre::SceneNode* GetSceneNode() { return scene_node_; }
+  Ogre::SceneNode* getSceneNode() { return scene_node_; }
 
 private:
   Ogre::SceneNode* scene_node_;

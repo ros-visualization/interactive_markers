@@ -50,19 +50,19 @@ AxesVisualizer::AxesVisualizer( Ogre::SceneManager* sceneManager, ros::node* nod
 {
   axes_ = new ogre_tools::Axes( scene_manager_, NULL, length_, radius_ );
 
-  axes_->GetSceneNode()->setVisible( IsEnabled() );
+  axes_->getSceneNode()->setVisible( isEnabled() );
 
   Ogre::Quaternion orient( Ogre::Quaternion::IDENTITY );
-  RobotToOgre( orient );
-  axes_->SetOrientation( orient );
+  robotToOgre( orient );
+  axes_->setOrientation( orient );
 
-  if ( IsEnabled() )
+  if ( isEnabled() )
   {
-    OnEnable();
+    onEnable();
   }
   else
   {
-    OnDisable();
+    onDisable();
   }
 }
 
@@ -70,32 +70,32 @@ AxesVisualizer::~AxesVisualizer()
 {
 }
 
-void AxesVisualizer::OnEnable()
+void AxesVisualizer::onEnable()
 {
-  axes_->GetSceneNode()->setVisible( true );
+  axes_->getSceneNode()->setVisible( true );
 }
 
-void AxesVisualizer::OnDisable()
+void AxesVisualizer::onDisable()
 {
-  axes_->GetSceneNode()->setVisible( false );
+  axes_->getSceneNode()->setVisible( false );
 }
 
-void AxesVisualizer::Create()
+void AxesVisualizer::create()
 {
-  axes_->Set( length_, radius_ );
+  axes_->set( length_, radius_ );
 
-  CauseRender();
+  causeRender();
 }
 
-void AxesVisualizer::Set( float length, float radius )
+void AxesVisualizer::set( float length, float radius )
 {
   length_ = length;
   radius_ = radius;
 
-  Create();
+  create();
 }
 
-void AxesVisualizer::FillPropertyGrid( wxPropertyGrid* propertyGrid )
+void AxesVisualizer::fillPropertyGrid( wxPropertyGrid* propertyGrid )
 {
   wxPGId prop = propertyGrid->Append( new wxFloatProperty( LENGTH_PROPERTY, wxPG_LABEL, length_ ) );
   propertyGrid->SetPropertyAttribute( prop, wxT("Min"), 0.0001 );
@@ -104,7 +104,7 @@ void AxesVisualizer::FillPropertyGrid( wxPropertyGrid* propertyGrid )
   propertyGrid->SetPropertyAttribute( prop, wxT("Min"), 0.0001 );
 }
 
-void AxesVisualizer::PropertyChanged( wxPropertyGridEvent& event )
+void AxesVisualizer::propertyChanged( wxPropertyGridEvent& event )
 {
   wxPGProperty* property = event.GetProperty();
 
@@ -114,12 +114,12 @@ void AxesVisualizer::PropertyChanged( wxPropertyGridEvent& event )
   if ( name == LENGTH_PROPERTY )
   {
     float length = value.GetDouble();
-    Set( length, radius_ );
+    set( length, radius_ );
   }
   else if ( name == RADIUS_PROPERTY )
   {
     float radius = value.GetDouble();
-    Set( length_, radius );
+    set( length_, radius );
   }
 }
 

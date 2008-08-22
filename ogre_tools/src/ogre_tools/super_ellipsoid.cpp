@@ -74,7 +74,7 @@ SuperEllipsoid::~SuperEllipsoid()
   material_.setNull();
 }
 
-void SuperEllipsoid::Create(int samples, float n1, float n2, const Ogre::Vector3& scale)
+void SuperEllipsoid::create(int samples, float n1, float n2, const Ogre::Vector3& scale)
 {
   float phi = 0.0, beta = 0.0;
   Ogre::Vector3 p1, p2, p3;
@@ -122,7 +122,7 @@ void SuperEllipsoid::Create(int samples, float n1, float n2, const Ogre::Vector3
   manual_object_->end();
 }
 
-void SuperEllipsoid::Create(Shape shape, int samples, const Ogre::Vector3& scale)
+void SuperEllipsoid::create(Shape shape, int samples, const Ogre::Vector3& scale)
 {
   float n1, n2;
 
@@ -143,7 +143,7 @@ void SuperEllipsoid::Create(Shape shape, int samples, const Ogre::Vector3& scale
     break;
   }
 
-  Create(samples, n1, n2, scale);
+  create(samples, n1, n2, scale);
 }
 
 Ogre::Vector3 SuperEllipsoid::Sample(float phi, float beta, float n1, float n2,
@@ -183,28 +183,28 @@ Ogre::Vector3 SuperEllipsoid::CalculateNormal(float phi, float beta, float n1, f
   return normal;
 }
 
-void SuperEllipsoid::SetColor( float r, float g, float b )
+void SuperEllipsoid::setColor( float r, float g, float b )
 {
   material_->getTechnique(0)->setAmbient( r*0.5, g*0.5, b*0.5 );
   material_->getTechnique(0)->setDiffuse( r, g, b, 1.0f );
 }
 
-void SuperEllipsoid::SetOffset( const Ogre::Vector3& offset )
+void SuperEllipsoid::setOffset( const Ogre::Vector3& offset )
 {
   offset_node_->setPosition( offset );
 }
 
-void SuperEllipsoid::SetPosition( const Ogre::Vector3& position )
+void SuperEllipsoid::setPosition( const Ogre::Vector3& position )
 {
   scene_node_->setPosition( position );
 }
 
-void SuperEllipsoid::SetOrientation( const Ogre::Quaternion& orientation )
+void SuperEllipsoid::setOrientation( const Ogre::Quaternion& orientation )
 {
   scene_node_->setOrientation( orientation );
 }
 
-void SuperEllipsoid::SetScale( const Ogre::Vector3& scale )
+void SuperEllipsoid::setScale( const Ogre::Vector3& scale )
 {
   scene_node_->setScale( scale );
 }

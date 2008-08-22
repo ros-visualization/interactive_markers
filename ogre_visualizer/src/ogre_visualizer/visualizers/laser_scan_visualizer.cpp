@@ -64,106 +64,106 @@ LaserScanVisualizer::LaserScanVisualizer( Ogre::SceneManager* sceneManager, ros:
 {
   cloud_ = new ogre_tools::PointCloud( scene_manager_ );
 
-  SetStyle( style_ );
-  SetBillboardSize( billboard_size_ );
+  setStyle( style_ );
+  setBillboardSize( billboard_size_ );
 
-  if ( IsEnabled() )
+  if ( isEnabled() )
   {
-    OnEnable();
+    onEnable();
   }
 }
 
 LaserScanVisualizer::~LaserScanVisualizer()
 {
-  Unsubscribe();
+  unsubscribe();
 
   delete cloud_;
 }
 
-void LaserScanVisualizer::SetCloudTopic( const std::string& topic )
+void LaserScanVisualizer::setCloudTopic( const std::string& topic )
 {
-  Unsubscribe();
+  unsubscribe();
 
   cloud_topic_ = topic;
 
-  Subscribe();
+  subscribe();
 }
 
-void LaserScanVisualizer::SetScanTopic( const std::string& topic )
+void LaserScanVisualizer::setScanTopic( const std::string& topic )
 {
-  Unsubscribe();
+  unsubscribe();
 
   scan_topic_ = topic;
 
-  Subscribe();
+  subscribe();
 }
 
-void LaserScanVisualizer::SetColor( float r, float g, float b )
+void LaserScanVisualizer::setColor( float r, float g, float b )
 {
   r_ = r;
   g_ = g;
   b_ = b;
 }
 
-void LaserScanVisualizer::SetStyle( Style style )
+void LaserScanVisualizer::setStyle( Style style )
 {
   {
     RenderAutoLock renderLock( this );
 
     style_ = style;
-    cloud_->SetUsePoints( style == Points );
+    cloud_->setUsePoints( style == Points );
   }
 
-  CauseRender();
+  causeRender();
 }
 
-void LaserScanVisualizer::SetBillboardSize( float size )
+void LaserScanVisualizer::setBillboardSize( float size )
 {
   {
     RenderAutoLock renderLock( this );
 
     billboard_size_ = size;
-    cloud_->SetBillboardDimensions( size, size );
+    cloud_->setBillboardDimensions( size, size );
   }
 
-  CauseRender();
+  causeRender();
 }
 
-void LaserScanVisualizer::OnEnable()
+void LaserScanVisualizer::onEnable()
 {
-  cloud_->SetVisible( true );
-  Subscribe();
+  cloud_->setVisible( true );
+  subscribe();
 }
 
-void LaserScanVisualizer::OnDisable()
+void LaserScanVisualizer::onDisable()
 {
-  Unsubscribe();
+  unsubscribe();
 
-  cloud_->SetVisible( false );
-  cloud_->Clear();
+  cloud_->setVisible( false );
+  cloud_->clear();
   points_.clear();
   point_times_.clear();
 }
 
-void LaserScanVisualizer::Subscribe()
+void LaserScanVisualizer::subscribe()
 {
-  if ( !IsEnabled() )
+  if ( !isEnabled() )
   {
     return;
   }
 
   if ( !cloud_topic_.empty() )
   {
-    ros_node_->subscribe( cloud_topic_, cloud_message_, &LaserScanVisualizer::IncomingCloudCallback, this, 1 );
+    ros_node_->subscribe( cloud_topic_, cloud_message_, &LaserScanVisualizer::incomingCloudCallback, this, 1 );
   }
 
   if ( !scan_topic_.empty() )
   {
-    ros_node_->subscribe( scan_topic_, scan_message_, &LaserScanVisualizer::IncomingScanCallback, this, 1 );
+    ros_node_->subscribe( scan_topic_, scan_message_, &LaserScanVisualizer::incomingScanCallback, this, 1 );
   }
 }
 
-void LaserScanVisualizer::Unsubscribe()
+void LaserScanVisualizer::unsubscribe()
 {
   if ( !cloud_topic_.empty() )
   {
@@ -176,7 +176,7 @@ void LaserScanVisualizer::Unsubscribe()
   }
 }
 
-void LaserScanVisualizer::Update( float dt )
+void LaserScanVisualizer::update( float dt )
 {
   cloud_message_.lock();
 
@@ -187,12 +187,12 @@ void LaserScanVisualizer::Update( float dt )
     *it += dt;
   }
 
-  CullPoints();
+  cullPoints();
 
   cloud_message_.unlock();
 }
 
-void LaserScanVisualizer::CullPoints()
+void LaserScanVisualizer::cullPoints()
 {
   if ( point_decay_time_ == 0.0f )
   {
@@ -206,7 +206,7 @@ void LaserScanVisualizer::CullPoints()
   }
 }
 
-void LaserScanVisualizer::TransformCloud()
+void LaserScanVisualizer::transformCloud()
 {
   if ( cloud_message_.header.frame_id.empty() )
   {
@@ -256,7 +256,7 @@ void LaserScanVisualizer::TransformCloud()
   for(uint32_t i = 0; i < pointCount; i++)
   {
     Ogre::Vector3 point( cloud_message_.pts[i].x, cloud_message_.pts[i].y, cloud_message_.pts[i].z );
-    RobotToOgre( point );
+    robotToOgre( point );
 
     float intensity = cloud_message_.chan[0].vals[i];
 
@@ -266,9 +266,9 @@ void LaserScanVisualizer::TransformCloud()
     color *= normalizedIntensity;
 
     ogre_tools::PointCloud::Point& currentPoint = points[ i ];
-    currentPoint.m_X = point.x;
-    currentPoint.m_Y = point.y;
-    currentPoint.m_Z = point.z;
+    currentPoint.x_ = point.x;
+    currentPoint.y_ = point.y;
+    currentPoint.z_ = point.z;
     currentPoint.r_ = color.x;
     currentPoint.g_ = color.y;
     currentPoint.b_ = color.z;
@@ -277,7 +277,7 @@ void LaserScanVisualizer::TransformCloud()
   {
     RenderAutoLock renderLock( this );
 
-    cloud_->Clear();
+    cloud_->clear();
 
     if ( !points_.empty() )
     {
@@ -289,25 +289,25 @@ void LaserScanVisualizer::TransformCloud()
 
         if ( !points.empty() )
         {
-          cloud_->AddPoints( &points.front(), points.size() );
+          cloud_->addPoints( &points.front(), points.size() );
         }
       }
     }
   }
 
-  CauseRender();
+  causeRender();
 }
 
-void LaserScanVisualizer::IncomingCloudCallback()
+void LaserScanVisualizer::incomingCloudCallback()
 {
   cloud_message_.lock();
 
-  TransformCloud();
+  transformCloud();
 
   cloud_message_.unlock();
 }
 
-void LaserScanVisualizer::IncomingScanCallback()
+void LaserScanVisualizer::incomingScanCallback()
 {
   cloud_message_.lock();
 
@@ -317,12 +317,12 @@ void LaserScanVisualizer::IncomingScanCallback()
   }
 
   laser_projection_.projectLaser( scan_message_, cloud_message_ );
-  TransformCloud();
+  transformCloud();
 
   cloud_message_.unlock();
 }
 
-void LaserScanVisualizer::FillPropertyGrid( wxPropertyGrid* propertyGrid )
+void LaserScanVisualizer::fillPropertyGrid( wxPropertyGrid* propertyGrid )
 {
   wxArrayString styleNames;
   styleNames.Add( wxT("Billboards") );
@@ -344,7 +344,7 @@ void LaserScanVisualizer::FillPropertyGrid( wxPropertyGrid* propertyGrid )
   propertyGrid->SetPropertyAttribute( prop, wxT("Min"), 0.0 );
 }
 
-void LaserScanVisualizer::PropertyChanged( wxPropertyGridEvent& event )
+void LaserScanVisualizer::propertyChanged( wxPropertyGridEvent& event )
 {
   wxPGProperty* property = event.GetProperty();
 
@@ -354,34 +354,34 @@ void LaserScanVisualizer::PropertyChanged( wxPropertyGridEvent& event )
   if ( name == SCAN_TOPIC_PROPERTY )
   {
     wxString topic = value.GetString();
-    SetScanTopic( std::string(topic.char_str()) );
+    setScanTopic( std::string(topic.char_str()) );
   }
   else if ( name == CLOUD_TOPIC_PROPERTY )
   {
     wxString topic = value.GetString();
-    SetCloudTopic( std::string(topic.char_str()) );
+    setCloudTopic( std::string(topic.char_str()) );
   }
   else if ( name == COLOR_PROPERTY )
   {
     wxColour color;
     color << value;
 
-    SetColor( color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f );
+    setColor( color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f );
   }
   else if ( name == DECAY_TIME_PROPERTY )
   {
     float val = value.GetDouble();
-    SetDecayTime( val );
+    setDecayTime( val );
   }
   else if ( name == STYLE_PROPERTY )
   {
     int val = value.GetLong();
-    SetStyle( (Style)val );
+    setStyle( (Style)val );
   }
   else if ( name == BILLBOARD_SIZE_PROPERTY )
   {
     float val = value.GetDouble();
-    SetBillboardSize( val );
+    setBillboardSize( val );
   }
 }
 

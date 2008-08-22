@@ -19,28 +19,28 @@ public:
   FPSCamera( Ogre::SceneManager* sceneManager );
   virtual ~FPSCamera();
 
-  virtual void Yaw( float angle );
-  virtual void Pitch( float angle );
-  virtual void Roll( float angle );
-  virtual void SetOrientation( float x, float y, float z, float w );
-  virtual void SetPosition( float x, float y, float z );
-  virtual void SetFrom( CameraBase* camera );
+  virtual void yaw( float angle );
+  virtual void pitch( float angle );
+  virtual void roll( float angle );
+  virtual void setOrientation( float x, float y, float z, float w );
+  virtual void setPosition( float x, float y, float z );
+  virtual void setFrom( CameraBase* camera );
 
-  virtual Ogre::Vector3 GetPosition();
-  virtual Ogre::Quaternion GetOrientation();
+  virtual Ogre::Vector3 getPosition();
+  virtual Ogre::Quaternion getOrientation();
 
   /// Move the camera relative to its forward axis
-  virtual void Move( float x, float y, float z );
+  virtual void move( float x, float y, float z );
 
-  virtual void MouseLeftDrag( int diffX, int diffY );
-  virtual void MouseMiddleDrag( int diffX, int diffY );
-  virtual void MouseRightDrag( int diffX, int diffY );
-  virtual void ScrollWheel( int diff );
+  virtual void mouseLeftDrag( int diffX, int diffY );
+  virtual void mouseMiddleDrag( int diffX, int diffY );
+  virtual void mouseRightDrag( int diffX, int diffY );
+  virtual void scrollWheel( int diff );
 
 protected:
-  void Update();
-  void NormalizePitch();
-  void NormalizeYaw();
+  void update();
+  void normalizePitch();
+  void normalizeYaw();
 
   float pitch_;
   float yaw_;

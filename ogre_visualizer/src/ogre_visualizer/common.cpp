@@ -38,7 +38,7 @@ Ogre::Matrix3 g_robot_to_ogre_matrix;
 Ogre::Quaternion g_ogre_to_robot_quat;
 Ogre::Quaternion g_robot_to_ogre_quat;
 
-void InitializeCommon()
+void initializeCommon()
 {
   g_ogre_to_robot_matrix.FromEulerAnglesXYZ( Ogre::Degree( 90 ), Ogre::Degree( -90 ), Ogre::Degree( 0 ) );
   g_robot_to_ogre_matrix = g_ogre_to_robot_matrix.Inverse();

@@ -59,7 +59,7 @@ PointCloud::PointCloud( Ogre::SceneManager* sceneManager )
 
 
 
-  Clear();
+  clear();
 }
 
 PointCloud::~PointCloud()
@@ -85,14 +85,14 @@ float PointCloud::getBoundingRadius() const
   return bounding_radius_;
 }
 
-void PointCloud::Clear()
+void PointCloud::clear()
 {
   point_count_ = 0;
   bounding_box_.setExtents( -10000.0f, -10000.0f, -10000.0f, 10000.0f, 10000.0f, 10000.0f );
   bounding_radius_ = 30000.0f;
 }
 
-void PointCloud::SetUsePoints( bool usePoints )
+void PointCloud::setUsePoints( bool usePoints )
 {
   use_points_ = usePoints;
 
@@ -116,7 +116,7 @@ void PointCloud::SetUsePoints( bool usePoints )
   }
 }
 
-void PointCloud::SetBillboardDimensions( float width, float height )
+void PointCloud::setBillboardDimensions( float width, float height )
 {
   billboard_width_ = width;
   billboard_height_ = height;
@@ -130,7 +130,7 @@ void PointCloud::SetBillboardDimensions( float width, float height )
   }
 }
 
-Ogre::BillboardSet* PointCloud::CreateBillboardSet()
+Ogre::BillboardSet* PointCloud::createBillboardSet()
 {
   Ogre::BillboardSet* bbs = new Ogre::BillboardSet( "", 0, true );
   bbs->setPointRenderingEnabled( use_points_ );
@@ -145,7 +145,7 @@ Ogre::BillboardSet* PointCloud::CreateBillboardSet()
   return bbs;
 }
 
-void PointCloud::AddPoints( Point* points, uint32_t numPoints )
+void PointCloud::addPoints( Point* points, uint32_t numPoints )
 {
   if ( points_.size() < point_count_ + numPoints )
   {
@@ -211,7 +211,7 @@ void PointCloud::_updateRenderQueue( Ogre::RenderQueue* queue )
 
     if ( currentBBS >= billboard_sets_.size() )
     {
-      bbs = CreateBillboardSet();
+      bbs = createBillboardSet();
       billboard_sets_.push_back( bbs );
 
       newBBS = true;
@@ -227,9 +227,9 @@ void PointCloud::_updateRenderQueue( Ogre::RenderQueue* queue )
 
     Point& p = points_[i];
 
-    bb.mPosition.x = p.m_X;
-    bb.mPosition.y = p.m_Y;
-    bb.mPosition.z = p.m_Z;
+    bb.mPosition.x = p.x_;
+    bb.mPosition.y = p.y_;
+    bb.mPosition.z = p.z_;
     bb.mColour.r = p.r_;
     bb.mColour.g = p.g_;
     bb.mColour.b = p.b_;
@@ -246,11 +246,6 @@ void PointCloud::_updateRenderQueue( Ogre::RenderQueue* queue )
   {
     (*bbsIt)->_updateRenderQueue( queue );
   }
-}
-
-void PointCloud::SetVisible( bool visible )
-{
-  scene_node_->setVisible( visible );
 }
 
 } // namespace ogre_tools

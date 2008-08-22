@@ -51,25 +51,25 @@ public:
   GridVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
   virtual ~GridVisualizer();
 
-  uint32_t GetCellCount() { return cell_count_; }
-  float GetCellSize() { return cell_size_; }
-  void GetColor( float& r, float& g, float& b );
+  uint32_t getCellCount() { return cell_count_; }
+  float getCellSize() { return cell_size_; }
+  void getColor( float& r, float& g, float& b );
 
-  void Set( uint32_t cellCount, float cellSize, float r, float g, float b );
-  void SetCellCount( uint32_t cellCount );
-  void SetCellSize( float cellSize );
-  void SetColor( float r, float g, float b );
+  void set( uint32_t cellCount, float cellSize, float r, float g, float b );
+  void setCellCount( uint32_t cellCount );
+  void setCellSize( float cellSize );
+  void setColor( float r, float g, float b );
 
   // Overrides from VisualizerBase
-  virtual void FillPropertyGrid( wxPropertyGrid* propertyGrid );
-  virtual void PropertyChanged( wxPropertyGridEvent& event );
+  virtual void fillPropertyGrid( wxPropertyGrid* propertyGrid );
+  virtual void propertyChanged( wxPropertyGridEvent& event );
 
 protected:
-  void Create();
+  void create();
 
   // overrides from VisualizerBase
-  virtual void OnEnable();
-  virtual void OnDisable();
+  virtual void onEnable();
+  virtual void onDisable();
 
   float cell_size_;
   uint32_t cell_count_;

@@ -62,45 +62,45 @@ public:
   virtual ~VisualizerBase();
 
   /// Enable this visualizer
-  void Enable();
+  void enable();
   /// Disable this visualizer
-  void Disable();
+  void disable();
 
-  bool IsEnabled() { return enabled_; }
-  const std::string& GetName() { return name_; }
+  bool isEnabled() { return enabled_; }
+  const std::string& getName() { return name_; }
 
   /// Called periodically by the visualization panel
-  virtual void Update( float dt ) {}
+  virtual void update( float dt ) {}
 
   /// Called by the visualization panel to tell set our functor used for causing a render to happen
-  void SetRenderCallback( abstractFunctor* func );
+  void setRenderCallback( abstractFunctor* func );
 
-  void SetLockRenderCallback( abstractFunctor* func );
-  void SetUnlockRenderCallback( abstractFunctor* func );
+  void setLockRenderCallback( abstractFunctor* func );
+  void setUnlockRenderCallback( abstractFunctor* func );
 
   /// Override this to fill out the property grid when this visualizer is selected
-  virtual void FillPropertyGrid( wxPropertyGrid* propertyGrid ) {} // default to no options
+  virtual void fillPropertyGrid( wxPropertyGrid* propertyGrid ) {} // default to no options
 
   /// Override this to handle a changing property value.  This provides the opportunity to veto a change if there is an invalid value
   /// event.Veto() will prevent the change.
-  virtual void PropertyChanging( wxPropertyGridEvent& event ) {}
+  virtual void propertyChanging( wxPropertyGridEvent& event ) {}
   /// Override this to handle a changed property value
-  virtual void PropertyChanged( wxPropertyGridEvent& event ) {}
+  virtual void propertyChanged( wxPropertyGridEvent& event ) {}
 
 
-  void SetTargetFrame( const std::string& frame ) { target_frame_ = frame; }
+  void setTargetFrame( const std::string& frame ) { target_frame_ = frame; }
 
 protected:
   /// Derived classes override this to do the actual work of enabling themselves
-  virtual void OnEnable() = 0;
+  virtual void onEnable() = 0;
   /// Derived classes override this to do the actual work of disabling themselves
-  virtual void OnDisable() = 0;
+  virtual void onDisable() = 0;
 
   /// Called by derived classes to cause the scene we're in to be rendered.
-  void CauseRender();
+  void causeRender();
 
-  void LockRender();
-  void UnlockRender();
+  void lockRender();
+  void unlockRender();
 
   Ogre::SceneManager* scene_manager_;
   std::string name_;
@@ -124,12 +124,12 @@ public:
   RenderAutoLock( VisualizerBase* visualizer )
   : visualizer_( visualizer )
   {
-    visualizer_->LockRender();
+    visualizer_->lockRender();
   }
 
   ~RenderAutoLock()
   {
-    visualizer_->UnlockRender();
+    visualizer_->unlockRender();
   }
 
 private:

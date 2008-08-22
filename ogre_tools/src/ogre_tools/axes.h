@@ -54,14 +54,14 @@ public:
   Axes( Ogre::SceneManager* manager, Ogre::SceneNode* parentNode = NULL, float length = 1.0f, float radius = 0.1f );
   virtual ~Axes();
 
-  void Set( float length, float radius );
-  virtual void SetOrientation( const Ogre::Quaternion& orientation );
-  virtual void SetPosition( const Ogre::Vector3& position );
-  virtual void SetScale( const Ogre::Vector3& scale );
+  void set( float length, float radius );
+  virtual void setOrientation( const Ogre::Quaternion& orientation );
+  virtual void setPosition( const Ogre::Vector3& position );
+  virtual void setScale( const Ogre::Vector3& scale );
 
-  virtual void SetColor( float r, float g, float b );
+  virtual void setColor( float r, float g, float b );
 
-  Ogre::SceneNode* GetSceneNode() { return scene_node_; }
+  Ogre::SceneNode* getSceneNode() { return scene_node_; }
 
 private:
   Ogre::SceneNode* scene_node_;

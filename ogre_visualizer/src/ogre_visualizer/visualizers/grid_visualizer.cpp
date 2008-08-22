@@ -53,31 +53,31 @@ GridVisualizer::GridVisualizer( Ogre::SceneManager* sceneManager, ros::node* nod
 {
   grid_ = new ogre_tools::Grid( scene_manager_, cell_count_, cell_size_, r_, g_, b_ );
 
-  grid_->GetSceneNode()->setVisible( IsEnabled() );
+  grid_->getSceneNode()->setVisible( isEnabled() );
 }
 
 GridVisualizer::~GridVisualizer()
 {
 }
 
-void GridVisualizer::OnEnable()
+void GridVisualizer::onEnable()
 {
-  grid_->GetSceneNode()->setVisible( true );
+  grid_->getSceneNode()->setVisible( true );
 }
 
-void GridVisualizer::OnDisable()
+void GridVisualizer::onDisable()
 {
-  grid_->GetSceneNode()->setVisible( false );
+  grid_->getSceneNode()->setVisible( false );
 }
 
-void GridVisualizer::Create()
+void GridVisualizer::create()
 {
-  grid_->Set( cell_count_, cell_size_, r_, g_, b_ );
+  grid_->set( cell_count_, cell_size_, r_, g_, b_ );
 
-  CauseRender();
+  causeRender();
 }
 
-void GridVisualizer::Set( uint32_t cellCount, float cellSize, float r, float g, float b )
+void GridVisualizer::set( uint32_t cellCount, float cellSize, float r, float g, float b )
 {
   cell_count_ = cellCount;
   cell_size_ = cellSize;
@@ -85,25 +85,25 @@ void GridVisualizer::Set( uint32_t cellCount, float cellSize, float r, float g, 
   g_ = g;
   b_ = b;
 
-  Create();
+  create();
 }
 
-void GridVisualizer::SetCellSize( float size )
+void GridVisualizer::setCellSize( float size )
 {
-  Set( cell_count_, size, r_, g_, b_ );
+  set( cell_count_, size, r_, g_, b_ );
 }
 
-void GridVisualizer::SetCellCount( uint32_t count )
+void GridVisualizer::setCellCount( uint32_t count )
 {
-  Set( count, cell_size_, r_, g_, b_ );
+  set( count, cell_size_, r_, g_, b_ );
 }
 
-void GridVisualizer::SetColor( float r, float g, float b )
+void GridVisualizer::setColor( float r, float g, float b )
 {
-  Set( cell_count_, cell_size_, r, g, b );
+  set( cell_count_, cell_size_, r, g, b );
 }
 
-void GridVisualizer::FillPropertyGrid( wxPropertyGrid* propertyGrid )
+void GridVisualizer::fillPropertyGrid( wxPropertyGrid* propertyGrid )
 {
   wxPGId countProp = propertyGrid->Append( new wxIntProperty( CELLCOUNT_PROPERTY, wxPG_LABEL, cell_count_ ) );
   propertyGrid->SetPropertyAttribute( countProp, wxT("Min"), 1 );
@@ -116,7 +116,7 @@ void GridVisualizer::FillPropertyGrid( wxPropertyGrid* propertyGrid )
   propertyGrid->Append( new wxColourProperty( COLOR_PROPERTY, wxPG_LABEL, wxColour( r_ * 255, g_ * 255, b_ * 255 ) ) );
 }
 
-void GridVisualizer::PropertyChanged( wxPropertyGridEvent& event )
+void GridVisualizer::propertyChanged( wxPropertyGridEvent& event )
 {
   wxPGProperty* property = event.GetProperty();
 
@@ -126,23 +126,23 @@ void GridVisualizer::PropertyChanged( wxPropertyGridEvent& event )
   if ( name == CELLCOUNT_PROPERTY )
   {
     int cellCount = value.GetLong();
-    SetCellCount( cellCount );
+    setCellCount( cellCount );
   }
   else if ( name == CELLSIZE_PROPERTY )
   {
     float cellSize = value.GetDouble();
-    SetCellSize( cellSize );
+    setCellSize( cellSize );
   }
   else if ( name == COLOR_PROPERTY )
   {
     wxColour color;
     color << value;
 
-    SetColor( color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f );
+    setColor( color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f );
   }
 }
 
-void GridVisualizer::GetColor( float& r, float& g, float& b )
+void GridVisualizer::getColor( float& r, float& g, float& b )
 {
   r = r_;
   g = g_;

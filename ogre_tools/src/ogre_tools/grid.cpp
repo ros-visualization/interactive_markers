@@ -49,7 +49,7 @@ Grid::Grid( Ogre::SceneManager* sceneManager, uint32_t gridSize, float cellLengt
   scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
   scene_node_->attachObject( manual_object_ );
 
-  Set( gridSize, cellLength, r, g, b );
+  set( gridSize, cellLength, r, g, b );
 }
 
 Grid::~Grid()
@@ -58,7 +58,7 @@ Grid::~Grid()
   scene_manager_->destroyManualObject( manual_object_ );
 }
 
-void Grid::Set( uint32_t gridSize, float cellLength, float r, float g, float b )
+void Grid::set( uint32_t gridSize, float cellLength, float r, float g, float b )
 {
   manual_object_->clear();
 

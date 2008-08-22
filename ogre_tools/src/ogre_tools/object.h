@@ -47,10 +47,10 @@ public:
   Object( Ogre::SceneManager* sceneManager );
   virtual ~Object() {}
 
-  virtual void SetPosition( const Ogre::Vector3& position ) = 0;
-  virtual void SetOrientation( const Ogre::Quaternion& orientation ) = 0;
-  virtual void SetScale( const Ogre::Vector3& scale ) = 0;
-  virtual void SetColor( float r, float g, float b ) = 0;
+  virtual void setPosition( const Ogre::Vector3& position ) = 0;
+  virtual void setOrientation( const Ogre::Quaternion& orientation ) = 0;
+  virtual void setScale( const Ogre::Vector3& scale ) = 0;
+  virtual void setColor( float r, float g, float b ) = 0;
 
 protected:
   Ogre::SceneManager* scene_manager_;

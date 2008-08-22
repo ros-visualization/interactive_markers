@@ -21,28 +21,28 @@ public:
 
   virtual ~CameraBase();
 
-  virtual void Yaw( float angle ) = 0;
-  virtual void Pitch( float angle ) = 0;
-  virtual void Roll( float angle ) = 0;
-  virtual void SetOrientation( float x, float y, float z, float w ) = 0;
-  virtual void SetPosition( float x, float y, float z ) = 0;
-  virtual void SetFrom( CameraBase* camera ) = 0;
+  virtual void yaw( float angle ) = 0;
+  virtual void pitch( float angle ) = 0;
+  virtual void roll( float angle ) = 0;
+  virtual void setOrientation( float x, float y, float z, float w ) = 0;
+  virtual void setPosition( float x, float y, float z ) = 0;
+  virtual void setFrom( CameraBase* camera ) = 0;
 
-  void SetPosition( const Ogre::Vector3& position );
-  void SetOrientation( const Ogre::Quaternion& orientation );
+  void setPosition( const Ogre::Vector3& position );
+  void setOrientation( const Ogre::Quaternion& orientation );
 
-  virtual Ogre::Vector3 GetPosition() = 0;
-  virtual Ogre::Quaternion GetOrientation() = 0;
+  virtual Ogre::Vector3 getPosition() = 0;
+  virtual Ogre::Quaternion getOrientation() = 0;
 
   /// Move the camera relative to its forward axis
-  virtual void Move( float x, float y, float z ) = 0;
+  virtual void move( float x, float y, float z ) = 0;
 
-  Ogre::Camera* GetOgreCamera() { return camera_; }
+  Ogre::Camera* getOgreCamera() { return camera_; }
 
-  virtual void MouseLeftDrag( int diffX, int diffY ) = 0;
-  virtual void MouseMiddleDrag( int diffX, int diffY ) = 0;
-  virtual void MouseRightDrag( int diffX, int diffY ) = 0;
-  virtual void ScrollWheel( int diff ) = 0;
+  virtual void mouseLeftDrag( int diffX, int diffY ) = 0;
+  virtual void mouseMiddleDrag( int diffX, int diffY ) = 0;
+  virtual void mouseRightDrag( int diffX, int diffY ) = 0;
+  virtual void scrollWheel( int diff ) = 0;
 
 protected:
   Ogre::Camera* camera_;

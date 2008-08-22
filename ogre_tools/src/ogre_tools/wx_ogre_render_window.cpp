@@ -18,9 +18,9 @@ namespace ogre_tools
 IMPLEMENT_CLASS (wxOgreRenderWindow, wxControl)
 
 BEGIN_EVENT_TABLE (wxOgreRenderWindow, wxControl)
-EVT_PAINT (wxOgreRenderWindow::OnPaint)
-EVT_SIZE (wxOgreRenderWindow::OnSize)
-EVT_MOUSE_EVENTS (wxOgreRenderWindow::OnMouseEvents)
+EVT_PAINT (wxOgreRenderWindow::onPaint)
+EVT_SIZE (wxOgreRenderWindow::onSize)
+EVT_MOUSE_EVENTS (wxOgreRenderWindow::onMouseEvents)
 END_EVENT_TABLE ()
 
 //------------------------------------------------------------------------------
@@ -36,7 +36,7 @@ wxOgreRenderWindow::wxOgreRenderWindow (Ogre::Root* ogreRoot, wxWindow *parent, 
 {
   SetBackgroundStyle(wxBG_STYLE_CUSTOM);
 
-  CreateRenderWindow();
+  createRenderWindow();
   
   viewport_ = render_window_->addViewport( NULL );
 }
@@ -59,27 +59,27 @@ inline wxSize wxOgreRenderWindow::DoGetBestSize () const
   return wxSize (320, 240);
 }
 //------------------------------------------------------------------------------
-Ogre::RenderWindow* wxOgreRenderWindow::GetRenderWindow () const
+Ogre::RenderWindow* wxOgreRenderWindow::getRenderWindow () const
 {
   return render_window_;
 }
 
 //------------------------------------------------------------------------------
-Ogre::Viewport* wxOgreRenderWindow::GetViewport () const
+Ogre::Viewport* wxOgreRenderWindow::getViewport () const
 {
   return viewport_;
 }
 
-void wxOgreRenderWindow::SetCamera( Ogre::Camera* camera )
+void wxOgreRenderWindow::setCamera( Ogre::Camera* camera )
 {
   viewport_->setCamera( camera );
   
-  SetCameraAspectRatio();
+  setCameraAspectRatio();
   
   Refresh();
 }
 
-void wxOgreRenderWindow::SetCameraAspectRatio()
+void wxOgreRenderWindow::setCameraAspectRatio()
 {
   Ogre::Camera* camera = viewport_->getCamera();
   if ( camera )
@@ -91,20 +91,20 @@ void wxOgreRenderWindow::SetCameraAspectRatio()
   }
 }
 
-void wxOgreRenderWindow::SetPreRenderCallback( abstractFunctor* func )
+void wxOgreRenderWindow::setPreRenderCallback( abstractFunctor* func )
 {
   delete m_PreRenderCallback;
   m_PreRenderCallback = func;
 }
 
-void wxOgreRenderWindow::SetPostRenderCallback( abstractFunctor* func )
+void wxOgreRenderWindow::setPostRenderCallback( abstractFunctor* func )
 {
   delete m_PostRenderCallback;
   m_PostRenderCallback = func;
 }
 
 //------------------------------------------------------------------------------
-void wxOgreRenderWindow::OnPaint (wxPaintEvent &evt)
+void wxOgreRenderWindow::onPaint (wxPaintEvent &evt)
 {
   evt.Skip();
   
@@ -122,7 +122,7 @@ void wxOgreRenderWindow::OnPaint (wxPaintEvent &evt)
 }
 
 //------------------------------------------------------------------------------
-void wxOgreRenderWindow::OnSize (wxSizeEvent &evt)
+void wxOgreRenderWindow::onSize (wxSizeEvent &evt)
 {
   if (render_window_)
   {
@@ -137,7 +137,7 @@ void wxOgreRenderWindow::OnSize (wxSizeEvent &evt)
     // Letting Ogre know the window has been resized;
     render_window_->windowMovedOrResized ();
     
-    SetCameraAspectRatio();
+    setCameraAspectRatio();
     
     Refresh();
   }
@@ -145,15 +145,15 @@ void wxOgreRenderWindow::OnSize (wxSizeEvent &evt)
   evt.Skip();
 }
 //------------------------------------------------------------------------------
-void wxOgreRenderWindow::OnMouseEvents (wxMouseEvent &evt)
+void wxOgreRenderWindow::onMouseEvents (wxMouseEvent &evt)
 {
   evt.Skip();
 }
 //------------------------------------------------------------------------------
-void wxOgreRenderWindow::CreateRenderWindow ()
+void wxOgreRenderWindow::createRenderWindow ()
 {
   Ogre::NameValuePairList params;
-  params["externalWindowHandle"] = GetOgreHandle ();
+  params["externalWindowHandle"] = getOgreHandle ();
 
   // Get wx control window size
   int width;
@@ -167,7 +167,7 @@ void wxOgreRenderWindow::CreateRenderWindow ()
   render_window_->setActive (true);
 }
 //------------------------------------------------------------------------------
-std::string wxOgreRenderWindow::GetOgreHandle () const
+std::string wxOgreRenderWindow::getOgreHandle () const
 {
   Ogre::String handle;
 

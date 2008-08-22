@@ -60,17 +60,17 @@ public:
   SuperEllipsoid(Ogre::SceneManager* sceneManager, Ogre::SceneNode* parentNode = NULL);
   virtual ~SuperEllipsoid();
 
-  void Create(int samples, float n1, float n2, const Ogre::Vector3& scale = Ogre::Vector3( 1.0f, 1.0f, 1.0f ));
-  void Create(Shape shape, int samples = 60, const Ogre::Vector3& scale = Ogre::Vector3( 1.0f, 1.0f, 1.0f ));
+  void create(int samples, float n1, float n2, const Ogre::Vector3& scale = Ogre::Vector3( 1.0f, 1.0f, 1.0f ));
+  void create(Shape shape, int samples = 60, const Ogre::Vector3& scale = Ogre::Vector3( 1.0f, 1.0f, 1.0f ));
 
-  virtual void SetColor( float r, float g, float b );
-  void SetOffset( const Ogre::Vector3&  offset );
+  virtual void setColor( float r, float g, float b );
+  void setOffset( const Ogre::Vector3&  offset );
 
-  virtual void SetPosition( const Ogre::Vector3& position );
-  virtual void SetOrientation( const Ogre::Quaternion& orientation );
-  virtual void SetScale( const Ogre::Vector3& scale );
+  virtual void setPosition( const Ogre::Vector3& position );
+  virtual void setOrientation( const Ogre::Quaternion& orientation );
+  virtual void setScale( const Ogre::Vector3& scale );
 
-  Ogre::SceneNode* GetRootNode() { return scene_node_; }
+  Ogre::SceneNode* getRootNode() { return scene_node_; }
 
 private:
   Ogre::Vector3 Sample(float phi, float beta, float n1, float n2,

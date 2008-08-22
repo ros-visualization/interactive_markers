@@ -50,24 +50,24 @@ public:
   RobotModelVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
   virtual ~RobotModelVisualizer();
 
-  void Initialize( const std::string& descriptionParam, const std::string& transformTopic );
+  void initialize( const std::string& descriptionParam, const std::string& transformTopic );
 
-  virtual void Update( float dt );
+  virtual void update( float dt );
 
 protected:
 
   // overrides from VisualizerBase
-  virtual void OnEnable();
-  virtual void OnDisable();
+  virtual void onEnable();
+  virtual void onDisable();
 
-  void Subscribe();
-  void Unsubscribe();
+  void subscribe();
+  void unsubscribe();
 
-  void IncomingTransform();
+  void incomingTransform();
   void UpdateTransforms();
 
-  void Clear();
-  void Load();
+  void clear();
+  void load();
 
   std_msgs::Empty message_;
   std::string transform_topic_;

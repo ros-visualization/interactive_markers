@@ -43,46 +43,46 @@ extern Ogre::Matrix3 g_robot_to_ogre_matrix;
 extern Ogre::Quaternion g_ogre_to_robot_quat;
 extern Ogre::Quaternion g_robot_to_ogre_quat;
 
-void InitializeCommon();
+void initializeCommon();
 
-inline void RobotToOgre( Ogre::Vector3& point )
+inline void robotToOgre( Ogre::Vector3& point )
 {
   point = g_robot_to_ogre_matrix * point;
 }
 
-inline void RobotToOgre( Ogre::Quaternion& quat )
+inline void robotToOgre( Ogre::Quaternion& quat )
 {
   quat = g_robot_to_ogre_quat * quat;
 }
 
-inline void RobotToOgre( Ogre::Matrix3& mat )
+inline void robotToOgre( Ogre::Matrix3& mat )
 {
   mat = g_robot_to_ogre_matrix * mat;
 }
 
 
 
-inline void OgreToRobot( Ogre::Vector3& point )
+inline void ogreToRobot( Ogre::Vector3& point )
 {
   point = g_ogre_to_robot_matrix * point;
 }
 
-inline void OgreToRobot( Ogre::Quaternion& quat )
+inline void ogreToRobot( Ogre::Quaternion& quat )
 {
   quat = g_ogre_to_robot_quat * quat;
 }
 
-inline void OgreToRobot( Ogre::Matrix3& mat )
+inline void ogreToRobot( Ogre::Matrix3& mat )
 {
   mat = g_ogre_to_robot_matrix * mat;
 }
 
 
-inline Ogre::Matrix3 OgreMatrixFromRobotEulers( float yaw, float pitch, float roll )
+inline Ogre::Matrix3 ogreMatrixFromRobotEulers( float yaw, float pitch, float roll )
 {
   Ogre::Matrix3 mat;
   mat.FromEulerAnglesZYX( Ogre::Radian( yaw ), Ogre::Radian( pitch ), Ogre::Radian( roll ) );
-  RobotToOgre( mat );
+  robotToOgre( mat );
 
   return mat;
 }

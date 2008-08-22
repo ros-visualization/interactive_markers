@@ -20,31 +20,31 @@ public:
   OrbitCamera( Ogre::SceneManager* sceneManager );
   virtual ~OrbitCamera();
 
-  void Zoom( float amount );
-  void SetFocalPoint( const Ogre::Vector3& focalPoint );
-  void SetFrom( CameraBase* camera );
+  void zoom( float amount );
+  void setFocalPoint( const Ogre::Vector3& focalPoint );
+  void setFrom( CameraBase* camera );
 
-  virtual void Yaw( float angle );
-  virtual void Pitch( float angle );
-  virtual void Roll( float angle );
-  virtual void SetOrientation( float x, float y, float z, float w );
-  virtual void SetPosition( float x, float y, float z );
+  virtual void yaw( float angle );
+  virtual void pitch( float angle );
+  virtual void roll( float angle );
+  virtual void setOrientation( float x, float y, float z, float w );
+  virtual void setPosition( float x, float y, float z );
 
-  virtual Ogre::Vector3 GetPosition();
-  virtual Ogre::Quaternion GetOrientation();
+  virtual Ogre::Vector3 getPosition();
+  virtual Ogre::Quaternion getOrientation();
 
-  virtual void Move( float x, float y, float z );
+  virtual void move( float x, float y, float z );
 
-  virtual void MouseLeftDrag( int diffX, int diffY );
-  virtual void MouseMiddleDrag( int diffX, int diffY );
-  virtual void MouseRightDrag( int diffX, int diffY );
-  virtual void ScrollWheel( int diff );
+  virtual void mouseLeftDrag( int diffX, int diffY );
+  virtual void mouseMiddleDrag( int diffX, int diffY );
+  virtual void mouseRightDrag( int diffX, int diffY );
+  virtual void scrollWheel( int diff );
 
 private:
-  void Update();
-  void CalculatePitchYawFromPosition( const Ogre::Vector3& position );
-  void NormalizePitch();
-  void NormalizeYaw();
+  void update();
+  void calculatePitchYawFromPosition( const Ogre::Vector3& position );
+  void normalizePitch();
+  void normalizeYaw();
 
   Ogre::Vector3 focal_point_;
   float yaw_;

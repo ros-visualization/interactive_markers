@@ -113,26 +113,26 @@ public:
         m_WXRenderWindow->SetSize( this->GetSize() );
 
         camera_ = new ogre_tools::OrbitCamera( scene_manager_ );
-        camera_->SetPosition( 0, 0, 15 );
-        camera_->GetOgreCamera()->setNearClipDistance( 0.1 );
+        camera_->setPosition( 0, 0, 15 );
+        camera_->getOgreCamera()->setNearClipDistance( 0.1 );
 
-        m_WXRenderWindow->GetViewport()->setCamera( camera_->GetOgreCamera() );
+        m_WXRenderWindow->getViewport()->setCamera( camera_->getOgreCamera() );
 
         ogre_tools::Grid* grid = new ogre_tools::Grid( scene_manager_, 10, 1.0f, 1.0f, 0.0f, 0.0f );
-        //grid->GetSceneNode()->pitch( Ogre::Degree( 90 ) );
+        //grid->getSceneNode()->pitch( Ogre::Degree( 90 ) );
 
         ogre_tools::Axes* axes = new ogre_tools::Axes( scene_manager_ );
-        //axes->SetScale( Ogre::Vector3( 2.0f, 2.0f, 2.0f ) );
+        //axes->setScale( Ogre::Vector3( 2.0f, 2.0f, 2.0f ) );
 
         /*ogre_tools::Cone* cone = new ogre_tools::Cone( scene_manager_, NULL );
-        cone->SetScale( Ogre::Vector3( 0.3f, 2.0f, 0.3f ) );*/
+        cone->setScale( Ogre::Vector3( 0.3f, 2.0f, 0.3f ) );*/
 
         /*ogre_tools::Arrow* arrow = new ogre_tools::Arrow( scene_manager_ );
         arrow->SetHeadColor( 1.0f, 0.0f, 0.0f );
         arrow->SetShaftColor( 0.0f, 0.0f, 1.0f );
-        arrow->SetOrientation( Ogre::Quaternion::IDENTITY );*/
-        //arrow->SetOrientation( Ogre::Quaternion( Ogre::Degree( 45 ), Ogre::Vector3::UNIT_X ) );
-        //arrow->SetScale( Ogre::Vector3( 1.0f, 1.0f, 3.0f ) );
+        arrow->setOrientation( Ogre::Quaternion::IDENTITY );*/
+        //arrow->setOrientation( Ogre::Quaternion( Ogre::Degree( 45 ), Ogre::Vector3::UNIT_X ) );
+        //arrow->setScale( Ogre::Vector3( 1.0f, 1.0f, 3.0f ) );
 
         /*ogre_tools::PointCloud* pointCloud = new ogre_tools::PointCloud( scene_manager_ );
         std::vector<ogre_tools::PointCloud::Point> points;
@@ -233,19 +233,19 @@ private:
       bool handled = false;
       if ( left_mouse_down_ )
       {
-        camera_->MouseLeftDrag( diffX, diffY );
+        camera_->mouseLeftDrag( diffX, diffY );
 
         handled = true;
       }
       else if ( middle_mouse_down_ )
       {
-        camera_->MouseMiddleDrag( diffX, diffY );
+        camera_->mouseMiddleDrag( diffX, diffY );
 
         handled = true;
       }
       else if ( right_mouse_down_ )
       {
-        camera_->MouseRightDrag( diffX, diffY );
+        camera_->mouseRightDrag( diffX, diffY );
 
         handled = true;
       }
@@ -258,7 +258,7 @@ private:
 
     if ( event.GetWheelRotation() != 0 )
     {
-      camera_->ScrollWheel( event.GetWheelRotation() );
+      camera_->scrollWheel( event.GetWheelRotation() );
 
       m_WXRenderWindow->Refresh();
     }
