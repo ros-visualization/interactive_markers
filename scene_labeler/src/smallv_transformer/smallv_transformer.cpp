@@ -28,8 +28,8 @@ public:
     advertise<std_msgs::PointCloudFloat32>("full_cloud_smallv", 1000);
     advertise<std_msgs::PointCloudFloat32>("videre/cloud_smallv", 1000);
     
-    subscribe("videre/cloud", videre_cloud_, &SmallvTransformer::videreCallback, true);
-    subscribe("full_cloud", full_cloud_, &SmallvTransformer::fullCallback, true);
+    subscribe("videre/cloud", videre_cloud_, &SmallvTransformer::videreCallback);
+    subscribe("full_cloud", full_cloud_, &SmallvTransformer::fullCallback);
 
   }
 
