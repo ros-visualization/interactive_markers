@@ -60,11 +60,11 @@ MarkerVisualizer::~MarkerVisualizer()
 
 void MarkerVisualizer::clearMarkers()
 {
-  M_IDToObject::iterator markerIt = markers_.begin();
-  M_IDToObject::iterator markerEnd = markers_.end();
-  for ( ; markerIt != markerEnd; ++markerIt )
+  M_IDToObject::iterator marker_it = markers_.begin();
+  M_IDToObject::iterator marker_end = markers_.end();
+  for ( ; marker_it != marker_end; ++marker_it )
   {
-    delete markerIt->second;
+    delete marker_it->second;
   }
   markers_.clear();
 }
@@ -215,15 +215,15 @@ void MarkerVisualizer::setCommonValues( const std_msgs::VisualizationMarker& mes
     frameId = tf_client_->lookup( message.frame );
   }*/
 
-  libTF::TFPoint tfPoint;
-  tfPoint.x = message.x;
-  tfPoint.y = message.y;
-  tfPoint.z = message.z;
-  tfPoint.time = 0;
-  tfPoint.frame = frameId;
+  libTF::TFPoint tf_point;
+  tf_point.x = message.x;
+  tf_point.y = message.y;
+  tf_point.z = message.z;
+  tf_point.time = 0;
+  tf_point.frame = frameId;
   try
   {
-    tfPoint = tf_client_->transformPoint( target_frame_, tfPoint );
+    tf_point = tf_client_->transformPoint( target_frame_, tf_point );
   }
   catch(libTF::TransformReference::LookupException& e)
   {
@@ -238,15 +238,15 @@ void MarkerVisualizer::setCommonValues( const std_msgs::VisualizationMarker& mes
     printf( "Error transforming marker '%d': %s\n", message.id, e.what() );
   }
 
-  libTF::TFEulerYPR tfEulers;
-  tfEulers.yaw = message.yaw;
-  tfEulers.pitch = message.pitch;
-  tfEulers.roll = message.roll;
-  tfEulers.time = 0;
-  tfEulers.frame = frameId;
+  libTF::TFEulerYPR tf_eulers;
+  tf_eulers.yaw = message.yaw;
+  tf_eulers.pitch = message.pitch;
+  tf_eulers.roll = message.roll;
+  tf_eulers.time = 0;
+  tf_eulers.frame = frameId;
   try
   {
-    tfEulers = tf_client_->transformEulerYPR( target_frame_, tfEulers );
+    tf_eulers = tf_client_->transformEulerYPR( target_frame_, tf_eulers );
   }
   catch(libTF::TransformReference::LookupException& e)
   {
@@ -261,12 +261,12 @@ void MarkerVisualizer::setCommonValues( const std_msgs::VisualizationMarker& mes
     printf( "Error transforming marker '%d': %s\n", message.id, e.what() );
   }
 
-  Ogre::Vector3 position( tfPoint.x, tfPoint.y, tfPoint.z );
+  Ogre::Vector3 position( tf_point.x, tf_point.y, tf_point.z );
   robotToOgre( position );
 
   Ogre::Matrix3 orientation;
-  orientation.FromEulerAnglesYXZ( Ogre::Radian( tfEulers.yaw ), Ogre::Radian( tfEulers.pitch ), Ogre::Radian( tfEulers.roll ) );
-  //Ogre::Matrix3 orientation( OgreMatrixFromRobotEulers( tfEulers.yaw, tfEulers.pitch, tfEulers.roll ) );
+  orientation.FromEulerAnglesYXZ( Ogre::Radian( tf_eulers.yaw ), Ogre::Radian( tf_eulers.pitch ), Ogre::Radian( tf_eulers.roll ) );
+  //Ogre::Matrix3 orientation( OgreMatrixFromRobotEulers( tf_eulers.yaw, tf_eulers.pitch, tf_eulers.roll ) );
   Ogre::Vector3 scale( message.xScale, message.yScale, message.zScale );
   robotToOgre( scale );
 
@@ -286,11 +286,11 @@ void MarkerVisualizer::update( float dt )
 
   if ( !message_queue_.empty() )
   {
-    V_MarkerMessage::iterator messageIt = message_queue_.begin();
-    V_MarkerMessage::iterator messageEnd = message_queue_.end();
-    for ( ; messageIt != messageEnd; ++messageIt )
+    V_MarkerMessage::iterator message_it = message_queue_.begin();
+    V_MarkerMessage::iterator message_end = message_queue_.end();
+    for ( ; message_it != message_end; ++message_it )
     {
-      std_msgs::VisualizationMarker& marker = *messageIt;
+      std_msgs::VisualizationMarker& marker = *message_it;
 
       processMessage( marker );
     }

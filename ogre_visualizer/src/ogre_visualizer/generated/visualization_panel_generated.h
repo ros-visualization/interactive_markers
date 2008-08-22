@@ -36,14 +36,14 @@ class VisualizationPanelGenerated : public wxPanel
 		wxSplitterWindow* m_splitter2;
 		wxPanel* m_panel5;
 		wxStaticText* m_staticText1;
-		wxCheckListBox* m_Displays;
+		wxCheckListBox* displays_;
 		wxPanel* m_panel6;
 		wxStaticText* m_staticText2;
-		wxPanel* m_PropertiesPanel;
-		wxBoxSizer* m_PropertiesPanelSizer;
-		wxPanel* m_3DPanel;
-		wxBoxSizer* m_3DSizer;
-		wxToolBar* m_Views;
+		wxPanel* properties_panel_;
+		wxBoxSizer* properties_panel_sizer_;
+		wxPanel* render_panel_;
+		wxBoxSizer* render_sizer_;
+		wxToolBar* views_;
 	
 	public:
 		VisualizationPanelGenerated( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 765,578 ), long style = wxTAB_TRAVERSAL );

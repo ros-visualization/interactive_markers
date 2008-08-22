@@ -105,13 +105,13 @@ void GridVisualizer::setColor( float r, float g, float b )
 
 void GridVisualizer::fillPropertyGrid( wxPropertyGrid* property_grid )
 {
-  wxPGId countProp = property_grid->Append( new wxIntProperty( CELLCOUNT_PROPERTY, wxPG_LABEL, cell_count_ ) );
-  property_grid->SetPropertyAttribute( countProp, wxT("Min"), 1 );
-  property_grid->SetPropertyAttribute( countProp, wxT("Step"), 1 );
-  property_grid->SetPropertyEditor( countProp, wxPG_EDITOR(SpinCtrl) );
+  wxPGId prop = property_grid->Append( new wxIntProperty( CELLCOUNT_PROPERTY, wxPG_LABEL, cell_count_ ) );
+  property_grid->SetPropertyAttribute( prop, wxT("Min"), 1 );
+  property_grid->SetPropertyAttribute( prop, wxT("Step"), 1 );
+  property_grid->SetPropertyEditor( prop, wxPG_EDITOR(SpinCtrl) );
 
-  wxPGId sizeProp = property_grid->Append( new wxFloatProperty( CELLSIZE_PROPERTY, wxPG_LABEL, cell_size_ ) );
-  property_grid->SetPropertyAttribute( sizeProp, wxT("Min"), 0.0001 );
+  prop = property_grid->Append( new wxFloatProperty( CELLSIZE_PROPERTY, wxPG_LABEL, cell_size_ ) );
+  property_grid->SetPropertyAttribute( prop, wxT("Min"), 0.0001 );
 
   property_grid->Append( new wxColourProperty( COLOR_PROPERTY, wxPG_LABEL, wxColour( r_ * 255, g_ * 255, b_ * 255 ) ) );
 }

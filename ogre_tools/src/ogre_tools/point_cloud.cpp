@@ -50,9 +50,9 @@ PointCloud::PointCloud( Ogre::SceneManager* scene_manager )
 , billboard_width_( 0.003f )
 , billboard_height_( 0.003f )
 {
-  static uint32_t pointCloudCount = 0;
+  static uint32_t count = 0;
   std::stringstream ss;
-  ss << "PointCloud" << pointCloudCount++;
+  ss << "PointCloud" << count++;
 
   scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
   scene_node_->attachObject( this );
@@ -64,11 +64,11 @@ PointCloud::PointCloud( Ogre::SceneManager* scene_manager )
 
 PointCloud::~PointCloud()
 {
-  V_BillboardSet::iterator bbsIt = billboard_sets_.begin();
-  V_BillboardSet::iterator bbsEnd = billboard_sets_.end();
-  for ( ; bbsIt != bbsEnd; ++bbsIt )
+  V_BillboardSet::iterator bbs_it = billboard_sets_.begin();
+  V_BillboardSet::iterator bbs_end = billboard_sets_.end();
+  for ( ; bbs_it != bbs_end; ++bbs_it )
   {
-    delete (*bbsIt);
+    delete (*bbs_it);
   }
   billboard_sets_.clear();
 
@@ -105,11 +105,11 @@ void PointCloud::setUsePoints( bool usePoints )
     points_per_bbs_ = MAX_BILLBOARDS_PER_BBS;
   }
 
-  V_BillboardSet::iterator bbsIt = billboard_sets_.begin();
-  V_BillboardSet::iterator bbsEnd = billboard_sets_.end();
-  for ( ; bbsIt != bbsEnd; ++bbsIt )
+  V_BillboardSet::iterator bbs_it = billboard_sets_.begin();
+  V_BillboardSet::iterator bbs_end = billboard_sets_.end();
+  for ( ; bbs_it != bbs_end; ++bbs_it )
   {
-    Ogre::BillboardSet* bbs = *bbsIt;
+    Ogre::BillboardSet* bbs = *bbs_it;
 
     bbs->setPointRenderingEnabled( usePoints );
     bbs->setPoolSize( points_per_bbs_ );
@@ -120,11 +120,11 @@ void PointCloud::setBillboardDimensions( float width, float height )
 {
   billboard_width_ = width;
   billboard_height_ = height;
-  V_BillboardSet::iterator bbsIt = billboard_sets_.begin();
-  V_BillboardSet::iterator bbsEnd = billboard_sets_.end();
-  for ( ; bbsIt != bbsEnd; ++bbsIt )
+  V_BillboardSet::iterator bbs_it = billboard_sets_.begin();
+  V_BillboardSet::iterator bbs_end = billboard_sets_.end();
+  for ( ; bbs_it != bbs_end; ++bbs_it )
   {
-    Ogre::BillboardSet* bbs = *bbsIt;
+    Ogre::BillboardSet* bbs = *bbs_it;
 
     bbs->setDefaultDimensions( width, height );
   }
@@ -175,11 +175,11 @@ void PointCloud::_notifyCurrentCamera( Ogre::Camera* camera )
   MovableObject::_notifyCurrentCamera( camera );
 
 
-  V_BillboardSet::iterator bbsIt = billboard_sets_.begin();
-  V_BillboardSet::iterator bbsEnd = billboard_sets_.end();
-  for ( ; bbsIt != bbsEnd; ++bbsIt )
+  V_BillboardSet::iterator bbs_it = billboard_sets_.begin();
+  V_BillboardSet::iterator bbs_end = billboard_sets_.end();
+  for ( ; bbs_it != bbs_end; ++bbs_it )
   {
-    (*bbsIt)->_notifyCurrentCamera( camera );
+    (*bbs_it)->_notifyCurrentCamera( camera );
   }
 }
 
@@ -192,34 +192,34 @@ void PointCloud::_updateRenderQueue( Ogre::RenderQueue* queue )
 
     // Update billboard set geometry
   Ogre::Billboard bb;
-  uint32_t pointsInCurrent = 0;
-  uint32_t currentBBS = 0;
+  uint32_t points_in_current = 0;
+  uint32_t current_bbs = 0;
   Ogre::BillboardSet* bbs = NULL;
   V_BillboardSet used;
-  for ( uint32_t i = 0; i < point_count_; ++i, ++pointsInCurrent )
+  for ( uint32_t i = 0; i < point_count_; ++i, ++points_in_current )
   {
-    bool newBBS = false;
-    if ( pointsInCurrent > points_per_bbs_ )
+    bool new_bbs = false;
+    if ( points_in_current > points_per_bbs_ )
     {
       bbs->endBillboards();
 
-      pointsInCurrent = 0;
-      ++currentBBS;
+      points_in_current = 0;
+      ++current_bbs;
 
-      newBBS = true;
+      new_bbs = true;
     }
 
-    if ( currentBBS >= billboard_sets_.size() )
+    if ( current_bbs >= billboard_sets_.size() )
     {
       bbs = createBillboardSet();
       billboard_sets_.push_back( bbs );
 
-      newBBS = true;
+      new_bbs = true;
     }
 
-    if ( newBBS || !bbs )
+    if ( new_bbs || !bbs )
     {
-      bbs = billboard_sets_[ currentBBS ];
+      bbs = billboard_sets_[ current_bbs ];
       bbs->beginBillboards( std::min<uint32_t>( point_count_ - i, points_per_bbs_ ) );
 
       used.push_back( bbs );
@@ -240,11 +240,11 @@ void PointCloud::_updateRenderQueue( Ogre::RenderQueue* queue )
   bbs->endBillboards();
 
   // Update the queue
-  V_BillboardSet::iterator bbsIt = used.begin();
-  V_BillboardSet::iterator bbsEnd = used.end();
-  for ( ; bbsIt != bbsEnd; ++bbsIt )
+  V_BillboardSet::iterator bbs_it = used.begin();
+  V_BillboardSet::iterator bbs_end = used.end();
+  for ( ; bbs_it != bbs_end; ++bbs_it )
   {
-    (*bbsIt)->_updateRenderQueue( queue );
+    (*bbs_it)->_updateRenderQueue( queue );
   }
 }
 

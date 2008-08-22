@@ -108,7 +108,7 @@ void LaserScanVisualizer::setColor( float r, float g, float b )
 void LaserScanVisualizer::setStyle( Style style )
 {
   {
-    RenderAutoLock renderLock( this );
+    RenderAutoLock render_lock( this );
 
     style_ = style;
     cloud_->setUsePoints( style == Points );
@@ -120,7 +120,7 @@ void LaserScanVisualizer::setStyle( Style style )
 void LaserScanVisualizer::setBillboardSize( float size )
 {
   {
-    RenderAutoLock renderLock( this );
+    RenderAutoLock render_lock( this );
 
     billboard_size_ = size;
     cloud_->setBillboardDimensions( size, size );
@@ -275,7 +275,7 @@ void LaserScanVisualizer::transformCloud()
   }
 
   {
-    RenderAutoLock renderLock( this );
+    RenderAutoLock render_lock( this );
 
     cloud_->clear();
 

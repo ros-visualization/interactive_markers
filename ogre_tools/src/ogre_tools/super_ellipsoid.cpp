@@ -87,9 +87,9 @@ void SuperEllipsoid::create(int samples, float n1, float n2, const Ogre::Vector3
   manual_object_->clear();
   manual_object_->begin( material_name_, Ogre::RenderOperation::OT_TRIANGLE_LIST );
 
-  float scaleX = scale.x / 2.0f;
-  float scaleY = scale.y / 2.0f;
-  float scaleZ = scale.z / 2.0f;
+  float scale_x = scale.x / 2.0f;
+  float scale_y = scale.y / 2.0f;
+  float scale_z = scale.z / 2.0f;
 
   for(int j=0; j<=samples/2; j++)
   {
@@ -98,20 +98,20 @@ void SuperEllipsoid::create(int samples, float n1, float n2, const Ogre::Vector3
     for(int i=0; i<=samples; i++)
     {
       //Triangle #1
-      manual_object_->position(Sample(phi+dP, beta, n1, n2, scaleX, scaleY, scaleZ));
-      manual_object_->normal(CalculateNormal(phi+dP, beta, n1, n2, scaleX, scaleY, scaleZ));
-      manual_object_->position(Sample(phi, beta, n1, n2, scaleX, scaleY, scaleZ));
-      manual_object_->normal(CalculateNormal(phi, beta, n1, n2, scaleX, scaleY, scaleZ));
-      manual_object_->position(Sample(phi+dP, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
-      manual_object_->normal(CalculateNormal(phi+dP, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
+      manual_object_->position(Sample(phi+dP, beta, n1, n2, scale_x, scale_y, scale_z));
+      manual_object_->normal(CalculateNormal(phi+dP, beta, n1, n2, scale_x, scale_y, scale_z));
+      manual_object_->position(Sample(phi, beta, n1, n2, scale_x, scale_y, scale_z));
+      manual_object_->normal(CalculateNormal(phi, beta, n1, n2, scale_x, scale_y, scale_z));
+      manual_object_->position(Sample(phi+dP, beta+dB, n1, n2, scale_x, scale_y, scale_z));
+      manual_object_->normal(CalculateNormal(phi+dP, beta+dB, n1, n2, scale_x, scale_y, scale_z));
 
       //Triangle #2
-      manual_object_->position(Sample(phi+dP, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
-      manual_object_->normal(CalculateNormal(phi+dP, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
-      manual_object_->position(Sample(phi, beta, n1, n2, scaleX, scaleY, scaleZ));
-      manual_object_->normal(CalculateNormal(phi, beta, n1, n2, scaleX, scaleY, scaleZ));
-      manual_object_->position(Sample(phi, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
-      manual_object_->normal(CalculateNormal(phi, beta+dB, n1, n2, scaleX, scaleY, scaleZ));
+      manual_object_->position(Sample(phi+dP, beta+dB, n1, n2, scale_x, scale_y, scale_z));
+      manual_object_->normal(CalculateNormal(phi+dP, beta+dB, n1, n2, scale_x, scale_y, scale_z));
+      manual_object_->position(Sample(phi, beta, n1, n2, scale_x, scale_y, scale_z));
+      manual_object_->normal(CalculateNormal(phi, beta, n1, n2, scale_x, scale_y, scale_z));
+      manual_object_->position(Sample(phi, beta+dB, n1, n2, scale_x, scale_y, scale_z));
+      manual_object_->normal(CalculateNormal(phi, beta+dB, n1, n2, scale_x, scale_y, scale_z));
 
       beta += dB;
     }
@@ -147,36 +147,36 @@ void SuperEllipsoid::create(Shape shape, int samples, const Ogre::Vector3& scale
 }
 
 Ogre::Vector3 SuperEllipsoid::Sample(float phi, float beta, float n1, float n2,
-                                     float scaleX, float scaleY, float scaleZ)
+                                     float scale_x, float scale_y, float scale_z)
 {
   Ogre::Vector3 vertex;
 
-  float cosPhi = cos(phi);
-  float cosBeta = cos(beta);
-  float sinPhi = sin(phi);
-  float sinBeta = sin(beta);
+  float cos_phi = cos(phi);
+  float cos_beta = cos(beta);
+  float sin_phi = sin(phi);
+  float sin_beta = sin(beta);
 
 
-  vertex.x = scaleX * SIGN(cosPhi) * pow(fabs(cosPhi), n1) * SIGN(sinBeta) * pow(fabs(sinBeta), n2);
-  vertex.y = scaleY * SIGN(sinPhi) * pow(fabs(sinPhi), n1);
-  vertex.z = scaleZ * SIGN(cosPhi) * pow(fabs(cosPhi), n1) * SIGN(cosBeta) * pow(fabs(cosBeta), n2);
+  vertex.x = scale_x * SIGN(cos_phi) * pow(fabs(cos_phi), n1) * SIGN(sin_beta) * pow(fabs(sin_beta), n2);
+  vertex.y = scale_y * SIGN(sin_phi) * pow(fabs(sin_phi), n1);
+  vertex.z = scale_z * SIGN(cos_phi) * pow(fabs(cos_phi), n1) * SIGN(cos_beta) * pow(fabs(cos_beta), n2);
 
   return vertex;
 }
 
 Ogre::Vector3 SuperEllipsoid::CalculateNormal(float phi, float beta, float n1, float n2,
-                                              float scaleX, float scaleY, float scaleZ)
+                                              float scale_x, float scale_y, float scale_z)
 {
   Ogre::Vector3 normal;
 
-  float cosPhi = cos(phi);
-  float cosBeta = cos(beta);
-  float sinPhi = sin(phi);
-  float sinBeta = sin(beta);
+  float cos_phi = cos(phi);
+  float cos_beta = cos(beta);
+  float sin_phi = sin(phi);
+  float sin_beta = sin(beta);
 
-  normal.x = SIGN(cosPhi) * pow(fabs(cosPhi), 2-n1) * SIGN(sinBeta) * pow(fabs(sinBeta), 2-n2) / scaleX;
-  normal.y = SIGN(sinPhi) * pow(fabs(sinPhi), 2-n1) / scaleY;
-  normal.z = SIGN(cosPhi) * pow(fabs(cosPhi), 2-n1) * SIGN(cosBeta) * pow(fabs(cosBeta), 2-n2) / scaleZ;
+  normal.x = SIGN(cos_phi) * pow(fabs(cos_phi), 2-n1) * SIGN(sin_beta) * pow(fabs(sin_beta), 2-n2) / scale_x;
+  normal.y = SIGN(sin_phi) * pow(fabs(sin_phi), 2-n1) / scale_y;
+  normal.z = SIGN(cos_phi) * pow(fabs(cos_phi), 2-n1) * SIGN(cos_beta) * pow(fabs(cos_beta), 2-n2) / scale_z;
 
   normal.normalise();
 

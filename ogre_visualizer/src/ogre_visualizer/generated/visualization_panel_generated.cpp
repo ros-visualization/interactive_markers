@@ -35,11 +35,11 @@ VisualizationPanelGenerated::VisualizationPanelGenerated( wxWindow* parent, wxWi
 	m_staticText1->Wrap( -1 );
 	bSizer8->Add( m_staticText1, 0, wxALL, 5 );
 	
-	wxArrayString m_DisplaysChoices;
-	m_Displays = new wxCheckListBox( m_panel5, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_DisplaysChoices, 0 );
-	m_Displays->SetMinSize( wxSize( 150,-1 ) );
+	wxArrayString displays_Choices;
+	displays_ = new wxCheckListBox( m_panel5, wxID_ANY, wxDefaultPosition, wxDefaultSize, displays_Choices, 0 );
+	displays_->SetMinSize( wxSize( 150,-1 ) );
 	
-	bSizer8->Add( m_Displays, 1, wxALL|wxEXPAND, 5 );
+	bSizer8->Add( displays_, 1, wxALL|wxEXPAND, 5 );
 	
 	m_panel5->SetSizer( bSizer8 );
 	m_panel5->Layout();
@@ -54,13 +54,13 @@ VisualizationPanelGenerated::VisualizationPanelGenerated( wxWindow* parent, wxWi
 	m_staticText2->Wrap( -1 );
 	bSizer9->Add( m_staticText2, 0, wxALL, 5 );
 	
-	m_PropertiesPanel = new wxPanel( m_panel6, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	m_PropertiesPanelSizer = new wxBoxSizer( wxVERTICAL );
+	properties_panel_ = new wxPanel( m_panel6, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	properties_panel_sizer_ = new wxBoxSizer( wxVERTICAL );
 	
-	m_PropertiesPanel->SetSizer( m_PropertiesPanelSizer );
-	m_PropertiesPanel->Layout();
-	m_PropertiesPanelSizer->Fit( m_PropertiesPanel );
-	bSizer9->Add( m_PropertiesPanel, 1, wxEXPAND | wxALL, 5 );
+	properties_panel_->SetSizer( properties_panel_sizer_ );
+	properties_panel_->Layout();
+	properties_panel_sizer_->Fit( properties_panel_ );
+	bSizer9->Add( properties_panel_, 1, wxEXPAND | wxALL, 5 );
 	
 	m_panel6->SetSizer( bSizer9 );
 	m_panel6->Layout();
@@ -71,18 +71,18 @@ VisualizationPanelGenerated::VisualizationPanelGenerated( wxWindow* parent, wxWi
 	m_panel3->SetSizer( bSizer25 );
 	m_panel3->Layout();
 	bSizer25->Fit( m_panel3 );
-	m_3DPanel = new wxPanel( m_splitter1, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	m_3DSizer = new wxBoxSizer( wxVERTICAL );
+	render_panel_ = new wxPanel( m_splitter1, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	render_sizer_ = new wxBoxSizer( wxVERTICAL );
 	
-	m_Views = new wxToolBar( m_3DPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTB_HORIZONTAL|wxTB_NOICONS|wxTB_TEXT ); 
-	m_Views->Realize();
+	views_ = new wxToolBar( render_panel_, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTB_HORIZONTAL|wxTB_NOICONS|wxTB_TEXT ); 
+	views_->Realize();
 	
-	m_3DSizer->Add( m_Views, 0, wxEXPAND, 0 );
+	render_sizer_->Add( views_, 0, wxEXPAND, 0 );
 	
-	m_3DPanel->SetSizer( m_3DSizer );
-	m_3DPanel->Layout();
-	m_3DSizer->Fit( m_3DPanel );
-	m_splitter1->SplitVertically( m_panel3, m_3DPanel, 200 );
+	render_panel_->SetSizer( render_sizer_ );
+	render_panel_->Layout();
+	render_sizer_->Fit( render_panel_ );
+	m_splitter1->SplitVertically( m_panel3, render_panel_, 200 );
 	bSizer23->Add( m_splitter1, 1, wxEXPAND, 5 );
 	
 	this->SetSizer( bSizer23 );

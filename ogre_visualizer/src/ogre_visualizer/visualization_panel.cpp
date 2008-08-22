@@ -82,8 +82,8 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent, Ogre::Root* root )
 
   scene_manager_ = ogre_root_->createSceneManager( Ogre::ST_GENERIC );
 
-  render_panel_ = new ogre_tools::wxOgreRenderWindow( ogre_root_, m_3DPanel );
-  m_3DSizer->Add( render_panel_, 1, wxALL|wxEXPAND, 0 );
+  render_panel_ = new ogre_tools::wxOgreRenderWindow( ogre_root_, VisualizationPanelGenerated::render_panel_ );
+  render_sizer_->Add( render_panel_, 1, wxALL|wxEXPAND, 0 );
 
   fps_camera_ = new ogre_tools::FPSCamera( scene_manager_ );
   fps_camera_->getOgreCamera()->setNearClipDistance( 0.1f );
@@ -93,22 +93,22 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent, Ogre::Root* root )
   orbit_camera_->getOgreCamera()->setNearClipDistance( 0.1f );
   orbit_camera_->setPosition( 0, 0, 15 );
 
-  Ogre::Light* directionalLight = scene_manager_->createLight( "MainDirectional" );
-  directionalLight->setType( Ogre::Light::LT_DIRECTIONAL );
-  directionalLight->setDirection( Ogre::Vector3( 0, -1, 1 ) );
-  directionalLight->setDiffuseColour( Ogre::ColourValue( 1.0f, 1.0f, 1.0f ) );
+  Ogre::Light* directional_light = scene_manager_->createLight( "MainDirectional" );
+  directional_light->setType( Ogre::Light::LT_DIRECTIONAL );
+  directional_light->setDirection( Ogre::Vector3( 0, -1, 1 ) );
+  directional_light->setDiffuseColour( Ogre::ColourValue( 1.0f, 1.0f, 1.0f ) );
 
   current_camera_ = orbit_camera_;
 
   render_panel_->getViewport()->setCamera( current_camera_->getOgreCamera() );
 
-  m_Views->AddRadioTool( IDs::Orbit, wxT("Orbit"), wxNullBitmap, wxNullBitmap, wxT("Orbit Camera Controls") );
-  m_Views->AddRadioTool( IDs::FPS, wxT("FPS"), wxNullBitmap, wxNullBitmap, wxT("FPS Camera Controls") );
+  views_->AddRadioTool( IDs::Orbit, wxT("Orbit"), wxNullBitmap, wxNullBitmap, wxT("Orbit Camera Controls") );
+  views_->AddRadioTool( IDs::FPS, wxT("FPS"), wxNullBitmap, wxNullBitmap, wxT("FPS Camera Controls") );
 
-  m_Views->Connect( wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( VisualizationPanel::onViewClicked ), NULL, this );
+  views_->Connect( wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( VisualizationPanel::onViewClicked ), NULL, this );
 
-  m_Displays->Connect( wxEVT_COMMAND_CHECKLISTBOX_TOGGLED, wxCommandEventHandler( VisualizationPanel::onDisplayToggled ), NULL, this );
-  m_Displays->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( VisualizationPanel::onDisplaySelected ), NULL, this );
+  displays_->Connect( wxEVT_COMMAND_CHECKLISTBOX_TOGGLED, wxCommandEventHandler( VisualizationPanel::onDisplayToggled ), NULL, this );
+  displays_->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( VisualizationPanel::onDisplaySelected ), NULL, this );
 
   render_panel_->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
   render_panel_->Connect( wxEVT_MIDDLE_DOWN, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
@@ -129,8 +129,8 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent, Ogre::Root* root )
 
   Connect( EVT_RENDER, wxCommandEventHandler( VisualizationPanel::onRender ), NULL, this );
 
-  property_grid_ = new wxPropertyGrid( m_PropertiesPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxPG_SPLITTER_AUTO_CENTER | wxTAB_TRAVERSAL | wxPG_DEFAULT_STYLE );
-  m_PropertiesPanelSizer->Add( property_grid_, 1, wxEXPAND, 5 );
+  property_grid_ = new wxPropertyGrid( properties_panel_, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxPG_SPLITTER_AUTO_CENTER | wxTAB_TRAVERSAL | wxPG_DEFAULT_STYLE );
+  properties_panel_sizer_->Add( property_grid_, 1, wxEXPAND, 5 );
 
   property_grid_->SetExtraStyle( wxPG_EX_HELP_AS_TOOLTIPS );
 
@@ -140,10 +140,10 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent, Ogre::Root* root )
 
 VisualizationPanel::~VisualizationPanel()
 {
-  m_Views->Disconnect( wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( VisualizationPanel::onViewClicked ), NULL, this );
+  views_->Disconnect( wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( VisualizationPanel::onViewClicked ), NULL, this );
 
-  m_Displays->Disconnect( wxEVT_COMMAND_CHECKLISTBOX_TOGGLED, wxCommandEventHandler( VisualizationPanel::onDisplayToggled ), NULL, this );
-  m_Displays->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( VisualizationPanel::onDisplaySelected ), NULL, this );
+  displays_->Disconnect( wxEVT_COMMAND_CHECKLISTBOX_TOGGLED, wxCommandEventHandler( VisualizationPanel::onDisplayToggled ), NULL, this );
+  displays_->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( VisualizationPanel::onDisplaySelected ), NULL, this );
 
   render_panel_->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
   render_panel_->Disconnect( wxEVT_MIDDLE_DOWN, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
@@ -163,11 +163,11 @@ VisualizationPanel::~VisualizationPanel()
   property_grid_->Disconnect( wxEVT_PG_CHANGED, wxPropertyGridEventHandler( VisualizationPanel::onpropertyChanged ), NULL, this );
   property_grid_->Destroy();
 
-  V_Visualizer::iterator visIt = visualizers_.begin();
-  V_Visualizer::iterator visEnd = visualizers_.end();
-  for ( ; visIt != visEnd; ++visIt )
+  V_Visualizer::iterator vis_it = visualizers_.begin();
+  V_Visualizer::iterator vis_end = visualizers_.end();
+  for ( ; vis_it != vis_end; ++vis_it )
   {
-    VisualizerBase* visualizer = *visIt;
+    VisualizerBase* visualizer = *vis_it;
     delete visualizer;
   }
   visualizers_.clear();
@@ -196,7 +196,7 @@ void VisualizationPanel::onRender( wxCommandEvent& event )
 
 void VisualizationPanel::onViewClicked( wxCommandEvent& event )
 {
-  ogre_tools::CameraBase* prevCamera = current_camera_;
+  ogre_tools::CameraBase* prev_camera = current_camera_;
 
   switch ( event.GetId() )
   {
@@ -213,7 +213,7 @@ void VisualizationPanel::onViewClicked( wxCommandEvent& event )
     break;
   }
 
-  current_camera_->setFrom( prevCamera );
+  current_camera_->setFrom( prev_camera );
 
   render_panel_->setCamera( current_camera_->getOgreCamera() );
 }
@@ -222,9 +222,9 @@ void VisualizationPanel::onDisplayToggled( wxCommandEvent& event )
 {
   int selectionIndex = event.GetSelection();
 
-  VisualizerBase* visualizer = (VisualizerBase*)m_Displays->GetClientData( selectionIndex );
+  VisualizerBase* visualizer = (VisualizerBase*)displays_->GetClientData( selectionIndex );
 
-  if ( m_Displays->IsChecked( selectionIndex ) )
+  if ( displays_->IsChecked( selectionIndex ) )
   {
     visualizer->enable();
   }
@@ -240,7 +240,7 @@ void VisualizationPanel::onDisplaySelected( wxCommandEvent& event )
 {
   int selectionIndex = event.GetSelection();
 
-  selected_visualizer_ = (VisualizerBase*)m_Displays->GetClientData( selectionIndex );
+  selected_visualizer_ = (VisualizerBase*)displays_->GetClientData( selectionIndex );
 
   property_grid_->Freeze();
   property_grid_->Clear();
@@ -258,11 +258,11 @@ void VisualizationPanel::onUpdate( wxTimerEvent& event )
 
   update_stopwatch_.Start();
 
-  V_Visualizer::iterator visIt = visualizers_.begin();
-  V_Visualizer::iterator visEnd = visualizers_.end();
-  for ( ; visIt != visEnd; ++visIt )
+  V_Visualizer::iterator vis_it = visualizers_.begin();
+  V_Visualizer::iterator vis_end = visualizers_.end();
+  for ( ; vis_it != vis_end; ++vis_it )
   {
-    VisualizerBase* visualizer = *visIt;
+    VisualizerBase* visualizer = *vis_it;
 
     if ( visualizer->isEnabled() )
     {
@@ -305,8 +305,8 @@ void VisualizationPanel::addVisualizer( VisualizerBase* visualizer )
 {
   visualizers_.push_back( visualizer );
 
-  m_Displays->Append( wxString::FromAscii( visualizer->getName().c_str() ), visualizer );
-  m_Displays->Check( m_Displays->GetCount() - 1, visualizer->isEnabled() );
+  displays_->Append( wxString::FromAscii( visualizer->getName().c_str() ), visualizer );
+  displays_->Check( displays_->GetCount() - 1, visualizer->isEnabled() );
 
   visualizer->setRenderCallback( new functor<VisualizationPanel>( this, &VisualizationPanel::render ) );
   visualizer->setLockRenderCallback( new functor<VisualizationPanel>( this, &VisualizationPanel::lockRender ) );
@@ -315,8 +315,8 @@ void VisualizationPanel::addVisualizer( VisualizerBase* visualizer )
 
 void VisualizationPanel::onRenderWindowMouseEvents( wxMouseEvent& event )
 {
-  int lastX = mouse_x_;
-  int lastY = mouse_y_;
+  int last_x = mouse_x_;
+  int last_y = mouse_y_;
 
   mouse_x_ = event.GetX();
   mouse_y_ = event.GetY();
@@ -353,8 +353,8 @@ void VisualizationPanel::onRenderWindowMouseEvents( wxMouseEvent& event )
   }
   else if ( event.Dragging() )
   {
-    int32_t diff_x = mouse_x_ - lastX;
-    int32_t diff_y = mouse_y_ - lastY;
+    int32_t diff_x = mouse_x_ - last_x;
+    int32_t diff_y = mouse_y_ - last_y;
 
     bool handled = false;
     if ( left_mouse_down_ )

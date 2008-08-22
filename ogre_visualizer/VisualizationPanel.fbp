@@ -339,7 +339,7 @@
                                                                 <property name="id">wxID_ANY</property>
                                                                 <property name="maximum_size"></property>
                                                                 <property name="minimum_size">150,-1</property>
-                                                                <property name="name">m_Displays</property>
+                                                                <property name="name">displays_</property>
                                                                 <property name="permission">protected</property>
                                                                 <property name="pos"></property>
                                                                 <property name="size"></property>
@@ -493,7 +493,7 @@
                                                                 <property name="id">wxID_ANY</property>
                                                                 <property name="maximum_size"></property>
                                                                 <property name="minimum_size"></property>
-                                                                <property name="name">m_PropertiesPanel</property>
+                                                                <property name="name">properties_panel_</property>
                                                                 <property name="permission">protected</property>
                                                                 <property name="pos"></property>
                                                                 <property name="size"></property>
@@ -527,7 +527,7 @@
                                                                 <event name="OnUpdateUI"></event>
                                                                 <object class="wxBoxSizer" expanded="1">
                                                                     <property name="minimum_size"></property>
-                                                                    <property name="name">m_PropertiesPanelSizer</property>
+                                                                    <property name="name">properties_panel_sizer_</property>
                                                                     <property name="orient">wxVERTICAL</property>
                                                                     <property name="permission">protected</property>
                                                                 </object>
@@ -552,7 +552,7 @@
                                 <property name="id">wxID_ANY</property>
                                 <property name="maximum_size"></property>
                                 <property name="minimum_size"></property>
-                                <property name="name">m_3DPanel</property>
+                                <property name="name">render_panel_</property>
                                 <property name="permission">protected</property>
                                 <property name="pos"></property>
                                 <property name="size"></property>
@@ -586,7 +586,7 @@
                                 <event name="OnUpdateUI"></event>
                                 <object class="wxBoxSizer" expanded="1">
                                     <property name="minimum_size"></property>
-                                    <property name="name">m_3DSizer</property>
+                                    <property name="name">render_sizer_</property>
                                     <property name="orient">wxVERTICAL</property>
                                     <property name="permission">protected</property>
                                     <object class="sizeritem" expanded="1">
@@ -605,7 +605,7 @@
                                             <property name="margins"></property>
                                             <property name="maximum_size"></property>
                                             <property name="minimum_size"></property>
-                                            <property name="name">m_Views</property>
+                                            <property name="name">views_</property>
                                             <property name="packing">1</property>
                                             <property name="permission">protected</property>
                                             <property name="pos"></property>

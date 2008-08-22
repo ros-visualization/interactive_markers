@@ -59,11 +59,11 @@ RobotModelVisualizer::~RobotModelVisualizer()
 
 void RobotModelVisualizer::clear()
 {
-  M_StringToEntity::iterator modelIt = models_.begin();
-  M_StringToEntity::iterator modelEnd = models_.end();
-  for ( ; modelIt != modelEnd; ++modelIt )
+  M_StringToEntity::iterator model_it = models_.begin();
+  M_StringToEntity::iterator model_end = models_.end();
+  for ( ; model_it != model_end; ++model_it )
   {
-    Ogre::Entity* entity = modelIt->second;
+    Ogre::Entity* entity = model_it->second;
     Ogre::SceneNode* node = entity->getParentSceneNode();
 
     node->detachObject( entity );
@@ -108,18 +108,18 @@ void RobotModelVisualizer::load()
   V_Link links;
   file->getLinks(links);
 
-  V_Link::iterator linkIt = links.begin();
-  V_Link::iterator linkEnd = links.end();
-  for ( ; linkIt != linkEnd; ++linkIt )
+  V_Link::iterator link_it = links.begin();
+  V_Link::iterator link_end = links.end();
+  for ( ; link_it != link_end; ++link_it )
   {
-    robot_desc::URDF::Link* link = *linkIt;
+    robot_desc::URDF::Link* link = *link_it;
     robot_desc::URDF::Link::Geometry::Mesh* mesh = static_cast<robot_desc::URDF::Link::Geometry::Mesh*>(link->visual->geometry->shape);
     if ( mesh->filename.empty() )
     {
       continue;
     }
 
-    std::string modelName = mesh->filename + "_hi.mesh";
+    std::string model_name = mesh->filename + "_hi.mesh";
 
     Ogre::SceneNode* node = root_node_->createChildSceneNode();
     try
@@ -130,12 +130,12 @@ void RobotModelVisualizer::load()
 
       printf( "link name: %s\n", link->name.c_str() );
 
-      Ogre::Entity* entity = scene_manager_->createEntity( ss.str(), modelName );
+      Ogre::Entity* entity = scene_manager_->createEntity( ss.str(), model_name );
       models_[ link->name ] = entity;
 
       // assign the material from the link
-      uint16_t numSubEntities = entity->getNumSubEntities();
-      for ( uint16_t i = 0; i < numSubEntities; ++i )
+      uint16_t num_sub_entities = entity->getNumSubEntities();
+      for ( uint16_t i = 0; i < num_sub_entities; ++i )
       {
         Ogre::SubEntity* subEntity = entity->getSubEntity( i );
 
@@ -143,12 +143,12 @@ void RobotModelVisualizer::load()
         V_string gazebo_names;
         link->visual->data.getMapTagNames("gazebo", gazebo_names);
 
-        V_string::iterator nameIt = gazebo_names.begin();
-        V_string::iterator nameEnd = gazebo_names.end();
-        for ( ; nameIt != nameEnd; ++nameIt )
+        V_string::iterator name_it = gazebo_names.begin();
+        V_string::iterator name_end = gazebo_names.end();
+        for ( ; name_it != name_end; ++name_it )
         {
           typedef std::map<std::string, std::string> M_string;
-          M_string m = link->visual->data.getMapTagValues("gazebo", *nameIt);
+          M_string m = link->visual->data.getMapTagValues("gazebo", *name_it);
 
           M_string::iterator it = m.find( "material" );
           if ( it != m.end() )
@@ -163,7 +163,7 @@ void RobotModelVisualizer::load()
     }
     catch( Ogre::Exception& e )
     {
-      printf( "Could not load model '%s' for link '%s': %s\n", modelName.c_str(), link->name.c_str(), e.what() );
+      printf( "Could not load model '%s' for link '%s': %s\n", model_name.c_str(), link->name.c_str(), e.what() );
     }
   }
 
@@ -222,12 +222,12 @@ void RobotModelVisualizer::incomingTransform()
 
 void RobotModelVisualizer::UpdateTransforms()
 {
-  M_StringToEntity::iterator modelIt = models_.begin();
-  M_StringToEntity::iterator modelEnd = models_.end();
-  for ( ; modelIt != modelEnd; ++modelIt )
+  M_StringToEntity::iterator model_it = models_.begin();
+  M_StringToEntity::iterator model_end = models_.end();
+  for ( ; model_it != model_end; ++model_it )
   {
-    const std::string& name = modelIt->first;
-    Ogre::Entity* entity = modelIt->second;
+    const std::string& name = model_it->first;
+    Ogre::Entity* entity = model_it->second;
     Ogre::SceneNode* node = entity->getParentSceneNode();
 
     libTF::TFPose pose = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0, "" };

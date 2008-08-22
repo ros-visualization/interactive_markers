@@ -185,8 +185,8 @@ void PointCloudVisualizer::incomingCloudCallback()
   points_.clear();
 
   // First find the min/max intensity values
-  float minIntensity = 999999.0f;
-  float maxIntensity = -999999.0f;
+  float min_intensity = 999999.0f;
+  float max_intensity = -999999.0f;
 
   uint32_t pointCount = message_.get_pts_size();
   for(uint32_t i = 0; i < pointCount; i++)
@@ -194,11 +194,11 @@ void PointCloudVisualizer::incomingCloudCallback()
     float& intensity = message_.chan[0].vals[i];
     // arbitrarily cap to 4096 for now
     intensity = std::min( intensity, 4096.0f );
-    minIntensity = std::min( minIntensity, intensity );
-    maxIntensity = std::max( maxIntensity, intensity );
+    min_intensity = std::min( min_intensity, intensity );
+    max_intensity = std::max( max_intensity, intensity );
   }
 
-  float diffIntensity = maxIntensity - minIntensity;
+  float diff_intensity = max_intensity - min_intensity;
 
   points_.resize( pointCount );
   for(uint32_t i = 0; i < pointCount; i++)
@@ -208,18 +208,18 @@ void PointCloudVisualizer::incomingCloudCallback()
 
     float intensity = message_.chan[0].vals[i];
 
-    float normalizedIntensity = diffIntensity > 0.0f ? ( intensity - minIntensity ) / diffIntensity : 1.0f;
+    float normalized_intensity = diff_intensity > 0.0f ? ( intensity - min_intensity ) / diff_intensity : 1.0f;
 
     Ogre::Vector3 color( r_, g_, b_ );
-    color *= normalizedIntensity;
+    color *= normalized_intensity;
 
-    ogre_tools::PointCloud::Point& currentPoint = points_[ i ];
-    currentPoint.x_ = point.x;
-    currentPoint.y_ = point.y;
-    currentPoint.z_ = point.z;
-    currentPoint.r_ = color.x;
-    currentPoint.g_ = color.y;
-    currentPoint.b_ = color.z;
+    ogre_tools::PointCloud::Point& current_point = points_[ i ];
+    current_point.x_ = point.x;
+    current_point.y_ = point.y;
+    current_point.z_ = point.z;
+    current_point.r_ = color.x;
+    current_point.g_ = color.y;
+    current_point.b_ = color.z;
   }
 
   {
@@ -238,14 +238,14 @@ void PointCloudVisualizer::incomingCloudCallback()
 
 void PointCloudVisualizer::fillPropertyGrid( wxPropertyGrid* property_grid )
 {
-  wxArrayString styleNames;
-  styleNames.Add( wxT("Billboards") );
-  styleNames.Add( wxT("Points") );
-  wxArrayInt styleIds;
-  styleIds.Add( Billboards );
-  styleIds.Add( Points );
+  wxArrayString style_names;
+  style_names.Add( wxT("Billboards") );
+  style_names.Add( wxT("Points") );
+  wxArrayInt style_ids;
+  style_ids.Add( Billboards );
+  style_ids.Add( Points );
 
-  property_grid->Append( new wxEnumProperty( STYLE_PROPERTY, wxPG_LABEL, styleNames, styleIds, style_ ) );
+  property_grid->Append( new wxEnumProperty( STYLE_PROPERTY, wxPG_LABEL, style_names, style_ids, style_ ) );
 
   property_grid->Append( new ROSTopicProperty( ros_node_, TOPIC_PROPERTY, wxPG_LABEL, wxString::FromAscii( topic_.c_str() ) ) );
   property_grid->Append( new wxColourProperty( COLOR_PROPERTY, wxPG_LABEL, wxColour( r_ * 255, g_ * 255, b_ * 255 ) ) );

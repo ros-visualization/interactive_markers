@@ -31,8 +31,8 @@ wxOgreRenderWindow::wxOgreRenderWindow (Ogre::Root* ogre_root, wxWindow *parent,
     : wxControl( parent, id, pos, size, style, validator )
     , render_window_( 0 )
     , ogre_root_( ogre_root )
-    , m_PreRenderCallback( NULL )
-    , m_PostRenderCallback( NULL )
+    , pre_render_callback_( NULL )
+    , post_render_callback_( NULL )
 {
   SetBackgroundStyle(wxBG_STYLE_CUSTOM);
 
@@ -93,14 +93,14 @@ void wxOgreRenderWindow::setCameraAspectRatio()
 
 void wxOgreRenderWindow::setPreRenderCallback( abstractFunctor* func )
 {
-  delete m_PreRenderCallback;
-  m_PreRenderCallback = func;
+  delete pre_render_callback_;
+  pre_render_callback_ = func;
 }
 
 void wxOgreRenderWindow::setPostRenderCallback( abstractFunctor* func )
 {
-  delete m_PostRenderCallback;
-  m_PostRenderCallback = func;
+  delete post_render_callback_;
+  post_render_callback_ = func;
 }
 
 //------------------------------------------------------------------------------
@@ -108,16 +108,16 @@ void wxOgreRenderWindow::onPaint (wxPaintEvent &evt)
 {
   evt.Skip();
   
-  if ( m_PreRenderCallback )
+  if ( pre_render_callback_ )
   {
-    m_PreRenderCallback->call();
+    pre_render_callback_->call();
   }
   
   render_window_->update();
   
-  if ( m_PostRenderCallback )
+  if ( post_render_callback_ )
   {
-    m_PostRenderCallback->call();
+    post_render_callback_->call();
   }
 }
 

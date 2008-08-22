@@ -112,8 +112,8 @@ protected:
   
   void setCameraAspectRatio();
 
-  abstractFunctor* m_PreRenderCallback;
-  abstractFunctor* m_PostRenderCallback;
+  abstractFunctor* pre_render_callback_;
+  abstractFunctor* post_render_callback_;
 };
 
 } // namespace ogre_tools
