@@ -58,6 +58,7 @@ GridVisualizer::GridVisualizer( Ogre::SceneManager* scene_manager, ros::node* no
 
 GridVisualizer::~GridVisualizer()
 {
+  delete grid_;
 }
 
 void GridVisualizer::onEnable()

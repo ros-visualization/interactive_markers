@@ -22,6 +22,7 @@ rospack_add_library(ogrevisualizer src/ogre_visualizer/visualization_panel.cpp
 				   												 src/ogre_visualizer/visualizers/point_cloud_visualizer.cpp
 				   												 src/ogre_visualizer/visualizers/laser_scan_visualizer.cpp
 				   												 src/ogre_visualizer/visualizers/robot_model_visualizer.cpp
+				   												 src/ogre_visualizer/visualizers/octree_visualizer.cpp
  				   												 src/ogre_visualizer/generated/visualization_panel_generated.cpp)
 target_link_libraries(ogrevisualizer ${wxWidgets_LIBRARIES})
 

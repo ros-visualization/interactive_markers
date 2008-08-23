@@ -37,6 +37,7 @@
 #include "../ogre_visualizer/visualizers/laser_scan_visualizer.h"
 #include "../ogre_visualizer/visualizers/robot_model_visualizer.h"
 #include "../ogre_visualizer/visualizers/marker_visualizer.h"
+#include "../ogre_visualizer/visualizers/octree_visualizer.h"
 
 #include "Ogre.h"
 
@@ -142,6 +143,7 @@ public:
     laserScan->setColor( 0.0f, 1.0f, 0.0f );
     laserScan->setDecayTime( 0.0f );
 
+    visualization_panel_->createVisualizer<OctreeVisualizer>( "Octree", true )->setOctreeTopic( "full_octree" );
     visualization_panel_->createVisualizer<MarkerVisualizer>( "Visualization Markers", true );
   }
 

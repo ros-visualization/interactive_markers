@@ -39,8 +39,10 @@
 
 #include "../visualizer_base.h"
 #include <scan_utils/OctreeMsg.h>
+#include <octree.h>
 
 #include <Ogre.h>
+
 namespace ogre_vis
 {
 
@@ -50,33 +52,40 @@ namespace ogre_vis
 		OctreeVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
 		virtual ~OctreeVisualizer();
 
-		void SetOctreeTopic( const std::string& topic );
-		void SetColor( float r, float g, float b );
+		void setOctreeTopic( const std::string& topic );
+		void setColor( float r, float g, float b );
 
-		virtual void Update( float dt );
+		// Overrides from VisualizerBase
+    virtual void fillPropertyGrid( wxPropertyGrid* property_grid );
+    virtual void propertyChanged( wxPropertyGridEvent& event );
+
+		virtual void update( float dt );
 
 	protected:
 		// overrides from VisualizerBase
-		virtual void OnEnable();
-		virtual void OnDisable();
-		void Subscribe();
-		void Unsubscribe();
+		virtual void onEnable();
+		virtual void onDisable();
+		void subscribe();
+		void unsubscribe();
 
-		void IncomingOctreeCallback();
+		void incomingOctreeCallback();
 
-		float m_R;
-		float m_G;
-		float m_B;
+		float r_;
+		float g_;
+		float b_;
 
-		Ogre::SceneNode* m_SceneNode;
-		Ogre::ManualObject* m_ManualObject;
-		Ogre::MaterialPtr m_Material;
-		std::string m_MaterialName;
-		std::string m_OctreeTopic;
+		Ogre::SceneNode* scene_node_;
+		Ogre::ManualObject* manual_object_;
+		Ogre::MaterialPtr material_;
+		std::string material_name_;
+		std::string octree_topic_;
 
-		scan_utils::OctreeMsg m_OctreeMessage;
+		scan_utils::OctreeMsg octree_message_;
+		typedef std::vector<Ogre::Vector3> V_Vector3;
+		V_Vector3 vertices_;
+		V_Vector3 normals_;
 
-		bool m_NewMessage;
+		bool new_message_;
 	};
 
 }
