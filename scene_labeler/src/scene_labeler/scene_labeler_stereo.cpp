@@ -8,12 +8,14 @@ int main(int argc, char **argv) {
   usleep(500000);
 
   for(int i=1; i<argc; i++) {
-    scene_labeler_stereo sl;
-    sl.processMsgs(string(argv[i]));
-    sl.publishAll();
+    SceneLabelerStereo sls;
+    cout << "start" << endl;
+    sls.processMsgs(string(argv[i]));
+    cout << "finished" << endl;
+    sls.publishAll();
     cout << "Press Enter to continue . . .\n";
     cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    sl.shutdown();
+    sls.shutdown();
 
   }
 

@@ -40,36 +40,51 @@ void copyMsg(string name, ros::msg* m, ros::Time t, void* n)
   }
 }
 
-class scene_labeler_stereo : public ros::node
+class SceneLabelerStereo : public ros::node
 {
 public:
   std_msgs::ImageArray videre_images_msg_;
   std_msgs::ImageArray labeled_images_msg_;
   std_msgs::Image intensity_image_msg_;
   std_msgs::PointCloudFloat32 full_cloud_msg_;
-  std_msgs::PointCloudFloat32 videre_cloud_msg_;
+  std_msgs::PointCloudFloat32 cloud_;
   std_msgs::String cal_params_msg_;
 
   std_msgs::PointCloudFloat32 full_cloud_colored_;
   std_msgs::PointCloudFloat32 videre_cloud_colored_;
 
   IplImage *mask_, *left_, *disp_;
+  map<int, SmartScan> ss_labels_;
+  vector< pair<int, SmartScan*> > ss_objs_; //label, ss
+  NEWMAT::Matrix trns_; //ptcld to image.
 
-  scene_labeler_stereo() 
-    : ros::node("scene_labeler"), mask_(0), left_(0), disp_(0)
+  SceneLabelerStereo() 
+    : ros::node("scene_labeler_stereo"), mask_(0), left_(0), disp_(0)
   {
     advertise<std_msgs::PointCloudFloat32>("videre/cloud", 100);
     advertise<std_msgs::VisualizationMarker>("visualizationMarker", 100);
     advertise<std_msgs::ImageArray>("labeled_images", 100);
     advertise<std_msgs::ImageArray>("videre/images", 100);
+
+    trns_ = NEWMAT::Matrix(3,4); trns_ = 0.0;
   }
+
+  ~SceneLabelerStereo() 
+    {
+      cvReleaseImage(&mask_);
+      cvReleaseImage(&disp_);
+      cvReleaseImage(&left_);
+      for(int i=0; i<ss_objs_.size(); i++) {
+	delete ss_objs_[i].second;
+      }
+    }
 
   void processMsgs(string file1) {
     cout << "Loading messages... "; flush(cout);
     lp.open(file1, ros::Time(0));
     lp.addHandler<std_msgs::ImageArray>(string("videre/images"), &copyMsg<std_msgs::ImageArray>, (void*)(&videre_images_msg_), true);
     lp.addHandler<std_msgs::ImageArray>(string("labeled_images"), &copyMsg<std_msgs::ImageArray>, (void*)(&labeled_images_msg_), true);
-    lp.addHandler<std_msgs::PointCloudFloat32>(string("videre/cloud_smallv"), &copyMsg<std_msgs::PointCloudFloat32>, (void*)(&videre_cloud_msg_), true);
+    lp.addHandler<std_msgs::PointCloudFloat32>(string("videre/cloud_smallv"), &copyMsg<std_msgs::PointCloudFloat32>, (void*)(&cloud_), true);
     lp.addHandler<std_msgs::String>(string("videre/cal_params"), &copyMsg<std_msgs::String>, (void*)(&cal_params_msg_), true);
     while(lp.nextMsg()); //Load all the messages.
     cout << "Done." << endl;
@@ -86,13 +101,13 @@ public:
     assert(bridge_disp_->to_cv(&disp_));
     cout << "Done." << endl;
   
-/*     // -- Old time stamps anger rostf. */
-/*     full_cloud_msg_.header.stamp = ros::Time::now(); */
-/*     videre_cloud_msg_.header.stamp = ros::Time::now(); */
+    // -- Old time stamps anger rostf.
+    cloud_.header.stamp = ros::Time::now();
     
     // -- Propagate the labels.
-    cout << "labeling videre with frame id " << videre_cloud_msg_.header.frame_id << endl;
-    labelCloud(&videre_cloud_msg_);
+    //cout << "labeling videre with frame id " << cloud_.header.frame_id << endl;
+    labelCloud(&cloud_);
+    extractObjectsFromCloud();
   }
 
   void publishAll() {
@@ -125,11 +140,23 @@ public:
 /*     cvWaitKey(); */
 
     // -- Publish the messages.
-    cout << "Publishing... " << endl;
-    videre_cloud_colored_ = colorPointCloud(videre_cloud_msg_); 
+    cout << "Publishing original messages... " << endl;
+    videre_cloud_colored_ = colorPointCloud(cloud_); 
     publish("videre/cloud", videre_cloud_colored_);
     publish("labeled_images", labeled_images_msg_);
     publish("videre/images", videre_images_msg_);
+    cout << "Press Enter to continue . . . \n";
+    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    // -- Show the objects and their labels.
+    cout << "Showing objects..." << endl;
+    for(int i=0; i<ss_objs_.size(); i++) {
+      std_msgs::PointCloudFloat32 debug = ss_objs_[i].second->getPointCloud();
+      debug.header.frame_id = "FRAMEID_SMALLV";
+      publish("videre/cloud", debug);
+      cout << "Published object " << i << ". Press Enter to continue . . .\n";
+      cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
   }
 
 
@@ -150,12 +177,11 @@ public:
 
     //This is terrible.
     sscanf(proj.c_str(), "%*s %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %*s", &trnsele[0], &trnsele[1], &trnsele[2], &trnsele[3], &trnsele[4], &trnsele[5], &trnsele[6], &trnsele[7], &trnsele[8], &trnsele[9], &trnsele[10], &trnsele[11]);
-    
-    NEWMAT::Matrix trns(3,4);
-    trns << trnsele;
-    cout << "trns: " << endl << trns << endl;
+   
+    trns_ << trnsele;
+    //cout << "trns: " << endl << trns << endl;
 
-    // -- Put the videre_cloud_msg_ into a NEWMAT matrix and do the projection.
+    // -- Put the cloud_ into a NEWMAT matrix and do the projection.
     unsigned int n = ptcld->get_pts_size();
     NEWMAT::Matrix vid(4, n);
     NEWMAT::Real videle[4*n];
@@ -166,7 +192,7 @@ public:
       videle[i + 3*n] = 1;
     }
     vid << videle;
-    NEWMAT::Matrix projected = trns * vid;
+    NEWMAT::Matrix projected = trns_ * vid;
 
     // -- Normalize so z = 1.
     for ( unsigned int i=1; i<=n; i++) {
@@ -226,6 +252,81 @@ public:
     return ptcld;
 
   }
+
+  void getRandomPoint(float *x, float *y, float *z, float *row, float *col) {
+    int randId = 0;
+    srand(time(NULL));
+    randId = rand() % cloud_.size();
+    *x = cloud_.pts[randId].x;
+    *y = cloud_.pts[randId].y;
+    *z = cloud_.pts[randId].z;
+    NEWMAT::Matrix point(3,1);
+    point(1,1) = *x;
+    point(2,1) = *y;
+    point(3,1) = *z;
+    NEWMAT::Matrix projected = trns_ * point;
+    projected(1,1) = projected(1,1) / projected(3,1);
+    projected(2,1) = projected(2,1) / projected(3,1);
+    projected(3,1) = 1;
+    *row = projected(1,1);
+    *col = projected(2,1);
+  }
+
+  void extractObjectsFromCloud() {
+    map<int, int> nPts_for_label; //map<label, npts>
+    map<int, int>::iterator it;
+    std_msgs::PointCloudFloat32 debug;
+
+    // -- Find nPts of each label.
+    for(int i=0; i<cloud_.get_pts_size(); i++) {
+      int lbl = cloud_.chan[1].vals[i];
+      if(lbl == 0)
+	continue;
+
+      if(nPts_for_label.find(lbl) == nPts_for_label.end()) {
+	nPts_for_label[lbl] = 0;
+      }
+      nPts_for_label[lbl]++;
+    }
+
+    // -- For each label, make a SmartScan.
+    for(it = nPts_for_label.begin(); it != nPts_for_label.end(); it++) {
+      cout << "label " << it->first << " has " << it->second << " pts. " << endl;
+      float *pts = new float[it->second * 3];
+      int ptsctr = 0;
+      for(int i=0; i<cloud_.get_pts_size(); i++) {
+	if(cloud_.chan[1].vals[i] == it->first) {
+	  pts[ptsctr++] = cloud_.pts[i].x;
+	  pts[ptsctr++] = cloud_.pts[i].y;
+	  pts[ptsctr++] = cloud_.pts[i].z;
+	}
+      }
+
+      ss_labels_[it->first].setPoints(it->second, pts);
+/*       debug = ss_labels_[it->first].getPointCloud(); */
+/*       publish("videre/cloud", debug); */
+/*       cout << "Published cloud. Press Enter to continue . . .\n"; */
+/*       cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); */
+      delete[] pts; pts = NULL;
+    }
+
+    // -- For each ss_labels_, get connected components and clean up the cloud.
+    map<int, SmartScan>::iterator itss;
+    for(itss= ss_labels_.begin(); itss != ss_labels_.end(); itss++) {
+      vector<SmartScan*> *pcc = itss->second.connectedComponents(0.02, 1000);
+      vector<SmartScan*> cc = *pcc;
+      for(int i=0; i<cc.size(); i++) {
+	pair<int, SmartScan*> pr;
+	pr.first = itss->first;
+	pr.second = cc[i];
+	ss_objs_.push_back(pr);
+      }
+    }
+
+  }
+  
+
+      
 
 };
 #endif
