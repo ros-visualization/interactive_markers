@@ -256,7 +256,7 @@ public:
   void getRandomPoint(float *x, float *y, float *z, float *row, float *col) {
     int randId = 0;
     srand(time(NULL));
-    randId = rand() % cloud_.size();
+    randId = rand() % cloud_.get_pts_size();
     *x = cloud_.pts[randId].x;
     *y = cloud_.pts[randId].y;
     *z = cloud_.pts[randId].z;
