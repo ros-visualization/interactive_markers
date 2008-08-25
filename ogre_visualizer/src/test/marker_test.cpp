@@ -13,7 +13,9 @@ int main( int argc, char** argv )
     usleep( 10000 );
   }
 
-  node->advertise<std_msgs::VisualizationMarker>( "visualizationMarker" );
+  node->advertise<std_msgs::VisualizationMarker>( "visualizationMarker", 1 );
+
+  usleep( 100000 );
 
   std_msgs::VisualizationMarker marker;
   marker.id = 0;

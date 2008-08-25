@@ -52,7 +52,7 @@ PointCloud::PointCloud( Ogre::SceneManager* scene_manager )
 {
   static uint32_t count = 0;
   std::stringstream ss;
-  ss << "PointCloud" << count++;
+  ss << "ogre_tools::PointCloud" << count++;
 
   scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
   scene_node_->attachObject( this );

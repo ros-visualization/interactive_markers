@@ -43,7 +43,7 @@ SuperEllipsoid::SuperEllipsoid( Ogre::SceneManager* scene_manager, Ogre::SceneNo
 {
   static uint32_t count = 0;
   std::stringstream ss;
-  ss << "SuperEllipsoid" << count++;
+  ss << "ogre_tools::SuperEllipsoid" << count++;
 
   manual_object_ = scene_manager_->createManualObject( ss.str() );
 

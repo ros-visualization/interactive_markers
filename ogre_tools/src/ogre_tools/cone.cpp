@@ -10,7 +10,7 @@ Cone::Cone(Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node, int 
 {
   static uint32_t count = 0;
   std::stringstream ss;
-  ss << "Cone" << count++;
+  ss << "ogre_tools::Cone" << count++;
 
   manual_object_ = scene_manager_->createManualObject( ss.str() );
 
