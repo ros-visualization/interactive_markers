@@ -40,9 +40,11 @@ void copyMsg(string name, ros::msg* m, ros::Time t, void* n)
   }
 }
 
-class SceneLabelerStereo : public ros::node
+class SceneLabelerStereo
 {
 public:
+  ros::node* node_;
+
   std_msgs::ImageArray videre_images_msg_;
   std_msgs::ImageArray labeled_images_msg_;
   std_msgs::Image intensity_image_msg_;
@@ -58,18 +60,14 @@ public:
   vector< pair<int, SmartScan*> > ss_objs_; //label, ss
   NEWMAT::Matrix trns_; //ptcld to image.
 
-  SceneLabelerStereo() 
-    : ros::node("scene_labeler_stereo"), mask_(0), left_(0), disp_(0)
+ SceneLabelerStereo(ros::node* node) 
+   : node_(node), mask_(0), left_(0), disp_(0)
   {
-    advertise<std_msgs::PointCloudFloat32>("videre/cloud", 100);
-    advertise<std_msgs::VisualizationMarker>("visualizationMarker", 100);
-    advertise<std_msgs::ImageArray>("labeled_images", 100);
-    advertise<std_msgs::ImageArray>("videre/images", 100);
 
-    lp.addHandler<std_msgs::ImageArray>(string("videre/images"), &copyMsg<std_msgs::ImageArray>, (void*)(&videre_images_msg_), true);
-    lp.addHandler<std_msgs::ImageArray>(string("labeled_images"), &copyMsg<std_msgs::ImageArray>, (void*)(&labeled_images_msg_), true);
-    lp.addHandler<std_msgs::PointCloudFloat32>(string("videre/cloud_smallv"), &copyMsg<std_msgs::PointCloudFloat32>, (void*)(&cloud_), true);
-    lp.addHandler<std_msgs::String>(string("videre/cal_params"), &copyMsg<std_msgs::String>, (void*)(&cal_params_msg_), true);
+    node_->advertise<std_msgs::PointCloudFloat32>("videre/cloud", 100);
+    node_->advertise<std_msgs::VisualizationMarker>("visualizationMarker", 100);
+    node_->advertise<std_msgs::ImageArray>("labeled_images", 100);
+    node_->advertise<std_msgs::ImageArray>("videre/images", 100);
 
     trns_ = NEWMAT::Matrix(3,4); trns_ = 0.0;
   }
@@ -87,9 +85,17 @@ public:
   void processMsgs(string file1) {
     cout << "Loading messages... "; flush(cout);
     lp.open(file1, ros::Time(0));
+    lp.addHandler<std_msgs::ImageArray>(string("videre/images"), &copyMsg<std_msgs::ImageArray>, (void*)(&videre_images_msg_), true);
+    lp.addHandler<std_msgs::ImageArray>(string("labeled_images"), &copyMsg<std_msgs::ImageArray>, (void*)(&labeled_images_msg_), true);
+    lp.addHandler<std_msgs::PointCloudFloat32>(string("videre/cloud_smallv"), &copyMsg<std_msgs::PointCloudFloat32>, (void*)(&cloud_), true);
+    lp.addHandler<std_msgs::String>(string("videre/cal_params"), &copyMsg<std_msgs::String>, (void*)(&cal_params_msg_), true);
     while(lp.nextMsg()); //Load all the messages.
     lp.close();
     cout << "Done." << endl;
+
+    cout << labeled_images_msg_.images[2].label << endl; 
+    cout << "Image: " << labeled_images_msg_.images[2].compression << " ";
+
 
     // -- Get the labeled mask out of the labeled images array.
     cout << "Extracting images...";
@@ -144,9 +150,9 @@ public:
     // -- Publish the messages.
     cout << "Publishing original messages... " << endl;
     videre_cloud_colored_ = colorPointCloud(cloud_); 
-    publish("videre/cloud", videre_cloud_colored_);
-    publish("labeled_images", labeled_images_msg_);
-    publish("videre/images", videre_images_msg_);
+    node_->publish("videre/cloud", videre_cloud_colored_);
+    node_->publish("labeled_images", labeled_images_msg_);
+    node_->publish("videre/images", videre_images_msg_);
     cout << "Press Enter to continue . . . \n";
     cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
@@ -155,7 +161,7 @@ public:
     for(unsigned int i=0; i<ss_objs_.size(); i++) {
       std_msgs::PointCloudFloat32 debug = ss_objs_[i].second->getPointCloud();
       debug.header.frame_id = "FRAMEID_SMALLV";
-      publish("videre/cloud", debug);
+      node_->publish("videre/cloud", debug);
       cout << "Published object " << i << ". Press Enter to continue . . .\n";
       cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
@@ -319,7 +325,7 @@ public:
 
       ss_labels_[it->first].setPoints(it->second, pts);
 /*       debug = ss_labels_[it->first].getPointCloud(); */
-/*       publish("videre/cloud", debug); */
+/*       node_->publish("videre/cloud", debug); */
 /*       cout << "Published cloud. Press Enter to continue . . .\n"; */
 /*       cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); */
       delete[] pts; pts = NULL;
