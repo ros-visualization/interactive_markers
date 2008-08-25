@@ -272,6 +272,19 @@ public:
     *col = projected(2,1);
   }
 
+  void getImageIdx(float x, float y, float z, float *row, float*col) {
+    NEWMAT::Matrix point(3,1);
+    point(1,1) = x;
+    point(2,1) = y;
+    point(3,1) = z;
+    NEWMAT::Matrix projected = trns_ * point;
+    projected(1,1) = projected(1,1) / projected(3,1);
+    projected(2,1) = projected(2,1) / projected(3,1);
+    projected(3,1) = 1;
+    *row = projected(1,1);
+    *col = projected(2,1);
+  }
+
   void extractObjectsFromCloud() {
     map<int, int> nPts_for_label; //map<label, npts>
     map<int, int>::iterator it;
@@ -324,9 +337,6 @@ public:
     }
 
   }
-  
-
-      
-
 };
+
 #endif
