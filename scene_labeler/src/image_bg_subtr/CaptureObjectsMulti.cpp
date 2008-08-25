@@ -624,7 +624,7 @@ int main( int argc, char** argv )
 	  // -- Add an image to the ImageArray which contains mask.
 	  node.labelMask.label = string("labeling");
 	  node.labelMask.compression = string("raw");
-	  node.bridge_out->from_cv(mask, 100); //Puts mask into node.labelMask Image ros msg.
+	  node.bridge_out->from_cv(mask); //Puts mask into node.labelMask Image ros msg.
 	  v.push_back(node.labelMask);
 	  lb.set_images_vec(v);
 	  node.publish("labeled_images", lb);
