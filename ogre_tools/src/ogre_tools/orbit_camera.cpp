@@ -192,7 +192,7 @@ void OrbitCamera::mouseRightDrag( int diff_x, int diff_y )
 
 void OrbitCamera::scrollWheel( int diff )
 {
-  zoom( diff * 0.01 );
+  move( 0.0f, 0.0f, -diff * 0.01 );
 }
 
 } // namespace ogre_tools
