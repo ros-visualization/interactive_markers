@@ -66,6 +66,11 @@ public:
     advertise<std_msgs::ImageArray>("labeled_images", 100);
     advertise<std_msgs::ImageArray>("videre/images", 100);
 
+    lp.addHandler<std_msgs::ImageArray>(string("videre/images"), &copyMsg<std_msgs::ImageArray>, (void*)(&videre_images_msg_), true);
+    lp.addHandler<std_msgs::ImageArray>(string("labeled_images"), &copyMsg<std_msgs::ImageArray>, (void*)(&labeled_images_msg_), true);
+    lp.addHandler<std_msgs::PointCloudFloat32>(string("videre/cloud_smallv"), &copyMsg<std_msgs::PointCloudFloat32>, (void*)(&cloud_), true);
+    lp.addHandler<std_msgs::String>(string("videre/cal_params"), &copyMsg<std_msgs::String>, (void*)(&cal_params_msg_), true);
+
     trns_ = NEWMAT::Matrix(3,4); trns_ = 0.0;
   }
 
@@ -74,7 +79,7 @@ public:
       cvReleaseImage(&mask_);
       cvReleaseImage(&disp_);
       cvReleaseImage(&left_);
-      for(int i=0; i<ss_objs_.size(); i++) {
+      for(unsigned int i=0; i<ss_objs_.size(); i++) {
 	delete ss_objs_[i].second;
       }
     }
@@ -82,11 +87,8 @@ public:
   void processMsgs(string file1) {
     cout << "Loading messages... "; flush(cout);
     lp.open(file1, ros::Time(0));
-    lp.addHandler<std_msgs::ImageArray>(string("videre/images"), &copyMsg<std_msgs::ImageArray>, (void*)(&videre_images_msg_), true);
-    lp.addHandler<std_msgs::ImageArray>(string("labeled_images"), &copyMsg<std_msgs::ImageArray>, (void*)(&labeled_images_msg_), true);
-    lp.addHandler<std_msgs::PointCloudFloat32>(string("videre/cloud_smallv"), &copyMsg<std_msgs::PointCloudFloat32>, (void*)(&cloud_), true);
-    lp.addHandler<std_msgs::String>(string("videre/cal_params"), &copyMsg<std_msgs::String>, (void*)(&cal_params_msg_), true);
     while(lp.nextMsg()); //Load all the messages.
+    lp.close();
     cout << "Done." << endl;
 
     // -- Get the labeled mask out of the labeled images array.
@@ -150,7 +152,7 @@ public:
 
     // -- Show the objects and their labels.
     cout << "Showing objects..." << endl;
-    for(int i=0; i<ss_objs_.size(); i++) {
+    for(unsigned int i=0; i<ss_objs_.size(); i++) {
       std_msgs::PointCloudFloat32 debug = ss_objs_[i].second->getPointCloud();
       debug.header.frame_id = "FRAMEID_SMALLV";
       publish("videre/cloud", debug);
@@ -291,7 +293,7 @@ public:
     std_msgs::PointCloudFloat32 debug;
 
     // -- Find nPts of each label.
-    for(int i=0; i<cloud_.get_pts_size(); i++) {
+    for(unsigned int i=0; i<cloud_.get_pts_size(); i++) {
       int lbl = cloud_.chan[1].vals[i];
       if(lbl == 0)
 	continue;
@@ -307,7 +309,7 @@ public:
       cout << "label " << it->first << " has " << it->second << " pts. " << endl;
       float *pts = new float[it->second * 3];
       int ptsctr = 0;
-      for(int i=0; i<cloud_.get_pts_size(); i++) {
+      for(unsigned int i=0; i<cloud_.get_pts_size(); i++) {
 	if(cloud_.chan[1].vals[i] == it->first) {
 	  pts[ptsctr++] = cloud_.pts[i].x;
 	  pts[ptsctr++] = cloud_.pts[i].y;
@@ -328,7 +330,7 @@ public:
     for(itss= ss_labels_.begin(); itss != ss_labels_.end(); itss++) {
       vector<SmartScan*> *pcc = itss->second.connectedComponents(0.02, 1000);
       vector<SmartScan*> cc = *pcc;
-      for(int i=0; i<cc.size(); i++) {
+      for(unsigned int i=0; i<cc.size(); i++) {
 	pair<int, SmartScan*> pr;
 	pr.first = itss->first;
 	pr.second = cc[i];
