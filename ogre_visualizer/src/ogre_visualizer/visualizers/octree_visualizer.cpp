@@ -133,12 +133,15 @@ void OctreeVisualizer::update(float dt)
 
   if (new_message_)
   {
+    const size_t numVertices = vertices_.size();
+    printf( "Received an octree with %d vertices\n", numVertices );
+
     manual_object_->clear();
+    manual_object_->estimateVertexCount( numVertices );
     manual_object_->begin(material_name_, Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
     size_t vertexIndex = 0;
     size_t normalIndex = 0;
-    const size_t numVertices = vertices_.size();
     for ( ; vertexIndex < numVertices; )
     {
       Ogre::Vector3& v1 = vertices_[vertexIndex++];
@@ -157,11 +160,11 @@ void OctreeVisualizer::update(float dt)
     manual_object_->end();
 
     new_message_ = false;
+
+    causeRender();
   }
 
   octree_message_.unlock();
-
-  causeRender();
 }
 
 void OctreeVisualizer::incomingOctreeCallback()
