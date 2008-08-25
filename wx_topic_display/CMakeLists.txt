@@ -30,6 +30,7 @@ include_directories(${PROJECT_SOURCE_DIR}/src)
 rospack_add_library(wxtopicdisplay src/wx_topic_display/TopicDisplay.cpp
                                    src/wx_topic_display/GenTopicDisplay.cpp
 				   src/wx_topic_display/TopicDisplayDialog.cpp)
+target_link_libraries(wxtopicdisplay ${wxWidgets_LIBRARIES})
 
 rospack_add_executable(simpletest src/test/test.cpp
                             src/test/GenTestTopicDisplay.cpp)
