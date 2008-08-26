@@ -7,11 +7,11 @@ int main(int argc, char **argv) {
   ros::init(argc, argv);
   usleep(500000);
 
-  ros::node node("scene_labeler_stereo");
-  usleep(500000);
-
   for(int i=1; i<argc; i++) {
+    ros::node node("scene_labeler_stereo");
+    usleep(500000);
     SceneLabelerStereo sls(&node);
+
     cout << "start" << endl;
     sls.processMsgs(string(argv[i]));
     cout << "finished" << endl;
@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
     cout << "Press Enter to continue . . .\n";
     cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     sls.node_->shutdown();
-
+    node.shutdown();
   }
 
   usleep(500000);
