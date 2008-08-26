@@ -16,34 +16,29 @@ def check_for_msg(line):
 
 dirname = sys.argv[1]
 filebase = "fg"
-snap = "$ROS_PACKAGE_PATH/util/megamaid/bin/dustbuster --seq " + dirname + " " + filebase + " videre/cal_params labeled_images videre/cloud_smallv videre/images"
+snap = "`rospack find megamaid`/bin/dustbuster --seq " + dirname + " " + filebase + " videre/cal_params labeled_images videre/cloud_smallv videre/images"
 printr("using cmd: " + snap)
-p = sub.Popen("xterm -e $ROS_PACKAGE_PATH/visualization/scene_labeler/bin/image_bg_subtr", shell=True)
+p = sub.Popen("xterm -e `rospack find scene_labeler`/bin/image_bg_subtr_multi", shell=True)
+
+printr( "Set projector blank" )
 
 while True:
     printr( "Starting scene collection.")
-    os.system('ssh -f prc0 "killall gthumb"')
-    time.sleep(.3)
-    os.system('ssh -f prc0 "DISPLAY=:0.0 gthumb /home/teichman/Desktop/projector-off.png -f"')
     printr("Press enter when you have constructed your mask in image_bg_subtr")
     raw_input("")
-    os.system('ssh -f prc0 "killall gthumb"')
-    time.sleep(.3)
-    os.system('ssh -f prc0 "DISPLAY=:0.0 gthumb ~/Desktop/y3.png -f"')
-    time.sleep(2)
+    os.system('ssh -f prc0 "killall -s USR1 lpg"')
+    time.sleep(1)
                 
     snap_p = sub.Popen(snap, shell=True, stdout=sub.PIPE);
     nMsgs = 0;
     while True:
         line = snap_p.stdout.readline()
         nMsgs += check_for_msg(line)
-        if(nMsgs == 6):
+        if(nMsgs == 3):
             break
         
     printr( "All msgs but labeled_images have been recorded.")
-    os.system('ssh -f prc0 "killall gthumb"')
-    time.sleep(.3)
-    os.system('ssh -f prc0 "DISPLAY=:0.0 gthumb /home/teichman/Desktop/projector-off.png -f"')
+    os.system('ssh -f prc0 "killall -s USR1 lpg"')
     printr( "Now send output from image_bg_subtr by pressing 'o' in the segmentation window.")
     snap_p.wait()
     printr( "=== Done collecting that scene. ===")
