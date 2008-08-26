@@ -43,63 +43,86 @@ Ogre::RenderWindow* g_render_window = NULL;
 
 using namespace ogre_tools;
 
-void initializeOgre()
+class TestEnvironment : public testing::Environment
 {
-  if ( g_initialized )
+public:
+  virtual void SetUp()
   {
-    return;
-  }
+    Ogre::LogManager* log_manager = new Ogre::LogManager();
+    log_manager->createLog( "Ogre.log", false, false, true );
 
-  g_root = new Ogre::Root();
-  EXPECT_EQ( 0, 0 );
-  g_root->loadPlugin( "RenderSystem_GL" );
-  g_root->loadPlugin( "Plugin_OctreeSceneManager" );
+    g_root = new Ogre::Root();
+    g_root->loadPlugin( "RenderSystem_GL" );
+    g_root->loadPlugin( "Plugin_OctreeSceneManager" );
 
-  Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
+    Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
 
-  // Taken from gazebo
-  Ogre::RenderSystemList *rsList = g_root->getAvailableRenderers();
+    // Taken from gazebo
+    Ogre::RenderSystemList *rsList = g_root->getAvailableRenderers();
 
-  Ogre::RenderSystem* render_system = NULL;
-  Ogre::RenderSystemList::iterator renderIt = rsList->begin();
-  Ogre::RenderSystemList::iterator renderEnd = rsList->end();
-  for ( ; renderIt != renderEnd; ++renderIt )
-  {
+    Ogre::RenderSystem* render_system = NULL;
+    Ogre::RenderSystemList::iterator renderIt = rsList->begin();
+    Ogre::RenderSystemList::iterator renderEnd = rsList->end();
+    for ( ; renderIt != renderEnd; ++renderIt )
+    {
       render_system = *renderIt;
 
       if ( render_system->getName() == "OpenGL Rendering Subsystem" )
       {
-          break;
+        break;
       }
+    }
+
+    if ( render_system == NULL )
+    {
+      printf( "Could not find the opengl rendering subsystem!\n" );
+      exit(1);
+    }
+
+    render_system->setConfigOption("Full Screen","No");
+    render_system->setConfigOption("FSAA","2");
+    render_system->setConfigOption("RTT Preferred Mode", "PBuffer");
+
+    g_root->setRenderSystem( render_system );
+    g_render_window = g_root->initialise( true );
+    g_scene_manager = g_root->createSceneManager( Ogre::ST_GENERIC, "TestSceneManager" );
+    g_viewport = g_render_window->addViewport( NULL );
+
+    g_root->renderOneFrame();
   }
 
-  if ( render_system == NULL )
+  virtual void TearDown()
   {
-    printf( "Could not find the opengl rendering subsystem!\n" );
-    exit(1);
+    g_scene_manager->clearScene();
+    g_root->destroySceneManager( g_scene_manager );
+
+    delete g_root;
   }
+};
 
-  render_system->setConfigOption("Full Screen","No");
-  render_system->setConfigOption("FSAA","2");
-  render_system->setConfigOption("RTT Preferred Mode", "PBuffer");
+#define EXPECT_VECTOR_EQ( expected, actual ) \
+  EXPECT_FLOAT_EQ( expected.x, actual.x ); \
+  EXPECT_FLOAT_EQ( expected.y, actual.y ); \
+  EXPECT_FLOAT_EQ( expected.z, actual.z );
 
-  g_root->setRenderSystem( render_system );
-  g_render_window = g_root->initialise( true );
-  g_scene_manager = g_root->createSceneManager( Ogre::ST_GENERIC, "TestSceneManager" );
-  g_viewport = g_render_window->addViewport( NULL );
+#define EXPECT_VECTOR_NEAR( expected, actual, tolerance ) \
+  EXPECT_NEAR( expected.x, actual.x, tolerance ); \
+  EXPECT_NEAR( expected.y, actual.y, tolerance ); \
+  EXPECT_NEAR( expected.z, actual.z, tolerance );
 
-  g_initialized = true;
-}
+#define EXPECT_QUATERNION_EQ( expected, actual ) \
+  EXPECT_FLOAT_EQ( expected.x, actual.x ); \
+  EXPECT_FLOAT_EQ( expected.y, actual.y ); \
+  EXPECT_FLOAT_EQ( expected.z, actual.z ); \
+  EXPECT_FLOAT_EQ( expected.w, actual.w );
 
-void cleanupOgre()
-{
-  g_scene_manager->clearScene();
-  g_root->destroySceneManager( g_scene_manager );
+#define EXPECT_QUATERNION_NEAR( expected, actual, tolerance ) \
+  EXPECT_NEAR( expected.x, actual.x, tolerance ); \
+  EXPECT_NEAR( expected.y, actual.y, tolerance ); \
+  EXPECT_NEAR( expected.z, actual.z, tolerance ); \
+  EXPECT_NEAR( expected.w, actual.w, tolerance );
 
-  delete g_root;
-}
-
-TEST(Camera, orbitSetPosition)
+TEST(OrbitCamera, setPosition)
 {
   OrbitCamera* orbit_cam = new OrbitCamera( g_scene_manager );
   g_viewport->setCamera( orbit_cam->getOgreCamera() );
@@ -108,16 +131,14 @@ TEST(Camera, orbitSetPosition)
   orbit_cam->CameraBase::setPosition( expected_position );
   Ogre::Vector3 actual_position = orbit_cam->getPosition();
 
-  EXPECT_FLOAT_EQ( expected_position.x, actual_position.x );
-  EXPECT_FLOAT_EQ( expected_position.y, actual_position.y );
-  EXPECT_FLOAT_EQ( expected_position.z, actual_position.z );
+  EXPECT_VECTOR_EQ( expected_position, actual_position );
 
   g_viewport->setCamera( NULL );
 
   delete orbit_cam;
 }
 
-TEST(Camera, orbitSetOrientation)
+TEST(OrbitCamera, setOrientation)
 {
   OrbitCamera* orbit_cam = new OrbitCamera( g_scene_manager );
   g_viewport->setCamera( orbit_cam->getOgreCamera() );
@@ -129,17 +150,14 @@ TEST(Camera, orbitSetOrientation)
 
   Ogre::Quaternion actual_orientation = orbit_cam->getOrientation();
 
-  EXPECT_NEAR( expected_orientation.x, actual_orientation.x, 0.000001 );
-  EXPECT_NEAR( expected_orientation.y, actual_orientation.y, 0.000001 );
-  EXPECT_NEAR( expected_orientation.z, actual_orientation.z, 0.000001 );
-  EXPECT_NEAR( expected_orientation.w, actual_orientation.w, 0.000001 );
+  EXPECT_QUATERNION_NEAR( expected_orientation, actual_orientation, 0.000001 );
 
   g_viewport->setCamera( NULL );
 
   delete orbit_cam;
 }
 
-TEST(Camera, fpsSetPosition)
+TEST(FPSCamera, setPosition)
 {
   FPSCamera* fps_cam = new FPSCamera( g_scene_manager );
   g_viewport->setCamera( fps_cam->getOgreCamera() );
@@ -148,16 +166,14 @@ TEST(Camera, fpsSetPosition)
   fps_cam->CameraBase::setPosition( expected_position );
   Ogre::Vector3 actual_position = fps_cam->getPosition();
 
-  EXPECT_FLOAT_EQ( expected_position.x, actual_position.x );
-  EXPECT_FLOAT_EQ( expected_position.y, actual_position.y );
-  EXPECT_FLOAT_EQ( expected_position.z, actual_position.z );
+  EXPECT_VECTOR_EQ( expected_position, actual_position );
 
   g_viewport->setCamera( NULL );
 
   delete fps_cam;
 }
 
-TEST(Camera, fpsSetOrientation)
+TEST(FPSCamera, setOrientation)
 {
   FPSCamera* fps_cam = new FPSCamera( g_scene_manager );
   g_viewport->setCamera( fps_cam->getOgreCamera() );
@@ -169,26 +185,168 @@ TEST(Camera, fpsSetOrientation)
 
   Ogre::Quaternion actual_orientation = fps_cam->getOrientation();
 
-  EXPECT_NEAR( expected_orientation.x, actual_orientation.x, 0.000001 );
-  EXPECT_NEAR( expected_orientation.y, actual_orientation.y, 0.000001 );
-  EXPECT_NEAR( expected_orientation.z, actual_orientation.z, 0.000001 );
-  EXPECT_NEAR( expected_orientation.w, actual_orientation.w, 0.000001 );
+  EXPECT_QUATERNION_NEAR( expected_orientation, actual_orientation, 0.000001 );
 
   g_viewport->setCamera( NULL );
 
   delete fps_cam;
 }
 
+class OrbitSetFromFPS : public testing::Test
+{
+public:
+  virtual void SetUp()
+  {
+    fps_cam_ = new FPSCamera( g_scene_manager );
+    orbit_cam_ = new OrbitCamera( g_scene_manager );
+  }
+
+  virtual void TearDown()
+  {
+    delete fps_cam_;
+    delete orbit_cam_;
+  }
+
+  void TestQuadrant( float x, float y, float z )
+  {
+    fps_cam_->CameraBase::setPosition( Ogre::Vector3( x, y, z ) );
+    fps_cam_->CameraBase::setOrientation( Ogre::Quaternion( Ogre::Radian( Ogre::Math::HALF_PI ), Ogre::Vector3::UNIT_X ) );
+
+    Ogre::Vector3 expected_position = fps_cam_->getPosition();
+    Ogre::Quaternion expected_orientation = fps_cam_->getOrientation();
+
+    orbit_cam_->setFrom( fps_cam_ );
+
+    Ogre::Vector3 actual_position = orbit_cam_->getPosition();
+    Ogre::Quaternion actual_orientation = orbit_cam_->getOrientation();
+
+    EXPECT_VECTOR_NEAR( expected_position, actual_position, 0.001 );
+    EXPECT_QUATERNION_NEAR( expected_orientation, actual_orientation, 0.001 );
+  }
+
+  FPSCamera* fps_cam_;
+  OrbitCamera* orbit_cam_;
+};
+
+TEST_F(OrbitSetFromFPS, quadrantPosXPosYPosZ)
+{
+  TestQuadrant( 1.0f, 1.0f, 1.0f );
+}
+
+TEST_F(OrbitSetFromFPS, quadrantPosXNegYPosZ)
+{
+  TestQuadrant( 1.0f, -1.0f, 1.0f );
+}
+
+TEST_F(OrbitSetFromFPS, quadrantNegXPosYPosZ)
+{
+  TestQuadrant( -1.0f, 1.0f, 1.0f );
+}
+
+TEST_F(OrbitSetFromFPS, quadrantNegXNegYPosZ)
+{
+  TestQuadrant( -1.0f, -1.0f, 1.0f );
+}
+
+TEST_F(OrbitSetFromFPS, quadrantNegXPosYNegZ)
+{
+  TestQuadrant( -1.0f, 1.0f, -1.0f );
+}
+
+TEST_F(OrbitSetFromFPS, quadrantNegXNegYNegZ)
+{
+  TestQuadrant( -1.0f, -1.0f, -1.0f );
+}
+
+TEST_F(OrbitSetFromFPS, quadrantPosXPosYNegZ)
+{
+  TestQuadrant( 1.0f, 1.0f, -1.0f );
+}
+
+TEST_F(OrbitSetFromFPS, quadrantPosXNegYNegZ)
+{
+  TestQuadrant( 1.0f, -1.0f, -1.0f );
+}
+
+class FPSSetFromOrbit : public testing::Test
+{
+public:
+  virtual void SetUp()
+  {
+    fps_cam_ = new FPSCamera( g_scene_manager );
+    orbit_cam_ = new OrbitCamera( g_scene_manager );
+  }
+
+  virtual void TearDown()
+  {
+    delete fps_cam_;
+    delete orbit_cam_;
+  }
+
+  void TestQuadrant( float x, float y, float z )
+  {
+    orbit_cam_->CameraBase::setPosition( Ogre::Vector3( x, y, z ) );
+
+    Ogre::Vector3 expected_position = orbit_cam_->getPosition();
+    Ogre::Quaternion expected_orientation = orbit_cam_->getOrientation();
+
+    fps_cam_->setFrom( orbit_cam_ );
+
+    Ogre::Vector3 actual_position = fps_cam_->getPosition();
+    Ogre::Quaternion actual_orientation = fps_cam_->getOrientation();
+
+    EXPECT_VECTOR_NEAR( expected_position, actual_position, 0.001 );
+    EXPECT_QUATERNION_NEAR( expected_orientation, actual_orientation, 0.001 );
+  }
+
+  FPSCamera* fps_cam_;
+  OrbitCamera* orbit_cam_;
+};
+
+TEST_F(FPSSetFromOrbit, quadrantPosXPosYPosZ)
+{
+  TestQuadrant( 1.0f, 1.0f, 1.0f );
+}
+
+TEST_F(FPSSetFromOrbit, quadrantPosXNegYPosZ)
+{
+  TestQuadrant( 1.0f, -1.0f, 1.0f );
+}
+
+TEST_F(FPSSetFromOrbit, quadrantNegXPosYPosZ)
+{
+  TestQuadrant( -1.0f, 1.0f, 1.0f );
+}
+
+TEST_F(FPSSetFromOrbit, quadrantNegXNegYPosZ)
+{
+  TestQuadrant( -1.0f, -1.0f, 1.0f );
+}
+
+TEST_F(FPSSetFromOrbit, quadrantNegXPosYNegZ)
+{
+  TestQuadrant( -1.0f, 1.0f, -1.0f );
+}
+
+TEST_F(FPSSetFromOrbit, quadrantNegXNegYNegZ)
+{
+  TestQuadrant( -1.0f, -1.0f, -1.0f );
+}
+
+TEST_F(FPSSetFromOrbit, quadrantPosXPosYNegZ)
+{
+  TestQuadrant( 1.0f, 1.0f, -1.0f );
+}
+
+TEST_F(FPSSetFromOrbit, quadrantPosXNegYNegZ)
+{
+  TestQuadrant( 1.0f, -1.0f, -1.0f );
+}
+
 int main( int argc, char** argv )
 {
   testing::InitGoogleTest( &argc, argv );
+  testing::AddGlobalTestEnvironment( new TestEnvironment );
 
-  initializeOgre();
-  g_root->renderOneFrame();
-
-  int return_val = RUN_ALL_TESTS();
-
-  cleanupOgre();
-
-  return return_val;
+  return RUN_ALL_TESTS();
 }
