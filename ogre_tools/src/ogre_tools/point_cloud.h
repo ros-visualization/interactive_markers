@@ -51,15 +51,31 @@ class Camera;
 namespace ogre_tools
 {
 
+/**
+ * \class PointCloud
+ * \brief A visual representation of a set of points.
+ *
+ * Displays a set of points using any number of Ogre BillboardSets.  PointCloud is optimized for sets of points that change
+ * rapidly, rather than for large clouds that never change.
+ *
+ * Most of the functions in PointCloud are not safe to call from any thread but the render thread.  Exceptions are clear() and addPoints(), which
+ * are safe as long as we are not in the middle of a render (ie. Ogre::Root::renderOneFrame, or Ogre::RenderWindow::update)
+ */
 class PointCloud : public Ogre::MovableObject
 {
 public:
   PointCloud( Ogre::SceneManager* manager );
   ~PointCloud();
 
-  /// Clear this point cloud
+  /**
+   * \brief Clear all the points
+   */
   void clear();
 
+  /**
+   * \struct Point
+   * \brief Representation of a point, with x/y/z position and r/g/b color
+   */
   struct Point
   {
     Point() {}
@@ -72,10 +88,25 @@ public:
     float b_;
   };
 
-  /// Add points to this point cloud
+  /**
+   * \brief Add points to this point cloud
+   *
+   * @param points An array of Point structures
+   * @param num_points The number of points in the array
+   */
   void addPoints( Point* points, uint32_t num_points );
 
+  /**
+   * \brief Set whether to use points for rendering rather than billboards
+   * @param usePoints If true, will use point rendering instead of billboards
+   */
   void setUsePoints( bool usePoints );
+  /**
+   * \brief Set the dimensions of the billboards used to render each point
+   * @param width Width of the billboards
+   * @param height Height of the billboards
+   * @note Only applicable if point rendering is off
+   */
   void setBillboardDimensions( float width, float height );
 
   // overrides from MovableObject
@@ -86,26 +117,30 @@ public:
   virtual void _notifyCurrentCamera( Ogre::Camera* camera );
 
 private:
+  /**
+   * Creates an Ogre BillboardSet with the correct settings
+   * @return A BillboardSet
+   */
   Ogre::BillboardSet* createBillboardSet();
 
-  Ogre::SceneManager* scene_manager_;
-  Ogre::SceneNode* scene_node_;
-  Ogre::AxisAlignedBox bounding_box_;
-  float bounding_radius_;
+  Ogre::SceneManager* scene_manager_;       ///< The scene manager this point cloud is associated with
+  Ogre::SceneNode* scene_node_;             ///< The scene node this point cloud is attached to
+  Ogre::AxisAlignedBox bounding_box_;       ///< The bounding box of this point cloud
+  float bounding_radius_;                   ///< The bounding radius of this point cloud
 
   typedef std::vector<Ogre::BillboardSet*> V_BillboardSet;
-  V_BillboardSet billboard_sets_;
+  V_BillboardSet billboard_sets_;           ///< The billboard sets we've allocated
 
   typedef std::vector<Point> V_Point;
-  V_Point points_;
-  uint32_t point_count_;
-  uint32_t points_per_bbs_;
+  V_Point points_;                          ///< The list of points we're displaying.  Allocates to a high-water-mark.
+  uint32_t point_count_;                    ///< The number of points currently in #points_
+  uint32_t points_per_bbs_;                 ///< The number of points we can display per BillboardSet.  Changes based on the rendering style (point vs. billboard)
 
-  bool use_points_;
-  float billboard_width_;
-  float billboard_height_;
+  bool use_points_;                         ///< Are we rendering as points?
+  float billboard_width_;                   ///< Billboard width
+  float billboard_height_;                  ///< Billboard height
 
-  static Ogre::String sm_Type;
+  static Ogre::String sm_Type;              ///< The "renderable type" used by Ogre
 };
 
 } // namespace ogre_tools

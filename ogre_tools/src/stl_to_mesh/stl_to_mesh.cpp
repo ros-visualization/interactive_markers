@@ -1,6 +1,20 @@
 #include <Ogre.h>
 #include <OgreDefaultHardwareBufferManager.h>
 
+/**
+ * @file
+ *
+ * The stl_to_mesh binary converts a binary STL file to an Ogre mesh.  See http://en.wikipedia.org/wiki/STL_(file_format)#Binary_STL for a description of
+ * the file format.
+ *
+ * @par Usage
+ @verbatim
+ $ stl_to_mesh <stl files> <output directory>
+ $ stl_to_mesh <stl file> <output file>
+ @endverbatim
+ * See http://pr.willowgarage.com/wiki/STL_To_Ogre_Mesh_Converter for more information
+ */
+
 using namespace Ogre;
 
 int main( int argc, char** argv )

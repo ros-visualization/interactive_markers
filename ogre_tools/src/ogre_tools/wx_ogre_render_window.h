@@ -34,7 +34,7 @@ protected:
 
   /// This control's pointer to the global Ogre::Root
   Ogre::Root* ogre_root_;
-  
+
   /// This control's Viewport
   Ogre::Viewport* viewport_;
 
@@ -58,9 +58,16 @@ public:
   /** Virtual destructor.
    */
   virtual ~wxOgreRenderWindow ();
-  
-  /** Set the pre-render callback. */
+
+  /**
+   * Set a callback which is called before each render
+   * @param func The callback functor
+   */
   virtual void setPreRenderCallback( abstractFunctor* func );
+  /**
+     * Set a callback which is called after each render
+     * @param func The callback functor
+     */
   virtual void setPostRenderCallback( abstractFunctor* func );
 
   /** Overrides the default implementation.
@@ -73,12 +80,12 @@ public:
   	@return The render window used to paint this control.
    */
   Ogre::RenderWindow* getRenderWindow () const;
-  
+
   /** Gets the associated Ogre viewport.
     @return The viewport used to render this window.
    */
   Ogre::Viewport* getViewport() const;
-  
+
   /** Set the camera associated with this render window's viewport.
    */
   void setCamera( Ogre::Camera* camera );
@@ -109,11 +116,14 @@ protected:
   	@return The render window handle.
    */
   virtual std::string getOgreHandle () const;
-  
+
+  /**
+   * Sets the aspect ratio on the camera
+   */
   void setCameraAspectRatio();
 
-  abstractFunctor* pre_render_callback_;
-  abstractFunctor* post_render_callback_;
+  abstractFunctor* pre_render_callback_;      ///< Functor which is called before each render
+  abstractFunctor* post_render_callback_;     ///< Functor which is called after each render
 };
 
 } // namespace ogre_tools

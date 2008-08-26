@@ -27,8 +27,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-// adapted from http://www.ogre3d.org/wiki/index.php/SuperEllipsoid
-
 #ifndef OGRE_TOOLS_SUPER_ELLIPSOID_H
 #define OGRE_TOOLS_SUPER_ELLIPSOID_H
 
@@ -46,6 +44,11 @@ class SceneNode;
 namespace ogre_tools
 {
 
+/**
+ * \brief Adapted from http://www.ogre3d.org/wiki/index.php/SuperEllipsoid
+ *
+ * For a good explanation, see http://en.wikipedia.org/wiki/Superellipse#Superellipsoid
+ */
 class SuperEllipsoid : public Object
 {
 public:
@@ -57,19 +60,50 @@ public:
     Sphere,
   };
 
+  /**
+   * \brief Constructor
+   *
+   * @param scene_manager The scene manager this object is associated with
+   * @param parent_node A scene node to use as the parent of this object.  If NULL, uses the root scene node.
+   */
   SuperEllipsoid(Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node = NULL);
   virtual ~SuperEllipsoid();
 
+  /**
+   * \brief Create a shape
+   * @param samples Number of samples to use
+   * @param n1
+   * @param n2
+   * @param scale The scale of the object
+   */
   void create(int samples, float n1, float n2, const Ogre::Vector3& scale = Ogre::Vector3( 1.0f, 1.0f, 1.0f ));
+  /**
+   * \brief Create an object from one of the pre-defined shapes
+   * @param shape The shape to use
+   * @param samples The number of samples to use
+   * @param scale The scale of the object
+   */
   void create(Shape shape, int samples = 60, const Ogre::Vector3& scale = Ogre::Vector3( 1.0f, 1.0f, 1.0f ));
 
-  virtual void setColor( float r, float g, float b );
+  /**
+   * \brief Set the offset for this shape
+   *
+   * The default is no offset, which puts the pivot point directly in the center of the object.
+   *
+   * @param offset Amount to offset the center of the object from the pivot point
+   */
   void setOffset( const Ogre::Vector3&  offset );
 
+  virtual void setColor( float r, float g, float b );
   virtual void setPosition( const Ogre::Vector3& position );
   virtual void setOrientation( const Ogre::Quaternion& orientation );
   virtual void setScale( const Ogre::Vector3& scale );
 
+  /**
+   * \brief Get the root scene node (pivot node) for this object
+   *
+   * @return The root scene node of this object
+   */
   Ogre::SceneNode* getRootNode() { return scene_node_; }
 
 private:

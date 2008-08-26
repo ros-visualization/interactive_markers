@@ -98,7 +98,7 @@ void Axes::setScale( const Ogre::Vector3& scale )
 void Axes::setColor( float r, float g, float b )
 {
   // for now, do nothing
-  // TODO: what should be done here?
+  /// \todo should anything be done here?
 }
 
 } // namespace ogre_tools

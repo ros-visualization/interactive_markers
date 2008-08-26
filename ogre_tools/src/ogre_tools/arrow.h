@@ -45,30 +45,78 @@ namespace ogre_tools
 class SuperEllipsoid;
 class Cone;
 
+/**
+ * \class Arrow
+ * \brief An arrow object
+ */
 class Arrow : public Object
 {
 public:
-  Arrow( Ogre::SceneManager* manager, Ogre::SceneNode* parent_node = 0, float shaft_length = 1.0f, float shaft_radius = 0.1f,
+  /**
+   * \brief Constructor
+   *
+   * @param scene_manager The scene manager to use to construct any necessary objects
+   * @param parent_node A scene node to use as the parent of this object.  If NULL, uses the root scene node.
+   * @param shaft_length Length of the arrow's shaft
+   * @param shaft_radius Radius of the arrow's shaft
+   * @param head_length Length of the arrow's head
+   * @param head_radius Radius of the arrow's head
+   */
+  Arrow( Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node = 0, float shaft_length = 1.0f, float shaft_radius = 0.1f,
       float head_length = 0.3f, float head_radius =  0.2f );
   virtual ~Arrow();
 
+  /**
+   * \brief Set the parameters for this arrow
+   *
+   * @param shaft_length Length of the arrow's shaft
+   * @param shaft_radius Radius of the arrow's shaft
+   * @param head_length Length of the arrow's head
+   * @param head_radius Radius of the arrow's head
+   */
   void set( float shaft_length, float shaft_radius, float head_length, float head_radius );
 
+  /**
+   * \brief Set the color of this arrow.  Sets both the head and shaft color to the same value.  Values are in the range [0, 1]
+   *
+   * @param r Red component
+   * @param g Green component
+   * @param b Blue component
+   */
   virtual void setColor( float r, float g, float b );
+
+  /**
+   * \brief Set the color of the arrow's head.  Values are in the range [0, 1]
+   *
+   * @param r Red component
+   * @param g Green component
+   * @param b Blue component
+   */
   void setHeadColor( float r, float g, float b );
+  /**
+   * \brief Set the color of the arrow's shaft.  Values are in the range [0, 1]
+   *
+   * @param r Red component
+   * @param g Green component
+   * @param b Blue component
+   */
   void setShaftColor( float r, float g, float b );
 
   virtual void setOrientation( const Ogre::Quaternion& orientation );
   virtual void setPosition( const Ogre::Vector3& position );
   virtual void setScale( const Ogre::Vector3& scale );
 
+  /**
+   * \brief Get the scene node associated with this arrow
+   * @return the scene node associated with this arrow
+   */
   Ogre::SceneNode* getSceneNode() { return scene_node_; }
 
 private:
   Ogre::SceneNode* scene_node_;
 
-  SuperEllipsoid* shaft_;
-  Cone* head_;
+  SuperEllipsoid* shaft_;   ///< Cylinder used for the shaft of the arrow
+  Cone* head_;              ///< Cone used for the head of the arrow
 };
 
 } // namespace ogre_tools

@@ -41,19 +41,48 @@ class Quaternion;
 namespace ogre_tools
 {
 
+/**
+ * \class Object
+ * \brief Base class for visible objects, providing a minimal generic interface.
+ */
 class Object
 {
 public:
+  /**
+   *
+   * @param scene_manager The scene manager this object should be part of.
+   */
   Object( Ogre::SceneManager* scene_manager );
   virtual ~Object() {}
 
+  /**
+   * \brief Set the position of this object
+   * @param Position vector position to set to.
+   */
   virtual void setPosition( const Ogre::Vector3& position ) = 0;
+
+  /**
+   * \brief Set the orientation of the object
+   * @param Orientation quaternion orientation to set to.
+   */
   virtual void setOrientation( const Ogre::Quaternion& orientation ) = 0;
+
+  /**
+   * \brief Set the scale of the object.  Always relative to the identity orientation of the object.
+   * @param Scale vector scale to set to.
+   */
   virtual void setScale( const Ogre::Vector3& scale ) = 0;
+
+  /**
+   * \brief Set the color of the object.  Values are in the range [0, 1]
+   * @param r Red component
+   * @param g Green component
+   * @param b Blue component
+   */
   virtual void setColor( float r, float g, float b ) = 0;
 
 protected:
-  Ogre::SceneManager* scene_manager_;
+  Ogre::SceneManager* scene_manager_;  ///< Ogre scene manager this object is part of
 };
 
 } // namespace ogre_tools

@@ -48,27 +48,49 @@ namespace ogre_tools
 {
 class SuperEllipsoid;
 
+/**
+ * \class Axes
+ * \brief An object that displays a set of X/Y/Z axes, with X=Red, Y=Green, Z=Blue
+ */
 class Axes : public Object
 {
 public:
+  /**
+   * \brief Constructor
+   * @param manager Scene manager this object is a part of
+   * @param parent_node A scene node to use as the parent of this object.  If NULL, uses the root scene node.
+   * @param length Length of the axes
+   * @param radius Radius of the axes
+   */
   Axes( Ogre::SceneManager* manager, Ogre::SceneNode* parent_node = NULL, float length = 1.0f, float radius = 0.1f );
   virtual ~Axes();
 
+  /**
+   * \brief Set the parameters on this object
+   *
+   * @param length Length of the axes
+   * @param radius Radius of the axes
+   */
   void set( float length, float radius );
+
   virtual void setOrientation( const Ogre::Quaternion& orientation );
   virtual void setPosition( const Ogre::Vector3& position );
   virtual void setScale( const Ogre::Vector3& scale );
 
   virtual void setColor( float r, float g, float b );
 
+  /**
+   * \brief Get the scene node associated with this object
+   * @return The scene node associated with this object
+   */
   Ogre::SceneNode* getSceneNode() { return scene_node_; }
 
 private:
   Ogre::SceneNode* scene_node_;
 
-  SuperEllipsoid* x_axis_;
-  SuperEllipsoid* y_axis_;
-  SuperEllipsoid* z_axis_;
+  SuperEllipsoid* x_axis_;      ///< Cylinder for the X-axis
+  SuperEllipsoid* y_axis_;      ///< Cylinder for the Y-axis
+  SuperEllipsoid* z_axis_;      ///< Cylinder for the Z-axis
 };
 
 } // namespace ogre_tools

@@ -1,7 +1,7 @@
 <package>
-    <description brief="Ogre Visualization Tools">
+    <description brief="Ogre Tools">
     
-    This is a set of visualization tools for rendering things using Ogre3D.
+    A set of visualization tools for rendering things using Ogre3D.
     
     </description>
     <author>Josh Faust</author>

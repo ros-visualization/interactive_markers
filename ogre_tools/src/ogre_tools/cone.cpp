@@ -5,7 +5,7 @@
 namespace ogre_tools
 {
 
-Cone::Cone(Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node, int x_tes, int y_tes, float r, float g, float b)
+Cone::Cone(Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node, int x_tes, int y_tes)
 : Object( scene_manager )
 {
   static uint32_t count = 0;
@@ -30,7 +30,7 @@ Cone::Cone(Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node, int 
   material_->getTechnique(0)->setLightingEnabled(true);
   material_->getTechnique(0)->setAmbient( 0.5, 0.5, 0.5 );
 
-  create( x_tes, y_tes, r, g, b );
+  create( x_tes, y_tes );
 
   // Default the offset so that the base of the cone is at the origin
   setOffset( Ogre::Vector3( 0.0f, 0.5f, 0.0f ) );
@@ -45,11 +45,8 @@ Cone::~Cone()
 }
 
 
-void Cone::create(int x_tes, int y_tes, float r, float g, float b)
+void Cone::create(int x_tes, int y_tes)
 {
-  x_tes_ = x_tes;
-  y_tes_ = y_tes;
-
   manual_object_->clear();
   manual_object_->begin( material_name_, Ogre::RenderOperation::OT_TRIANGLE_LIST );
 
@@ -73,15 +70,12 @@ void Cone::create(int x_tes, int y_tes, float r, float g, float b)
 
       manual_object_->position( v1 );
       manual_object_->normal( n );
-      manual_object_->colour( r, g, b );
 
       manual_object_->position( v2 );
       manual_object_->normal( n );
-      manual_object_->colour( r, g, b );
 
       manual_object_->position( v3 );
       manual_object_->normal( n );
-      manual_object_->colour( r, g, b );
     }
 
     //top
@@ -98,15 +92,12 @@ void Cone::create(int x_tes, int y_tes, float r, float g, float b)
 
       manual_object_->position( v1 );
       manual_object_->normal( n1 );
-      manual_object_->colour( r, g, b );
 
       manual_object_->position( v3 );
       manual_object_->normal( n3 );
-      manual_object_->colour( r, g, b );
 
       manual_object_->position( v2 );
       manual_object_->normal( n2 );
-      manual_object_->colour( r, g, b );
     }
   }
 
@@ -134,28 +125,22 @@ void Cone::create(int x_tes, int y_tes, float r, float g, float b)
       // 1st triangle
       manual_object_->position( v1 );
       manual_object_->normal( n1 );
-      manual_object_->colour( r, g, b );
 
       manual_object_->position( v2 );
       manual_object_->normal( n2 );
-      manual_object_->colour( r, g, b );
 
       manual_object_->position( v3 );
       manual_object_->normal( n3 );
-      manual_object_->colour( r, g, b );
 
       // 2nd triangle
       manual_object_->position( v1 );
       manual_object_->normal( n1 );
-      manual_object_->colour( r, g, b );
 
       manual_object_->position( v3 );
       manual_object_->normal( n3 );
-      manual_object_->colour( r, g, b );
 
       manual_object_->position( v4 );
       manual_object_->normal( n4 );
-      manual_object_->colour( r, g, b );
     }
   }
 

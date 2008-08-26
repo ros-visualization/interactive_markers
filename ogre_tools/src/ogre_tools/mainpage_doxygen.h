@@ -27,65 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_TOOLS_FPS_CAMERA_H_
-#define OGRE_TOOLS_FPS_CAMERA_H_
-
-#include "camera_base.h"
-
-namespace Ogre
-{
-  class Camera;
-  class SceneNode;
-  class SceneManager;
-}
-
-namespace ogre_tools
-{
-
 /**
- * \class FPSCamera
- * \brief A first-person camera, controlled by yaw, pitch, and position.
+ * @mainpage
+ *
+ * @htmlinclude manifest.html
+ *
+ * @b ogre_tools is a set of utility classes and binaries dealing with the Ogre3D graphics engine (http://www.ogre3d.org/).
  */
-class FPSCamera : public CameraBase
-{
-public:
-  FPSCamera( Ogre::SceneManager* scene_manager );
-  virtual ~FPSCamera();
-
-  virtual void yaw( float angle );
-  virtual void pitch( float angle );
-  virtual void roll( float angle );
-  virtual void setOrientation( float x, float y, float z, float w );
-  virtual void setPosition( float x, float y, float z );
-  virtual void setFrom( CameraBase* camera );
-
-  virtual Ogre::Vector3 getPosition();
-  virtual Ogre::Quaternion getOrientation();
-
-  virtual void move( float x, float y, float z );
-  virtual void mouseLeftDrag( int diff_x, int diff_y );
-  virtual void mouseMiddleDrag( int diff_x, int diff_y );
-  virtual void mouseRightDrag( int diff_x, int diff_y );
-  virtual void scrollWheel( int diff );
-
-protected:
-  /**
-   * \brief Sets the camera's orientation based on #pitch_ and #yaw_
-   */
-  void update();
-  /**
-   * \brief Normalizes the camera's pitch, preventing it from turning upside down
-   */
-  void normalizePitch();
-  /**
-   * \brief Normalizes yaw in the range [0, 2*pi)
-   */
-  void normalizeYaw();
-
-  float pitch_;         ///< Pitch of the camera (rotation around the x-axis), in radians
-  float yaw_;           ///< Yaw of the camera (rotation around the y-axis), in radians
-};
-
-} // namespace ogre_tools
-
-#endif /*OGRE_TOOLS_FPS_CAMERA_H_*/

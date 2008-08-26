@@ -45,20 +45,50 @@ class SceneNode;
 namespace ogre_tools
 {
 
+/**
+ * \class Grid
+ * \brief Displays a grid of cells, drawn with lines
+ *
+ * Displays a grid of cells, drawn with lines.  A grid with an identity orientation is drawn along the XZ plane.
+ */
 class Grid
 {
 public:
+  /**
+   * \brief Constructor
+   *
+   * @param manager The scene manager this object is part of
+   * @param cell_count The number of cells to draw
+   * @param cell_length The size of each cell
+   * @param r Red color component, in the range [0, 1]
+   * @param g Green color component, in the range [0, 1]
+   * @param b Blue color component, in the range [0, 1]
+   */
   Grid( Ogre::SceneManager* manager, uint32_t cell_count, float cell_length, float r, float g, float b );
   ~Grid();
 
+  /**
+   * \brief Set the parameters on this grid
+   *
+   * @param cell_count The number of cells to draw
+   * @param cell_length The size of each cell
+   * @param r Red color component, in the range [0, 1]
+   * @param g Green color component, in the range [0, 1]
+   * @param b Blue color component, in the range [0, 1]
+   */
   void set( uint32_t gridSize, float cell_length, float r, float g, float b );
 
+  /**
+   * \brief Get the Ogre scene node associated with this grid
+   *
+   * @return The Ogre scene node associated with this grid
+   */
   Ogre::SceneNode* getSceneNode() { return scene_node_; }
 
 private:
   Ogre::SceneManager* scene_manager_;
-  Ogre::SceneNode* scene_node_;
-  Ogre::ManualObject* manual_object_;
+  Ogre::SceneNode* scene_node_;           ///< The scene node that this grid is attached to
+  Ogre::ManualObject* manual_object_;     ///< The manual object used to draw the grid
 
 };
 
