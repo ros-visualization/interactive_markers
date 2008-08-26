@@ -126,14 +126,13 @@ void OrbitCamera::setFrom( CameraBase* camera )
 
 void OrbitCamera::setOrientation( float x, float y, float z, float w )
 {
-  Ogre::Quaternion quat( w, x, y, z );
-  focal_point_ = camera_->getPosition() + quat * (Ogre::Vector3::NEGATIVE_UNIT_Z * distance_);
+  Ogre::Vector3 position = camera_->getPosition();
+  Ogre::Quaternion orientation( w, x, y, z );
 
-  pitch_ = quat.getPitch( false ).valueRadians();
-  yaw_ = quat.getYaw( false ).valueRadians();
+  Ogre::Vector3 direction = orientation * (Ogre::Vector3::NEGATIVE_UNIT_Z * distance_);
+  focal_point_ = position + direction;
 
-  normalizePitch();
-  normalizeYaw();
+  calculatePitchYawFromPosition( position );
 
   update();
 }

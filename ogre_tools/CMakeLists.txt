@@ -40,3 +40,8 @@ rospack_add_executable(grid_test src/test/grid_test.cpp)
 target_link_libraries(grid_test ogretools ${wxWidgets_LIBRARIES})
 
 rospack_add_executable(stl_to_mesh src/stl_to_mesh/stl_to_mesh.cpp)
+
+rospack_add_gtest(utest test/utest.cpp)
+target_link_libraries(utest ogretools)
+set_target_properties(utest PROPERTIES
+                      RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/test)

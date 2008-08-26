@@ -28,8 +28,8 @@ public:
   virtual void setPosition( float x, float y, float z ) = 0;
   virtual void setFrom( CameraBase* camera ) = 0;
 
-  void setPosition( const Ogre::Vector3& position );
-  void setOrientation( const Ogre::Quaternion& orientation );
+  virtual void setPosition( const Ogre::Vector3& position );
+  virtual void setOrientation( const Ogre::Quaternion& orientation );
 
   virtual Ogre::Vector3 getPosition() = 0;
   virtual Ogre::Quaternion getOrientation() = 0;
