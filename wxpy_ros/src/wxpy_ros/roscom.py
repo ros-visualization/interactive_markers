@@ -23,8 +23,8 @@ def _convert_time(stamp):
 #  Gets called by a RosSubscriber and acts as a buffer between ROS and the user event loop
 class RosChannel(wxplot.Channel):
     
-    def __init__(self, style, slotName):
-        wxplot.Channel.__init__(self, style='b')
+    def __init__(self, slotName, style):
+        wxplot.Channel.__init__(self, style)
         self.slotName = slotName
         #print 'Created ROS channel'
     
@@ -200,6 +200,7 @@ class RosMessageHandler:
         self.topicsSubs = dict()
         wxros.ROSListener(name).start() 
         self.topics = {} 
+        self.queryTopicsTree()
     
     #def subscribeTopic(self, topicName, topicType):
         #if self.topicsSubs.has_key(topicName):
@@ -234,7 +235,7 @@ class RosMessageHandler:
             exec('import %s' % messageModName)
             print eval(messageType)
             rospy.TopicSub(self._getTopic(itemPath), eval(messageType), self.topicsSubs[topicName].callback)
-        channel = RosChannel(style, itemPath)
+        channel = RosChannel(itemPath, style)
         item.channels.append(channel)
         return channel
 
