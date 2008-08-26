@@ -3,6 +3,8 @@
 
 #include "wx/wx.h"
 
+#include <boost/function.hpp>
+
 namespace Ogre
 {
 class Root;
@@ -10,8 +12,6 @@ class RenderWindow;
 class Viewport;
 class Camera;
 }
-
-class abstractFunctor;
 
 namespace ogre_tools
 {
@@ -63,12 +63,12 @@ public:
    * Set a callback which is called before each render
    * @param func The callback functor
    */
-  virtual void setPreRenderCallback( abstractFunctor* func );
+  virtual void setPreRenderCallback( boost::function<void ()> func );
   /**
      * Set a callback which is called after each render
      * @param func The callback functor
      */
-  virtual void setPostRenderCallback( abstractFunctor* func );
+  virtual void setPostRenderCallback( boost::function<void ()> func );
 
   /** Overrides the default implementation.
   	This override is here for convenience. Returns a symbolic 320x240px size.
@@ -122,8 +122,8 @@ protected:
    */
   void setCameraAspectRatio();
 
-  abstractFunctor* pre_render_callback_;      ///< Functor which is called before each render
-  abstractFunctor* post_render_callback_;     ///< Functor which is called after each render
+  boost::function<void ()> pre_render_callback_;      ///< Functor which is called before each render
+  boost::function<void ()> post_render_callback_;     ///< Functor which is called after each render
 };
 
 } // namespace ogre_tools

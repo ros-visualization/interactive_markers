@@ -108,7 +108,7 @@ public:
 
     visualization_panel_ = new VisualizationPanel( this, root_ );
 
-    // TODO: figure out how we can move this back to before panel (renderwindow) creation (manually creating a GpuProgramManager?)
+    /// \todo figure out how we can move this back to before panel (renderwindow) creation (manually creating a GpuProgramManager?)
     try
     {
       Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();

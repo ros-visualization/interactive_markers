@@ -29,8 +29,6 @@
 
 #include "visualizer_base.h"
 
-#include "ros/common.h"
-
 namespace ogre_vis
 {
 
@@ -50,7 +48,6 @@ VisualizerBase::VisualizerBase( Ogre::SceneManager* scene_manager, ros::node* no
 
 VisualizerBase::~VisualizerBase()
 {
-  delete render_callback_;
 }
 
 void VisualizerBase::enable()
@@ -77,24 +74,18 @@ void VisualizerBase::disable()
   onDisable();
 }
 
-void VisualizerBase::setRenderCallback( abstractFunctor* func )
+void VisualizerBase::setRenderCallback( boost::function<void ()> func )
 {
-  delete render_callback_;
-
   render_callback_ = func;
 }
 
-void VisualizerBase::setLockRenderCallback( abstractFunctor* func )
+void VisualizerBase::setLockRenderCallback( boost::function<void ()> func )
 {
-  delete render_lock_;
-
   render_lock_ = func;
 }
 
-void VisualizerBase::setUnlockRenderCallback( abstractFunctor* func )
+void VisualizerBase::setUnlockRenderCallback( boost::function<void ()> func )
 {
-  delete render_unlock_;
-
   render_unlock_ = func;
 }
 
@@ -103,7 +94,7 @@ void VisualizerBase::causeRender()
 {
   if ( render_callback_ )
   {
-    render_callback_->call();
+    render_callback_();
   }
 }
 
@@ -111,7 +102,7 @@ void VisualizerBase::lockRender()
 {
   if ( render_lock_ )
   {
-    render_lock_->call();
+    render_lock_();
   }
 }
 
@@ -119,7 +110,7 @@ void VisualizerBase::unlockRender()
 {
   if ( render_unlock_ )
   {
-    render_unlock_->call();
+    render_unlock_();
   }
 }
 

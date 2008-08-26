@@ -1,7 +1,5 @@
 #include "wx_ogre_render_window.h"
 
-#include "ros/common.h"
-
 #include "Ogre.h"
 
 #ifdef __WXGTK__
@@ -37,13 +35,13 @@ wxOgreRenderWindow::wxOgreRenderWindow (Ogre::Root* ogre_root, wxWindow *parent,
   SetBackgroundStyle(wxBG_STYLE_CUSTOM);
 
   createRenderWindow();
-  
+
   viewport_ = render_window_->addViewport( NULL );
 }
 
 //------------------------------------------------------------------------------
 wxOgreRenderWindow::~wxOgreRenderWindow ()
-{ 
+{
   if (render_window_)
   {
     render_window_->removeViewport( 0 );
@@ -73,9 +71,9 @@ Ogre::Viewport* wxOgreRenderWindow::getViewport () const
 void wxOgreRenderWindow::setCamera( Ogre::Camera* camera )
 {
   viewport_->setCamera( camera );
-  
+
   setCameraAspectRatio();
-  
+
   Refresh();
 }
 
@@ -91,15 +89,13 @@ void wxOgreRenderWindow::setCameraAspectRatio()
   }
 }
 
-void wxOgreRenderWindow::setPreRenderCallback( abstractFunctor* func )
+void wxOgreRenderWindow::setPreRenderCallback( boost::function<void ()> func )
 {
-  delete pre_render_callback_;
   pre_render_callback_ = func;
 }
 
-void wxOgreRenderWindow::setPostRenderCallback( abstractFunctor* func )
+void wxOgreRenderWindow::setPostRenderCallback( boost::function<void ()> func )
 {
-  delete post_render_callback_;
   post_render_callback_ = func;
 }
 
@@ -107,17 +103,17 @@ void wxOgreRenderWindow::setPostRenderCallback( abstractFunctor* func )
 void wxOgreRenderWindow::onPaint (wxPaintEvent &evt)
 {
   evt.Skip();
-  
+
   if ( pre_render_callback_ )
   {
-    pre_render_callback_->call();
+    pre_render_callback_();
   }
-  
+
   render_window_->update();
-  
+
   if ( post_render_callback_ )
   {
-    post_render_callback_->call();
+    post_render_callback_();
   }
 }
 
@@ -136,9 +132,9 @@ void wxOgreRenderWindow::onSize (wxSizeEvent &evt)
     render_window_->resize (width, height);
     // Letting Ogre know the window has been resized;
     render_window_->windowMovedOrResized ();
-    
+
     setCameraAspectRatio();
-    
+
     Refresh();
   }
 

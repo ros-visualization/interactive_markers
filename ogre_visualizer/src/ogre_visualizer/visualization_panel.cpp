@@ -43,6 +43,8 @@
 #include <wx/timer.h>
 #include <wx/propgrid/propgrid.h>
 
+#include <boost/bind.hpp>
+
 namespace ogre_vis
 {
 
@@ -119,8 +121,8 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent, Ogre::Root* root )
   render_panel_->Connect( wxEVT_RIGHT_UP, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
   render_panel_->Connect( wxEVT_MOUSEWHEEL, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
 
-  render_panel_->setPreRenderCallback( new functor<VisualizationPanel>( this, &VisualizationPanel::lockRender ) );
-  render_panel_->setPostRenderCallback( new functor<VisualizationPanel>( this, &VisualizationPanel::unlockRender ) );
+  render_panel_->setPreRenderCallback( boost::bind( &VisualizationPanel::lockRender, this ) );
+  render_panel_->setPostRenderCallback( boost::bind( &VisualizationPanel::unlockRender, this ) );
 
   update_timer_ = new wxTimer( this );
   update_timer_->Start( 10 );
@@ -308,9 +310,9 @@ void VisualizationPanel::addVisualizer( VisualizerBase* visualizer )
   displays_->Append( wxString::FromAscii( visualizer->getName().c_str() ), visualizer );
   displays_->Check( displays_->GetCount() - 1, visualizer->isEnabled() );
 
-  visualizer->setRenderCallback( new functor<VisualizationPanel>( this, &VisualizationPanel::render ) );
-  visualizer->setLockRenderCallback( new functor<VisualizationPanel>( this, &VisualizationPanel::lockRender ) );
-  visualizer->setUnlockRenderCallback( new functor<VisualizationPanel>( this, &VisualizationPanel::unlockRender ) );
+  visualizer->setRenderCallback( boost::bind( &VisualizationPanel::render, this ) );
+  visualizer->setLockRenderCallback( boost::bind( &VisualizationPanel::lockRender, this ) );
+  visualizer->setUnlockRenderCallback( boost::bind( &VisualizationPanel::unlockRender, this ) );
 }
 
 void VisualizationPanel::onRenderWindowMouseEvents( wxMouseEvent& event )

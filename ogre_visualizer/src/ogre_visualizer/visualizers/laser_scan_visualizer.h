@@ -50,7 +50,7 @@ class rosTFClient;
 namespace ogre_vis
 {
 
-// TODO: find out some way to share most of this code with PointCloudVisualizer
+/// \todo find out some way to share most of this code with PointCloudVisualizer
 
 class LaserScanVisualizer : public VisualizerBase
 {

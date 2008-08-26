@@ -31,6 +31,7 @@
 #define OGRE_VISUALIZER_VISUALIZER_BASE
 
 #include <string>
+#include <boost/function.hpp>
 
 namespace Ogre
 {
@@ -44,7 +45,6 @@ class node;
 
 class wxPanel;
 class wxWindow;
-class abstractFunctor;
 class rosTFClient;
 class wxPropertyGrid;
 class wxPropertyGridEvent;
@@ -73,10 +73,10 @@ public:
   virtual void update( float dt ) {}
 
   /// Called by the visualization panel to tell set our functor used for causing a render to happen
-  void setRenderCallback( abstractFunctor* func );
+  void setRenderCallback( boost::function<void ()> func );
 
-  void setLockRenderCallback( abstractFunctor* func );
-  void setUnlockRenderCallback( abstractFunctor* func );
+  void setLockRenderCallback( boost::function<void ()> func );
+  void setUnlockRenderCallback( boost::function<void ()> func );
 
   /// Override this to fill out the property grid when this visualizer is selected
   virtual void fillPropertyGrid( wxPropertyGrid* property_grid ) {} // default to no options
@@ -108,9 +108,9 @@ protected:
 
   std::string target_frame_;
 
-  abstractFunctor* render_callback_;
-  abstractFunctor* render_lock_;
-  abstractFunctor* render_unlock_;
+  boost::function<void ()> render_callback_;
+  boost::function<void ()> render_lock_;
+  boost::function<void ()> render_unlock_;
 
   ros::node* ros_node_;
   rosTFClient* tf_client_;
