@@ -1,7 +1,12 @@
 <launch>
+  <include file="$(find scene_labeler)/vis.xml"/>
+  <param name="videre/brightness" type="str" value="auto"/>
+  <param name="videre/gain" type="str" value="auto"/>
+  <param name="videre/exposure" type="str" value="auto"/>
+  <param name="videre/videre_param/companding" type="bool" value="true"/>
   <node pkg="rosTF" type="frameServer"/>
   <node pkg="scene_labeler" type="smallv_transformer"/>
   <node pkg="scene_labeler" type="guide_stereo" output="screen" args="defaultDataset"/>
-  <include file="$(find scene_labeler)/vis.xml"/>
+  <node pkg="dc1394_cam_server" type="check_params" />
   <!--include file="$(find sensor_cart)/sensors.xml"/-->
 </launch>
