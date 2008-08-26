@@ -249,7 +249,7 @@ void OctreeVisualizer::propertyChanged( wxPropertyGridEvent& event )
   if ( name == TOPIC_PROPERTY )
   {
     wxString topic = value.GetString();
-    setOctreeTopic( std::string(topic.char_str()) );
+    setOctreeTopic( std::string(topic.fn_str()) );
   }
   else if ( name == COLOR_PROPERTY )
   {

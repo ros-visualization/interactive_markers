@@ -263,7 +263,7 @@ void PointCloudVisualizer::propertyChanged( wxPropertyGridEvent& event )
   if ( name == TOPIC_PROPERTY )
   {
     wxString topic = value.GetString();
-    setTopic( std::string(topic.char_str()) );
+    setTopic( std::string(topic.fn_str()) );
   }
   else if ( name == COLOR_PROPERTY )
   {

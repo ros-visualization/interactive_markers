@@ -354,12 +354,12 @@ void LaserScanVisualizer::propertyChanged( wxPropertyGridEvent& event )
   if ( name == SCAN_TOPIC_PROPERTY )
   {
     wxString topic = value.GetString();
-    setScanTopic( std::string(topic.char_str()) );
+    setScanTopic( std::string(topic.fn_str()) );
   }
   else if ( name == CLOUD_TOPIC_PROPERTY )
   {
     wxString topic = value.GetString();
-    setCloudTopic( std::string(topic.char_str()) );
+    setCloudTopic( std::string(topic.fn_str()) );
   }
   else if ( name == COLOR_PROPERTY )
   {

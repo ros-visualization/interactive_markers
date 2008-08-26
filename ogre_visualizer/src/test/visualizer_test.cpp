@@ -175,7 +175,7 @@ public:
     localArgv =  new char*[ argc ];
     for ( int i = 0; i < argc; ++i )
     {
-      localArgv[ i ] = strdup( wxString( argv[ i ] ).char_str() );
+      localArgv[ i ] = strdup( wxString( argv[ i ] ).fn_str() );
 
       printf( "argv[%d]: %s\n", i, localArgv[i] );
     }
