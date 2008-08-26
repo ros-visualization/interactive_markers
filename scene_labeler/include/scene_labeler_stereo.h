@@ -56,12 +56,15 @@ public:
   std_msgs::PointCloudFloat32 videre_cloud_colored_;
 
   IplImage *mask_, *left_, *disp_;
+  SmartScan ss_cloud_;
   map<int, SmartScan> ss_labels_;
   vector< pair<int, SmartScan*> > ss_objs_; //label, ss
   NEWMAT::Matrix trns_; //ptcld to image.
+  bool objects_extracted_;
+
 
  SceneLabelerStereo(ros::node* node) 
-   : node_(node), mask_(0), left_(0), disp_(0)
+   : node_(node), mask_(0), left_(0), disp_(0), objects_extracted_(false)
   {
 
     node_->advertise<std_msgs::PointCloudFloat32>("videre/cloud", 100);
@@ -70,6 +73,8 @@ public:
     node_->advertise<std_msgs::ImageArray>("videre/images", 100);
 
     trns_ = NEWMAT::Matrix(3,4); trns_ = 0.0;
+
+    srand(time(NULL));
   }
 
   ~SceneLabelerStereo() 
@@ -167,7 +172,37 @@ public:
     }
   }
 
+  void getRandomPoint(float *x, float *y, float *z, int *row, int *col, SmartScan *ss = NULL) {
+    if(!objects_extracted_) {
+      cerr << "Don't call getRandomPoint before extracting objects!" << endl;
+    }
 
+    if(!ss) {
+      ss = &ss_cloud_;
+    }
+
+    int randId = 0;
+    randId = rand() % ss->size();
+    std_msgs::Point3DFloat32 pt = ss->getPoint(randId);
+    *x = pt.x;
+    *y = pt.y;
+    *z = pt.z;
+
+    NEWMAT::Matrix point(4,1);
+    point(1,1) = pt.x;
+    point(2,1) = pt.y;
+    point(3,1) = pt.z;
+    point(4,1) = 1;
+    NEWMAT::Matrix projected = trns_ * point;
+    projected(1,1) = projected(1,1) / projected(3,1);
+    projected(2,1) = projected(2,1) / projected(3,1);
+    projected(3,1) = 1;
+
+    *row = (int)projected(1,1);
+    *col = (int)projected(2,1);
+/*     cout << "sls: " << projected(1,1) << " being rounded to " << *row << endl; */
+/*     cout << "sls: " << projected(2,1) << " being rounded to " << *col << endl; */
+  }
 
  private:
 
@@ -261,24 +296,6 @@ public:
 
   }
 
-  void getRandomPoint(float *x, float *y, float *z, float *row, float *col) {
-    int randId = 0;
-    srand(time(NULL));
-    randId = rand() % cloud_.get_pts_size();
-    *x = cloud_.pts[randId].x;
-    *y = cloud_.pts[randId].y;
-    *z = cloud_.pts[randId].z;
-    NEWMAT::Matrix point(3,1);
-    point(1,1) = *x;
-    point(2,1) = *y;
-    point(3,1) = *z;
-    NEWMAT::Matrix projected = trns_ * point;
-    projected(1,1) = projected(1,1) / projected(3,1);
-    projected(2,1) = projected(2,1) / projected(3,1);
-    projected(3,1) = 1;
-    *row = projected(1,1);
-    *col = projected(2,1);
-  }
 
   void getImageIdx(float x, float y, float z, float *row, float*col) {
     NEWMAT::Matrix point(3,1);
@@ -297,6 +314,8 @@ public:
     map<int, int> nPts_for_label; //map<label, npts>
     map<int, int>::iterator it;
     std_msgs::PointCloudFloat32 debug;
+
+    ss_cloud_.setFromRosCloud(cloud_);
 
     // -- Find nPts of each label.
     for(unsigned int i=0; i<cloud_.get_pts_size(); i++) {
@@ -344,6 +363,7 @@ public:
       }
     }
 
+    objects_extracted_ = true;
   }
 };
 
