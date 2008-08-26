@@ -182,7 +182,14 @@ void OrbitCamera::mouseLeftDrag( int diff_x, int diff_y )
 
 void OrbitCamera::mouseMiddleDrag( int diff_x, int diff_y )
 {
-  move( diff_x*0.1, -diff_y*0.1, 0.0f );
+  float fovY = camera_->getFOVy().valueRadians();
+  float fovX = 2.0f * atan( tan( fovY / 2.0f ) * camera_->getAspectRatio() );
+
+  int width = camera_->getViewport()->getActualWidth();
+  int height = camera_->getViewport()->getActualHeight();
+
+  move( -((float)diff_x / (float)width) * distance_ * tan( fovX / 2.0f ) * 2.0f, ((float)diff_y / (float)height) * distance_ * tan( fovY / 2.0f ) * 2.0f, 0.0f );
+
 }
 
 void OrbitCamera::mouseRightDrag( int diff_x, int diff_y )
