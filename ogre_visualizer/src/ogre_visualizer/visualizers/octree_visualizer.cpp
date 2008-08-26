@@ -65,7 +65,7 @@ OctreeVisualizer::OctreeVisualizer(Ogre::SceneManager* sceneManager,
 {
   static uint32_t count = 0;
   std::stringstream ss;
-  ss << "Cone" << count++;
+  ss << "Octree" << count++;
 
   manual_object_ = scene_manager_->createManualObject(ss.str());
   manual_object_->setDynamic( true );
@@ -114,8 +114,7 @@ void OctreeVisualizer::subscribe()
 
   if (!octree_topic_.empty())
   {
-    ros_node_->subscribe(octree_topic_, octree_message_,
-        &OctreeVisualizer::incomingOctreeCallback, this, 10);
+    ros_node_->subscribe(octree_topic_, octree_message_, &OctreeVisualizer::incomingOctreeCallback, this, 10);
   }
 }
 

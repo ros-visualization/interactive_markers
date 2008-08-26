@@ -29,8 +29,6 @@ wxOgreRenderWindow::wxOgreRenderWindow (Ogre::Root* ogre_root, wxWindow *parent,
     : wxControl( parent, id, pos, size, style, validator )
     , render_window_( 0 )
     , ogre_root_( ogre_root )
-    , pre_render_callback_( NULL )
-    , post_render_callback_( NULL )
 {
   SetBackgroundStyle(wxBG_STYLE_CUSTOM);
 

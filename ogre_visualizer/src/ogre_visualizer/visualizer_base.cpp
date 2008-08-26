@@ -38,9 +38,6 @@ VisualizerBase::VisualizerBase( Ogre::SceneManager* scene_manager, ros::node* no
 , name_( name )
 , enabled_( enabled )
 , target_frame_( "base" )
-, render_callback_( NULL )
-, render_lock_( NULL )
-, render_unlock_( NULL )
 , ros_node_( node )
 , tf_client_( tf_client )
 {
