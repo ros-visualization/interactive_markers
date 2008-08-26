@@ -146,7 +146,7 @@ void FPSCamera::mouseLeftDrag( int diff_x, int diff_y )
 
 void FPSCamera::mouseMiddleDrag( int diff_x, int diff_y )
 {
-  move( diff_x*0.1, -diff_y*0.1, 0.0f );
+  move( -diff_x*0.01, diff_y*0.01, 0.0f );
 }
 
 void FPSCamera::mouseRightDrag( int diff_x, int diff_y )
@@ -156,7 +156,7 @@ void FPSCamera::mouseRightDrag( int diff_x, int diff_y )
 
 void FPSCamera::scrollWheel( int diff )
 {
-
+  move( 0.0f, 0.0f, -diff * 0.01 );
 }
 
 } // namespace ogre_tools
