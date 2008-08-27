@@ -212,9 +212,9 @@ void PointCloudVisualizer::incomingCloudCallback()
     if ( channel_is_rgb )
     {
       int rgb = *(int*)&channel;
-      float r = (rgb >> 16) & 0xff;
-      float g = (rgb >> 8) & 0xff;
-      float b = rgb & 0xff;
+      float r = ((rgb >> 16) & 0xff) / 255.0f;
+      float g = ((rgb >> 8) & 0xff) / 255.0f;
+      float b = (rgb & 0xff) / 255.0f;
       color = Ogre::Vector3( r, g, b );
     }
     else
