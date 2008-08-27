@@ -69,7 +69,7 @@ public:
     Billboards,///< Billboards -- points are drawn as camera-facing quads in 3d space
   };
 
-  LaserScanVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name, bool enabled );
+  LaserScanVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name );
   ~LaserScanVisualizer();
 
   /**

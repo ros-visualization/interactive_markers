@@ -55,10 +55,8 @@
 namespace ogre_vis
 {
 
-OctreeVisualizer::OctreeVisualizer(Ogre::SceneManager* sceneManager,
-    ros::node* node, rosTFClient* tfClient, const std::string& name,
-    bool enabled)
-: VisualizerBase(sceneManager, node, tfClient, name, enabled)
+OctreeVisualizer::OctreeVisualizer(Ogre::SceneManager* sceneManager,ros::node* node, rosTFClient* tfClient, const std::string& name)
+: VisualizerBase(sceneManager, node, tfClient, name)
 , r_( 1.0f )
 , g_( 1.0f )
 , b_( 1.0f )
@@ -80,11 +78,6 @@ OctreeVisualizer::OctreeVisualizer(Ogre::SceneManager* sceneManager,
   material_->setReceiveShadows(false);
   material_->getTechnique(0)->setLightingEnabled(true);
   setColor( r_, g_, b_ );
-
-  if (isEnabled())
-  {
-    onEnable();
-  }
 }
 
 OctreeVisualizer::~OctreeVisualizer()

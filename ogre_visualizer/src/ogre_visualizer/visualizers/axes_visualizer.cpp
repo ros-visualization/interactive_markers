@@ -43,8 +43,8 @@
 namespace ogre_vis
 {
 
-AxesVisualizer::AxesVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name, bool enabled )
-: VisualizerBase( scene_manager, node, tf_client, name, enabled )
+AxesVisualizer::AxesVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name )
+: VisualizerBase( scene_manager, node, tf_client, name )
 , length_( 1.0 )
 , radius_( 0.1 )
 {
@@ -55,15 +55,6 @@ AxesVisualizer::AxesVisualizer( Ogre::SceneManager* scene_manager, ros::node* no
   Ogre::Quaternion orient( Ogre::Quaternion::IDENTITY );
   robotToOgre( orient );
   axes_->setOrientation( orient );
-
-  if ( isEnabled() )
-  {
-    onEnable();
-  }
-  else
-  {
-    onDisable();
-  }
 }
 
 AxesVisualizer::~AxesVisualizer()

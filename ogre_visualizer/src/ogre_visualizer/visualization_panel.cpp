@@ -76,10 +76,9 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent, Ogre::Root* root )
 {
   initializeCommon();
 
-  static int count = 0;
-  std::stringstream ss;
-  ss << "VisualizationPanelNode" << count++;
-  ros_node_ = new ros::node( ss.str() );
+  ros_node_ = ros::node::instance();
+  ROS_ASSERT( ros_node_ );
+
   tf_client_ = new rosTFClient( *ros_node_ );
 
   scene_manager_ = ogre_root_->createSceneManager( Ogre::ST_GENERIC );
@@ -180,9 +179,6 @@ VisualizationPanel::~VisualizationPanel()
   delete orbit_camera_;
 
   ogre_root_->destroySceneManager( scene_manager_ );
-
-  ros_node_->shutdown();
-  delete ros_node_;
 }
 
 void VisualizationPanel::queueRender()

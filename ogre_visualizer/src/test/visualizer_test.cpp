@@ -184,6 +184,7 @@ public:
     }
 
     ros::init(argc, localArgv);
+    new ros::node( "Visualizer Test" );
 
     wxFrame* frame = new MyFrame(NULL);
     SetTopWindow(frame);
@@ -193,6 +194,8 @@ public:
 
   int OnExit()
   {
+    ros::fini();
+
     for ( int i = 0; i < argc; ++i )
     {
       free( localArgv[ i ] );

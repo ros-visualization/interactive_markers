@@ -43,8 +43,8 @@
 namespace ogre_vis
 {
 
-GridVisualizer::GridVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name, bool enabled )
-: VisualizerBase( scene_manager, node, tf_client, name, enabled )
+GridVisualizer::GridVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name )
+: VisualizerBase( scene_manager, node, tf_client, name )
 , cell_size_( 1.0f )
 , cell_count_( 10 )
 , r_( 0.5 )
@@ -52,8 +52,6 @@ GridVisualizer::GridVisualizer( Ogre::SceneManager* scene_manager, ros::node* no
 , b_( 0.5 )
 {
   grid_ = new ogre_tools::Grid( scene_manager_, cell_count_, cell_size_, r_, g_, b_ );
-
-  grid_->getSceneNode()->setVisible( isEnabled() );
 }
 
 GridVisualizer::~GridVisualizer()

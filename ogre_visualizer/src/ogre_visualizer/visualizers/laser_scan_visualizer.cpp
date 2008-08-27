@@ -51,8 +51,8 @@
 namespace ogre_vis
 {
 
-LaserScanVisualizer::LaserScanVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name, bool enabled )
-: VisualizerBase( scene_manager, node, tf_client, name, enabled )
+LaserScanVisualizer::LaserScanVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name )
+: VisualizerBase( scene_manager, node, tf_client, name )
 , r_( 1.0 )
 , g_( 0.0 )
 , b_( 0.0 )
@@ -66,11 +66,6 @@ LaserScanVisualizer::LaserScanVisualizer( Ogre::SceneManager* scene_manager, ros
 
   setStyle( style_ );
   setBillboardSize( billboard_size_ );
-
-  if ( isEnabled() )
-  {
-    onEnable();
-  }
 }
 
 LaserScanVisualizer::~LaserScanVisualizer()

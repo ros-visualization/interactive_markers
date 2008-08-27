@@ -49,8 +49,8 @@
 namespace ogre_vis
 {
 
-PointCloudVisualizer::PointCloudVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name, bool enabled )
-: VisualizerBase( scene_manager, node, tf_client, name, enabled )
+PointCloudVisualizer::PointCloudVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name )
+: VisualizerBase( scene_manager, node, tf_client, name )
 , r_( 1.0 )
 , g_( 1.0 )
 , b_( 1.0 )
@@ -61,11 +61,6 @@ PointCloudVisualizer::PointCloudVisualizer( Ogre::SceneManager* scene_manager, r
 
   setStyle( style_ );
   setBillboardSize( billboard_size_ );
-
-  if ( isEnabled() )
-  {
-    onEnable();
-  }
 }
 
 PointCloudVisualizer::~PointCloudVisualizer()

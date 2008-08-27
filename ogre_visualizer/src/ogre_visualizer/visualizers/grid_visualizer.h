@@ -54,7 +54,7 @@ namespace ogre_vis
 class GridVisualizer : public VisualizerBase
 {
 public:
-  GridVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name, bool enabled );
+  GridVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name );
   virtual ~GridVisualizer();
 
   /**

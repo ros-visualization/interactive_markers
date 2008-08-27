@@ -131,12 +131,6 @@ public:
   void unlockRender() { render_mutex_.unlock(); }
 
   /**
-   * \brief Add a visualizer to be managed by this panel
-   * @param visualizer The visualizer to be added
-   */
-  void addVisualizer( VisualizerBase* visualizer );
-
-  /**
    * \brief Create and then add a visualizer to this panel.
    * @param name Display name of the visualizer
    * @param enabled Whether to start enabled
@@ -145,7 +139,15 @@ public:
   template< class T >
   T* createVisualizer( const std::string& name, bool enabled )
   {
-    T* visualizer = new T( scene_manager_, ros_node_, tf_client_, name, enabled );
+    T* visualizer = new T( scene_manager_, ros_node_, tf_client_, name );
+    if ( enabled )
+    {
+      visualizer->enable( true );
+    }
+    else
+    {
+      visualizer->disable( true );
+    }
 
     addVisualizer( visualizer );
 
@@ -153,6 +155,12 @@ public:
   }
 
 protected:
+  /**
+   * \brief Add a visualizer to be managed by this panel
+   * @param visualizer The visualizer to be added
+   */
+  void addVisualizer( VisualizerBase* visualizer );
+
   /// Called when a "view" (camera) is selected from the list
   void onViewClicked( wxCommandEvent& event );
   /// Called when a visualizer is toggled on/off from the display checklist

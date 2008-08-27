@@ -33,10 +33,10 @@ namespace ogre_vis
 {
 
 VisualizerBase::VisualizerBase( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client,
-                                const std::string& name, bool enabled )
+                                const std::string& name )
 : scene_manager_( scene_manager )
 , name_( name )
-, enabled_( enabled )
+, enabled_( false )
 , target_frame_( "base" )
 , ros_node_( node )
 , tf_client_( tf_client )
@@ -47,9 +47,9 @@ VisualizerBase::~VisualizerBase()
 {
 }
 
-void VisualizerBase::enable()
+void VisualizerBase::enable( bool force )
 {
-  if ( enabled_ )
+  if ( enabled_ && !force )
   {
     return;
   }
@@ -59,9 +59,9 @@ void VisualizerBase::enable()
   onEnable();
 }
 
-void VisualizerBase::disable()
+void VisualizerBase::disable( bool force )
 {
-  if ( !enabled_ )
+  if ( !enabled_ && !force )
   {
     return;
   }

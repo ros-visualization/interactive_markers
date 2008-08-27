@@ -62,13 +62,19 @@ namespace ogre_vis
 class VisualizerBase
 {
 public:
-  VisualizerBase( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name, bool enabled = false );
+  VisualizerBase( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name );
   virtual ~VisualizerBase();
 
-  /// Enable this visualizer
-  void enable();
-  /// Disable this visualizer
-  void disable();
+  /**
+   * \brief Enable this visualizer
+   * @param force If false, does not re-enable if this visualizer is already enabled.  If true, it does.
+   */
+  void enable( bool force = false );
+  /**
+   * \brief Disable this visualizer
+   * @param force If false, does not re-disable if this visualizer is already disabled.  If true, it does.
+   */
+  void disable( bool force = false );
 
   bool isEnabled() { return enabled_; }
   const std::string& getName() { return name_; }

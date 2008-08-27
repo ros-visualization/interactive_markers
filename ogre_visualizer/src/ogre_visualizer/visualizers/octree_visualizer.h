@@ -52,7 +52,7 @@ namespace ogre_vis
 class OctreeVisualizer : public VisualizerBase
 {
 public:
-  OctreeVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
+  OctreeVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name );
   virtual ~OctreeVisualizer();
 
   /**

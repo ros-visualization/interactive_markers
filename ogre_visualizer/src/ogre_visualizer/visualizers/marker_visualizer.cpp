@@ -42,15 +42,10 @@
 namespace ogre_vis
 {
 
-MarkerVisualizer::MarkerVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name, bool enabled )
-: VisualizerBase( scene_manager, node, tf_client, name, enabled )
+MarkerVisualizer::MarkerVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name )
+: VisualizerBase( scene_manager, node, tf_client, name )
 {
   scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
-
-  if ( isEnabled() )
-  {
-    onEnable();
-  }
 }
 
 MarkerVisualizer::~MarkerVisualizer()
