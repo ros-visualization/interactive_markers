@@ -30,6 +30,33 @@
 #ifndef OGRE_VISUALIZER_VISUALIZATION_PANEL_H
 #define OGRE_VISUALIZER_VISUALIZATION_PANEL_H
 
+/**
+ * @mainpage
+ *
+ * @htmlinclude manifest.html
+ *
+ * @b ogre_visualizer is a 3D visualization framework that is embeddable anywhere, as a wxPanel
+ *
+ * @section vispanelusage VisualizationPanel Usage
+ * The visualization panel needs an initialized Ogre::Root before it can be created.  For an example of this, see the visualizer_test.cpp test application.
+ *
+ * Once Ogre::Root is initialized, create a VisualizationPanel with:
+ @verbatim
+ ogre_tools::VisualizationPanel* visualization_panel = new VisualizationPanel( <parent wxWindow>, <Ogre::Root*> );
+ @endverbatim
+ * You can then add any number of visualizers:
+ @verbatim
+ visualization_panel->createVisualizer<AxesVisualizer>( "Origin Axes", true );
+
+ pointCloud = visualization_panel->createVisualizer<PointCloudVisualizer>( "Head Full Cloud", false );
+ pointCloud->setTopic( "full_cloud" );
+ pointCloud->setColor( 1.0, 1.0, 0.0 );
+ ...
+ @endverbatim
+ *
+ * Writing your own visualizer is easy.  For a simple example, see http://pr.willowgarage.com/wiki/ogre_visualizer/SimpleVisualizerTutorial
+ */
+
 #include "generated/visualization_panel_generated.h"
 
 #include "rosthread/mutex.h"
@@ -70,19 +97,51 @@ namespace ogre_vis
 
 class VisualizerBase;
 
+/**
+ * \class VisualizationPanel
+ * \brief A self-contained wxPanel for 3D visualization of pretty much anything.
+ *
+ */
 class VisualizationPanel : public VisualizationPanelGenerated
 {
 public:
+  /**
+   * \brief Constructor
+   *
+   * @param parent Parent window
+   * @param root Ogre root, passed in because there may be multiple VisualizationPanels, but there can be only one root
+   * @return
+   */
   VisualizationPanel( wxWindow* parent, Ogre::Root* root );
   virtual ~VisualizationPanel();
 
-  void render();
+  /**
+   * \brief Queues a render.  Multiple calls before a render happens will only cause a single render.
+   * \note This function can be called from any thread.
+   */
+  void queueRender();
 
+  /**
+   * \brief Locks the renderer
+   */
   void lockRender() { render_mutex_.lock(); }
+  /**
+   * \brief Unlocks the renderer
+   */
   void unlockRender() { render_mutex_.unlock(); }
 
+  /**
+   * \brief Add a visualizer to be managed by this panel
+   * @param visualizer The visualizer to be added
+   */
   void addVisualizer( VisualizerBase* visualizer );
 
+  /**
+   * \brief Create and then add a visualizer to this panel.
+   * @param name Display name of the visualizer
+   * @param enabled Whether to start enabled
+   * @return A pointer to the new visualizer
+   */
   template< class T >
   T* createVisualizer( const std::string& name, bool enabled )
   {
@@ -94,43 +153,51 @@ public:
   }
 
 protected:
+  /// Called when a "view" (camera) is selected from the list
   void onViewClicked( wxCommandEvent& event );
+  /// Called when a visualizer is toggled on/off from the display checklist
   void onDisplayToggled( wxCommandEvent& event );
+  /// Called when a visualizer is selected in the display checklist
   void onDisplaySelected( wxCommandEvent& event );
+  /// Called when a mouse event happens inside the render window
   void onRenderWindowMouseEvents( wxMouseEvent& event );
+  /// Called from the update timer
   void onUpdate( wxTimerEvent& event );
+  /// Called when our custom EVT_RENDER is fired
   void onRender( wxCommandEvent& event );
+  /// Called when a property from the wxPropertyGrid is changing
   void onPropertyChanging( wxPropertyGridEvent& event );
+  /// Called when a property from the wxProperty
   void onpropertyChanged( wxPropertyGridEvent& event );
 
-  Ogre::Root* ogre_root_;
-  Ogre::SceneManager* scene_manager_;
+  Ogre::Root* ogre_root_;                                 ///< Ogre Root
+  Ogre::SceneManager* scene_manager_;                     ///< Ogre scene manager associated with this panel
 
-  wxTimer* update_timer_;
-  wxStopWatch update_stopwatch_;
+  wxTimer* update_timer_;                                 ///< Update timer.  VisualizerBase::update is called on each visualizer whenever this timer fires
+  wxStopWatch update_stopwatch_;                          ///< Update stopwatch.  Stores how long it's been since the last update
 
-  wxPropertyGrid* property_grid_;
+  wxPropertyGrid* property_grid_;                         ///< Visualizer property grid
 
-  ogre_tools::wxOgreRenderWindow* render_panel_;
-  ogre_tools::CameraBase* current_camera_;
-  ogre_tools::FPSCamera* fps_camera_;
-  ogre_tools::OrbitCamera* orbit_camera_;
+  ogre_tools::wxOgreRenderWindow* render_panel_;          ///< Render window
+  ogre_tools::CameraBase* current_camera_;                ///< The current camera
+  ogre_tools::FPSCamera* fps_camera_;                     ///< FPS camera
+  ogre_tools::OrbitCamera* orbit_camera_;                 ///< Orbit camera
 
-  ros::node* ros_node_;
-  rosTFClient* tf_client_;
+  ros::node* ros_node_;                                   ///< Our ros::node
+  rosTFClient* tf_client_;                                ///< Our rosTF client
 
   typedef std::vector< VisualizerBase* > V_Visualizer;
-  V_Visualizer visualizers_;
-  VisualizerBase* selected_visualizer_;
+  V_Visualizer visualizers_;                              ///< Our list of visualizers
+  VisualizerBase* selected_visualizer_;                   ///< The currently selected visualizer
 
   // Mouse handling
-  bool left_mouse_down_;
-  bool middle_mouse_down_;
-  bool right_mouse_down_;
-  int mouse_x_;
-  int mouse_y_;
+  bool left_mouse_down_;                                  ///< Is the left mouse button down?
+  bool middle_mouse_down_;                                ///< Is the middle mouse button down?
+  bool right_mouse_down_;                                 ///< Is the right mouse button down?
+  int mouse_x_;                                           ///< X position of the last mouse event
+  int mouse_y_;                                           ///< Y position of the last mouse event
 
-  ros::thread::mutex render_mutex_;
+  ros::thread::mutex render_mutex_;                       ///< Render mutex
 };
 
 } // namespace ogre_vis

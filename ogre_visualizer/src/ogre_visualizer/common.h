@@ -34,6 +34,10 @@
 
 #include <Ogre.h>
 
+/**
+ * \file
+ */
+
 namespace ogre_vis
 {
 
@@ -43,41 +47,73 @@ extern Ogre::Matrix3 g_robot_to_ogre_matrix;
 extern Ogre::Quaternion g_ogre_to_robot_quat;
 extern Ogre::Quaternion g_robot_to_ogre_quat;
 
+/**
+ * \brief Initialize the ogre-to-robot and robot-to-ogre matrices/quaternions
+ */
 void initializeCommon();
 
+/**
+ * \brief Convert a point from robot space to ogre space
+ * @param point Converts this point in-place
+ */
 inline void robotToOgre( Ogre::Vector3& point )
 {
   point = g_robot_to_ogre_matrix * point;
 }
 
+/**
+ * \brief Convert a quaternion from robot space to ogre space
+ * @param quat Converts this quaternion in-place
+ */
 inline void robotToOgre( Ogre::Quaternion& quat )
 {
   quat = g_robot_to_ogre_quat * quat;
 }
 
+/**
+ * \brief Convert a matrix3 from robot space to ogre space
+ * @param mat Converts this matrix in-place
+ */
 inline void robotToOgre( Ogre::Matrix3& mat )
 {
   mat = g_robot_to_ogre_matrix * mat;
 }
 
 
-
+/**
+ * \brief Convert a point from ogre space to robot space
+ * @param point Converts this point in-place
+ */
 inline void ogreToRobot( Ogre::Vector3& point )
 {
   point = g_ogre_to_robot_matrix * point;
 }
 
+/**
+ * \brief Convert a quaternion from ogre space to robot space
+ * @param quat Converts this quaternion in-place
+ */
 inline void ogreToRobot( Ogre::Quaternion& quat )
 {
   quat = g_ogre_to_robot_quat * quat;
 }
 
+/**
+ * \brief Convert a matrix3 from ogre space to robot space
+ * @param mat Converts this matrix in-place
+ */
 inline void ogreToRobot( Ogre::Matrix3& mat )
 {
   mat = g_ogre_to_robot_matrix * mat;
 }
 
-
+/**
+ * Gets an ogre-space rotation matrix from robot-space euler angles
+ * @param yaw Robot-space yaw value
+ * @param pitch Robot-space pitch value
+ * @param roll Robot-space roll value
+ * @return Ogre-space rotation matrix
+ */
 inline Ogre::Matrix3 ogreMatrixFromRobotEulers( float yaw, float pitch, float roll )
 {
   Ogre::Matrix3 mat;

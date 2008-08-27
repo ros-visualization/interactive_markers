@@ -37,10 +37,11 @@
 #include "octree_visualizer.h"
 #include "../ros_topic_property.h"
 
-#include "dataTypes.h"
-#include "ros/node.h"
+#include <dataTypes.h>
+#include <ros/node.h>
 
 #include <rosTF/rosTF.h>
+#include <octree.h>
 
 #include <wx/wx.h>
 #include <wx/propgrid/propgrid.h>

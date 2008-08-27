@@ -45,19 +45,58 @@ class GridOptionsPanel;
 namespace ogre_vis
 {
 
+/**
+ * \class GridVisualizer
+ * \brief Displays a grid along the XZ plane (XY in robot space)
+ *
+ * For more information see ogre_tools::Grid
+ */
 class GridVisualizer : public VisualizerBase
 {
 public:
   GridVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name, bool enabled );
   virtual ~GridVisualizer();
 
+  /**
+   * @return The cell count for this grid
+   */
   uint32_t getCellCount() { return cell_count_; }
+  /**
+   * @return The cell size for this grid
+   */
   float getCellSize() { return cell_size_; }
+  /**
+   * @param r (return) The red color component, range [0,1]
+   * @param g (return) The green color component, range [0,1]
+   * @param b (return) The blue color component, range [0,1]
+   */
   void getColor( float& r, float& g, float& b );
 
+  /**
+   * \brief Set all the parameters of the grid
+   * @param cell_count The number of cells
+   * @param cell_size The size of each cell
+   * @param r Red color component, range [0,1]
+   * @param g Green color component, range [0,1]
+   * @param b Blue color component, range [0,1]
+   */
   void set( uint32_t cell_count, float cell_size, float r, float g, float b );
+  /**
+   * \brief Set the number of cells
+   * @param cell_count The number of cells
+   */
   void setCellCount( uint32_t cell_count );
+  /**
+   * \brief Set the cell size
+   * @param cell_size The cell size
+   */
   void setCellSize( float cell_size );
+  /**
+   * \brief Set the color
+   * @param r Red color component, range [0,1]
+   * @param g Green color component, range [0,1]
+   * @param b Blue color component, range [0,1]
+   */
   void setColor( float r, float g, float b );
 
   // Overrides from VisualizerBase
@@ -65,18 +104,21 @@ public:
   virtual void propertyChanged( wxPropertyGridEvent& event );
 
 protected:
+  /**
+   * \brief Creates the grid with the currently-set parameters
+   */
   void create();
 
   // overrides from VisualizerBase
   virtual void onEnable();
   virtual void onDisable();
 
-  float cell_size_;
-  uint32_t cell_count_;
-  float r_;
-  float g_;
-  float b_;
-  ogre_tools::Grid* grid_;
+  float cell_size_;                   ///< The size of each cell drawn.  Cells are square.
+  uint32_t cell_count_;               ///< The number of rows/columns to draw.
+  float r_;                           ///< Red color component, range [0,1]
+  float g_;                           ///< Green color component, range [0,1]
+  float b_;                           ///< Blue color component, range [0,1]
+  ogre_tools::Grid* grid_;            ///< Handles actually drawing the grid
 };
 
 } // namespace ogre_vis

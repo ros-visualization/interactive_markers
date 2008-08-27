@@ -39,54 +39,81 @@
 
 #include "../visualizer_base.h"
 #include <scan_utils/OctreeMsg.h>
-#include <octree.h>
 
 #include <Ogre.h>
 
 namespace ogre_vis
 {
 
-	class OctreeVisualizer : public VisualizerBase
-	{
-	public:
-		OctreeVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
-		virtual ~OctreeVisualizer();
+/**
+ * \class OctreeVisualizer
+ * \brief Visualizes a scan_utils::Octree, using its triangulation
+ */
+class OctreeVisualizer : public VisualizerBase
+{
+public:
+  OctreeVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name, bool enabled );
+  virtual ~OctreeVisualizer();
 
-		void setOctreeTopic( const std::string& topic );
-		void setColor( float r, float g, float b );
+  /**
+   * \brief Set the ROS topic to listen on for Octree messages
+   * @param topic The ROS topic
+   */
+  void setOctreeTopic( const std::string& topic );
+  /**
+   * \brief Set the color to display as
+   * @param r Red component, range [0,1]
+   * @param g Green component, range [0,1]
+   * @param b Blue component, range [0,1]
+   */
+  void setColor( float r, float g, float b );
 
-		// Overrides from VisualizerBase
-    virtual void fillPropertyGrid( wxPropertyGrid* property_grid );
-    virtual void propertyChanged( wxPropertyGridEvent& event );
+  // Overrides from VisualizerBase
+  virtual void fillPropertyGrid( wxPropertyGrid* property_grid );
+  virtual void propertyChanged( wxPropertyGridEvent& event );
 
-		virtual void update( float dt );
+  virtual void update( float dt );
 
-	protected:
-		// overrides from VisualizerBase
-		virtual void onEnable();
-		virtual void onDisable();
-		void subscribe();
-		void unsubscribe();
+protected:
+  // overrides from VisualizerBase
+  virtual void onEnable();
+  virtual void onDisable();
 
-		void incomingOctreeCallback();
+  /**
+   * \brief Subscribes to the topic set by setOctreeTopic()
+   */
+  void subscribe();
+  /**
+   * \brief Unsubscribes from the topic set by setOctreeTopic()
+   */
+  void unsubscribe();
 
-		float r_;
-		float g_;
-		float b_;
+  /**
+   * \brief ROS callback for an incoming octree message
+   */
+  void incomingOctreeCallback();
 
-		Ogre::SceneNode* scene_node_;
-		Ogre::ManualObject* manual_object_;
-		Ogre::MaterialPtr material_;
-		std::string material_name_;
-		std::string octree_topic_;
+  float r_;                             ///< Color, red component, range [0,1]
+  float g_;                             ///< Color, green component, range [0,1]
+  float b_;                             ///< Color, blue component, range [0,1]
 
-		scan_utils::OctreeMsg octree_message_;
-		typedef std::vector<Ogre::Vector3> V_Vector3;
-		V_Vector3 vertices_;
-		V_Vector3 normals_;
+  Ogre::SceneNode* scene_node_;         ///< Scene node we're attached to
+  Ogre::ManualObject* manual_object_;   ///< Manual object used to display the octree
+  Ogre::MaterialPtr material_;          ///< Material created for this object
+  std::string material_name_;           ///< Name of the material created for this object
+  std::string octree_topic_;            ///< Topic to listen on
 
-		bool new_message_;
-	};
+  scan_utils::OctreeMsg octree_message_;  ///< Octree message
+  typedef std::vector<Ogre::Vector3> V_Vector3;
+
+  V_Vector3 vertices_;                  ///< List of vertices spit out by the Octree's triangulator.  Every 3 vertices form a triangle.
+                                        ///< Must lock #octree_message_ before accessing in any way.
+
+  V_Vector3 normals_;                   ///< List of normals for each triangle -- this list is always 1/3 the size of #vertices_.
+                                        ///< Must lock #octree_message_ before accessing in any way.
+
+  bool new_message_;                    ///< Informs our update function that there is new data in #vertices_ and #normals_, so it can rebuild the ManualObject
+};
 
 }
 #endif /* OCTREE_VISUALIZER_H_ */

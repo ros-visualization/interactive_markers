@@ -127,7 +127,6 @@ void PointCloudVisualizer::onDisable()
 
   cloud_->clear();
   cloud_->setVisible( false );
-  points_.clear();
 }
 
 void PointCloudVisualizer::subscribe()
@@ -182,8 +181,6 @@ void PointCloudVisualizer::incomingCloudCallback()
     printf( "Error transforming point cloud '%s': %s\n", name_.c_str(), e.what() );
   }
 
-  points_.clear();
-
   // First find the min/max intensity values
   float min_intensity = 999999.0f;
   float max_intensity = -999999.0f;
@@ -200,7 +197,9 @@ void PointCloudVisualizer::incomingCloudCallback()
 
   float diff_intensity = max_intensity - min_intensity;
 
-  points_.resize( pointCount );
+  typedef std::vector< ogre_tools::PointCloud::Point > V_Point;
+  V_Point points;
+  points.resize( pointCount );
   for(uint32_t i = 0; i < pointCount; i++)
   {
     Ogre::Vector3 point( message_.pts[i].x, message_.pts[i].y, message_.pts[i].z );
@@ -213,7 +212,7 @@ void PointCloudVisualizer::incomingCloudCallback()
     Ogre::Vector3 color( r_, g_, b_ );
     color *= normalized_intensity;
 
-    ogre_tools::PointCloud::Point& current_point = points_[ i ];
+    ogre_tools::PointCloud::Point& current_point = points[ i ];
     current_point.x_ = point.x;
     current_point.y_ = point.y;
     current_point.z_ = point.z;
@@ -227,9 +226,9 @@ void PointCloudVisualizer::incomingCloudCallback()
 
     cloud_->clear();
 
-    if ( !points_.empty() )
+    if ( !points.empty() )
     {
-      cloud_->addPoints( &points_.front(), points_.size() );
+      cloud_->addPoints( &points.front(), points.size() );
     }
   }
 

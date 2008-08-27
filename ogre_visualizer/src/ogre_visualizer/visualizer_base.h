@@ -52,9 +52,13 @@ class wxPropertyGridEvent;
 namespace ogre_vis
 {
 
-/** Abstract base class for all visualizers.  This provides a common interface for the visualization panel to interact with,
+/**
+ * \class VisualizerBase
+ * \brief Abstract base class for all visualizers.
+ *
+ * Provides a common interface for the visualization panel to interact with,
  * so that new visualizers can be added without the visualization panel knowing anything about them.
- * */
+ */
 class VisualizerBase
 {
 public:
@@ -69,25 +73,43 @@ public:
   bool isEnabled() { return enabled_; }
   const std::string& getName() { return name_; }
 
-  /// Called periodically by the visualization panel
+  /**
+   * \brief Called periodically by the visualization panel
+   * @param dt Time, in seconds, since the last time the update list was run through.
+   */
   virtual void update( float dt ) {}
 
-  /// Called by the visualization panel to tell set our functor used for causing a render to happen
+  ///
+  /**
+   * \brief Set the callback used for causing a render to happen
+   * @param func a void(void) function that will cause a render to happen from the correct thread
+   */
   void setRenderCallback( boost::function<void ()> func );
 
+  /// Set the callback used to lock the renderer
   void setLockRenderCallback( boost::function<void ()> func );
+  /// Set the callback used to unlock the renderer
   void setUnlockRenderCallback( boost::function<void ()> func );
 
   /// Override this to fill out the property grid when this visualizer is selected
   virtual void fillPropertyGrid( wxPropertyGrid* property_grid ) {} // default to no options
 
-  /// Override this to handle a changing property value.  This provides the opportunity to veto a change if there is an invalid value
-  /// event.Veto() will prevent the change.
+  ///
+  ///
+  /**
+   * \brief Override this to handle a changing property value.
+   *
+   * This provides the opportunity to veto a change if there is an invalid value: event.Veto() will prevent the change.
+   * @param event The changing event
+   */
   virtual void propertyChanging( wxPropertyGridEvent& event ) {}
-  /// Override this to handle a changed property value
+  /**
+   * \brief Override this to handle a changed property value
+   * @param event The changed event
+   */
   virtual void propertyChanged( wxPropertyGridEvent& event ) {}
 
-
+  /// Set the target frame of this visualizer. This is a frame id which should match something being broadcast through libTF.
   void setTargetFrame( const std::string& frame ) { target_frame_ = frame; }
 
 protected:
@@ -96,28 +118,41 @@ protected:
   /// Derived classes override this to do the actual work of disabling themselves
   virtual void onDisable() = 0;
 
-  /// Called by derived classes to cause the scene we're in to be rendered.
+  ///
+  /**
+   * \brief Cause the scene we're in to be rendered.
+   * \note This does not immediately cause a render -- instead, one is queued and happens next run through the event loop.
+   */
   void causeRender();
 
+  /// Lock the renderer
   void lockRender();
+  /// Unlock the renderer
   void unlockRender();
 
-  Ogre::SceneManager* scene_manager_;
-  std::string name_;
-  bool enabled_;
+  Ogre::SceneManager* scene_manager_;                 ///< The scene manager we're associated with
+  std::string name_;                                  ///< The name of this visualizer
+  bool enabled_;                                      ///< Are we enabled?
 
-  std::string target_frame_;
+  std::string target_frame_;                          ///< The frame we should transform everything into
 
-  boost::function<void ()> render_callback_;
-  boost::function<void ()> render_lock_;
-  boost::function<void ()> render_unlock_;
+  boost::function<void ()> render_callback_;          ///< Render callback
+  boost::function<void ()> render_lock_;              ///< Render lock callback
+  boost::function<void ()> render_unlock_;            ///< Render unlock callback
 
-  ros::node* ros_node_;
-  rosTFClient* tf_client_;
+  ros::node* ros_node_;                               ///< ros node
+  rosTFClient* tf_client_;                            ///< rosTF client
 
   friend class RenderAutoLock;
 };
 
+/**
+ * \class RenderAutoLock
+ * \brief A scoped lock on the renderer
+ *
+ * Constructor calls VisualizerBase::lockRender<br>
+ * Destructor calls VisualizerBase::unlockRender
+ */
 class RenderAutoLock
 {
 public:

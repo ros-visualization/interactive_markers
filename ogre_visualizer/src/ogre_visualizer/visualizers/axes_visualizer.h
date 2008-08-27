@@ -40,12 +40,21 @@ class Axes;
 namespace ogre_vis
 {
 
+/**
+ * \class AxesVisualizer
+ * \brief Displays a set of XYZ axes at the origin
+ */
 class AxesVisualizer : public VisualizerBase
 {
 public:
   AxesVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name, bool enabled );
   virtual ~AxesVisualizer();
 
+  /**
+   * \brief Set the parameters for the axes
+   * @param length Length of each axis
+   * @param radius Radius of each axis
+   */
   void set( float length, float radius );
 
   // Overrides from VisualizerBase
@@ -53,15 +62,18 @@ public:
   virtual void propertyChanged( wxPropertyGridEvent& event );
 
 protected:
+  /**
+   * \brief Create the axes with the current parameters
+   */
   void create();
 
   // overrides from VisualizerBase
   virtual void onEnable();
   virtual void onDisable();
 
-  float length_;
-  float radius_;
-  ogre_tools::Axes* axes_;
+  float length_;                ///< Length of each axis
+  float radius_;                ///< Radius of each axis
+  ogre_tools::Axes* axes_;      ///< Handles actually drawing the axes
 };
 
 } // namespace ogre_vis

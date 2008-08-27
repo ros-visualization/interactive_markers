@@ -185,7 +185,7 @@ VisualizationPanel::~VisualizationPanel()
   delete ros_node_;
 }
 
-void VisualizationPanel::render()
+void VisualizationPanel::queueRender()
 {
   wxCommandEvent event( EVT_RENDER, GetId() );
   wxPostEvent( this, event );
@@ -235,7 +235,7 @@ void VisualizationPanel::onDisplayToggled( wxCommandEvent& event )
     visualizer->disable();
   }
 
-  render();
+  queueRender();
 }
 
 void VisualizationPanel::onDisplaySelected( wxCommandEvent& event )
@@ -310,7 +310,7 @@ void VisualizationPanel::addVisualizer( VisualizerBase* visualizer )
   displays_->Append( wxString::FromAscii( visualizer->getName().c_str() ), visualizer );
   displays_->Check( displays_->GetCount() - 1, visualizer->isEnabled() );
 
-  visualizer->setRenderCallback( boost::bind( &VisualizationPanel::render, this ) );
+  visualizer->setRenderCallback( boost::bind( &VisualizationPanel::queueRender, this ) );
   visualizer->setLockRenderCallback( boost::bind( &VisualizationPanel::lockRender, this ) );
   visualizer->setUnlockRenderCallback( boost::bind( &VisualizationPanel::unlockRender, this ) );
 }
@@ -380,7 +380,7 @@ void VisualizationPanel::onRenderWindowMouseEvents( wxMouseEvent& event )
 
     if ( handled )
     {
-      render();
+      queueRender();
     }
   }
 
@@ -388,7 +388,7 @@ void VisualizationPanel::onRenderWindowMouseEvents( wxMouseEvent& event )
   {
     current_camera_->scrollWheel( event.GetWheelRotation() );
 
-    render();
+    queueRender();
   }
 }
 

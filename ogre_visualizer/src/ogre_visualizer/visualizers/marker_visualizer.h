@@ -79,6 +79,12 @@ enum MarkerAction
 }
 typedef MarkerActions::MarkerAction MarkerAction;
 
+/**
+ * \class MarkerVisualizer
+ * \brief Displays "markers" sent in by other ROS nodes on the "visualizationMarker" topic
+ *
+ * Markers come in as std_msgs::VisualizationMarker messages.  See the VisualizationMarker message for more information.
+ */
 class MarkerVisualizer : public VisualizerBase
 {
 public:
@@ -91,28 +97,62 @@ protected:
   virtual void onEnable();
   virtual void onDisable();
 
+  /**
+   * \brief Subscribes to the "visualizationMarker" topic
+   */
   void subscribe();
+  /**
+   * \brief Unsubscribes from the "visualizationMarker" topic
+   */
   void unsubscribe();
 
+  /**
+   * \brief Removes all the markers
+   */
   void clearMarkers();
 
+  /**
+   * \brief Processes a marker message
+   * @param message The message to process
+   */
   void processMessage( const std_msgs::VisualizationMarker& message );
+  /**
+   * \brief Processes an "Add" marker message
+   * @param message The message to process
+   */
   void processAdd( const std_msgs::VisualizationMarker& message );
+  /**
+   * \brief Processes a "Modify" marker message
+   * @param message The message to process
+   */
   void processModify( const std_msgs::VisualizationMarker& message );
+  /**
+   * \brief Processes a "Delete" marker message
+   * @param message The message to process
+   */
   void processDelete( const std_msgs::VisualizationMarker& message );
+  /**
+   * \brief Set common values (position, orientation, scale, color) on a marker's object
+   * @param message The message to get the values from
+   * @param object The object to set the values on
+   */
   void setCommonValues( const std_msgs::VisualizationMarker& message, ogre_tools::Object* object );
 
+  /**
+   * \brief ROS callback notifying us of a new marker
+   */
   void incomingMarker();
 
   typedef std::map<int, ogre_tools::Object*> M_IDToObject;
-  M_IDToObject markers_;
+  M_IDToObject markers_;                                ///< Map of marker id to the object that displays the marker
 
-  std_msgs::VisualizationMarker current_message_;
+  std_msgs::VisualizationMarker current_message_;       ///< Incoming marker message
 
   typedef std::vector< std_msgs::VisualizationMarker > V_MarkerMessage;
-  V_MarkerMessage message_queue_;
+  V_MarkerMessage message_queue_;                       ///< Marker message queue.  Messages are added to this as they are received, and then processed
+                                                        ///< in our update() function
 
-  Ogre::SceneNode* scene_node_;
+  Ogre::SceneNode* scene_node_;                         ///< Scene node all the marker objects are parented to
 };
 
 } // namespace ogre_vis

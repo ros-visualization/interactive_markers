@@ -1,5 +1,5 @@
 <package>
-    <description brief="Ogre Visualizer">
+    <description brief="Ogre Visualization Panel">
     
     This is a wx panel and set of classes you can use to put a 3d visualization window in any wx app.
     

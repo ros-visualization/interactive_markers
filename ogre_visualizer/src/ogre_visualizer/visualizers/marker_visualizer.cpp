@@ -56,6 +56,8 @@ MarkerVisualizer::MarkerVisualizer( Ogre::SceneManager* scene_manager, ros::node
 MarkerVisualizer::~MarkerVisualizer()
 {
   unsubscribe();
+
+  clearMarkers();
 }
 
 void MarkerVisualizer::clearMarkers()
