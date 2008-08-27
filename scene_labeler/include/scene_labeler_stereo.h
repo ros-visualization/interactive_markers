@@ -205,9 +205,11 @@ public:
   }
 
 
-  bool getRandomPointFromImage(float *x, float *y, float *z, int *row, int *col) {
+  bool getRandomPointFromImage(float *x, float *y, float *z, int *row, int *col, int label=-1) {
     *col = rand() % mask_->width;
     *row = rand() % mask_->height;
+
+    //if(cvGetmask_
 
     if(!objects_extracted_) {
       cerr << "Don't call getRandomPoint before extracting objects!" << endl;
