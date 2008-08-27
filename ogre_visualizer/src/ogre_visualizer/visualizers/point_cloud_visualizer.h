@@ -49,6 +49,9 @@ namespace ogre_vis
  * \class PointCloudVisualizer
  * \brief Displays a point cloud of type std_msgs::PointCloudFloat32
  *
+ * By default it will assume channel 0 of the cloud is an intensity value, and will color them by intensity.
+ * If you set the channel's name to "rgb", it will interpret the channel as an integer rgb value, with r, g and b
+ * all being 8 bits.
  */
 class PointCloudVisualizer : public VisualizerBase
 {
