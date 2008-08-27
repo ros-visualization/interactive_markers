@@ -176,18 +176,23 @@ void PointCloudVisualizer::incomingCloudCallback()
     printf( "Error transforming point cloud '%s': %s\n", name_.c_str(), e.what() );
   }
 
+  bool channel_is_rgb = message_.chan[0].name == "rgb";
+
   // First find the min/max intensity values
   float min_intensity = 999999.0f;
   float max_intensity = -999999.0f;
 
   uint32_t pointCount = message_.get_pts_size();
-  for(uint32_t i = 0; i < pointCount; i++)
+  if ( !channel_is_rgb )
   {
-    float& intensity = message_.chan[0].vals[i];
-    // arbitrarily cap to 4096 for now
-    intensity = std::min( intensity, 4096.0f );
-    min_intensity = std::min( min_intensity, intensity );
-    max_intensity = std::max( max_intensity, intensity );
+    for(uint32_t i = 0; i < pointCount; i++)
+    {
+      float& intensity = message_.chan[0].vals[i];
+      // arbitrarily cap to 4096 for now
+      intensity = std::min( intensity, 4096.0f );
+      min_intensity = std::min( min_intensity, intensity );
+      max_intensity = std::max( max_intensity, intensity );
+    }
   }
 
   float diff_intensity = max_intensity - min_intensity;
@@ -200,12 +205,23 @@ void PointCloudVisualizer::incomingCloudCallback()
     Ogre::Vector3 point( message_.pts[i].x, message_.pts[i].y, message_.pts[i].z );
     robotToOgre( point );
 
-    float intensity = message_.chan[0].vals[i];
-
-    float normalized_intensity = diff_intensity > 0.0f ? ( intensity - min_intensity ) / diff_intensity : 1.0f;
+    float channel = message_.chan[0].vals[i];
 
     Ogre::Vector3 color( r_, g_, b_ );
-    color *= normalized_intensity;
+
+    if ( channel_is_rgb )
+    {
+      int rgb = *(int*)&channel;
+      float r = (rgb >> 16) & 0xff;
+      float g = (rgb >> 8) & 0xff;
+      float b = rgb & 0xff;
+      color = Ogre::Vector3( r, g, b );
+    }
+    else
+    {
+      float normalized_intensity = diff_intensity > 0.0f ? ( channel - min_intensity ) / diff_intensity : 1.0f;
+      color *= normalized_intensity;
+    }
 
     ogre_tools::PointCloud::Point& current_point = points[ i ];
     current_point.x_ = point.x;
