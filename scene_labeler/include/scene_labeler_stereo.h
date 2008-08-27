@@ -61,7 +61,7 @@ public:
   vector< pair<int, SmartScan*> > ss_objs_; //label, ss
   NEWMAT::Matrix trns_; //ptcld to image.
   bool objects_extracted_;
-
+  vector< vector<int> > xidx_;
 
  SceneLabelerStereo(ros::node* node) 
    : node_(node), mask_(0), left_(0), disp_(0), objects_extracted_(false)
@@ -172,7 +172,7 @@ public:
     }
   }
 
-  void getRandomPoint(float *x, float *y, float *z, int *row, int *col, SmartScan *ss = NULL) {
+  void getRandomPointFromPointcloud(float *x, float *y, float *z, int *row, int *col, SmartScan *ss = NULL) {
     if(!objects_extracted_) {
       cerr << "Don't call getRandomPoint before extracting objects!" << endl;
     }
@@ -203,6 +203,29 @@ public:
 /*     cout << "sls: " << projected(1,1) << " being rounded to " << *row << endl; */
 /*     cout << "sls: " << projected(2,1) << " being rounded to " << *col << endl; */
   }
+
+
+  bool getRandomPointFromImage(float *x, float *y, float *z, int *row, int *col) {
+    *col = rand() % mask_->width;
+    *row = rand() % mask_->height;
+
+    if(!objects_extracted_) {
+      cerr << "Don't call getRandomPoint before extracting objects!" << endl;
+      return false;
+    }
+
+    int ptId = xidx_[*row][*col];
+    if(ptId==-1) {
+      return false;
+    }
+
+    std_msgs::Point3DFloat32 pt = cloud_.pts[ptId];
+    *x = pt.x;
+    *y = pt.y;
+    *z = pt.z;
+  }
+
+
 
  private:
 
@@ -237,12 +260,21 @@ public:
     vid << videle;
     NEWMAT::Matrix projected = trns_ * vid;
 
-    // -- Normalize so z = 1.
+    // -- Normalize so z = 1.  Make the pixel / point cross-indexing for later while we're at it.
+    for ( unsigned int i=0; i<mask_->height; i++) {
+      for ( unsigned int j=0; j<mask_->width; j++) {
+	xidx_[i][j] = -1;
+      }
+    }
+
     for ( unsigned int i=1; i<=n; i++) {
       projected(1,i) = projected(1,i) / projected(3,i);
       projected(2,i) = projected(2,i) / projected(3,i);
       projected(3,i) = 1;
+
+      xidx_[(int)projected(1,i)][(int)projected(2,i)] = i-1;
     } 
+
 
     /* cout << endl << "Max x: " << projected.Row(1).Maximum() << "   Min x: " << projected.Row(1).Minimum() << endl; */
 /*     cout << endl << "Max y: " << projected.Row(2).Maximum() << "   Min y: " << projected.Row(2).Minimum() << endl; */
