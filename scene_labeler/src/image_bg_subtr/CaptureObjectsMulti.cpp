@@ -41,6 +41,10 @@
 #include <std_msgs/ImageArray.h>
 #include <ros/node.h>
 
+#define N_LEARN_FRAMES 20
+
+#define BACKGROUND_ID 0
+
 extern int CONTOUR_APPROX_LEVEL;   // Approx.threshold - the bigger it is, the simpler is the boundary
 extern int CLOSE_ITR;
 
@@ -81,14 +85,14 @@ imagesc(const char* wname, const IplImage* image) {
   cvMinMaxLoc(image, &imin, &imax);
   double range = imax - imin;
 
-  std::cout << "RANGE = " << range << std::endl;
-    
+  assert(image->depth == IPL_DEPTH_8U);
+
   IplImage* hsv = cvCreateImage(cvGetSize(image), IPL_DEPTH_8U, 3);
 
   for (int xx = 0; xx < hsv->width; xx++) {
     for (int yy = 0; yy < hsv->height; yy++) {
       unsigned char* prIn = 
-	(unsigned char*)(hsv->imageData + yy*hsv->widthStep);
+	(unsigned char*)(image->imageData + yy*image->widthStep);
       unsigned char* prOut = 
 	(unsigned char*)(hsv->imageData + yy*hsv->widthStep);
       prOut[3*xx] = 255.0 * (prIn[xx] - imin) / range;
@@ -107,6 +111,25 @@ imagesc(const char* wname, const IplImage* image) {
   cvReleaseImage(&rgb);
 }
 
+std::string cvGetString() {
+  string str;
+  printf("\n");
+  while (1) {
+    char ch = cvWaitKey();
+
+    if (ch == '\n')
+      break;
+
+    printf("%c", ch); 
+    fflush(stdout);
+    str.append(1, ch);
+  }
+
+  printf("\n");
+
+  return str;
+}
+
 // -- ROS Node class for getting Videre images.
 class ImgBGSubtr : public ros::node
 {
@@ -115,16 +138,20 @@ public:
   std_msgs::ImageArray frame_msg;
   bool hasNewFrameMsg, builtBridge, frameInUse;
   CvBridge<std_msgs::Image> *bridge_in, *bridge_out;
-  std_msgs::Image labelMask;
-  ros::thread::mutex frame_mutex_;
+  std_msgs::Image labelMask; 
+ ros::thread::mutex frame_mutex_;
 
 
   ImgBGSubtr() : ros::node("img_bg_subtr_multi"), hasNewFrameMsg(false), frame(0), builtBridge(false)
   {
     bridge_in = NULL;
-    bridge_out = new CvBridge<std_msgs::Image>(&labelMask, CvBridge<std_msgs::Image>::CORRECT_BGR | CvBridge<std_msgs::Image>::MAXDEPTH_8U);
+    bridge_out = 
+      new CvBridge<std_msgs::Image>
+      (&labelMask, 
+       CvBridge<std_msgs::Image>::CORRECT_BGR | 
+       CvBridge<std_msgs::Image>::MAXDEPTH_8U);
     subscribe("videre/images", frame_msg, &ImgBGSubtr::processFrame, true);
-    advertise<std_msgs::ImageArray>("labeled_images");
+    advertise<std_msgs::ImageArray>("labeled_images", 1);
   }
 
   ~ImgBGSubtr()
@@ -138,7 +165,11 @@ public:
   {
 
     if(!builtBridge) {
-      bridge_in = new CvBridge<std_msgs::Image>(&frame_msg.images[1], CvBridge<std_msgs::Image>::CORRECT_BGR | CvBridge<std_msgs::Image>::MAXDEPTH_8U);
+      bridge_in = 
+	new CvBridge<std_msgs::Image>
+	(&frame_msg.images[1], 
+	 CvBridge<std_msgs::Image>::CORRECT_BGR | 
+	 CvBridge<std_msgs::Image>::MAXDEPTH_8U);
       builtBridge = true;
     }
 
@@ -151,7 +182,6 @@ public:
       hasNewFrameMsg = true;
       frame_mutex_.unlock();
     }
-
   }  
 };
 
@@ -353,7 +383,7 @@ void help()
 	  "\n"
 	  "********Misc:********\n"
 	  "\tp   - Pause toggle\n"
-	  "\tr   - Remove stale codebook entries (can make code faster)\n"
+	  "\tt   - Remove stale codebook entries (can make code faster)\n"
 	  "\ta   - Return average codebook entries\n"
 	  "Mouse down in image window activated mouse event\n" );
 }
@@ -403,6 +433,7 @@ int main( int argc, char** argv )
 
   //Create Window
   cvNamedWindow("Multiclass segmentation", 0);
+  cvNamedWindow("Multiclass segmentation (preview)", 0);
   cvNamedWindow( "CaptureObjects", 0 );
   //Create Mouse Handler
   //	CVAPI(void) cvSetMouseCallback( const char* window_name, CvMouseCallback on_mouse,
@@ -463,7 +494,11 @@ int main( int argc, char** argv )
 	  node.hasNewFrameMsg = false;
 
 	  node.frame_mutex_.lock();
-	  cvMerge( node.frame, node.frame, node.frame, NULL, frame ); 
+	  // FIXME: change for color images
+
+	  //	  cvMerge( node.frame, node.frame, node.frame, NULL, frame ); 
+	  cvCopy(node.frame, frame);
+
 	  node.frame_mutex_.unlock();
 
 	  // -- Continue with normal execution of CaptureObjects.
@@ -474,7 +509,7 @@ int main( int argc, char** argv )
 	      int max = 0;
 	      if(framecount > 10)
 		{afoo = avgEntries(); max = maxEntries();}
-	      printf("frame=%d, avgEntries=%f, maxEntries=%d\n",framecount,afoo,max);
+	      //	      printf("frame=%d, avgEntries=%f, maxEntries=%d\n",framecount,afoo,max);
 	    }
 	  if( !frame )
 	    break;
@@ -545,6 +580,7 @@ int main( int argc, char** argv )
 		  learn = 0;
 		  modelExists = 1;
 		  printf("Learning Complete\n");
+		  printf("Place object, then press spacebar to confirm segmentation.\n");
 		}
 	    }
 
@@ -600,11 +636,17 @@ int main( int argc, char** argv )
 	cvSet(MultiClassSegmentedImage, cvScalar(0));
       }
 
-      updateLabeledImage(mask, MultiClassSegmentedImage, ObjectID);
+      //      cvShowImage( "CaptureObjects", image );
 
-      cvShowImage( "CaptureObjects", image );
-
-      imagesc("Multiclass segmentation", MultiClassSegmentedImage);
+      // display multiclass segmentation
+      if ((framecount % 15) == 1) {
+	IplImage* tempIm = 
+	  cvCreateImage(cvGetSize(MultiClassSegmentedImage), IPL_DEPTH_8U, 1);
+	cvCopy(MultiClassSegmentedImage, tempIm);
+	updateLabeledImage(mask, tempIm, ObjectID);
+	imagesc("Multiclass segmentation (preview)", tempIm);
+	cvReleaseImage(&tempIm);
+      }
 
       mw.paint(markedImage,0,1,1);  //Raw image with marked bounding boxes
 
@@ -621,14 +663,47 @@ int main( int argc, char** argv )
 	  printf("Sending labeled imagearray over ros.\n");
 	  node.frame_msg.get_images_vec(v);
 	  
+	  //	  updateLabeledImage(mask, MultiClassSegmentedImage, ObjectID);
+
 	  // -- Add an image to the ImageArray which contains mask.
 	  node.labelMask.label = string("labeling");
 	  node.labelMask.compression = string("raw");
-	  node.bridge_out->from_cv(mask); //Puts mask into node.labelMask Image ros msg.
+
+	  //node.bridge_out->from_cv(mask); //Puts mask into node.labelMask Image ros msg.
+	  node.bridge_out->from_cv(MultiClassSegmentedImage, 100); //Puts mask into node.labelMask Image ros msg.
+
 	  v.push_back(node.labelMask);
 	  lb.set_images_vec(v);
 	  node.publish("labeled_images", lb);
+	  
+	  /// @todo fix/remove this hack
+	  {
+	    char namebuf[200];
+
+	    IplImage* seg32 = 
+	      cvCreateImage(cvGetSize(MultiClassSegmentedImage), 
+			    IPL_DEPTH_32S, 1);
+	    cvConvert(MultiClassSegmentedImage, seg32);
+
+	    snprintf(namebuf, sizeof(namebuf), "testing%d.seg", framecount);
+	    cvSave(namebuf, seg32);
+	    cvReleaseImage(&seg32);
+
+	    snprintf(namebuf, sizeof(namebuf), "testing%d.png", framecount);
+	    cvSaveImage(namebuf, frame);
+	  }
 	  break;
+	case 'r':
+	  printf("Reset segmentation.  Press l to re-learn background.\n");
+	  cvSet(MultiClassSegmentedImage, cvScalar(BACKGROUND_ID));
+	  imagesc("Multiclass segmentation", MultiClassSegmentedImage);
+	  break;
+	case ' ':
+	  updateLabeledImage(mask, MultiClassSegmentedImage, ObjectID);
+	  imagesc("Multiclass segmentation", MultiClassSegmentedImage);
+	  printf("Confirmed segmentation. Press l to re-learn background.\n");
+	  break;
+	  /*
 	case ' ': //Write out object
 	  if(!modelExists)
 	    {
@@ -707,6 +782,7 @@ int main( int argc, char** argv )
 	    }
 	  ObjectCount += 1;
 	  break;
+	  */
 	case 'R': //Read in thresholds
 	  printf("Reading codebook thresholds\n");
 	  if(readThresholds())
@@ -798,8 +874,17 @@ int main( int argc, char** argv )
 	  printf("you need to learn\n");
 	  break;
 	case 'l': { //Learn for 120 frames
-	  printf("Enter the id of the next object to be placed: ");
-	  scanf("%d", &ObjectID);
+	  printf("Enter the id of the next object to be placed [%d]\n",
+		 ObjectID+1);
+	  fflush(stdout);
+	  //	  scanf("%d", &ObjectID);
+	  string str = cvGetString();
+
+	  if (str.length() == 0) 
+	    ObjectID = ObjectID+1;
+	  else
+	    ObjectID = atof(str.c_str());
+
 	  printf("Next object is %d\n", ObjectID);
 
 	  if(modelExists)
@@ -819,8 +904,8 @@ int main( int argc, char** argv )
 	      modelExists = 0;  //No model now exists
 	    }
 	  printf("Learning on for 120 frames, use \"L\" if you want to manually toggle on and off...\n");
-	  learn = 1;
-	  learnTarget = learnCnt + 120;
+	  learn = 1; 
+	  learnTarget = learnCnt + N_LEARN_FRAMES;
 	}
 	  break;
 	case 'L': //Toggle learning
@@ -852,7 +937,7 @@ int main( int argc, char** argv )
 	    }
 	  printf("nChannels = %d\n",nChannels);
 	  break;
-	case 'r': //Remove stale codebook entries
+	case 't': //Remove stale codebook entries
 	  {
 	    int cleanedCnt;
 	    cleanedCnt = 0;
