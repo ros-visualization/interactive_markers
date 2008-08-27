@@ -198,18 +198,30 @@ public:
     projected(2,1) = projected(2,1) / projected(3,1);
     projected(3,1) = 1;
 
-    *row = (int)projected(1,1);
-    *col = (int)projected(2,1);
+    *row = (int)projected(2,1);
+    *col = (int)projected(1,1);
 /*     cout << "sls: " << projected(1,1) << " being rounded to " << *row << endl; */
 /*     cout << "sls: " << projected(2,1) << " being rounded to " << *col << endl; */
   }
 
 
   bool getRandomPointFromImage(float *x, float *y, float *z, int *row, int *col, int label=-1) {
-    *col = rand() % mask_->width;
-    *row = rand() % mask_->height;
 
-    //if(cvGetmask_
+    while(true) {
+      *col = rand() % mask_->width;
+      *row = rand() % mask_->height;
+
+      CvScalar s = cvGet2D(mask_, *row, *col);
+      //int val = CV_IMAGE_ELEM(mask_, uchar, *row, *col);
+
+      //cout << "check: " << val << " " << s.val[0] << endl;
+      //assert(val == s.val[0]);
+
+      cout << s.val[0] << " at " << *row << " " << *col << endl;
+      if(s.val[0] == label | label == -1)
+	break;
+    }
+
 
     if(!objects_extracted_) {
       cerr << "Don't call getRandomPoint before extracting objects!" << endl;
@@ -225,6 +237,8 @@ public:
     *x = pt.x;
     *y = pt.y;
     *z = pt.z;
+
+    return true;
   }
 
 
@@ -263,18 +277,18 @@ public:
     NEWMAT::Matrix projected = trns_ * vid;
 
     // -- Normalize so z = 1.  Make the pixel / point cross-indexing for later while we're at it.
-    for ( unsigned int i=0; i<mask_->height; i++) {
-      for ( unsigned int j=0; j<mask_->width; j++) {
-	xidx_[i][j] = -1;
-      }
+    for(int i=0; i<mask_->height; i++) {
+      vector<int> tmp(mask_->width, -1);
+      xidx_.push_back(tmp);
     }
+    
 
     for ( unsigned int i=1; i<=n; i++) {
       projected(1,i) = projected(1,i) / projected(3,i);
       projected(2,i) = projected(2,i) / projected(3,i);
       projected(3,i) = 1;
 
-      xidx_[(int)projected(1,i)][(int)projected(2,i)] = i-1;
+      xidx_[(int)projected(2,i)][(int)projected(1,i)] = i-1; //xidx_[row][col]
     } 
 
 
