@@ -37,6 +37,14 @@
 
 import wx
 
+# Check for numpy and matplotlib
+try:
+  import matplotlib
+  BAD_MPL_VERSION=True
+finally:
+  BAD_MPL_VERSION=False
+
+
 #import matplotlib
 import rostools
 rostools.update_path('matplotlib')
@@ -52,9 +60,16 @@ import copy
 
 # We want to check if the user has a different version of matplotlib installed on the computer
 __mpl_proper__ = ['0.98.2','0.98.1']
+__numpy_proper__ = ['1.1.0']
 
-if not matplotlib.__version__ in __mpl_proper__ :
-  print "*** Wrong version of matplotlib detected ***\n The following version was found : %s and it is not a supported version (the supported versions are: %s). I cannot continue.\n This usually happens when a different version was packaged and installed with your operating system. In this case, uninstall the package \'matplotlib\' and try again." % (matplotlib.__version__, __mpl_proper__ )
+# Check for numpy version:
+if not numpy.__version__ in __numpy_proper__:
+  print "*** Wrong version of numpy detected ***\n The following version was found : %s and it is not a supported version (the supported versions are: %s). I cannot continue.\n This usually happens when a different version was packaged and installed with your operating system, as they conflict with the version located in the 3rd party packge directory. In this case, uninstall the packages \'numpy\' and try again." % (numpy.__version__, __numpy_proper__ )
+  raise ImportError('wrong version of numpy')
+
+
+if BAD_MPL_VERSION:
+  print "*** Wrong version of matplotlib detected ***\n The following version was found : %s and it is not a supported version (the supported versions are: %s). I cannot continue.\n This usually happens when a different version was packaged and installed with your operating system, as they conflict with the version located in the 3rd party packge dir. In this case, uninstall the packages \'matplotlib\' and try again." % (matplotlib.__version__, __mpl_proper__ )
   raise ImportError('wrong version of matplotlib')
 
 
