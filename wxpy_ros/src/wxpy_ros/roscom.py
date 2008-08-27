@@ -42,7 +42,6 @@ class RosChannel(wxplot.Channel):
       self.addPoint(value)
       #print 'received ', self.slotName, value
           
-
 ## Channel subscriber to a topic
 #  Gets a new message from a channel and dispatch the result to the associated TreeItem
 class RosSubscriber:
@@ -54,7 +53,7 @@ class RosSubscriber:
         global _ros_timestamp
         if hasattr(message, 'has_header') and message.has_header:
             timestamp = _convert_time(message.header.stamp)
-            print "teimstamp", timestamp
+            #print "teimstamp", timestamp
             return self.treeItem.update(message, timestamp)
         if _ros_timestamp:
             return self.treeItem.update(message, _ros_timestamp)
@@ -81,6 +80,7 @@ class RosMessageItem:
         self.children = {} 
         # for graphical purpose
         self.isList = isList
+        self.channels = []
         
     ## Recursively updates the values in the trees given a message coming from ROS    
     def update(self, message, timestamp = None):
@@ -108,11 +108,18 @@ class RosMessageItem:
                 self.children[slot].update(object, timestamp)
                 structureChanged = True
                 self.children[slot].update(object, timestamp)
+        for channel in self.channels:
+            if timestamp:
+                channel.callback(message, timestamp)
+            else:
+                channel.callback(message)
         return structureChanged
                 
     # Recursively gets the tree item corresponding to path
     # Only valid for leaves (used for validating user-input paths)                
     def getSlot(self, path):
+        if not path or (len(path)==1 and path[0]==''):
+          return self
         assert len(path) > 0
         thisSlotName = path[0]
         if not thisSlotName in self.children: # Assumes we have a list
@@ -222,7 +229,7 @@ class RosMessageHandler:
         #print eval(messageName)
         #rospy.TopicSub(topicName, eval(messageName), callback)
         
-    def subscribe(self, itemPath, style):
+    def subscribe(self, itemPath, style, ChannelType=RosChannel):
         
         item = self._getItem(itemPath)
         topicName = self._getTopic(itemPath)
@@ -235,7 +242,7 @@ class RosMessageHandler:
             exec('import %s' % messageModName)
             print eval(messageType)
             rospy.TopicSub(self._getTopic(itemPath), eval(messageType), self.topicsSubs[topicName].callback)
-        channel = RosChannel(itemPath, style)
+        channel = ChannelType(itemPath, style)
         item.channels.append(channel)
         return channel
 
@@ -260,6 +267,7 @@ class RosMessageHandler:
         l = itemPath.split('/')
         topic = '/%s'%l[1]
         assert topic in self.topics
+        print 'XXX', l[2:], self.topics[ topic ].getSlot(l[2:])
         return self.topics[ topic ].getSlot(l[2:])
 
     
@@ -341,20 +349,4 @@ def importMessageModule(moduleName, messageModName):
     print messageModName
     exec('import %s' % messageModName)
     
-    
-#def getMessageInstance(rosMessageName):   
-    #"""Returns an object of type rosMessageName, or None if it could not be found."""
-    #(modName, messageName) = messageNames(rosMessageName)
-    
-    #importMessageModule(modName, messageName)
-    #exec('import %s' % messageName)
-    
-    #command = 'myobj = %s()' % messageName
-    #print command
-    #exec(command)
-    #return myobj
-    
-#def getMessageFloatSlots(rosMessageName):
-    #"""Returns an object of type rosMessageName, or None if it could not be found."""
-    ##(modName, messageName) = messageNames(rosMessageName)
-    #obj = getMessageInstance(rosMessageName)
+

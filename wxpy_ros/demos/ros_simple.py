@@ -54,20 +54,20 @@ import rospy
 
 #Here is what it looks like:
 
-plots1=[('/mechanism_state/joint_states[0]/position', 'r'), \
-  ('/mechanism_state/joint_states[1]/position', 'b'), \
-  ('/mechanism_state/joint_states[2]/position', 'g'), \
-  ('/mechanism_state/joint_states[3]/position', 'y'), \
-  ('/mechanism_state/joint_states[4]/position', 'y'), \
-  ('/mechanism_state/joint_states[5]/position', 'y'), \
-  ('/mechanism_state/joint_states[7]/position', 'y'), \
-  ('/mechanism_state/joint_states[6]/position', 'm')]
+plots1=[('/mechanism_state/joint_states[6]/position', 'r')]
+  #('/mechanism_state/joint_states[1]/position', 'b'), \
+  #('/mechanism_state/joint_states[2]/position', 'g'), \
+  #('/mechanism_state/joint_states[3]/position', 'y'), \
+  #('/mechanism_state/joint_states[4]/position', 'y'), \
+  #('/mechanism_state/joint_states[5]/position', 'y'), \
+  #('/mechanism_state/joint_states[7]/position', 'y'), \
+  #('/mechanism_state/joint_states[6]/position', 'm')]
 
-plots2=[('/mechanism_state/joint_states[0]/velocity', 'r'), \
+plots2=[('/mechanism_state/joint_states[6]/velocity', 'r')]
   #('/mechanism_state/joint_states[1]/velocity', 'b'), \
   #('/mechanism_state/joint_states[2]/velocity', 'g'), \
   #('/mechanism_state/joint_states[3]/velocity', 'y'), \
-  ('/mechanism_state/joint_states[5]/velocity', 'm')]
+  #('/mechanism_state/joint_states[5]/velocity', 'm')]
 
 # And we specify the timespan as well
 all_plots = {'positions' : (plots1,20), 'velocities' : (plots2,20)}
@@ -80,6 +80,19 @@ all_plots = {'positions' : (plots1,20), 'velocities' : (plots2,20)}
 # Create a message handler, that will take care of the communication with ROS
 messageHandler = wxpy_ros.RosMessageHandler()
 
+
+class NamesChannel(wxpy_ros.wxplot.Channel):
+  def __init__(self, itempath, style):
+    pass
+    
+  def callback(self, mechstate, time=None):
+    print 'Joint names:'
+    i = 0
+    for j in mechstate.joint_states:
+      print ' + %i \t ==> %s '%(i,j.name)
+      i+=1
+
+messageHandler.subscribe('/mechanism_state/', '', NamesChannel)
 
 # Creating an app
 app = wx.App()
