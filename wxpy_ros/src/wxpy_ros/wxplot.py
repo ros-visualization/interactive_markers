@@ -60,7 +60,7 @@ import copy
 
 # We want to check if the user has a different version of matplotlib installed on the computer
 __mpl_proper__ = ['0.98.2','0.98.1']
-__numpy_proper__ = ['1.1.0']
+__numpy_proper__ = ['1.1.0', '1.1.1']
 
 # Check for numpy version:
 if not numpy.__version__ in __numpy_proper__:
