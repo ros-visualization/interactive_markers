@@ -136,6 +136,11 @@ public:
     pointCloud->setTopic( "full_cloud" );
     pointCloud->setColor( 1.0, 1.0, 0.0 );
 
+    pointCloud = visualization_panel_->createVisualizer<PointCloudVisualizer>( "World 3D Map", false );
+    pointCloud->setTopic( "world_3d_map" );
+    pointCloud->setColor( 1.0f, 0.0f, 0.0f );
+    pointCloud->setBillboardSize( 0.01 );
+
     LaserScanVisualizer* laserScan = visualization_panel_->createVisualizer<LaserScanVisualizer>( "Head Scan", false );
     laserScan->setScanTopic( "tilt_scan" );
     laserScan->setColor( 1.0, 0.0, 0.0 );

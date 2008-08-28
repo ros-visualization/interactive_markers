@@ -176,14 +176,15 @@ void PointCloudVisualizer::incomingCloudCallback()
     printf( "Error transforming point cloud '%s': %s\n", name_.c_str(), e.what() );
   }
 
-  bool channel_is_rgb = message_.chan[0].name == "rgb";
+  bool has_channel_0 = message_.get_chan_size() > 0;
+  bool channel_is_rgb = has_channel_0 ? message_.chan[0].name == "rgb" : false;
 
   // First find the min/max intensity values
   float min_intensity = 999999.0f;
   float max_intensity = -999999.0f;
 
   uint32_t pointCount = message_.get_pts_size();
-  if ( !channel_is_rgb )
+  if ( has_channel_0 && !channel_is_rgb )
   {
     for(uint32_t i = 0; i < pointCount; i++)
     {
@@ -205,7 +206,7 @@ void PointCloudVisualizer::incomingCloudCallback()
     Ogre::Vector3 point( message_.pts[i].x, message_.pts[i].y, message_.pts[i].z );
     robotToOgre( point );
 
-    float channel = message_.chan[0].vals[i];
+    float channel = has_channel_0 ? message_.chan[0].vals[i] : 1.0f;
 
     Ogre::Vector3 color( r_, g_, b_ );
 
