@@ -278,7 +278,7 @@ void CameraPanel::AdvertisePTZControl()
 {
   if ( IsPTZControlEnabled() )
   {
-    m_ROSNode->advertise<std_msgs::PTZActuatorCmd>(m_PTZControlTopic, 0);
+    m_ROSNode->advertise<axis_cam::PTZActuatorCmd>(m_PTZControlTopic, 0);
   }
 }
 

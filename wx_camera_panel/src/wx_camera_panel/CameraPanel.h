@@ -36,8 +36,8 @@
 // ROS includes
 #include <rosthread/mutex.h>
 #include <std_msgs/Image.h>
-#include <std_msgs/PTZActuatorState.h>
-#include <std_msgs/PTZActuatorCmd.h>
+#include <axis_cam/PTZActuatorState.h>
+#include <axis_cam/PTZActuatorCmd.h>
 
 #include "image_utils/image_codec.h"
 
@@ -203,8 +203,8 @@ private:
   wxBitmap      m_Bitmap;
   bool        m_RecreateBitmap;
 
-  std_msgs::PTZActuatorState m_PTZStateMessage;
-  std_msgs::PTZActuatorCmd   m_PTZControlMessage;
+  axis_cam::PTZActuatorState m_PTZStateMessage;
+  axis_cam::PTZActuatorCmd   m_PTZControlMessage;
 
   /// Latest pan received from ROS
   float m_CurrentPan;

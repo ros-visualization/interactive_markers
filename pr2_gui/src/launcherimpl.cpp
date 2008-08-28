@@ -38,8 +38,7 @@ void LauncherImpl::errorOut()
 {
 	//std::cerr << "errorOut!!!\n";
 	long first = Ros_TC->GetLastPosition();
-	wxString line;
-	line.FromUTF8(rosErrMsg.msg.c_str());
+	wxString line = wxString::FromAscii( rosErrMsg.msg.c_str() );
 	Ros_TC->AppendText(line);
 }
 
@@ -261,7 +260,7 @@ void LauncherImpl::startStop_PTZL( wxCommandEvent& event )
 		PTZL_B->Enable(true);
 		myNode->subscribe("image_ptz_left", PTZLImage, &LauncherImpl::incomingPTZLImageConn,this);
 		myNode->subscribe("PTZL_state", PTZL_state, &LauncherImpl::incomingPTZLState,this);
-		myNode->advertise<std_msgs::PTZActuatorCmd>("PTZL_cmd");
+		myNode->advertise<axis_cam::PTZActuatorCmd>("PTZL_cmd");
 	}
 	else
 	{
@@ -363,7 +362,7 @@ void LauncherImpl::startStop_PTZR( wxCommandEvent& event )
 		PTZR_B->Enable(true);
 		myNode->subscribe("image_ptz_right", PTZRImage, &LauncherImpl::incomingPTZRImageConn,this);
 		myNode->subscribe("PTZR_state", PTZR_state, &LauncherImpl::incomingPTZRState,this);
-		myNode->advertise<std_msgs::PTZActuatorCmd>("PTZR_cmd");
+		myNode->advertise<axis_cam::PTZActuatorCmd>("PTZR_cmd");
 	}
 	else
 	{

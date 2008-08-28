@@ -10,6 +10,7 @@
     <depend package="image_utils"/>
     <depend package="roscpp"/>
     <depend package="std_msgs"/>
+    <depend package="axis_cam"/>
     <depend package="wx_topic_display"/>
     <export> 
         <cpp cflags="-I${prefix}/src/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lwxcamerapanels"/>
