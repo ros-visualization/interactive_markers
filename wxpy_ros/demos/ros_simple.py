@@ -54,20 +54,22 @@ import rospy
 
 #Here is what it looks like:
 
-plots1=[('/mechanism_state/joint_states[6]/position', 'r')]
-  #('/mechanism_state/joint_states[1]/position', 'b'), \
-  #('/mechanism_state/joint_states[2]/position', 'g'), \
-  #('/mechanism_state/joint_states[3]/position', 'y'), \
-  #('/mechanism_state/joint_states[4]/position', 'y'), \
-  #('/mechanism_state/joint_states[5]/position', 'y'), \
-  #('/mechanism_state/joint_states[7]/position', 'y'), \
+plots1=[('/mechanism_state/joint_states[8]/position', 'r'),\
+  ('/mechanism_state/joint_states[7]/position', 'b'), \
+  ('/mechanism_state/joint_states[6]/position', 'g'), \
+  ('/mechanism_state/joint_states[5]/position', 'y'), \
+  ('/mechanism_state/joint_states[4]/position', 'm'), \
+  ('/mechanism_state/joint_states[3]/position', 'y'), \
+  ('/mechanism_state/joint_states[2]/position', 'y')]
   #('/mechanism_state/joint_states[6]/position', 'm')]
 
-plots2=[('/mechanism_state/joint_states[6]/velocity', 'r')]
-  #('/mechanism_state/joint_states[1]/velocity', 'b'), \
-  #('/mechanism_state/joint_states[2]/velocity', 'g'), \
-  #('/mechanism_state/joint_states[3]/velocity', 'y'), \
-  #('/mechanism_state/joint_states[5]/velocity', 'm')]
+plots2=[('/mechanism_state/joint_states[8]/velocity', 'r'),\
+  ('/mechanism_state/joint_states[7]/velocity', 'b'), \
+  ('/mechanism_state/joint_states[6]/velocity', 'g'), \
+  ('/mechanism_state/joint_states[5]/velocity', 'y'), \
+  ('/mechanism_state/joint_states[4]/velocity', 'm'), \
+  ('/mechanism_state/joint_states[3]/velocity', 'y'), \
+  ('/mechanism_state/joint_states[2]/velocity', 'y')]
 
 # And we specify the timespan as well
 all_plots = {'positions' : (plots1,20), 'velocities' : (plots2,20)}
