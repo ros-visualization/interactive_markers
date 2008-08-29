@@ -33,14 +33,14 @@
 
 #include <wx/wx.h>
 
-#include "../ogre_visualizer/visualization_panel.h"
-#include "../ogre_visualizer/visualizers/grid_visualizer.h"
-#include "../ogre_visualizer/visualizers/axes_visualizer.h"
-#include "../ogre_visualizer/visualizers/point_cloud_visualizer.h"
-#include "../ogre_visualizer/visualizers/laser_scan_visualizer.h"
-#include "../ogre_visualizer/visualizers/robot_model_visualizer.h"
-#include "../ogre_visualizer/visualizers/marker_visualizer.h"
-#include "../ogre_visualizer/visualizers/octree_visualizer.h"
+#include "visualization_panel.h"
+#include "visualizers/grid_visualizer.h"
+#include "visualizers/axes_visualizer.h"
+#include "visualizers/point_cloud_visualizer.h"
+#include "visualizers/laser_scan_visualizer.h"
+#include "visualizers/robot_model_visualizer.h"
+#include "visualizers/marker_visualizer.h"
+#include "visualizers/octree_visualizer.h"
 
 #include "Ogre.h"
 

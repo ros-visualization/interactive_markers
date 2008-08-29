@@ -90,6 +90,8 @@ public:
   virtual void setPosition( const Ogre::Vector3& position );
   virtual void setOrientation( const Ogre::Quaternion& orientation );
   virtual void setScale( const Ogre::Vector3& scale );
+  virtual const Ogre::Vector3& getPosition();
+  virtual const Ogre::Quaternion& getOrientation();
 
 protected:
   /**

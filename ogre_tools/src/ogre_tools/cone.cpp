@@ -188,4 +188,14 @@ void Cone::setScale( const Ogre::Vector3& scale )
   scene_node_->setScale( scale );
 }
 
+const Ogre::Vector3& Cone::getPosition()
+{
+  return scene_node_->getPosition();
+}
+
+const Ogre::Quaternion& Cone::getOrientation()
+{
+  return scene_node_->getOrientation();
+}
+
 } // namespace ogre_tools

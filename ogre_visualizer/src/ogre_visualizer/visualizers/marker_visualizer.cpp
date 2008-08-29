@@ -28,7 +28,7 @@
  */
 
 #include "marker_visualizer.h"
-#include "../common.h"
+#include "common.h"
 
 #include <ogre_tools/arrow.h>
 #include <ogre_tools/super_ellipsoid.h>
@@ -265,11 +265,7 @@ void MarkerVisualizer::setCommonValues( const std_msgs::VisualizationMarker& mes
   orientation.FromEulerAnglesYXZ( Ogre::Radian( tf_eulers.yaw ), Ogre::Radian( tf_eulers.pitch ), Ogre::Radian( tf_eulers.roll ) );
   //Ogre::Matrix3 orientation( OgreMatrixFromRobotEulers( tf_eulers.yaw, tf_eulers.pitch, tf_eulers.roll ) );
   Ogre::Vector3 scale( message.xScale, message.yScale, message.zScale );
-  robotToOgre( scale );
-
-  scale.x = fabsf( scale.x );
-  scale.y = fabsf( scale.y );
-  scale.z = fabsf( scale.z );
+  scaleRobotToOgre( scale );
 
   object->setPosition( position );
   object->setOrientation( orientation );

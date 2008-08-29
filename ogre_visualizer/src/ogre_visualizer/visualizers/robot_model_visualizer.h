@@ -44,6 +44,8 @@ class SceneNode;
 namespace ogre_vis
 {
 
+class Robot;
+
 /**
  * \class RobotModelVisualizer
  * \brief Uses a robot xml description to display the pieces of a robot at the transforms broadcast by rosTF
@@ -63,6 +65,10 @@ public:
 
   virtual void update( float dt );
 
+  // Overrides from VisualizerBase
+  virtual void fillPropertyGrid( wxPropertyGrid* property_grid );
+  virtual void propertyChanged( wxPropertyGridEvent& event );
+
 protected:
   /**
    * \brief Subscribes to any ROS topics we need to subscribe to
@@ -77,15 +83,7 @@ protected:
    * \brief ROS callback for an incoming transform message
    */
   void incomingTransform();
-  /**
-   * \brief Iterates over all the models, setting their transforms with rosTF
-   */
-  void UpdateTransforms();
 
-  /**
-   * \brief Clears all models and associated data
-   */
-  void clear();
   /**
    * \brief Loads a URDF from our #description_param_, iterates through the links and loads any necessary models
    */
@@ -99,10 +97,8 @@ protected:
   std::string transform_topic_;               ///< ROS topic we're listening to for new transforms
   std::string description_param_;             ///< ROS parameter that contains the robot xml description
 
-  typedef std::map< std::string, Ogre::Entity* > M_StringToEntity;
-  M_StringToEntity models_;                   ///< Map of the model transform name to Ogre entity that draws it
+  Robot* robot_;                              ///< Handles actually drawing the robot
 
-  Ogre::SceneNode* root_node_;                ///< Node all our entities are attached to
   bool has_new_transforms_;                   ///< Callback sets this to tell our update function it needs to update the transforms
 
   bool initialized_;                          ///< Are we initialized?

@@ -108,5 +108,15 @@ void Arrow::setScale( const Ogre::Vector3& scale )
   scene_node_->setScale( Ogre::Vector3( scale.x, scale.z, scale.y ) );
 }
 
+const Ogre::Vector3& Arrow::getPosition()
+{
+  return scene_node_->getPosition();
+}
+
+const Ogre::Quaternion& Arrow::getOrientation()
+{
+  return scene_node_->getOrientation();
+}
+
 } // namespace ogre_tools
 

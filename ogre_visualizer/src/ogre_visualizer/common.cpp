@@ -40,7 +40,7 @@ Ogre::Quaternion g_robot_to_ogre_quat;
 
 void initializeCommon()
 {
-  g_ogre_to_robot_matrix.FromEulerAnglesXYZ( Ogre::Degree( 90 ), Ogre::Degree( -90 ), Ogre::Degree( 0 ) );
+  g_ogre_to_robot_matrix.FromEulerAnglesYXZ( Ogre::Degree( -90 ), Ogre::Degree( 0 ), Ogre::Degree( -90 ) );
   g_robot_to_ogre_matrix = g_ogre_to_robot_matrix.Inverse();
 
   g_ogre_to_robot_quat.FromRotationMatrix( g_ogre_to_robot_matrix );

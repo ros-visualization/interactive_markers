@@ -28,7 +28,7 @@
  */
 
 #include "point_cloud_visualizer.h"
-#include "../common.h"
+#include "common.h"
 #include "../ros_topic_property.h"
 
 #include "ros/node.h"

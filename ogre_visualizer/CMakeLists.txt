@@ -12,6 +12,8 @@ find_package(wxWidgets REQUIRED)
 include(${wxWidgets_USE_FILE})
 include_directories( ${wxWidgets_INCLUDE_DIRS} )
 
+include_directories( src/ogre_visualizer )
+
 rospack_add_library(ogrevisualizer src/ogre_visualizer/visualization_panel.cpp
 				   												 src/ogre_visualizer/visualizer_base.cpp
                                    src/ogre_visualizer/common.cpp
@@ -23,7 +25,8 @@ rospack_add_library(ogrevisualizer src/ogre_visualizer/visualization_panel.cpp
 				   												 src/ogre_visualizer/visualizers/laser_scan_visualizer.cpp
 				   												 src/ogre_visualizer/visualizers/robot_model_visualizer.cpp
 				   												 src/ogre_visualizer/visualizers/octree_visualizer.cpp
- 				   												 src/ogre_visualizer/generated/visualization_panel_generated.cpp)
+ 				   												 src/ogre_visualizer/generated/visualization_panel_generated.cpp
+ 				   												 src/ogre_visualizer/helpers/robot.cpp)
 target_link_libraries(ogrevisualizer ${wxWidgets_LIBRARIES})
 
 rospack_add_executable(visualizer_test src/test/visualizer_test.cpp)

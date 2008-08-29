@@ -101,5 +101,15 @@ void Axes::setColor( float r, float g, float b )
   /// \todo should anything be done here?
 }
 
+const Ogre::Vector3& Axes::getPosition()
+{
+  return scene_node_->getPosition();
+}
+
+const Ogre::Quaternion& Axes::getOrientation()
+{
+  return scene_node_->getOrientation();
+}
+
 } // namespace ogre_tools
 

@@ -81,6 +81,17 @@ public:
    */
   virtual void setColor( float r, float g, float b ) = 0;
 
+  /**
+   * \brief Get the local position of this object
+   * @return The position
+   */
+  virtual const Ogre::Vector3& getPosition() = 0;
+  /**
+   * \brief Get the local orientation of this object
+   * @return The orientation
+   */
+  virtual const Ogre::Quaternion& getOrientation() = 0;
+
 protected:
   Ogre::SceneManager* scene_manager_;  ///< Ogre scene manager this object is part of
 };

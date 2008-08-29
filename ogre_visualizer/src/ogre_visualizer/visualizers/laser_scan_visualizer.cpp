@@ -28,7 +28,7 @@
  */
 
 #include "laser_scan_visualizer.h"
-#include "../common.h"
+#include "common.h"
 #include "../ros_topic_property.h"
 
 #include "ros/node.h"

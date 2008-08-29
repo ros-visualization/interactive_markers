@@ -47,7 +47,7 @@
 #include <wx/propgrid/propgrid.h>
 #include <wx/propgrid/advprops.h>
 
-#include "../common.h"
+#include "common.h"
 
 #define COLOR_PROPERTY wxT("Color")
 #define TOPIC_PROPERTY wxT("Topic")

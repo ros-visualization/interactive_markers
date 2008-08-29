@@ -28,7 +28,7 @@
  */
 
 #include "axes_visualizer.h"
-#include "../common.h"
+#include "common.h"
 
 #include "ogre_tools/axes.h"
 

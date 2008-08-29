@@ -38,6 +38,7 @@
 #include "../ogre_tools/cone.h"
 #include "../ogre_tools/arrow.h"
 #include "../ogre_tools/point_cloud.h"
+#include "../ogre_tools/super_ellipsoid.h"
 
 #include "Ogre.h"
 
@@ -121,7 +122,7 @@ public:
         ogre_tools::Grid* grid = new ogre_tools::Grid( scene_manager_, 10, 1.0f, 1.0f, 0.0f, 0.0f );
         //grid->getSceneNode()->pitch( Ogre::Degree( 90 ) );
 
-        ogre_tools::Axes* axes = new ogre_tools::Axes( scene_manager_ );
+        //ogre_tools::Axes* axes = new ogre_tools::Axes( scene_manager_ );
         //axes->setScale( Ogre::Vector3( 2.0f, 2.0f, 2.0f ) );
 
         /*ogre_tools::Cone* cone = new ogre_tools::Cone( scene_manager_, NULL );
@@ -153,6 +154,9 @@ public:
         }
 
         pointCloud->AddPoints( &points.front(), 1000000 );*/
+
+        ogre_tools::SuperEllipsoid* se = new ogre_tools::SuperEllipsoid( scene_manager_ );
+        se->create( ogre_tools::SuperEllipsoid::Cube, 60, Ogre::Vector3( 1.0f, 5.0f, 1.0f ) );
     }
     catch ( Ogre::Exception& e )
     {

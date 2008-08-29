@@ -28,7 +28,8 @@
  */
 
 #include "robot_model_visualizer.h"
-#include "../common.h"
+#include "common.h"
+#include "helpers/robot.h"
 
 #include "ogre_tools/axes.h"
 
@@ -36,6 +37,12 @@
 #include "rosTF/rosTF.h"
 
 #include <Ogre.h>
+#include <wx/wx.h>
+#include <wx/propgrid/propgrid.h>
+#include <wx/propgrid/advprops.h>
+
+#define VISUAL_ENABLED_PROPERTY wxT("Show Visual")
+#define COLLISION_ENABLED_PROPERTY wxT("Show Collision")
 
 namespace ogre_vis
 {
@@ -45,34 +52,14 @@ RobotModelVisualizer::RobotModelVisualizer( Ogre::SceneManager* scene_manager, r
 , has_new_transforms_( false )
 , initialized_( false )
 {
-  root_node_ = scene_manager->getRootSceneNode()->createChildSceneNode();
+  robot_ = new Robot( scene_manager );
 }
 
 RobotModelVisualizer::~RobotModelVisualizer()
 {
   unsubscribe();
 
-  clear();
-
-  scene_manager_->destroySceneNode( root_node_->getName() );
-}
-
-void RobotModelVisualizer::clear()
-{
-  M_StringToEntity::iterator model_it = models_.begin();
-  M_StringToEntity::iterator model_end = models_.end();
-  for ( ; model_it != model_end; ++model_it )
-  {
-    Ogre::Entity* entity = model_it->second;
-    Ogre::SceneNode* node = entity->getParentSceneNode();
-
-    node->detachObject( entity );
-    scene_manager_->destroyEntity( entity );
-  }
-
-  models_.clear();
-
-  root_node_->removeAndDestroyAllChildren();
+  delete robot_;
 }
 
 void RobotModelVisualizer::initialize( const std::string& description_param, const std::string& transform_topic )
@@ -95,79 +82,15 @@ void RobotModelVisualizer::initialize( const std::string& description_param, con
 
 void RobotModelVisualizer::load()
 {
-  clear();
-
   std::string content;
   ros_node_->get_param(description_param_, content);
-  robot_desc::URDF* file = new robot_desc::URDF();
-  std::auto_ptr<robot_desc::URDF> file_ptr( file );
+  robot_desc::URDF file;
+  file.loadString(content.c_str());
 
-  file->loadString(content.c_str());
-
-  typedef std::vector<robot_desc::URDF::Link*> V_Link;
-  V_Link links;
-  file->getLinks(links);
-
-  V_Link::iterator link_it = links.begin();
-  V_Link::iterator link_end = links.end();
-  for ( ; link_it != link_end; ++link_it )
-  {
-    robot_desc::URDF::Link* link = *link_it;
-    robot_desc::URDF::Link::Geometry::Mesh* mesh = static_cast<robot_desc::URDF::Link::Geometry::Mesh*>(link->visual->geometry->shape);
-    if ( mesh->filename.empty() )
-    {
-      continue;
-    }
-
-    std::string model_name = mesh->filename + "_hi.mesh";
-
-    Ogre::SceneNode* node = root_node_->createChildSceneNode();
-    try
-    {
-      static int count = 0;
-      std::stringstream ss;
-      ss << "RobotModelVis" << count++;
-
-      printf( "link name: %s\n", link->name.c_str() );
-
-      Ogre::Entity* entity = scene_manager_->createEntity( ss.str(), model_name );
-      models_[ link->name ] = entity;
-
-      // assign the material from the link
-      uint16_t num_sub_entities = entity->getNumSubEntities();
-      for ( uint16_t i = 0; i < num_sub_entities; ++i )
-      {
-        Ogre::SubEntity* subEntity = entity->getSubEntity( i );
-
-        typedef std::vector<std::string> V_string;
-        V_string gazebo_names;
-        link->visual->data.getMapTagNames("gazebo", gazebo_names);
-
-        V_string::iterator name_it = gazebo_names.begin();
-        V_string::iterator name_end = gazebo_names.end();
-        for ( ; name_it != name_end; ++name_it )
-        {
-          typedef std::map<std::string, std::string> M_string;
-          M_string m = link->visual->data.getMapTagValues("gazebo", *name_it);
-
-          M_string::iterator it = m.find( "material" );
-          if ( it != m.end() )
-          {
-            subEntity->setMaterialName( it->second );
-          }
-        }
-
-      }
-
-      node->attachObject( entity );
-    }
-    catch( Ogre::Exception& e )
-    {
-      printf( "Could not load model '%s' for link '%s': %s\n", model_name.c_str(), link->name.c_str(), e.what() );
-    }
-  }
-
-  UpdateTransforms();
+  robot_->load( &file );
+  robot_->update( tf_client_, target_frame_ );
+  robot_->setVisualVisible( true );
+  robot_->setCollisionVisible( false );
 }
 
 void RobotModelVisualizer::onEnable()
@@ -178,7 +101,7 @@ void RobotModelVisualizer::onEnable()
   }
 
   subscribe();
-  root_node_->setVisible( true );
+  robot_->setVisible( true );
 
   load();
 }
@@ -191,7 +114,7 @@ void RobotModelVisualizer::onDisable()
   }
 
   unsubscribe();
-  root_node_->setVisible( false );
+  robot_->setVisible( false );
 }
 
 void RobotModelVisualizer::subscribe()
@@ -220,62 +143,49 @@ void RobotModelVisualizer::incomingTransform()
   has_new_transforms_ = true;
 }
 
-void RobotModelVisualizer::UpdateTransforms()
-{
-  M_StringToEntity::iterator model_it = models_.begin();
-  M_StringToEntity::iterator model_end = models_.end();
-  for ( ; model_it != model_end; ++model_it )
-  {
-    const std::string& name = model_it->first;
-    Ogre::Entity* entity = model_it->second;
-    Ogre::SceneNode* node = entity->getParentSceneNode();
-
-    libTF::TFPose pose = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0, "" };
-
-    pose.frame = name;
-
-    try
-    {
-      pose = tf_client_->transformPose( target_frame_, pose );
-    }
-    catch(libTF::TransformReference::LookupException& e)
-    {
-      printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), target_frame_.c_str(), e.what() );
-    }
-    catch(libTF::TransformReference::ConnectivityException& e)
-    {
-      printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), target_frame_.c_str(), e.what() );
-    }
-    catch(libTF::TransformReference::ExtrapolateException& e)
-    {
-      printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), target_frame_.c_str(), e.what() );
-    }
-    catch(libTF::TransformReference::MaxDepthException& e)
-    {
-      printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), target_frame_.c_str(), e.what() );
-    }
-
-    Ogre::Vector3 position( pose.x, pose.y, pose.z );
-    robotToOgre( position );
-    node->setPosition( position );
-
-    node->setOrientation( ogreMatrixFromRobotEulers( pose.yaw, pose.pitch, pose.roll ) );
-  }
-}
-
 void RobotModelVisualizer::update( float dt )
 {
   message_.lock();
 
   if ( has_new_transforms_ )
   {
-    UpdateTransforms();
+    robot_->update( tf_client_, target_frame_ );
     causeRender();
 
     has_new_transforms_ = false;
   }
 
   message_.unlock();
+}
+
+void RobotModelVisualizer::fillPropertyGrid( wxPropertyGrid* property_grid )
+{
+  property_grid->Append( new wxBoolProperty( VISUAL_ENABLED_PROPERTY, wxPG_LABEL, robot_->isVisualVisible() ) );
+  property_grid->Append( new wxBoolProperty( COLLISION_ENABLED_PROPERTY, wxPG_LABEL, robot_->isCollisionVisible() ) );
+
+  property_grid->SetPropertyAttribute( VISUAL_ENABLED_PROPERTY, wxPG_BOOL_USE_CHECKBOX, true );
+  property_grid->SetPropertyAttribute( COLLISION_ENABLED_PROPERTY, wxPG_BOOL_USE_CHECKBOX, true );
+}
+
+void RobotModelVisualizer::propertyChanged( wxPropertyGridEvent& event )
+{
+  wxPGProperty* property = event.GetProperty();
+
+  const wxString& name = property->GetName();
+  wxVariant value = property->GetValue();
+
+  if ( name == VISUAL_ENABLED_PROPERTY )
+  {
+    bool visible = value.GetBool();
+    robot_->setVisualVisible( visible );
+  }
+  else if ( name == COLLISION_ENABLED_PROPERTY )
+  {
+    bool visible = value.GetBool();
+    robot_->setCollisionVisible( visible );
+  }
+
+  causeRender();
 }
 
 } // namespace ogre_vis

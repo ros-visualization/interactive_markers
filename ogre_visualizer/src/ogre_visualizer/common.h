@@ -62,6 +62,19 @@ inline void robotToOgre( Ogre::Vector3& point )
 }
 
 /**
+ * \brief Convert a scale xyz from robot space to ogre space
+ * @param scale Converts this scale xyz in-place
+ */
+inline void scaleRobotToOgre( Ogre::Vector3& scale )
+{
+  scale = g_robot_to_ogre_matrix * scale;
+
+  scale.x = fabsf( scale.x );
+  scale.y = fabsf( scale.y );
+  scale.z = fabsf( scale.z );
+}
+
+/**
  * \brief Convert a quaternion from robot space to ogre space
  * @param quat Converts this quaternion in-place
  */
@@ -87,6 +100,19 @@ inline void robotToOgre( Ogre::Matrix3& mat )
 inline void ogreToRobot( Ogre::Vector3& point )
 {
   point = g_ogre_to_robot_matrix * point;
+}
+
+/**
+ * \brief Convert a scale xyz from ogre space to robot space
+ * @param scale Converts this scale xyz in-place
+ */
+inline void scaleOgreToRobot( Ogre::Vector3& scale )
+{
+  scale = g_ogre_to_robot_matrix * scale;
+
+  scale.x = fabsf( scale.x );
+  scale.y = fabsf( scale.y );
+  scale.z = fabsf( scale.z );
 }
 
 /**
