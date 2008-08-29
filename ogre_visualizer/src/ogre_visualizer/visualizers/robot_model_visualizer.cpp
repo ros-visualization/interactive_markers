@@ -53,6 +53,9 @@ RobotModelVisualizer::RobotModelVisualizer( Ogre::SceneManager* scene_manager, r
 , initialized_( false )
 {
   robot_ = new Robot( scene_manager );
+
+  robot_->setVisualVisible( true );
+  robot_->setCollisionVisible( false );
 }
 
 RobotModelVisualizer::~RobotModelVisualizer()
@@ -89,8 +92,6 @@ void RobotModelVisualizer::load()
 
   robot_->load( &file );
   robot_->update( tf_client_, target_frame_ );
-  robot_->setVisualVisible( true );
-  robot_->setCollisionVisible( false );
 }
 
 void RobotModelVisualizer::onEnable()
@@ -101,9 +102,9 @@ void RobotModelVisualizer::onEnable()
   }
 
   subscribe();
-  robot_->setVisible( true );
 
   load();
+  robot_->setVisible( true );
 }
 
 void RobotModelVisualizer::onDisable()

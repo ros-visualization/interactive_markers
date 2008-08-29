@@ -97,11 +97,13 @@ public:
   /// Set the callback used to unlock the renderer
   void setUnlockRenderCallback( boost::function<void ()> func );
 
-  /// Override this to fill out the property grid when this visualizer is selected
-  virtual void fillPropertyGrid( wxPropertyGrid* property_grid ) {} // default to no options
+  /**
+   * \brief Override this to fill out the property grid when this visualizer is selected
+   *
+   * @param property_grid The wxPropertyGrid to add properties to.
+   */
+  virtual void fillPropertyGrid( wxPropertyGrid* property_grid ) {}
 
-  ///
-  ///
   /**
    * \brief Override this to handle a changing property value.
    *
