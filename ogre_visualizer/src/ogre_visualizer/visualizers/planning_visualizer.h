@@ -27,11 +27,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_VISUALIZER_ROBOT_MODEL_VISUALIZER_H
-#define OGRE_VISUALIZER_ROBOT_MODEL_VISUALIZER_H
+#ifndef OGRE_VISUALIZER_PLANNING_VISUALIZER_H
+#define OGRE_VISUALIZER_PLANNING_VISUALIZER_H
 
 #include "visualizer_base.h"
-#include "std_msgs/Empty.h"
+#include <robot_msgs/DisplayKinematicPath.h>
 
 #include <map>
 
@@ -41,27 +41,34 @@ class Entity;
 class SceneNode;
 }
 
+namespace planning_models
+{
+class KinematicModel;
+}
+
 namespace ogre_vis
 {
 
 class Robot;
 
 /**
- * \class RobotModelVisualizer
- * \brief Uses a robot xml description to display the pieces of a robot at the transforms broadcast by rosTF
+ * \class PlanningVisualizer
+ * \brief
  */
-class RobotModelVisualizer : public VisualizerBase
+class PlanningVisualizer : public VisualizerBase
 {
 public:
-  RobotModelVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name );
-  virtual ~RobotModelVisualizer();
+  PlanningVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name );
+  virtual ~PlanningVisualizer();
 
   /**
    * \brief Initializes the visualizer.  The visualizer will not show anything until this is called.
    * @param description_param The ROS parameter name which contains the robot xml description
-   * @param transform_topic The topic to listen on that notifies us there is new transform data
+   * @param kinematic_path_topic The topic to listen on for a NamedKinematicPath
    */
-  void initialize( const std::string& description_param, const std::string& transform_topic );
+  void initialize( const std::string& description_param, const std::string& kinematic_path_topic );
+
+  void setStateDisplayTime( float time ) { state_display_time_ = time; }
 
   virtual void update( float dt );
 
@@ -80,31 +87,37 @@ protected:
   void unsubscribe();
 
   /**
-   * \brief ROS callback for an incoming transform message
-   */
-  void incomingTransform();
-
-  /**
-   * \brief Loads a URDF from our #description_param_, iterates through the links and loads any necessary models
+   * \brief Loads a URDF from our #description_param_
    */
   void load();
+
+  /**
+   * \brief ROS callback for an incoming kinematic path message
+   */
+  void incomingKinematicPath();
 
   // overrides from VisualizerBase
   virtual void onEnable();
   virtual void onDisable();
 
-  std_msgs::Empty message_;                   ///< new transforms message
-  std::string transform_topic_;               ///< ROS topic we're listening to for new transforms
+  bool initialized_;                          ///< Are we initialized?
   std::string description_param_;             ///< ROS parameter that contains the robot xml description
 
   Robot* robot_;                              ///< Handles actually drawing the robot
 
-  bool has_new_transforms_;                   ///< Callback sets this to tell our update function it needs to update the transforms
-
-  bool initialized_;                          ///< Are we initialized?
+  std::string kinematic_path_topic_;
+  planning_models::KinematicModel* kinematic_model_;
+  robot_msgs::DisplayKinematicPath incoming_kinematic_path_message_;
+  robot_msgs::DisplayKinematicPath displaying_kinematic_path_message_;
+  bool new_kinematic_path_;
+  bool animating_path_;
+  int current_state_;
+  float state_display_time_;
+  float current_state_time_;
 };
 
 } // namespace ogre_vis
 
  #endif
+
 

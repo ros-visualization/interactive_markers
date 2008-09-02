@@ -122,7 +122,7 @@ void OctreeVisualizer::unsubscribe()
 
 void OctreeVisualizer::update(float dt)
 {
-  octree_message_.lock();
+  triangles_mutex_.lock();
 
   if (new_message_)
   {
@@ -157,7 +157,7 @@ void OctreeVisualizer::update(float dt)
     causeRender();
   }
 
-  octree_message_.unlock();
+  triangles_mutex_.unlock();
 }
 
 void OctreeVisualizer::incomingOctreeCallback()
@@ -195,7 +195,7 @@ void OctreeVisualizer::incomingOctreeCallback()
     n.normalise();
   }
 
-  octree_message_.lock();
+  triangles_mutex_.lock();
 
   vertices_.clear();
   normals_.clear();
@@ -204,7 +204,7 @@ void OctreeVisualizer::incomingOctreeCallback()
   normals.swap( normals_ );
 
   new_message_ = true;
-  octree_message_.unlock();
+  triangles_mutex_.unlock();
 }
 
 void OctreeVisualizer::setOctreeTopic(const std::string& topic)

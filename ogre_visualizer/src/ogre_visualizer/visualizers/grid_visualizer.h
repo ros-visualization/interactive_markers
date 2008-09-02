@@ -30,7 +30,7 @@
 #ifndef OGRE_VISUALIZER_GRID_VISUALIZER_H
 #define OGRE_VISUALIZER_GRID_VISUALIZER_H
 
-#include "../visualizer_base.h"
+#include "visualizer_base.h"
 
 namespace ogre_tools
 {

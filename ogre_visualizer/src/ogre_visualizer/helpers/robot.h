@@ -35,11 +35,16 @@
 
 #include <urdf/URDF.h>
 
+#include <OgreVector3.h>
+#include <OgreQuaternion.h>
+
 namespace Ogre
 {
 class SceneManager;
 class Entity;
 class SceneNode;
+class Vector3;
+class Quaternion;
 }
 
 namespace ogre_tools
@@ -50,6 +55,11 @@ class Object;
 namespace robot_desc
 {
 class URDF;
+}
+
+namespace planning_models
+{
+class KinematicModel;
 }
 
 class rosTFClient;
@@ -84,8 +94,17 @@ public:
    * \brief Updates positions/orientations from a rosTF client
    *
    * @param tf_client The rosTF client to load from
+   * @param target_frame The frame to transform into
    */
   void update( rosTFClient* tf_client, const std::string& target_frame );
+
+  /**
+   * \brief Updates positions/orientations from a kinematic planning model
+   *
+   * @param kinematic_model The model to load from
+   * @param target_frame The frame to transform into
+   */
+  void update( planning_models::KinematicModel* kinematic_model, const std::string& target_frame );
 
   /**
    * \brief Set the robot as a whole to be visible or not
@@ -105,11 +124,18 @@ public:
    */
   void setCollisionVisible( bool visible );
 
-  bool isVisible();
+  /**
+   * \brief Returns whether or not the visual representation is set to be visible
+   */
   bool isVisualVisible();
+  /**
+   * \brief Returns whether or not the collision representation is set to be visible
+   */
   bool isCollisionVisible();
 
-protected:
+  void setPosition( const Ogre::Vector3& position );
+  void setOrientation( const Ogre::Quaternion& orientation );
+
   /**
    * \struct LinkInfo
    * \brief Contains any data we need from a link in the robot.
@@ -134,8 +160,12 @@ protected:
 
     Ogre::SceneNode* visual_node_;              ///< The scene node the visual mesh is attached to
     Ogre::SceneNode* collision_node_;           ///< The scene node the collision mesh/primitive is attached to
+
+    Ogre::Vector3 collision_offset_position_;   ///< Collision origin offset position
+    Ogre::Quaternion collision_offset_orientation_; ///< Collision origin offset orientation
   };
 
+protected:
 
   void createCollisionForLink( LinkInfo& info, robot_desc::URDF::Link* link );
 
@@ -147,8 +177,8 @@ protected:
   Ogre::SceneNode* root_visual_node_;           ///< Node all our visual nodes are children of
   Ogre::SceneNode* root_collision_node_;        ///< Node all our collision nodes are children of
 
-  bool visual_visible_;
-  bool collision_visible_;
+  bool visual_visible_;                         ///< Should we show the visual representation?
+  bool collision_visible_;                      ///< Should we show the collision representation?
 };
 
 } // namespace ogre_vis

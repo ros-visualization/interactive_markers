@@ -37,7 +37,7 @@
 #ifndef OCTREE_VISUALIZER_H_
 #define OCTREE_VISUALIZER_H_
 
-#include "../visualizer_base.h"
+#include "visualizer_base.h"
 #include <scan_utils/OctreeMsg.h>
 
 #include <Ogre.h>
@@ -106,6 +106,7 @@ protected:
   scan_utils::OctreeMsg octree_message_;  ///< Octree message
   typedef std::vector<Ogre::Vector3> V_Vector3;
 
+  ros::thread::mutex triangles_mutex_;  ///< Locks #vertices_ and #normals_
   V_Vector3 vertices_;                  ///< List of vertices spit out by the Octree's triangulator.  Every 3 vertices form a triangle.
                                         ///< Must lock #octree_message_ before accessing in any way.
 

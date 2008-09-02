@@ -41,6 +41,7 @@
 #include "visualizers/robot_model_visualizer.h"
 #include "visualizers/marker_visualizer.h"
 #include "visualizers/octree_visualizer.h"
+#include "visualizers/planning_visualizer.h"
 
 #include "Ogre.h"
 
@@ -127,6 +128,8 @@ public:
 
     RobotModelVisualizer* model = visualization_panel_->createVisualizer<RobotModelVisualizer>( "Robot Model", false );
     model->initialize( "robotdesc/pr2", "transform" );
+    PlanningVisualizer* planning = visualization_panel_->createVisualizer<PlanningVisualizer>( "Planning", false );
+    planning->initialize( "robotdesc/pr2", "display_kinematic_path" );
 
     PointCloudVisualizer* pointCloud = visualization_panel_->createVisualizer<PointCloudVisualizer>( "Stereo Full Cloud", false );
     pointCloud->setTopic( "videre/cloud" );

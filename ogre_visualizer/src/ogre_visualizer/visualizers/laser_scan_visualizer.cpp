@@ -295,11 +295,7 @@ void LaserScanVisualizer::transformCloud()
 
 void LaserScanVisualizer::incomingCloudCallback()
 {
-  cloud_message_.lock();
-
   transformCloud();
-
-  cloud_message_.unlock();
 }
 
 void LaserScanVisualizer::incomingScanCallback()

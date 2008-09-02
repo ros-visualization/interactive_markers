@@ -34,6 +34,7 @@
 #include "ogre_tools/super_ellipsoid.h"
 
 #include <rosTF/rosTF.h>
+#include <planning_models/kinematic.h>
 
 #include <Ogre.h>
 
@@ -86,11 +87,6 @@ void Robot::setCollisionVisible( bool visible )
   root_collision_node_->setVisible( visible );
 }
 
-bool Robot::isVisible()
-{
-  return isVisualVisible() || isCollisionVisible();
-}
-
 bool Robot::isVisualVisible()
 {
   return visual_visible_;
@@ -139,6 +135,7 @@ void Robot::createCollisionForLink( LinkInfo& info, robot_desc::URDF::Link* link
       ogre_tools::SuperEllipsoid* obj = new ogre_tools::SuperEllipsoid( scene_manager_, info.collision_node_ );
 
       Ogre::Vector3 scale( box->size[0], box->size[1], box->size[2] );
+      robotToOgre( scale );
 
       obj->create( ogre_tools::SuperEllipsoid::Cube, 10, scale );
       info.collision_object_ = obj;
@@ -167,6 +164,7 @@ void Robot::createCollisionForLink( LinkInfo& info, robot_desc::URDF::Link* link
       Ogre::Vector3 scale( cylinder->radius*2, cylinder->length, cylinder->radius*2 );
 
       obj->create( ogre_tools::SuperEllipsoid::Cylinder, 20, scale );
+
       info.collision_object_ = obj;
     }
     break;
@@ -179,10 +177,10 @@ void Robot::createCollisionForLink( LinkInfo& info, robot_desc::URDF::Link* link
   {
     Ogre::Vector3 position( collision->xyz[0], collision->xyz[1], collision->xyz[2] );
     Ogre::Matrix3 orientation;
-    orientation.FromEulerAnglesYXZ( Ogre::Radian( collision->rpy[0] ), Ogre::Radian( collision->rpy[1] ), Ogre::Radian( collision->rpy[2] ) );
+    orientation.FromEulerAnglesYXZ( Ogre::Radian( collision->rpy[2] ), Ogre::Radian( collision->rpy[1] ), Ogre::Radian( collision->rpy[0] ) );
 
-    info.collision_object_->setPosition( position );
-    info.collision_object_->setOrientation( orientation );
+    info.collision_offset_position_ = position;
+    info.collision_offset_orientation_ = orientation;
 
     info.collision_object_->setColor( 0.0f, 0.6f, 1.0f );
   }
@@ -265,6 +263,35 @@ void Robot::load( robot_desc::URDF* urdf )
   }
 }
 
+void setTransformsOnLink( const Robot::LinkInfo& info, const Ogre::Vector3& position, const Ogre::Quaternion& orientation, bool applyOffsetTransforms )
+{
+  if ( info.visual_node_ )
+  {
+    info.visual_node_->setPosition( position );
+    info.visual_node_->setOrientation( orientation );
+  }
+
+  if ( info.collision_node_ )
+  {
+    Ogre::Quaternion initial_orientation;
+    ogreToRobot( initial_orientation );
+
+    if ( applyOffsetTransforms )
+    {
+      info.collision_object_->setPosition( info.collision_offset_position_ );
+      info.collision_object_->setOrientation( initial_orientation * info.collision_offset_orientation_ );
+    }
+    else
+    {
+      info.collision_object_->setPosition( Ogre::Vector3::ZERO );
+      info.collision_object_->setOrientation( initial_orientation );
+    }
+
+    info.collision_node_->setPosition( position );
+    info.collision_node_->setOrientation( orientation );
+  }
+}
+
 void Robot::update( rosTFClient* tf_client, const std::string& target_frame )
 {
   M_NameToLinkInfo::iterator link_it = links_.begin();
@@ -282,19 +309,7 @@ void Robot::update( rosTFClient* tf_client, const std::string& target_frame )
     {
       pose = tf_client->transformPose( target_frame, pose );
     }
-    catch(libTF::TransformReference::LookupException& e)
-    {
-      printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), target_frame.c_str(), e.what() );
-    }
-    catch(libTF::TransformReference::ConnectivityException& e)
-    {
-      printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), target_frame.c_str(), e.what() );
-    }
-    catch(libTF::TransformReference::ExtrapolateException& e)
-    {
-      printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), target_frame.c_str(), e.what() );
-    }
-    catch(libTF::TransformReference::MaxDepthException& e)
+    catch(libTF::Exception& e)
     {
       printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), target_frame.c_str(), e.what() );
     }
@@ -304,18 +319,48 @@ void Robot::update( rosTFClient* tf_client, const std::string& target_frame )
 
     Ogre::Matrix3 orientation( ogreMatrixFromRobotEulers( pose.yaw, pose.pitch, pose.roll ) );
 
-    if ( info.visual_node_ )
+    setTransformsOnLink( info, position, orientation, true );
+  }
+}
+
+void Robot::update( planning_models::KinematicModel* kinematic_model, const std::string& target_frame )
+{
+  M_NameToLinkInfo::iterator link_it = links_.begin();
+  M_NameToLinkInfo::iterator link_end = links_.end();
+  for ( ; link_it != link_end; ++link_it )
+  {
+    const std::string& name = link_it->first;
+    const LinkInfo& info = link_it->second;
+
+    planning_models::KinematicModel::Link* link = kinematic_model->getLink( name );
+
+    if ( !link )
     {
-      info.visual_node_->setPosition( position );
-      info.visual_node_->setOrientation( orientation );
+      continue;
     }
 
-    if ( info.collision_node_ )
-    {
-      info.collision_node_->setPosition( position );
-      info.collision_node_->setOrientation( orientation );
-    }
+    libTF::Pose3D::Position robot_position = link->globalTrans.getPosition();
+    libTF::Pose3D::Quaternion robot_orientation = link->globalTrans.getQuaternion();
+    Ogre::Vector3 position( robot_position.x, robot_position.y, robot_position.z );
+    Ogre::Quaternion orientation( robot_orientation.w, robot_orientation.x, robot_orientation.y, robot_orientation.z );
+
+    robotToOgre( position );
+    robotToOgre( orientation );
+
+    setTransformsOnLink( info, position, orientation, false );
   }
+}
+
+void Robot::setPosition( const Ogre::Vector3& position )
+{
+  root_visual_node_->setPosition( position );
+  root_collision_node_->setPosition( position );
+}
+
+void Robot::setOrientation( const Ogre::Quaternion& orientation )
+{
+  root_visual_node_->setOrientation( orientation );
+  root_collision_node_->setOrientation( orientation );
 }
 
 } // namespace ogre_vis

@@ -30,7 +30,7 @@
 #ifndef OGRE_VISUALIZER_POINT_CLOUD_VISUALIZER_H
 #define OGRE_VISUALIZER_POINT_CLOUD_VISUALIZER_H
 
-#include "../visualizer_base.h"
+#include "visualizer_base.h"
 #include "ogre_tools/point_cloud.h"
 
 #include "std_msgs/PointCloudFloat32.h"

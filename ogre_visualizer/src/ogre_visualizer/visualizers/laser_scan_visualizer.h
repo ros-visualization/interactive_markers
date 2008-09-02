@@ -30,7 +30,7 @@
 #ifndef OGRE_VISUALIZER_LASER_SCAN_VISUALIZER_H
 #define OGRE_VISUALIZER_LASER_SCAN_VISUALIZER_H
 
-#include "../visualizer_base.h"
+#include "visualizer_base.h"
 #include "laser_scan_utils/laser_scan.h"
 #include "ogre_tools/point_cloud.h"
 
