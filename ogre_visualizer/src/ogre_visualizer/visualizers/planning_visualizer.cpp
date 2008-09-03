@@ -101,6 +101,7 @@ void PlanningVisualizer::load()
   kinematic_model_ = new planning_models::KinematicModel();
   kinematic_model_->setVerbose( false );
   kinematic_model_->build( file );
+  kinematic_model_->defaultState();
 
   robot_->update( kinematic_model_, target_frame_ );
 }
