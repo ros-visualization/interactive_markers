@@ -263,12 +263,13 @@ void Robot::load( robot_desc::URDF* urdf )
   }
 }
 
-void setTransformsOnLink( const Robot::LinkInfo& info, const Ogre::Vector3& position, const Ogre::Quaternion& orientation, bool applyOffsetTransforms )
+void setTransformsOnLink( const Robot::LinkInfo& info, const Ogre::Vector3& visual_position, const Ogre::Quaternion& visual_orientation,
+                          const Ogre::Vector3& collision_position, const Ogre::Quaternion& collision_orientation, bool applyOffsetTransforms )
 {
   if ( info.visual_node_ )
   {
-    info.visual_node_->setPosition( position );
-    info.visual_node_->setOrientation( orientation );
+    info.visual_node_->setPosition( visual_position );
+    info.visual_node_->setOrientation( visual_orientation );
   }
 
   if ( info.collision_node_ )
@@ -287,8 +288,8 @@ void setTransformsOnLink( const Robot::LinkInfo& info, const Ogre::Vector3& posi
       info.collision_object_->setOrientation( initial_orientation );
     }
 
-    info.collision_node_->setPosition( position );
-    info.collision_node_->setOrientation( orientation );
+    info.collision_node_->setPosition( collision_position );
+    info.collision_node_->setOrientation( collision_orientation );
   }
 }
 
@@ -319,7 +320,8 @@ void Robot::update( rosTFClient* tf_client, const std::string& target_frame )
 
     Ogre::Matrix3 orientation( ogreMatrixFromRobotEulers( pose.yaw, pose.pitch, pose.roll ) );
 
-    setTransformsOnLink( info, position, orientation, true );
+    // Collision/visual transforms are the same in this case
+    setTransformsOnLink( info, position, orientation, position, orientation, true );
   }
 }
 
@@ -339,15 +341,21 @@ void Robot::update( planning_models::KinematicModel* kinematic_model, const std:
       continue;
     }
 
-    libTF::Pose3D::Position robot_position = link->globalTrans.getPosition();
-    libTF::Pose3D::Quaternion robot_orientation = link->globalTrans.getQuaternion();
-    Ogre::Vector3 position( robot_position.x, robot_position.y, robot_position.z );
-    Ogre::Quaternion orientation( robot_orientation.w, robot_orientation.x, robot_orientation.y, robot_orientation.z );
+    libTF::Pose3D::Position robot_visual_position = link->globalTransFwd.getPosition();
+    libTF::Pose3D::Quaternion robot_visual_orientation = link->globalTransFwd.getQuaternion();
+    Ogre::Vector3 visual_position( robot_visual_position.x, robot_visual_position.y, robot_visual_position.z );
+    Ogre::Quaternion visual_orientation( robot_visual_orientation.w, robot_visual_orientation.x, robot_visual_orientation.y, robot_visual_orientation.z );
+    robotToOgre( visual_position );
+    robotToOgre( visual_orientation );
 
-    robotToOgre( position );
-    robotToOgre( orientation );
+    libTF::Pose3D::Position robot_collision_position = link->globalTrans.getPosition();
+    libTF::Pose3D::Quaternion robot_collision_orientation = link->globalTrans.getQuaternion();
+    Ogre::Vector3 collision_position( robot_collision_position.x, robot_collision_position.y, robot_collision_position.z );
+    Ogre::Quaternion collision_orientation( robot_collision_orientation.w, robot_collision_orientation.x, robot_collision_orientation.y, robot_collision_orientation.z );
+    robotToOgre( collision_position );
+    robotToOgre( collision_orientation );
 
-    setTransformsOnLink( info, position, orientation, false );
+    setTransformsOnLink( info, visual_position, visual_orientation, collision_position, collision_orientation, false );
   }
 }
 
