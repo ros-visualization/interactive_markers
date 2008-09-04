@@ -9,13 +9,38 @@ find_package(wxWidgets REQUIRED)
 include(${wxWidgets_USE_FILE})
 include_directories( ${wxWidgets_INCLUDE_DIRS} )
 
+# Find the combined swig flags for this project
+_rospack_invoke(${PROJECT_NAME} ${PROJECT_NAME} SWIG_FLAGS export/swig/flags)
+set(SWIG_FLAGS ${${PROJECT_NAME}_SWIG_FLAGS})
+
+# Find the wxswig executable
+find_ros_package(wxswig)
+set(WXSWIG_EXECUTABLE ${wxswig_PACKAGE_PATH}/bin/swig)
+
+# Add a custom command for generating the swig output files
+set(SWIG_INTERFACE_FILE ${PROJECT_SOURCE_DIR}/src/wx_camera_panel/CameraPanel.i)
+set(SWIG_OUTPUT_CPP_FILE ${PROJECT_SOURCE_DIR}/src/wx_camera_panel/CameraPanel_swig_generated.cpp)
+set(SWIG_OUTPUT_PYTHON_FILE ${PROJECT_SOURCE_DIR}/lib/wx_camera_panel.py)
+add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE} 
+                            ${SWIG_OUTPUT_PYTHON_FILE}
+                   COMMAND  ${WXSWIG_EXECUTABLE} ${SWIG_FLAGS} -o ${SWIG_OUTPUT_CPP_FILE} -outdir ../lib -module ${PROJECT_NAME} ${SWIG_INTERFACE_FILE}
+                   DEPENDS  ${SWIG_INTERFACE_FILE}
+                            src/wx_camera_panel/CameraPanelsGenerated.i
+                            src/wx_camera_panel/CameraPanelsGenerated.cpp 
+                            src/wx_camera_panel/CameraPanel.cpp)
 
 # shared library
-rospack_add_library(wxcamerapanel src/wx_camera_panel/CameraPanelsGenerated.cpp 
+rospack_add_library(wx_camera_panel src/wx_camera_panel/CameraPanelsGenerated.cpp 
 				  src/wx_camera_panel/CameraPanel.cpp
-				  src/wx_camera_panel/CameraSetupDialog.cpp)
-target_link_libraries(wxcamerapanel ${wxWidgets_LIBRARIES})
+				  src/wx_camera_panel/CameraSetupDialog.cpp
+				  ${SWIG_OUTPUT_CPP_FILE})
+target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES})
+# swig python needs a shared library named _<modulename>.[so|dll|...]
+# this renames the output file to conform to that by prepending an underscore and removing the "lib" prefix
+set_target_properties(${PROJECT_NAME}
+                      PROPERTIES OUTPUT_NAME _${PROJECT_NAME}
+                      PREFIX "")
 
 # test application
 rospack_add_executable(camera_test src/test/test.cpp)
-target_link_libraries(camera_test wxcamerapanel ${wxWidgets_LIBRARIES})
+target_link_libraries(camera_test ${PROJECT_NAME} ${wxWidgets_LIBRARIES})

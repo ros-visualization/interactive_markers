@@ -107,7 +107,9 @@ CameraPanel::CameraPanel(wxWindow* parent)
   std::stringstream ss;
   ss << "CameraPanelNode" << count++;
 
-  // jfaust TODO: rosnode should be passed in once STROS is here and it supports multiple subscribers to the same topic
+  /// @todo rosnode should be passed in, since it's a singleton
+  int argc = 0;
+  ros::node::init(argc,0);
   m_ROSNode = new ros::node( ss.str() );
 
   m_ImagePanel->Connect( EVT_FAKE_REFRESH, wxCommandEventHandler( CameraPanel::OnFakeRefresh ), NULL, this );

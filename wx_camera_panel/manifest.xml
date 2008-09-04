@@ -12,8 +12,11 @@
     <depend package="std_msgs"/>
     <depend package="axis_cam"/>
     <depend package="wx_topic_display"/>
+    <depend package="wxswig"/>
+    <depend package="wxPython_swig_interface"/>
     <export> 
-        <cpp cflags="-I${prefix}/src/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lwxcamerapanels"/>
+        <cpp cflags="-I${prefix}/src/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -l_wx_camera_panel"/>
+        <python path="${prefix}/lib/"/>
     </export>
 <sysdepend os="ubuntu" version="7.04-feisty" package="libwxgtk2.8-dev"/>
 <sysdepend os="ubuntu" version="8.04-hardy" package="libwxgtk2.8-dev"/>
