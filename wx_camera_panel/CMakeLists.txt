@@ -26,8 +26,8 @@ add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE}
                    COMMAND  ${WXSWIG_EXECUTABLE} ${SWIG_FLAGS} -o ${SWIG_OUTPUT_CPP_FILE} -outdir ../lib -module ${PROJECT_NAME} ${SWIG_INTERFACE_FILE}
                    DEPENDS  ${SWIG_INTERFACE_FILE}
                             src/wx_camera_panel/CameraPanelsGenerated.i
-                            src/wx_camera_panel/CameraPanelsGenerated.cpp 
-                            src/wx_camera_panel/CameraPanel.cpp)
+                            src/wx_camera_panel/CameraPanelsGenerated.h 
+                            src/wx_camera_panel/CameraPanel.h)
 
 # shared library
 rospack_add_library(wx_camera_panel src/wx_camera_panel/CameraPanelsGenerated.cpp 
