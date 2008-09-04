@@ -18,7 +18,7 @@ app = wx.PySimpleApp()
 titlebar_string = "Camera"
 if ( options.name != None ):
     titlebar_string = titlebar_string + " " + options.name
-frame = wx.Frame(None, wx.ID_ANY, titlebar_string)
+frame = wx.Frame(None, wx.ID_ANY, titlebar_string, wx.DefaultPosition, wx.Size( 500, 500 ) )
 
 camera_panel = wx_camera_panel.CameraPanel(frame)
 camera_panel.SetEnabled(True)
