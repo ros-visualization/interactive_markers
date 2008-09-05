@@ -66,6 +66,7 @@ public:
   void set_look_tgt(double x, double y, double z) 
   { look_tgt_x = x; look_tgt_y = y; look_tgt_z = z; }
   bool write_file(const std::string &filename);
+  void set_postrender_cb(void(*cb)()) { postrender_cb = cb; }
 
 private:
 	std::vector<CloudViewerPoint> points;
@@ -73,6 +74,7 @@ private:
 	float look_tgt_x, look_tgt_y, look_tgt_z;
 	bool left_button_down, right_button_down;
   bool hide_axes;
+  void (*postrender_cb)();
 };
 
 #endif

@@ -38,7 +38,7 @@ CloudViewer::CloudViewer() :
 	cam_azi(-M_PI/2), cam_ele(0), cam_rho(1),
 	look_tgt_x(0), look_tgt_y(0), look_tgt_z(0),
 	left_button_down(false), right_button_down(false),
-  hide_axes(false)
+  hide_axes(false), postrender_cb(NULL)
 {
 }
 
@@ -106,6 +106,9 @@ void CloudViewer::render()
 		glVertex3f(points[i].x, points[i].y, points[i].z);
 	}
 	glEnd();
+
+  if (postrender_cb)
+    postrender_cb();
 }
 
 void CloudViewer::set_opengl_params(unsigned width, unsigned height)
