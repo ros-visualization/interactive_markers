@@ -341,15 +341,15 @@ void Robot::update( planning_models::KinematicModel* kinematic_model, const std:
       continue;
     }
 
-    libTF::Pose3D::Position robot_visual_position = link->globalTransFwd.getPosition();
-    libTF::Pose3D::Quaternion robot_visual_orientation = link->globalTransFwd.getQuaternion();
+    libTF::Position robot_visual_position = link->globalTransFwd.getPosition();
+    libTF::Quaternion robot_visual_orientation = link->globalTransFwd.getQuaternion();
     Ogre::Vector3 visual_position( robot_visual_position.x, robot_visual_position.y, robot_visual_position.z );
     Ogre::Quaternion visual_orientation( robot_visual_orientation.w, robot_visual_orientation.x, robot_visual_orientation.y, robot_visual_orientation.z );
     robotToOgre( visual_position );
     robotToOgre( visual_orientation );
 
-    libTF::Pose3D::Position robot_collision_position = link->globalTrans.getPosition();
-    libTF::Pose3D::Quaternion robot_collision_orientation = link->globalTrans.getQuaternion();
+    libTF::Position robot_collision_position = link->globalTrans.getPosition();
+    libTF::Quaternion robot_collision_orientation = link->globalTrans.getQuaternion();
     Ogre::Vector3 collision_position( robot_collision_position.x, robot_collision_position.y, robot_collision_position.z );
     Ogre::Quaternion collision_orientation( robot_collision_orientation.w, robot_collision_orientation.x, robot_collision_orientation.y, robot_collision_orientation.z );
     robotToOgre( collision_position );
