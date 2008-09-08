@@ -12,8 +12,8 @@ objects = $(filter %.o, $(1:%.c=%.o) $(1:%.cc=%.o)) $(call noheaders,$(call noso
 
 
 
-CPPFLAGS = $(shell rospack export/cpp/cflags irrlicht_viewer)
-LDFLAGS =  $(shell rospack export/cpp/lflags irrlicht_viewer)
+CPPFLAGS = $(shell rospack --lang=cpp --attrib=cflags export irrlicht_viewer)
+LDFLAGS =  $(shell rospack --lang=cpp --attrib=lflags export irrlicht_viewer)
 
 CUSTOM_NODES = $(shell ls CustomNodes/*.cc)
 
