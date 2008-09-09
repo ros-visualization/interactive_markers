@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
     sls.processMsgs(string(argv[i]));
     cout << "finished" << endl;
     sls.publishAll();
-    cout << "Press Enter to continue . . .\n";
+    cout << "Press Enter to see next scene . . ."; cout.flush();
     cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     sls.node_->shutdown();
     node.shutdown();

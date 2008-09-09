@@ -16,7 +16,7 @@ def check_for_msg(line):
 
 dirname = sys.argv[1]
 filebase = "fg"
-snap = "`rospack find megamaid`/bin/dustbuster --seq " + dirname + " " + filebase + " videre/cal_params labeled_images videre/cloud_smallv videre/images"
+snap = "`rospack find megamaid`/bin/dustbuster --seq " + dirname + " " + filebase + " videre/cal_params labeled_images spacetime_stereo videre/images"
 printr("using cmd: " + snap)
 p = sub.Popen("xterm -e `rospack find scene_labeler`/bin/image_bg_subtr_multi", shell=True)
 
@@ -26,9 +26,8 @@ while True:
     printr( "Starting scene collection.")
     printr("Press enter when you have constructed your mask in image_bg_subtr")
     raw_input("")
-    os.system('ssh -f prc0 "killall -s USR1 lpg"')
-    time.sleep(1)
-                
+
+    printr( "Now send output from image_bg_subtr by pressing 'o' in the segmentation window.")
     snap_p = sub.Popen(snap, shell=True, stdout=sub.PIPE);
     nMsgs = 0;
     while True:
@@ -36,9 +35,14 @@ while True:
         nMsgs += check_for_msg(line)
         if(nMsgs == 3):
             break
-        
-    printr( "All msgs but labeled_images have been recorded.")
-    os.system('ssh -f prc0 "killall -s USR1 lpg"')
-    printr( "Now send output from image_bg_subtr by pressing 'o' in the segmentation window.")
-    snap_p.wait()
+
+
+    printr( "All msgs but spacetime stereo have been recorded.")
+    os.system('ssh -f prc0 "killall -s USR1 lpg"') #turn on projector.
+    printr( "Start spacetime stereo computation")
+
+    snap_p.wait() #Wait until sts is done and dustbuster dies.
     printr( "=== Done collecting that scene. ===")
+    
+    os.system('ssh -f prc0 "killall -s USR1 lpg"')
+
