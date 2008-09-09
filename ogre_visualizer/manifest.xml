@@ -20,8 +20,11 @@
     <depend package="wx_topic_display"/>
     <depend package="planning_models"/>
     <depend package="robot_msgs" />
+    <depend package="wxswig"/>
+    <depend package="wxPython_swig_interface"/>
     <export> 
-        <cpp cflags="-I${prefix}/src/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -logre_visualizer"/>
+        <cpp cflags="-I${prefix}/src/" lflags="-Wl,-rpath,${prefix}/lib ${prefix}/lib/_ogre_visualizer.so"/>
+        <python path="${prefix}/lib/"/>
     </export>
     
     <sysdepend os="ubuntu" version="7.04-feisty" package="libwxgtk2.8-dev"/>

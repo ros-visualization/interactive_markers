@@ -109,10 +109,9 @@ public:
    * \brief Constructor
    *
    * @param parent Parent window
-   * @param root Ogre root, passed in because there may be multiple VisualizationPanels, but there can be only one root
    * @return
    */
-  VisualizationPanel( wxWindow* parent, Ogre::Root* root );
+  VisualizationPanel( wxWindow* parent );
   virtual ~VisualizationPanel();
 
   /**

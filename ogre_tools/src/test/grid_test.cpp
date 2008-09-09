@@ -39,6 +39,7 @@
 #include "../ogre_tools/arrow.h"
 #include "../ogre_tools/point_cloud.h"
 #include "../ogre_tools/super_ellipsoid.h"
+#include "../ogre_tools/initialization.h"
 
 #include "Ogre.h"
 
@@ -53,58 +54,10 @@ public:
   , mouse_x_( 0 )
   , mouse_y_( 0 )
   {
-    root_ = new Ogre::Root();
+    ogre_tools::initializeOgre();
+    ogre_tools::initializeResources( ogre_tools::V_string() );
 
-    try
-    {
-      root_->loadPlugin( "RenderSystem_GL" );
-      root_->loadPlugin( "Plugin_OctreeSceneManager" );
-    }
-    catch ( Ogre::Exception& e )
-    {
-      printf( "Error: %s\n", e.what() );
-      exit( 1 );
-    }
-
-    Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
-
-    // Taken from gazebo
-    Ogre::RenderSystemList *rsList = root_->getAvailableRenderers();
-
-    Ogre::RenderSystem* renderSystem = NULL;
-    Ogre::RenderSystemList::iterator renderIt = rsList->begin();
-    Ogre::RenderSystemList::iterator renderEnd = rsList->end();
-    for ( ; renderIt != renderEnd; ++renderIt )
-    {
-        renderSystem = *renderIt;
-
-        if ( renderSystem->getName() == "OpenGL Rendering Subsystem" )
-        {
-            break;
-        }
-    }
-
-    if ( renderSystem == NULL )
-    {
-      printf( "Could not find the opengl rendering subsystem!\n" );
-      exit(1);
-    }
-
-    renderSystem->setConfigOption("Full Screen","No");
-    renderSystem->setConfigOption("FSAA","2");
-    renderSystem->setConfigOption("RTT Preferred Mode", "PBuffer");
-
-    root_->setRenderSystem( renderSystem );
-
-    try
-    {
-        root_->initialise( false );
-    }
-    catch ( Ogre::Exception& e )
-    {
-        printf( "Failed to initialize Ogre::Root: %s\n", e.what() );
-        exit(1);
-    }
+    root_ = Ogre::Root::getSingletonPtr();
 
     try
     {

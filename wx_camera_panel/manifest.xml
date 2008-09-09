@@ -15,7 +15,7 @@
     <depend package="wxswig"/>
     <depend package="wxPython_swig_interface"/>
     <export> 
-        <cpp cflags="-I${prefix}/src/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -l_wx_camera_panel"/>
+        <cpp cflags="-I${prefix}/src/" lflags="-Wl,-rpath,${prefix}/lib ${prefix}/lib/_wx_camera_panel.so"/>
         <python path="${prefix}/lib/"/>
     </export>
 <sysdepend os="ubuntu" version="7.04-feisty" package="libwxgtk2.8-dev"/>

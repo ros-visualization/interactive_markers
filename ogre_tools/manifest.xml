@@ -8,9 +8,10 @@
     <license>BSD</license>
     <url>http://pr.willowgarage.com/wiki/ROS</url>
     <depend package="ogre"/>
-    
+    <depend package="wxswig"/>
     <export> 
-        <cpp cflags="-I${prefix}/src/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -logretools"/>
+        <cpp cflags="-I${prefix}/src/" lflags="-Wl,-rpath,${prefix}/lib ${prefix}/lib/_ogre_tools.so"/>
+        <python path="${prefix}/lib/"/>
     </export>
     <sysdepend os="ubuntu" version="7.04-feisty" package="libwxgtk2.8-dev"/>
     <sysdepend os="ubuntu" version="8.04-hardy" package="libwxgtk2.8-dev"/>

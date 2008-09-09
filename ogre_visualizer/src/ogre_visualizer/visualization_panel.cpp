@@ -64,9 +64,9 @@ END_DECLARE_EVENT_TYPES()
 
 DEFINE_EVENT_TYPE(EVT_RENDER)
 
-VisualizationPanel::VisualizationPanel( wxWindow* parent, Ogre::Root* root )
+VisualizationPanel::VisualizationPanel( wxWindow* parent )
     : VisualizationPanelGenerated( parent )
-    , ogre_root_( root )
+    , ogre_root_( Ogre::Root::getSingletonPtr() )
     , selected_visualizer_( NULL )
     , left_mouse_down_( false )
     , middle_mouse_down_( false )
@@ -77,6 +77,14 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent, Ogre::Root* root )
   initializeCommon();
 
   ros_node_ = ros::node::instance();
+
+  /// @todo This should go away once creation of the ros::node is more well-defined
+  if (!ros_node_)
+  {
+    int argc = 0;
+    ros::init( argc, 0 );
+    ros_node_ = new ros::node( "VisualizationPanel" );
+  }
   ROS_ASSERT( ros_node_ );
 
   tf_client_ = new rosTFClient( *ros_node_ );

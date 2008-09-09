@@ -23,7 +23,26 @@ link_directories( ${GTK2_LIBRARY_DIRS} )
 find_package(OpenGL REQUIRED)
 include_directories( ${OPENGL_INCLUDE_DIR} )
 
-rospack_add_library(ogretools src/ogre_tools/point_cloud.cpp
+# Find the combined swig flags for this project
+_rospack_invoke(${PROJECT_NAME} ${PROJECT_NAME} SWIG_FLAGS "--lang=swig" "--attrib=flags" "export")
+set(SWIG_FLAGS ${${PROJECT_NAME}_SWIG_FLAGS})
+
+# Find the wxswig executable
+find_ros_package(wxswig)
+set(WXSWIG_EXECUTABLE ${wxswig_PACKAGE_PATH}/bin/swig)
+
+# Add a custom command for generating the swig output files
+set(SWIG_INTERFACE_FILE ${PROJECT_SOURCE_DIR}/src/ogre_tools/ogre_tools.i)
+set(SWIG_OUTPUT_CPP_FILE ${PROJECT_SOURCE_DIR}/src/ogre_tools/ogre_tools_swig_generated.cpp)
+set(SWIG_OUTPUT_PYTHON_FILE ${PROJECT_SOURCE_DIR}/lib/ogre_tools.py)
+add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE} 
+                            ${SWIG_OUTPUT_PYTHON_FILE}
+                   COMMAND  ${WXSWIG_EXECUTABLE} ${SWIG_FLAGS} -o ${SWIG_OUTPUT_CPP_FILE} -outdir ../lib -module ${PROJECT_NAME} ${SWIG_INTERFACE_FILE}
+                   DEPENDS  ${SWIG_INTERFACE_FILE}
+                            src/ogre_tools/initialization.i
+                            src/ogre_tools/initialization.h)
+
+rospack_add_library(${PROJECT_NAME} src/ogre_tools/point_cloud.cpp
             src/ogre_tools/object.cpp
             src/ogre_tools/cone.cpp
 			      src/ogre_tools/grid.cpp
@@ -33,15 +52,22 @@ rospack_add_library(ogretools src/ogre_tools/point_cloud.cpp
 			      src/ogre_tools/camera_base.cpp
 			      src/ogre_tools/fps_camera.cpp
 			      src/ogre_tools/orbit_camera.cpp
-			      src/ogre_tools/wx_ogre_render_window.cpp)
-target_link_libraries(ogretools ${wxWidgets_LIBRARIES} ${GTK2_LIBRARIES} ${OPENGL_gl_LIBRARY})
+			      src/ogre_tools/wx_ogre_render_window.cpp
+			      src/ogre_tools/initialization.cpp
+			      ${SWIG_OUTPUT_CPP_FILE})
+target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} ${GTK2_LIBRARIES} ${OPENGL_gl_LIBRARY})
+# swig python needs a shared library named _<modulename>.[so|dll|...]
+# this renames the output file to conform to that by prepending an underscore and removing the "lib" prefix
+set_target_properties(${PROJECT_NAME}
+                      PROPERTIES OUTPUT_NAME _${PROJECT_NAME}
+                      PREFIX "")
 
 rospack_add_executable(grid_test src/test/grid_test.cpp)
-target_link_libraries(grid_test ogretools ${wxWidgets_LIBRARIES})
+target_link_libraries(grid_test ${PROJECT_NAME} ${wxWidgets_LIBRARIES})
 
 rospack_add_executable(stl_to_mesh src/stl_to_mesh/stl_to_mesh.cpp)
 
 rospack_add_gtest(utest test/utest.cpp)
-target_link_libraries(utest ogretools)
+target_link_libraries(utest ${PROJECT_NAME})
 set_target_properties(utest PROPERTIES
                       RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
