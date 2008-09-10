@@ -475,14 +475,16 @@ int main( int argc, char** argv )
   std_msgs::ImageArray lb;
   std::vector<std_msgs::Image> v;
 
+
+  // -- Setup periodic publishing.
+  time_t start, end;
+  int secs = 0;
+  time(&start);
+
   /////////////////FRAME PROCESS LOOP////////////////////////////
   for(;;)
     {
 
-      // -- Setup periodic publishing.
-      time_t start, end;
-      int secs = 0;
-      time(&start);
 
       // -- Wait for a new message and check for control-c.
       while(!node.hasNewFrameMsg && node.ok()) {
@@ -508,9 +510,7 @@ int main( int argc, char** argv )
 	  
 	  // -- Periodically send the mask over ROS.
 	  time(&end);
-	  
 	  if(difftime(end, start) != secs && MultiClassSegmentedImage != NULL) {
-	    cout << "Periodic publish..." << endl;
 	    node.frame_msg.get_images_vec(v);
 	    node.labelMask.label = string("labeling");
 	    node.labelMask.compression = string("raw");
