@@ -479,6 +479,11 @@ int main( int argc, char** argv )
   for(;;)
     {
 
+      // -- Setup periodic publishing.
+      time_t start, end;
+      int secs = 0;
+      time(&start);
+
       // -- Wait for a new message and check for control-c.
       while(!node.hasNewFrameMsg && node.ok()) {
 	usleep(1000);
@@ -492,14 +497,29 @@ int main( int argc, char** argv )
 	 
 	  // -- Get frame from ROS rather than from the camera directly.
 	  node.hasNewFrameMsg = false;
-
 	  node.frame_mutex_.lock();
 	  // FIXME: change for color images
 
 	  //	  cvMerge( node.frame, node.frame, node.frame, NULL, frame ); 
 	  cvCopy(node.frame, frame);
-
 	  node.frame_mutex_.unlock();
+
+
+	  
+	  // -- Periodically send the mask over ROS.
+	  time(&end);
+	  
+	  if(difftime(end, start) != secs && MultiClassSegmentedImage != NULL) {
+	    cout << "Periodic publish..." << endl;
+	    node.frame_msg.get_images_vec(v);
+	    node.labelMask.label = string("labeling");
+	    node.labelMask.compression = string("raw");
+	    node.bridge_out->from_cv(MultiClassSegmentedImage, 100); //Puts mask into node.labelMask Image ros msg.
+	    v.push_back(node.labelMask);
+	    lb.set_images_vec(v);
+	    node.publish("labeled_images", lb);
+	  }	  
+	  secs = difftime(end, start);
 
 	  // -- Continue with normal execution of CaptureObjects.
 	  framecount += 1;
