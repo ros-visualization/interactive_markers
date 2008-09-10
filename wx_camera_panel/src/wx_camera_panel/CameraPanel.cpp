@@ -102,15 +102,16 @@ CameraPanel::CameraPanel(wxWindow* parent)
 
   Connect( wxEVT_TIMER, wxTimerEventHandler(CameraPanel::OnScrollComplete), NULL, this);
 
-  // ensure a unique node name
-  static uint32_t count = 0;
-  std::stringstream ss;
-  ss << "CameraPanelNode" << count++;
+  m_ROSNode = ros::node::instance();
 
-  /// @todo rosnode should be passed in, since it's a singleton
-  int argc = 0;
-  ros::node::init(argc,0);
-  m_ROSNode = new ros::node( ss.str() );
+  /// @todo This should go away once creation of the ros::node is more well-defined
+  if (!m_ROSNode)
+  {
+    int argc = 0;
+    ros::init( argc, 0 );
+    m_ROSNode = new ros::node( "CameraPanel" );
+  }
+  ROS_ASSERT( m_ROSNode );
 
   m_ImagePanel->Connect( EVT_FAKE_REFRESH, wxCommandEventHandler( CameraPanel::OnFakeRefresh ), NULL, this );
 }
