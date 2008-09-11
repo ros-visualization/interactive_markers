@@ -20,6 +20,10 @@ snap = "`rospack find megamaid`/bin/dustbuster --seq " + dirname + " " + filebas
 printr("using cmd: " + snap)
 p = sub.Popen("xterm -e `rospack find scene_labeler`/bin/image_bg_subtr_multi", shell=True)
 
+os.system('ssh -f prc0 "killall sts_node"') #compute next point cloud using S.T.S.
+
+os.system('ssh -Yf prc0 "ROS_MASTER_URI=http://fep:11311 rosrun spacetime_stereo sts_node"') #start sts with X forwarding.
+
 printr( "Set projector blank" )
 
 while True:
@@ -27,7 +31,7 @@ while True:
     printr("Press enter when you have constructed your mask in image_bg_subtr")
     raw_input("")
 
-    printr( "Now send output from image_bg_subtr by pressing 'o' in the segmentation window.")
+    #printr( "Now send output from image_bg_subtr by pressing 'o' in the segmentation window.")
     snap_p = sub.Popen(snap, shell=True, stdout=sub.PIPE);
     nMsgs = 0;
     while True:
@@ -38,11 +42,15 @@ while True:
 
 
     printr( "All msgs but spacetime stereo have been recorded.")
-    os.system('ssh -f prc0 "killall -s USR1 lpg"') #turn on projector.
-    printr( "Start spacetime stereo computation")
+    #os.system('ssh -f prc0 "killall -s USR1 lpg"') #turn on projector.
+    printr( "Starting spacetime stereo computation")
 
+    time.sleep(1)
+
+    os.system('ssh -f prc0 "killall -s USR1 sts_node"') #compute next point cloud using S.T.S.
+    
     snap_p.wait() #Wait until sts is done and dustbuster dies.
     printr( "=== Done collecting that scene. ===")
     
-    os.system('ssh -f prc0 "killall -s USR1 lpg"')
+    #os.system('ssh -f prc0 "killall -s USR1 lpg"')
 
