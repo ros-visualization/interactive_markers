@@ -8,5 +8,6 @@
   <!--node pkg="scene_labeler" type="smallv_transformer"/-->
   <node pkg="scene_labeler" type="guide_stereo" output="screen" args="defaultDataset"/>
   <node pkg="dc1394_cam_server" type="check_params" />
+  <node pkg="ogre_visualizer" type="visualizer_test" args="videre/cloud:=spacetime_stereo"/>
   <!--include file="$(find sensor_cart)/sensors.xml"/-->
 </launch>
