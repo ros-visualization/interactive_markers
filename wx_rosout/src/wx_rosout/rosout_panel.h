@@ -64,71 +64,134 @@ class wxTimerEvent;
 class wxAuiNotebook;
 class wxRichTextCtrl;
 
-struct LogPage
-{
-  uint32_t filter_;
-  wxTextCtrl* text_control_;
-};
+class LogPage;
+class NodePage;
+
 typedef std::vector<LogPage*> V_LogPage;
-
-struct NodePage
-{
-  NodePage() {}
-  ~NodePage();
-  std::string name_;
-  wxAuiNotebook* notebook_;
-
-  V_LogPage log_pages_;
-};
 typedef std::vector<NodePage*> V_NodePage;
 
+/**
+ * \class RosoutPanel
+ * \brief An embeddable panel which listens on rosout and displays any messages that arrive.
+ */
 class RosoutPanel : public RosoutPanelBase
 {
 public:
+  /**
+   * \brief Constructor
+   * @param parent The window which is the parent of this one
+   */
   RosoutPanel( wxWindow* parent );
   ~RosoutPanel();
 
+  /**
+   * \brief Set this panel to be enabled or not.
+   *
+   * When enabled, it will be subscribed to the rosout topic and processing messages.  When disabled, it will not.
+   * @param enabled Should we be enabled?
+   */
 	void setEnabled(bool enabled);
+	/**
+	 * \brief Set the topic to listen on for rostools::Log messages
+	 * @param topic The topic name
+	 */
   void setTopic( const std::string& topic );
 
+  /**
+   * \brief Clear all messages
+   */
   void clear();
 
+  /**
+   * \brief Mostly for internal use.  Creates a page in our choicebook for a node.
+   * @param name The name of the page.  If a page of this name already exists, it will return the pre-existing one.
+   * @return If no page of the same name existed, a new page.  Otherwise, the pre-existing page.
+   */
 	NodePage* createNodePage( const std::string& name );
+	/**
+	 * \brief Mostly for internal use.  Creates the default log pages (All, Fatal, Error, Warning, Debug, Info)
+	 * @param node_page The node page to create the log pages under
+	 */
 	void createDefaultLogPages( NodePage* node_page );
+	/**
+	 * \brief Mostly for internal use.  Creates a log page.
+	 * @param node_page The node page to create the log page under
+	 * @param filter A flags-word for which types of messages will appear in this log page.  Flags should be ored together from the flags available in rostools::Log
+	 * @param name Name of this log page
+	 * @return The new log page
+	 */
 	LogPage* createLogPage( NodePage* node_page, uint32_t filter, const std::string& name );
 
 protected:
+  /**
+   * \brief (wx callback) Called when the "Enable" checkbox is toggled
+   */
   virtual void onEnable( wxCommandEvent& event );
+  /**
+   * \brief (wx callback) Called when the "Setup" button is pressed
+   */
   virtual void onSetup( wxCommandEvent& event );
+  /**
+   * \brief (wx callback) Called when the "Pause" button is toggled
+   */
   virtual void onPauseToggled( wxCommandEvent& event );
+  /**
+   * \brief (wx callback) Called when the "Clear" button is pressed
+   */
   virtual void onClear( wxCommandEvent& event );
+  /**
+   * \brief (wx callback) Called every 100ms so we can process new messages
+   */
   void onProcessTimer( wxTimerEvent& evt );
 
+  /**
+   * \brief subscribe to our topic
+   */
   void subscribe();
+  /**
+   * \brief unsubscribe from our topic
+   */
   void unsubscribe();
 
+  /**
+   * \brief Calls a callback for every log page
+   * @param f The callback
+   */
   void forEachLogPage( boost::function<void (NodePage* node_page, LogPage* log_page)> f );
 
+  /**
+   * \brief Creates the default node and log pages
+   */
   void createDefaultPages();
+  /**
+   * \brief (ros callback) Called when there is a new message waiting
+   */
   void incomingMessage();
+  /**
+   * \brief Processes any messages in our message queue
+   */
   void processMessages();
+  /**
+   * \brief Process a log message
+   * @param message The message to process
+   */
   void processMessage( const rostools::Log& message );
 
-  bool enabled_;
-  std::string topic_;
+  bool enabled_;                                            ///< Are we enabled?
+  std::string topic_;                                       ///< The topic we're listening on (or will listen on once we're enabled)
 
-  ros::node* ros_node_;
-  rostools::Log message_;
+  ros::node* ros_node_;                                     ///< Our pointer to the global ros::node
+  rostools::Log message_;                                   ///< Our incoming message
 
   typedef std::vector<rostools::Log> V_Log;
-  V_Log message_queue_;
-  ros::thread::mutex queue_mutex_;
+  V_Log message_queue_;                                     ///< Queue of messages we've received since the last time processMessages() was called
+  ros::thread::mutex queue_mutex_;                          ///< Mutex for locking the message queue
 
-  V_NodePage node_pages_;
+  V_NodePage node_pages_;                                   ///< List of node pages in the order they were added
   typedef std::map<std::string, NodePage*> M_NameToNodePage;
-  M_NameToNodePage node_pages_by_name_;
+  M_NameToNodePage node_pages_by_name_;                     ///< Map of name to node page
 
-  wxTimer* process_timer_;
+  wxTimer* process_timer_;                                  ///< Timer used to periodically process messages
 };
 
 #endif // WX_ROSOUT_ROSOUT_PANEL

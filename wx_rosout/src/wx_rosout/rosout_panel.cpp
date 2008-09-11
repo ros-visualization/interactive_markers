@@ -11,6 +11,22 @@
 
 #include <boost/bind.hpp>
 
+struct LogPage
+{
+  uint32_t filter_;
+  wxTextCtrl* text_control_;
+};
+
+struct NodePage
+{
+  NodePage() {}
+  ~NodePage();
+  std::string name_;
+  wxAuiNotebook* notebook_;
+
+  V_LogPage log_pages_;
+};
+
 NodePage::~NodePage()
 {
   V_LogPage::iterator it = log_pages_.begin();
@@ -228,6 +244,8 @@ void RosoutPanel::processMessage( const rostools::Log& message )
 
   const wxColour* color;
   static const wxColour YELLOW( 255, 255, 0 );
+
+  ss << "[" << message.header.stamp << "] ";
 
   ss << "[" << message.name << "] ";
 
