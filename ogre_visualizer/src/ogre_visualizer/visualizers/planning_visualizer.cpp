@@ -164,6 +164,9 @@ void PlanningVisualizer::update( float dt )
     new_kinematic_path_ = false;
     current_state_ = -1;
     current_state_time_ = state_display_time_ + 1.0f;
+    
+    kinematic_model_->computeTransforms(displaying_kinematic_path_message_.start_state.vals);
+    robot_->update( kinematic_model_, target_frame_ );
   }
 
   incoming_kinematic_path_message_.unlock();
@@ -197,7 +200,7 @@ void PlanningVisualizer::update( float dt )
 
       if ( (size_t)current_state_ < displaying_kinematic_path_message_.path.get_states_size() )
       {
-        int group_id = kinematic_model_->getGroupID( displaying_kinematic_path_message_.name );
+        int group_id = kinematic_model_->getGroupID( displaying_kinematic_path_message_.model_name );
         kinematic_model_->computeTransforms(displaying_kinematic_path_message_.path.states[ current_state_ ].vals, group_id);
         robot_->update( kinematic_model_, target_frame_ );
 
