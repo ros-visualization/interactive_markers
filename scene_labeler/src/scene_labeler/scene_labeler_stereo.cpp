@@ -13,7 +13,8 @@ int main(int argc, char **argv) {
     SceneLabelerStereo sls(&node);
 
     cout << "start" << endl;
-    sls.processMsgs(string(argv[i]));
+    sls.loadMsgsFromFile(string(argv[i]));
+    sls.processMsgs();
     cout << "finished" << endl;
     sls.publishAll();
     cout << "Press Enter to see next scene . . ."; cout.flush();

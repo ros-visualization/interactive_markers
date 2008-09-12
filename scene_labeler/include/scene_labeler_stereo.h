@@ -48,6 +48,7 @@ class SceneLabelerStereo
 public:
   ros::node* node_;
 
+  bool loaded_msgs_;
   std_msgs::ImageArray videre_images_msg_;
   std_msgs::ImageArray labeled_images_msg_;
   std_msgs::Image intensity_image_msg_;
@@ -67,6 +68,7 @@ public:
   vector< vector<int> > xidx_; //cross-index.  xidx_[row][col] returns the point id of the corresponding point in ss_cloud_.
 
   string ptcld_topic_;
+  NEWMAT::Matrix projected_; //The 3d points projected into the image.
 
  SceneLabelerStereo(ros::node* node) 
    : node_(node), mask_(0), left_(0), disp_(0), objects_extracted_(false)
@@ -79,6 +81,8 @@ public:
     node_->advertise<std_msgs::VisualizationMarker>("visualizationMarker", 100);
     node_->advertise<std_msgs::ImageArray>("labeled_images", 100);
     node_->advertise<std_msgs::ImageArray>("videre/images", 100);
+
+    loaded_msgs_ = false;
 
     trns_ = NEWMAT::Matrix(3,4); trns_ = 0.0;
 
@@ -102,9 +106,10 @@ public:
       }
     }
 
-  void processMsgs(string file1) {
+
+  void loadMsgsFromFile(string file) {
     cout << "Loading messages... "; flush(cout);
-    lp.open(file1, ros::Time(0));
+    lp.open(file, ros::Time(0));
     lp.addHandler<std_msgs::ImageArray>(string("videre/images"), &copyMsg<std_msgs::ImageArray>, (void*)(&videre_images_msg_), true);
     lp.addHandler<std_msgs::ImageArray>(string("labeled_images"), &copyMsg<std_msgs::ImageArray>, (void*)(&labeled_images_msg_), true);
     lp.addHandler<std_msgs::PointCloudFloat32>(ptcld_topic_, &copyMsg<std_msgs::PointCloudFloat32>, (void*)(&cloud_), true);
@@ -112,11 +117,9 @@ public:
     while(lp.nextMsg()); //Load all the messages.
     lp.close();
     cout << "Done." << endl;
+    loaded_msgs_ = true;
 
-    cout << labeled_images_msg_.images[2].label << endl; 
-    //cout << "Image: " << labeled_images_msg_.images[2].compression << " ";
-
-
+    
     // -- Get the labeled mask out of the labeled images array.
     cout << "Extracting images...";
     bridge_mask_ = new CvBridge<std_msgs::Image>(&labeled_images_msg_.images[2], CvBridge<std_msgs::Image>::CORRECT_BGR | CvBridge<std_msgs::Image>::MAXDEPTH_8U);
@@ -128,13 +131,40 @@ public:
     bridge_disp_ = new CvBridge<std_msgs::Image>(&videre_images_msg_.images[0], CvBridge<std_msgs::Image>::CORRECT_BGR | CvBridge<std_msgs::Image>::MAXDEPTH_8U);
     assert(bridge_disp_->to_cv(&disp_));
     cout << "Done." << endl;
+  }
+
+
+  void loadMsgsFromMem(std_msgs::ImageArray videre_images_msg, std_msgs::PointCloudFloat32 cloud, std_msgs::String cal_params_msg) {
+    xidx_.clear();
+    cal_params_msg_ = cal_params_msg;
+    cloud_ = cloud;
+    videre_images_msg_ = videre_images_msg;
+
+    
+    // -- Get the labeled mask out of the labeled images array.
+    cout << "Extracting images...";
   
+    bridge_left_ = new CvBridge<std_msgs::Image>(&videre_images_msg_.images[1], CvBridge<std_msgs::Image>::CORRECT_BGR | CvBridge<std_msgs::Image>::MAXDEPTH_8U);
+    assert(bridge_left_->to_cv(&left_));
+
+    bridge_disp_ = new CvBridge<std_msgs::Image>(&videre_images_msg_.images[0], CvBridge<std_msgs::Image>::CORRECT_BGR | CvBridge<std_msgs::Image>::MAXDEPTH_8U);
+    assert(bridge_disp_->to_cv(&disp_));
+    cout << "Done." << endl;
+  }
+
+  void processMsgs() {
+    assert(loaded_msgs_);
+
+    cout << labeled_images_msg_.images[2].label << endl; 
+    //cout << "Image: " << labeled_images_msg_.images[2].compression << " ";
+		       
+
     // -- Old time stamps anger rostf.
     cloud_.header.stamp = ros::Time::now();
     
     // -- Propagate the labels.
     //cout << "labeling videre with frame id " << cloud_.header.frame_id << endl;
-    labelCloud(&cloud_);
+    labelCloud();
     extractObjectsFromCloud();
   }
 
@@ -256,15 +286,9 @@ public:
     return true;
   }
 
-
-
- private:
-
-  CvBridge<std_msgs::Image> *bridge_mask_, *bridge_left_, *bridge_disp_;
-  LogPlayer lp;
-  
-  void labelCloud(std_msgs::PointCloudFloat32 *ptcld) {
-       
+		       
+  void projectAndCrossIndex() {
+           
     // -- Set up smallv to image plane transformation.
     //Assumes the points are in mm:
     string cal = cal_params_msg_.data;
@@ -289,82 +313,92 @@ public:
 
     // -- Put the cloud_ into a NEWMAT matrix and do the projection.
 
-/*     unsigned int n = ptcld->get_pts_size(); */
-/*     NEWMAT::Matrix projected(3,n); */
+/*     unsigned int n = cloud_->get_pts_size(); */
+/*     NEWMAT::Matrix projected_(3,n); */
 /*     cout << n << " points." << endl; */
 
 /*     NEWMAT::Matrix vid(4, 1);  */
 /*     for (unsigned int i=0; i<n; i++) { */
 /*       //cout << i << endl; */
-/*       vid(1,1) = ptcld->pts[i].x * 1000; //in millimeters */
-/*       vid(2,1) = ptcld->pts[i].y * 1000; //in millimeters */
-/*       vid(3,1) = ptcld->pts[i].z * 1000; //in millimeters */
+/*       vid(1,1) = cloud_->pts[i].x * 1000; //in millimeters */
+/*       vid(2,1) = cloud_->pts[i].y * 1000; //in millimeters */
+/*       vid(3,1) = cloud_->pts[i].z * 1000; //in millimeters */
 /*       vid(4,1) = 1; */
-/*       projected.Column(i+1) = trns_ * vid; */
-/*       //cout << projected.Column(i+1) << endl; */
+/*       projected_.Column(i+1) = trns_ * vid; */
+/*       //cout << projected_.Column(i+1) << endl; */
 /*     } */
 
 
     // -- videle gets too big and segfaults here sometimes!  The above might be better but is untested.
-    unsigned int n = ptcld->get_pts_size();
+    unsigned int n = cloud_.get_pts_size();
     cout << n << " points." << endl;
     NEWMAT::Matrix vid(4, n);
     NEWMAT::Real videle[4*n];
     for (unsigned int i=0; i<n; i++) {
-      videle[i] = ptcld->pts[i].x * 1000; //in millimeters
-      videle[i + n] = ptcld->pts[i].y  * 1000;
-      videle[i + 2*n] = ptcld->pts[i].z * 1000;
+      videle[i] = cloud_.pts[i].x * 1000; //in millimeters
+      videle[i + n] = cloud_.pts[i].y  * 1000;
+      videle[i + 2*n] = cloud_.pts[i].z * 1000;
       videle[i + 3*n] = 1;
     }
     vid << videle;
-    NEWMAT::Matrix projected = trns_ * vid;
+    projected_ = trns_ * vid;
 
     // -- Normalize so z = 1.  Make the pixel / point cross-indexing for later while we're at it.
-    for(int i=0; i<mask_->height; i++) {
-      vector<int> tmp(mask_->width, -1);
+    for(int i=0; i<left_->height; i++) {
+      vector<int> tmp(left_->width, -1);
       xidx_.push_back(tmp);
     }
     
     for ( unsigned int i=1; i<=n; i++) {
-      //cout << "*** " << projected(1,i) << " " << projected(2,i) << " " << projected(3,i) << endl;
-      assert(projected(3,i) != 0);
-      projected(1,i) = projected(1,i) / projected(3,i);
-      projected(2,i) = projected(2,i) / projected(3,i);
-      projected(3,i) = 1;
-      //cout << projected.Column(i);
-      int row = (int)projected(2,i);
-      int col = (int)projected(1,i);
+      //cout << "*** " << projected_(1,i) << " " << projected_(2,i) << " " << projected_(3,i) << endl;
+      assert(projected_(3,i) != 0);
+      projected_(1,i) = projected_(1,i) / projected_(3,i);
+      projected_(2,i) = projected_(2,i) / projected_(3,i);
+      projected_(3,i) = 1;
+      //cout << projected_.Column(i);
+      int row = (int)projected_(2,i);
+      int col = (int)projected_(1,i);
       if(row >= 480 || row < 0 || col >= 640 || col < 0) {
-	cout << "row: " << (int)projected(2,i) << " col: " << (int)projected(1,i) << endl;
+	cout << "row: " << (int)projected_(2,i) << " col: " << (int)projected_(1,i) << endl;
 	//cerr << "Was this pointcloud calibrated correctly?  This doesn't look right?" << endl;
 	//exit(0);
       }
       else {
-	xidx_[(int)projected(2,i)][(int)projected(1,i)] = i-1; //xidx_[row][col]
+	xidx_[(int)projected_(2,i)][(int)projected_(1,i)] = i-1; //xidx_[row][col]
       }
     }
+  }
 
 
-    /* cout << endl << "Max x: " << projected.Row(1).Maximum() << "   Min x: " << projected.Row(1).Minimum() << endl; */
-/*     cout << endl << "Max y: " << projected.Row(2).Maximum() << "   Min y: " << projected.Row(2).Minimum() << endl; */
-/*     cout << endl << "Max z: " << projected.Row(3).Maximum() << "   Min z: " << projected.Row(3).Minimum() << endl; */
+ private:
+
+  CvBridge<std_msgs::Image> *bridge_mask_, *bridge_left_, *bridge_disp_;
+  LogPlayer lp;
+  
+  void labelCloud() {
+    projectAndCrossIndex();
+
+    /* cout << endl << "Max x: " << projected_.Row(1).Maximum() << "   Min x: " << projected_.Row(1).Minimum() << endl; */
+/*     cout << endl << "Max y: " << projected_.Row(2).Maximum() << "   Min y: " << projected_.Row(2).Minimum() << endl; */
+/*     cout << endl << "Max z: " << projected_.Row(3).Maximum() << "   Min z: " << projected_.Row(3).Minimum() << endl; */
 
     // -- Add the channel with the labeling.
     std_msgs::PointCloudFloat32 tmp;
+    unsigned int n = cloud_.get_pts_size();
     tmp.set_pts_size(n);
     tmp.set_chan_size(2);
-    //cout << "copying " << ptcld->chan[0].name.data << endl;
-    tmp.chan[0] = ptcld->chan[0];
-    tmp.header = ptcld->header;
+    //cout << "copying " << cloud_.chan[0].name.data << endl;
+    tmp.chan[0] = cloud_.chan[0];
+    tmp.header = cloud_.header;
     //tmp.chan[0].set_vals_size(n);
     tmp.chan[1].set_vals_size(n);
     //tmp.chan[0].name = "intensities";
     tmp.chan[1].name = "labels";
     cout << "hxw " << mask_->height << " " << mask_->width << endl;
     for (unsigned int i=1; i<=n; i++) {
-      tmp.pts[i-1] = ptcld->pts[i-1];
-      int c = floor(projected(1, i)+.5);
-      int r = floor(projected(2, i)+.5);
+      tmp.pts[i-1] = cloud_.pts[i-1];
+      int c = floor(projected_(1, i)+.5);
+      int r = floor(projected_(2, i)+.5);
       if(r >= 0 && r < mask_->height && //
 	 c >= 0 && c < mask_->width && //
 	 cvGet2D(mask_, r, c).val[0] != 0)
@@ -373,9 +407,9 @@ public:
         tmp.chan[1].vals[i-1] = 0;
     }
 
-    ptcld->set_chan_size(2);
-    *ptcld = tmp;
-    cout << "label: chan size is " << ptcld->get_chan_size() << " and npts is " << ptcld->get_pts_size() << endl;
+    cloud_.set_chan_size(2);
+    cloud_ = tmp;
+    cout << "label: chan size is " << cloud_.get_chan_size() << " and npts is " << cloud_.get_pts_size() << endl;
   }
 
   std_msgs::PointCloudFloat32 colorPointCloud(std_msgs::PointCloudFloat32 ptcld) {
