@@ -43,6 +43,7 @@
 
 #define VISUAL_ENABLED_PROPERTY wxT("Show Visual")
 #define COLLISION_ENABLED_PROPERTY wxT("Show Collision")
+#define UPDATE_RATE_PROPERTY wxT("Update Rate")
 
 namespace ogre_vis
 {
@@ -51,6 +52,8 @@ RobotModelVisualizer::RobotModelVisualizer( Ogre::SceneManager* scene_manager, r
 : VisualizerBase( scene_manager, node, tf_client, name )
 , has_new_transforms_( false )
 , initialized_( false )
+, time_since_last_transform_( 0.0f )
+, update_rate_( 0.1f )
 {
   robot_ = new Robot( scene_manager );
 
@@ -146,14 +149,17 @@ void RobotModelVisualizer::incomingTransform()
 
 void RobotModelVisualizer::update( float dt )
 {
+  time_since_last_transform_ += dt;
+
   message_.lock();
 
-  if ( has_new_transforms_ )
+  if ( has_new_transforms_ || (update_rate_ > 0.0f && time_since_last_transform_ >= update_rate_) )
   {
     robot_->update( tf_client_, target_frame_ );
     causeRender();
 
     has_new_transforms_ = false;
+    time_since_last_transform_ = 0.0f;
   }
 
   message_.unlock();
@@ -163,6 +169,7 @@ void RobotModelVisualizer::fillPropertyGrid( wxPropertyGrid* property_grid )
 {
   property_grid->Append( new wxBoolProperty( VISUAL_ENABLED_PROPERTY, wxPG_LABEL, robot_->isVisualVisible() ) );
   property_grid->Append( new wxBoolProperty( COLLISION_ENABLED_PROPERTY, wxPG_LABEL, robot_->isCollisionVisible() ) );
+  property_grid->Append( new wxFloatProperty( UPDATE_RATE_PROPERTY, wxPG_LABEL, update_rate_ ) );
 
   property_grid->SetPropertyAttribute( VISUAL_ENABLED_PROPERTY, wxPG_BOOL_USE_CHECKBOX, true );
   property_grid->SetPropertyAttribute( COLLISION_ENABLED_PROPERTY, wxPG_BOOL_USE_CHECKBOX, true );
@@ -184,6 +191,10 @@ void RobotModelVisualizer::propertyChanged( wxPropertyGridEvent& event )
   {
     bool visible = value.GetBool();
     robot_->setCollisionVisible( visible );
+  }
+  else if ( name == UPDATE_RATE_PROPERTY )
+  {
+    update_rate_ = value.GetDouble();
   }
 
   causeRender();

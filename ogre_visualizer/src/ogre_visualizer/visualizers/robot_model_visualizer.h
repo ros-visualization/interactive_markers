@@ -102,6 +102,9 @@ protected:
   bool has_new_transforms_;                   ///< Callback sets this to tell our update function it needs to update the transforms
 
   bool initialized_;                          ///< Are we initialized?
+
+  float time_since_last_transform_;
+  float update_rate_;
 };
 
 } // namespace ogre_vis
