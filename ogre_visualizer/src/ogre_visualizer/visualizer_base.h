@@ -32,7 +32,6 @@
 
 #include <string>
 #include <boost/function.hpp>
-#include <ros/common.h>
 
 namespace Ogre
 {
@@ -126,7 +125,7 @@ public:
    * \brief Returns whether an object owned by this visualizer is pickable/mouse selectable
    * @param object The Ogre::MovableObject to check
    */
-  virtual bool isObjectPickable( const Ogre::MovableObject* object ) const { ROS_BREAK(); return false; }
+  virtual bool isObjectPickable( const Ogre::MovableObject* object ) const { return false; }
 
 protected:
   /// Derived classes override this to do the actual work of enabling themselves
