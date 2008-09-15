@@ -59,6 +59,7 @@ RobotModelVisualizer::RobotModelVisualizer( Ogre::SceneManager* scene_manager, r
 
   robot_->setVisualVisible( true );
   robot_->setCollisionVisible( false );
+  robot_->setUserData( (void*)this );
 }
 
 RobotModelVisualizer::~RobotModelVisualizer()

@@ -167,6 +167,15 @@ Ogre::Vector3 FPSCamera::getPosition()
   return camera_->getPosition();
 }
 
+void FPSCamera::lookAt( const Ogre::Vector3& point )
+{
+  camera_->lookAt( point );
+
+  CameraBase::setOrientation( camera_->getOrientation() );
+
+  update();
+}
+
 void FPSCamera::mouseLeftDrag( int diff_x, int diff_y )
 {
   yaw( -diff_x*0.005 );

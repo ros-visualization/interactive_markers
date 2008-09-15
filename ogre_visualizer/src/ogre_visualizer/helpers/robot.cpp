@@ -45,6 +45,7 @@ Robot::Robot( Ogre::SceneManager* scene_manager )
 : scene_manager_( scene_manager )
 , visual_visible_( true )
 , collision_visible_( false )
+, user_data_( NULL )
 {
   root_visual_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
   root_collision_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
@@ -95,6 +96,32 @@ bool Robot::isVisualVisible()
 bool Robot::isCollisionVisible()
 {
   return collision_visible_;
+}
+
+void Robot::setUserData( void* user_data )
+{
+  user_data_ = user_data;
+  M_NameToLinkInfo::iterator it = links_.begin();
+  M_NameToLinkInfo::iterator end = links_.end();
+  for ( ; it != end; ++it )
+  {
+    LinkInfo& info = it->second;
+
+    if ( info.visual_mesh_ )
+    {
+      info.visual_mesh_->setUserAny( Ogre::Any( user_data_ ) );
+    }
+
+    if ( info.collision_mesh_ )
+    {
+      info.collision_mesh_->setUserAny( Ogre::Any( user_data_ ) );
+    }
+
+    if ( info.collision_object_ )
+    {
+      info.collision_object_->setUserData( Ogre::Any( user_data_ ) );
+    }
+  }
 }
 
 void Robot::clear()
@@ -183,6 +210,11 @@ void Robot::createCollisionForLink( LinkInfo& info, robot_desc::URDF::Link* link
     info.collision_offset_orientation_ = orientation;
 
     info.collision_object_->setColor( 0.0f, 0.6f, 1.0f );
+
+    if ( user_data_ )
+    {
+      info.collision_object_->setUserData( Ogre::Any( user_data_ ) );
+    }
   }
 }
 
@@ -226,6 +258,11 @@ void Robot::load( robot_desc::URDF* urdf )
 
     if ( info.visual_mesh_ )
     {
+      if ( user_data_ )
+      {
+        info.visual_mesh_->setUserAny( Ogre::Any( user_data_ ) );
+      }
+
       info.visual_node_ = root_visual_node_->createChildSceneNode();
       info.visual_node_->attachObject( info.visual_mesh_ );
 

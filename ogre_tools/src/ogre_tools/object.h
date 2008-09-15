@@ -36,6 +36,7 @@ class SceneManager;
 class SceneNode;
 class Vector3;
 class Quaternion;
+class Any;
 }
 
 namespace ogre_tools
@@ -91,6 +92,12 @@ public:
    * @return The orientation
    */
   virtual const Ogre::Quaternion& getOrientation() = 0;
+
+  /**
+   * \brief Set the user data on this object
+   * @param data
+   */
+  virtual void setUserData( const Ogre::Any& data ) = 0;
 
 protected:
   Ogre::SceneManager* scene_manager_;  ///< Ogre scene manager this object is part of

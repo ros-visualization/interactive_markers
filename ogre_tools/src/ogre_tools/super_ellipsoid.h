@@ -39,6 +39,7 @@ namespace Ogre
 {
 class SceneManager;
 class SceneNode;
+class Any;
 }
 
 namespace ogre_tools
@@ -107,6 +108,11 @@ public:
    * @return The root scene node of this object
    */
   Ogre::SceneNode* getRootNode() { return scene_node_; }
+
+  /**
+   * \brief Sets user data on all ogre objects we own
+   */
+  void setUserData( const Ogre::Any& data );
 
 private:
   Ogre::Vector3 Sample(float phi, float beta, float n1, float n2,

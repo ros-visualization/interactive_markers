@@ -40,6 +40,7 @@ class SceneManager;
 class SceneNode;
 class ManualObject;
 class Vector3;
+class Any;
 }
 
 namespace ogre_tools
@@ -92,6 +93,11 @@ public:
   virtual void setScale( const Ogre::Vector3& scale );
   virtual const Ogre::Vector3& getPosition();
   virtual const Ogre::Quaternion& getOrientation();
+
+  /**
+   * \brief Sets user data on all ogre objects we own
+   */
+  void setUserData( const Ogre::Any& data );
 
 protected:
   /**

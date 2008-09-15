@@ -55,6 +55,7 @@ AxesVisualizer::AxesVisualizer( Ogre::SceneManager* scene_manager, ros::node* no
   Ogre::Quaternion orient( Ogre::Quaternion::IDENTITY );
   robotToOgre( orient );
   axes_->setOrientation( orient );
+  axes_->setUserData( Ogre::Any( (void*)this ) );
 }
 
 AxesVisualizer::~AxesVisualizer()

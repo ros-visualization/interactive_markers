@@ -42,6 +42,7 @@ class SceneManager;
 class SceneNode;
 class Vector3;
 class Quaternion;
+class Any;
 }
 
 namespace ogre_tools
@@ -85,6 +86,11 @@ public:
    * @return The scene node associated with this object
    */
   Ogre::SceneNode* getSceneNode() { return scene_node_; }
+
+  /**
+   * \brief Sets user data on all ogre objects we own
+   */
+  void setUserData( const Ogre::Any& data );
 
 private:
   Ogre::SceneNode* scene_node_;

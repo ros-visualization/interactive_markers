@@ -219,4 +219,9 @@ const Ogre::Quaternion& SuperEllipsoid::getOrientation()
   return scene_node_->getOrientation();
 }
 
+void SuperEllipsoid::setUserData( const Ogre::Any& data )
+{
+  manual_object_->setUserAny( data );
+}
+
 } // namespace ogre_tools

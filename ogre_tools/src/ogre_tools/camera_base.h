@@ -142,6 +142,12 @@ public:
   virtual Ogre::Quaternion getOrientation() = 0;
 
   /**
+   * \brief Point the camera at the specified point
+   * @param point The point to look at
+   */
+  virtual void lookAt( const Ogre::Vector3& point ) = 0;
+
+  /**
    * \brief Move the camera relative to its orientation
    *
    * @param x Distance to move along the X-axis

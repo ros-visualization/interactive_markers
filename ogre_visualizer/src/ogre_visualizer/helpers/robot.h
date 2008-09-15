@@ -137,6 +137,12 @@ public:
   void setOrientation( const Ogre::Quaternion& orientation );
 
   /**
+   * \brief Set the user data that should be set on any ogre objects created by this class
+   * @param user_data The user data
+   */
+  void setUserData( void* user_data );
+
+  /**
    * \struct LinkInfo
    * \brief Contains any data we need from a link in the robot.
    */
@@ -179,6 +185,8 @@ protected:
 
   bool visual_visible_;                         ///< Should we show the visual representation?
   bool collision_visible_;                      ///< Should we show the collision representation?
+
+  void* user_data_;
 };
 
 } // namespace ogre_vis

@@ -93,6 +93,8 @@ public:
 
   virtual void update( float dt );
 
+  virtual bool isObjectPickable( const Ogre::MovableObject* object ) const { return true; }
+
 protected:
   virtual void onEnable();
   virtual void onDisable();

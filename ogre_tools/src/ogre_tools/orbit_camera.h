@@ -85,6 +85,8 @@ public:
   virtual Ogre::Vector3 getPosition();
   virtual Ogre::Quaternion getOrientation();
 
+  virtual void lookAt( const Ogre::Vector3& point );
+
   virtual void mouseLeftDrag( int diff_x, int diff_y );
   virtual void mouseMiddleDrag( int diff_x, int diff_y );
   virtual void mouseRightDrag( int diff_x, int diff_y );

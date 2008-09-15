@@ -78,6 +78,7 @@ namespace Ogre
 class Root;
 class SceneManager;
 class Camera;
+class RaySceneQuery;
 }
 
 namespace ros
@@ -160,6 +161,8 @@ protected:
    */
   void addVisualizer( VisualizerBase* visualizer );
 
+  void pick( int mouse_x, int mouse_y );
+
   /// Called when a "view" (camera) is selected from the list
   void onViewClicked( wxCommandEvent& event );
   /// Called when a visualizer is toggled on/off from the display checklist
@@ -175,10 +178,11 @@ protected:
   /// Called when a property from the wxPropertyGrid is changing
   void onPropertyChanging( wxPropertyGridEvent& event );
   /// Called when a property from the wxProperty
-  void onpropertyChanged( wxPropertyGridEvent& event );
+  void onPropertyChanged( wxPropertyGridEvent& event );
 
   Ogre::Root* ogre_root_;                                 ///< Ogre Root
   Ogre::SceneManager* scene_manager_;                     ///< Ogre scene manager associated with this panel
+  Ogre::RaySceneQuery* ray_scene_query_;                  ///< Used for querying the scene based on the mouse location
 
   wxTimer* update_timer_;                                 ///< Update timer.  VisualizerBase::update is called on each visualizer whenever this timer fires
   wxStopWatch update_stopwatch_;                          ///< Update stopwatch.  Stores how long it's been since the last update

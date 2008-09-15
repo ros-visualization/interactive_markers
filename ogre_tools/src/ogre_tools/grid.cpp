@@ -85,4 +85,9 @@ void Grid::set( uint32_t gridSize, float cell_length, float r, float g, float b 
   manual_object_->end();
 }
 
+void Grid::setUserData( const Ogre::Any& data )
+{
+  manual_object_->setUserAny( data );
+}
+
 } // namespace ogre_tools

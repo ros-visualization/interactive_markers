@@ -111,5 +111,12 @@ const Ogre::Quaternion& Axes::getOrientation()
   return scene_node_->getOrientation();
 }
 
+void Axes::setUserData( const Ogre::Any& data )
+{
+  x_axis_->setUserData( data );
+  y_axis_->setUserData( data );
+  z_axis_->setUserData( data );
+}
+
 } // namespace ogre_tools
 

@@ -90,6 +90,7 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent )
   tf_client_ = new rosTFClient( *ros_node_ );
 
   scene_manager_ = ogre_root_->createSceneManager( Ogre::ST_GENERIC );
+  ray_scene_query_ = scene_manager_->createRayQuery( Ogre::Ray() );
 
   render_panel_ = new ogre_tools::wxOgreRenderWindow( ogre_root_, VisualizationPanelGenerated::render_panel_ );
   render_sizer_->Add( render_panel_, 1, wxALL|wxEXPAND, 0 );
@@ -127,6 +128,7 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent )
   render_panel_->Connect( wxEVT_MIDDLE_UP, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
   render_panel_->Connect( wxEVT_RIGHT_UP, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
   render_panel_->Connect( wxEVT_MOUSEWHEEL, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
+  render_panel_->Connect( wxEVT_LEFT_DCLICK, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
 
   render_panel_->setPreRenderCallback( boost::bind( &VisualizationPanel::lockRender, this ) );
   render_panel_->setPostRenderCallback( boost::bind( &VisualizationPanel::unlockRender, this ) );
@@ -144,7 +146,7 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent )
   property_grid_->SetExtraStyle( wxPG_EX_HELP_AS_TOOLTIPS );
 
   property_grid_->Connect( wxEVT_PG_CHANGING, wxPropertyGridEventHandler( VisualizationPanel::onPropertyChanging ), NULL, this );
-  property_grid_->Connect( wxEVT_PG_CHANGED, wxPropertyGridEventHandler( VisualizationPanel::onpropertyChanged ), NULL, this );
+  property_grid_->Connect( wxEVT_PG_CHANGED, wxPropertyGridEventHandler( VisualizationPanel::onPropertyChanged ), NULL, this );
 }
 
 VisualizationPanel::~VisualizationPanel()
@@ -162,6 +164,7 @@ VisualizationPanel::~VisualizationPanel()
   render_panel_->Disconnect( wxEVT_MIDDLE_UP, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
   render_panel_->Disconnect( wxEVT_RIGHT_UP, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
   render_panel_->Disconnect( wxEVT_MOUSEWHEEL, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
+  render_panel_->Disconnect( wxEVT_LEFT_DCLICK, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
 
   Disconnect( wxEVT_TIMER, update_timer_->GetId(), wxTimerEventHandler( VisualizationPanel::onUpdate ), NULL, this );
   delete update_timer_;
@@ -169,7 +172,7 @@ VisualizationPanel::~VisualizationPanel()
   Disconnect( EVT_RENDER, wxCommandEventHandler( VisualizationPanel::onRender ), NULL, this );
 
   property_grid_->Disconnect( wxEVT_PG_CHANGING, wxPropertyGridEventHandler( VisualizationPanel::onPropertyChanging ), NULL, this );
-  property_grid_->Disconnect( wxEVT_PG_CHANGED, wxPropertyGridEventHandler( VisualizationPanel::onpropertyChanged ), NULL, this );
+  property_grid_->Disconnect( wxEVT_PG_CHANGED, wxPropertyGridEventHandler( VisualizationPanel::onPropertyChanged ), NULL, this );
   property_grid_->Destroy();
 
   V_Visualizer::iterator vis_it = visualizers_.begin();
@@ -186,6 +189,7 @@ VisualizationPanel::~VisualizationPanel()
   delete fps_camera_;
   delete orbit_camera_;
 
+  scene_manager_->destroyQuery( ray_scene_query_ );
   ogre_root_->destroySceneManager( scene_manager_ );
 }
 
@@ -292,7 +296,7 @@ void VisualizationPanel::onPropertyChanging( wxPropertyGridEvent& event )
   }
 }
 
-void VisualizationPanel::onpropertyChanged( wxPropertyGridEvent& event )
+void VisualizationPanel::onPropertyChanged( wxPropertyGridEvent& event )
 {
   if ( selected_visualizer_ )
   {
@@ -329,9 +333,16 @@ void VisualizationPanel::onRenderWindowMouseEvents( wxMouseEvent& event )
 
   if ( event.LeftDown() )
   {
-    left_mouse_down_ = true;
-    middle_mouse_down_ = false;
-    right_mouse_down_ = false;
+    if ( event.ControlDown() )
+    {
+      pick( mouse_x_, mouse_y_ );
+    }
+    else
+    {
+      left_mouse_down_ = true;
+      middle_mouse_down_ = false;
+      right_mouse_down_ = false;
+    }
   }
   else if ( event.MiddleDown() )
   {
@@ -393,6 +404,57 @@ void VisualizationPanel::onRenderWindowMouseEvents( wxMouseEvent& event )
     current_camera_->scrollWheel( event.GetWheelRotation() );
 
     queueRender();
+  }
+}
+
+void VisualizationPanel::pick( int mouse_x, int mouse_y )
+{
+  int width, height;
+  render_panel_->GetSize( &width, &height );
+
+  Ogre::Ray mouse_ray = current_camera_->getOgreCamera()->getCameraToViewportRay( (float)mouse_x / (float)width, (float)mouse_y / (float)height );
+  ray_scene_query_->setRay( mouse_ray );
+
+  Ogre::RaySceneQueryResult& result = ray_scene_query_->execute();
+
+  Ogre::MovableObject* picked = NULL;
+  float closest_distance = 9999999.0f;
+
+  // find the closest object that is also selectable
+  Ogre::RaySceneQueryResult::iterator it = result.begin();
+  Ogre::RaySceneQueryResult::iterator end = result.end();
+  for ( ; it != end; ++it )
+  {
+    Ogre::RaySceneQueryResultEntry& entry = *it;
+
+    const Ogre::Any& user_any = entry.movable->getUserAny();
+    if ( user_any.isEmpty() )
+    {
+      continue;
+    }
+
+    // ugh -- can't just any_cast to VisualizerBase because it's abstract
+    /// @todo This is dangerous, should find a better way
+    const VisualizerBase* visualizer = reinterpret_cast<const VisualizerBase*>( Ogre::any_cast<void*>( user_any ) );
+
+    if ( visualizer && visualizer->isObjectPickable( entry.movable ) )
+    {
+      if ( entry.distance < closest_distance )
+      {
+        closest_distance = entry.distance;
+        picked = entry.movable;
+      }
+    }
+  }
+
+  if ( picked )
+  {
+    Ogre::SceneNode* scene_node = picked->getParentSceneNode();
+    if ( scene_node )
+    {
+      current_camera_->lookAt( scene_node->_getDerivedPosition() );
+      queueRender();
+    }
   }
 }
 

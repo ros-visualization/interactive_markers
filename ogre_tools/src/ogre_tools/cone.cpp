@@ -198,4 +198,9 @@ const Ogre::Quaternion& Cone::getOrientation()
   return scene_node_->getOrientation();
 }
 
+void Cone::setUserData( const Ogre::Any& data )
+{
+  manual_object_->setUserAny( data );
+}
+
 } // namespace ogre_tools

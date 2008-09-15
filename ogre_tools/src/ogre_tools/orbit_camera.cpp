@@ -34,6 +34,8 @@
 #include <stdint.h>
 #include <sstream>
 
+#define MIN_DISTANCE 0.1
+
 namespace ogre_tools
 {
 
@@ -170,9 +172,17 @@ void OrbitCamera::zoom( float amount )
 {
   distance_ -= amount;
 
-  if ( distance_ <= 0.1 )
+  if ( distance_ <= MIN_DISTANCE )
   {
-    distance_ = 0.1;
+#if 0
+    float diff = MIN_DISTANCE - distance_;
+    distance_ = MIN_DISTANCE + diff;
+
+    move( 0.0f, 0.0f, -diff );
+#else
+    distance_ = MIN_DISTANCE;
+#endif
+
   }
 
   update();
@@ -198,6 +208,14 @@ void OrbitCamera::setPosition( float x, float y, float z )
   distance_ = (pos - focal_point_).length();
 
   calculatePitchYawFromPosition( Ogre::Vector3( x, y, z ) );
+
+  update();
+}
+
+void OrbitCamera::lookAt( const Ogre::Vector3& point )
+{
+  distance_ = point.distance( camera_->getPosition() );
+  focal_point_ = point;
 
   update();
 }

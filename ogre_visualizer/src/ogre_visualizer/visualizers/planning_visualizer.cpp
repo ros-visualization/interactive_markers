@@ -61,6 +61,7 @@ PlanningVisualizer::PlanningVisualizer( Ogre::SceneManager* scene_manager, ros::
 
   robot_->setVisualVisible( false );
   robot_->setCollisionVisible( true );
+  robot_->setUserData( (void*)this );
 }
 
 PlanningVisualizer::~PlanningVisualizer()
@@ -164,7 +165,7 @@ void PlanningVisualizer::update( float dt )
     new_kinematic_path_ = false;
     current_state_ = -1;
     current_state_time_ = state_display_time_ + 1.0f;
-    
+
     kinematic_model_->computeTransforms(displaying_kinematic_path_message_.start_state.vals);
     robot_->update( kinematic_model_, target_frame_ );
   }

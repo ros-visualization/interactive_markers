@@ -40,6 +40,8 @@ class SceneManager;
 
 class ManualObject;
 class SceneNode;
+
+class Any;
 }
 
 namespace ogre_tools
@@ -84,6 +86,11 @@ public:
    * @return The Ogre scene node associated with this grid
    */
   Ogre::SceneNode* getSceneNode() { return scene_node_; }
+
+  /**
+   * \brief Sets user data on all ogre objects we own
+   */
+  void setUserData( const Ogre::Any& data );
 
 private:
   Ogre::SceneManager* scene_manager_;
