@@ -15,11 +15,10 @@ public:
   uint32_t num_extra;
 	CloudViewerPoint(float x, float y, float z, uint8_t r, uint8_t g, uint8_t b, 
                    float *_extra = NULL, uint32_t _num_extra = 0)
-  : x(x), y(y), z(z), r(r), g(g), b(b)
+  : x(x), y(y), z(z), r(r), g(g), b(b), num_extra(_num_extra)
   {
     if (_num_extra > 0)
     {
-      num_extra = _num_extra;
       extra = new float[num_extra];
       for (uint32_t i = 0; i < num_extra; i++)
         extra[i] = _extra[i];
@@ -32,10 +31,10 @@ public:
     r(ref.r), g(ref.g), b(ref.b),
     num_extra(ref.num_extra)
   {
-    if (num_extra > 0)
+    if (ref.num_extra > 0)
     {
       extra = new float[num_extra];
-      for (uint32_t i = 0; i < num_extra; i++)
+      for (uint32_t i = 0; i < ref.num_extra; i++)
         extra[i] = ref.extra[i];
     }
     else
