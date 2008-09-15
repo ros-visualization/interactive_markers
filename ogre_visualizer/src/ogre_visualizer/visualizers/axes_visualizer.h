@@ -60,7 +60,6 @@ public:
   // Overrides from VisualizerBase
   virtual void fillPropertyGrid( wxPropertyGrid* property_grid );
   virtual void propertyChanged( wxPropertyGridEvent& event );
-  virtual bool isObjectPickable( const Ogre::MovableObject* object ) const { return true; }
 
 protected:
   /**

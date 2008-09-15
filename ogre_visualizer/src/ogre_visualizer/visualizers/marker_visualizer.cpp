@@ -271,7 +271,7 @@ void MarkerVisualizer::setCommonValues( const std_msgs::VisualizationMarker& mes
   object->setOrientation( orientation );
   object->setScale( scale );
   object->setColor( message.r / 255.0f, message.g / 255.0f, message.b / 255.0f );
-  object->setUserData( Ogre::Any( this ) );
+  object->setUserData( Ogre::Any( (void*)this ) );
 }
 
 void MarkerVisualizer::update( float dt )
