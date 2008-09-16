@@ -77,11 +77,6 @@ public:
     ptcld_topic_ = string("spacetime_stereo");
     //ptcld_topic_ = string("videre/cloud_smallv");
 
-    node_->advertise<std_msgs::PointCloudFloat32>(ptcld_topic_, 100);
-    node_->advertise<std_msgs::VisualizationMarker>("visualizationMarker", 100);
-    node_->advertise<std_msgs::ImageArray>("labeled_images", 100);
-    node_->advertise<std_msgs::ImageArray>("videre/images", 100);
-
     loaded_msgs_ = false;
 
     trns_ = NEWMAT::Matrix(3,4); trns_ = 0.0;
@@ -107,7 +102,13 @@ public:
     }
 
 
-  void loadMsgsFromFile(string file) {
+  void loadMsgsFromFile(string file) {    
+    node_->advertise<std_msgs::PointCloudFloat32>(ptcld_topic_, 100);
+    node_->advertise<std_msgs::VisualizationMarker>("visualizationMarker", 100);
+    node_->advertise<std_msgs::ImageArray>("labeled_images", 100);
+    node_->advertise<std_msgs::ImageArray>("videre/images", 100);
+
+
     cout << "Loading messages... "; flush(cout);
     lp.open(file, ros::Time(0));
     lp.addHandler<std_msgs::ImageArray>(string("videre/images"), &copyMsg<std_msgs::ImageArray>, (void*)(&videre_images_msg_), true);

@@ -14,7 +14,6 @@ def check_for_msg(line):
     else:
         return 0
 
-
 def runDataCollect():
 
     dirname = sys.argv[1]
@@ -55,8 +54,6 @@ def runDataCollect():
         snap_p.wait() #Wait until sts is done and dustbuster dies.
         printr( "=== Done collecting that scene. ===")
             
-        #os.system('ssh -f prc0 "killall -s USR1 lpg"')
-
 
 
 try:

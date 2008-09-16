@@ -150,7 +150,7 @@ public:
       (&labelMask, 
        CvBridge<std_msgs::Image>::CORRECT_BGR | 
        CvBridge<std_msgs::Image>::MAXDEPTH_8U);
-    subscribe("videre/images", frame_msg, &ImgBGSubtr::processFrame, true);
+    subscribe("videre/images", frame_msg, &ImgBGSubtr::processFrame, this, 1);
     advertise<std_msgs::ImageArray>("labeled_images", 1);
   }
 
@@ -163,6 +163,7 @@ public:
   //Copies the image out of the frame_msg and into frame.
   void processFrame() 
   {
+    frame_mutex_.lock();
 
     if(!builtBridge) {
       bridge_in = 
@@ -174,15 +175,16 @@ public:
     }
 
     if(!hasNewFrameMsg) {
-      frame_mutex_.lock();
       if(frame) {
 	cvReleaseImage(&frame);
       }
       bridge_in->to_cv(&frame);
       hasNewFrameMsg = true;
-      frame_mutex_.unlock();
     }
+    frame_mutex_.unlock();
   }  
+ 
+  
 };
 
 
@@ -487,7 +489,7 @@ int main( int argc, char** argv )
 
 
       // -- Wait for a new message and check for control-c.
-      while(!node.hasNewFrameMsg && node.ok()) {
+      while(!node.hasNewFrameMsg && node.ok() && !paused) {
 	usleep(1000);
       }
       if(!node.ok())
@@ -650,7 +652,7 @@ int main( int argc, char** argv )
 
       // FIXME: generalize to non-8-bit images
       // update the multiclass segmented image
-      if (MultiClassSegmentedImage == NULL) {
+      if (MultiClassSegmentedImage == NULL && !paused) {
 	MultiClassSegmentedImage =
 	  cvCreateImage(cvGetSize(mask), IPL_DEPTH_8U, 1);
 	cvSet(MultiClassSegmentedImage, cvScalar(0));
@@ -659,7 +661,7 @@ int main( int argc, char** argv )
       //      cvShowImage( "CaptureObjects", image );
 
       // display multiclass segmentation
-      if ((framecount % 15) == 1) {
+      if ((framecount % 15) == 1 && !paused) {
 	IplImage* tempIm = 
 	  cvCreateImage(cvGetSize(MultiClassSegmentedImage), IPL_DEPTH_8U, 1);
 	cvCopy(MultiClassSegmentedImage, tempIm);
@@ -671,7 +673,7 @@ int main( int argc, char** argv )
       mw.paint(markedImage,0,1,1);  //Raw image with marked bounding boxes
 
       //Get keyboard input
-      c = cvWaitKey(10);
+      c = cvWaitKey(50);
       if( (c == 27)||(c == 'q') )
 	break;
       int bgCnt,pbgCnt, origbgCnt;
@@ -1110,13 +1112,23 @@ int main( int argc, char** argv )
 	case 'p': //Pause
 	  if(paused == 1)
 	    {
+	      node.frame_mutex_.lock();
 	      paused = 0;
 	      printf("Unpaused\n");
+	      fflush(stdout);
+	      node.subscribe("videre/images", node.frame_msg, &ImgBGSubtr::processFrame, &node, true);
+	      node.frame_mutex_.unlock();
 	    }
 	  else
 	    {
+	      //node.frame_msg.lock();
 	      paused = 1;
+	      printf("Unsubscribing...\n");
+	      if(node.unsubscribe("videre/images") == false) {
+		printf("Failed!\n");
+	      }
 	      printf("Paused\n");
+	      //node.frame_msg.unlock();
 	    }
 	  break;
 	case 'h':
@@ -1142,6 +1154,7 @@ int main( int argc, char** argv )
 	}
   */
   
+  printf("fini...\n");
   ros::fini();
   
   return 0;
