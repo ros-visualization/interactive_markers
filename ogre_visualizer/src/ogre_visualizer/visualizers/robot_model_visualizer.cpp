@@ -154,7 +154,7 @@ void RobotModelVisualizer::update( float dt )
 
   message_.lock();
 
-  if ( has_new_transforms_ || (update_rate_ > 0.0f && time_since_last_transform_ >= update_rate_) )
+  if ( has_new_transforms_ || (update_rate_ > 0.0001f && time_since_last_transform_ >= update_rate_) )
   {
     robot_->update( tf_client_, target_frame_ );
     causeRender();

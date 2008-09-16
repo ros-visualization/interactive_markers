@@ -107,7 +107,14 @@ void wxOgreRenderWindow::onPaint (wxPaintEvent &evt)
     pre_render_callback_();
   }
 
+  if( !ogre_root_->_fireFrameStarted() )
+  {
+    return;
+  }
+
   render_window_->update();
+
+  ogre_root_->_fireFrameEnded();
 
   if ( post_render_callback_ )
   {

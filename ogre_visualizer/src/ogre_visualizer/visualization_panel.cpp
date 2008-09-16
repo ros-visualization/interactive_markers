@@ -95,6 +95,11 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent )
   render_panel_ = new ogre_tools::wxOgreRenderWindow( ogre_root_, VisualizationPanelGenerated::render_panel_ );
   render_sizer_->Add( render_panel_, 1, wxALL|wxEXPAND, 0 );
 
+  selection_bounds_particle_system_ = scene_manager_->createParticleSystem( "VisualizationPanelSelectionBoundsParticleSystem" );
+  selection_bounds_particle_system_->setMaterialName( "BaseWhiteNoLighting" );
+  Ogre::SceneNode* node = scene_manager_->getRootSceneNode()->createChildSceneNode();
+  node->attachObject( selection_bounds_particle_system_ );
+
   fps_camera_ = new ogre_tools::FPSCamera( scene_manager_ );
   fps_camera_->getOgreCamera()->setNearClipDistance( 0.1f );
   fps_camera_->setPosition( 0, 0, 15 );
@@ -189,6 +194,7 @@ VisualizationPanel::~VisualizationPanel()
   delete fps_camera_;
   delete orbit_camera_;
 
+  scene_manager_->destroyParticleSystem( selection_bounds_particle_system_ );
   scene_manager_->destroyQuery( ray_scene_query_ );
   ogre_root_->destroySceneManager( scene_manager_ );
 }
@@ -278,6 +284,14 @@ void VisualizationPanel::onUpdate( wxTimerEvent& event )
     {
       visualizer->update( dt );
     }
+  }
+
+  static float render_update_time = 0.0f;
+  render_update_time += dt;
+  if ( selection_bounds_particle_system_->getNumParticles() > 0 && render_update_time > 0.1 )
+  {
+    queueRender();
+    render_update_time = 0.0f;
   }
 }
 
@@ -407,6 +421,37 @@ void VisualizationPanel::onRenderWindowMouseEvents( wxMouseEvent& event )
   }
 }
 
+inline void createParticle( Ogre::ParticleSystem* particle_sys, const Ogre::Vector3& position, float size )
+{
+  Ogre::Particle* p = particle_sys->createParticle();
+  if ( p )
+  {
+    p->setDimensions( size, size );
+    p->colour = Ogre::ColourValue( 1.0f, 1.0f, 1.0f, 1.0f );
+    p->timeToLive = p->totalTimeToLive = 2.0f;
+    p->rotationSpeed = 0.1f;
+    p->position = position;
+  }
+}
+
+void createParticleLine( Ogre::ParticleSystem* particle_sys, const Ogre::Vector3& point1, const Ogre::Vector3& point2, float size, float step )
+{
+  createParticle( particle_sys, point1, size );
+
+  float distance = point1.distance( point2 );
+  int num_particles = distance / step;
+  Ogre::Vector3 dir = point2 - point1;
+  dir.normalise();
+  for ( int i = 1; i < num_particles; ++i )
+  {
+    Ogre::Vector3 point = point1 + ( dir * ( step * i ) );
+
+    createParticle( particle_sys, point, size );
+  }
+
+  createParticle( particle_sys, point2, size );
+}
+
 void VisualizationPanel::pick( int mouse_x, int mouse_y )
 {
   int width, height;
@@ -452,7 +497,28 @@ void VisualizationPanel::pick( int mouse_x, int mouse_y )
     Ogre::SceneNode* scene_node = picked->getParentSceneNode();
     if ( scene_node )
     {
-      current_camera_->lookAt( scene_node->_getDerivedPosition() );
+      selection_bounds_particle_system_->clear();
+
+      const Ogre::AxisAlignedBox& aabb = scene_node->_getWorldAABB();
+
+      const Ogre::Vector3* corners = aabb.getAllCorners();
+      const float size = 0.01f;
+      const float step = 0.02f;
+      createParticleLine( selection_bounds_particle_system_, corners[0], corners[1], size, step );
+      createParticleLine( selection_bounds_particle_system_, corners[1], corners[2], size, step );
+      createParticleLine( selection_bounds_particle_system_, corners[2], corners[3], size, step );
+      createParticleLine( selection_bounds_particle_system_, corners[3], corners[0], size, step );
+      createParticleLine( selection_bounds_particle_system_, corners[4], corners[5], size, step );
+      createParticleLine( selection_bounds_particle_system_, corners[5], corners[6], size, step );
+      createParticleLine( selection_bounds_particle_system_, corners[6], corners[7], size, step );
+      createParticleLine( selection_bounds_particle_system_, corners[7], corners[4], size, step );
+      createParticleLine( selection_bounds_particle_system_, corners[1], corners[5], size, step );
+      createParticleLine( selection_bounds_particle_system_, corners[2], corners[4], size, step );
+      createParticleLine( selection_bounds_particle_system_, corners[3], corners[7], size, step );
+      createParticleLine( selection_bounds_particle_system_, corners[0], corners[6], size, step );
+
+      current_camera_->lookAt( aabb.getCenter() );
+
       queueRender();
     }
   }

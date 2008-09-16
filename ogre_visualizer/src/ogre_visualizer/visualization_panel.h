@@ -79,6 +79,7 @@ class Root;
 class SceneManager;
 class Camera;
 class RaySceneQuery;
+class ParticleSystem;
 }
 
 namespace ros
@@ -183,6 +184,7 @@ protected:
   Ogre::Root* ogre_root_;                                 ///< Ogre Root
   Ogre::SceneManager* scene_manager_;                     ///< Ogre scene manager associated with this panel
   Ogre::RaySceneQuery* ray_scene_query_;                  ///< Used for querying the scene based on the mouse location
+  Ogre::ParticleSystem* selection_bounds_particle_system_;
 
   wxTimer* update_timer_;                                 ///< Update timer.  VisualizerBase::update is called on each visualizer whenever this timer fires
   wxStopWatch update_stopwatch_;                          ///< Update stopwatch.  Stores how long it's been since the last update

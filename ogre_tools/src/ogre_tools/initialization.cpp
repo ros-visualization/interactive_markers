@@ -11,6 +11,7 @@ void initializeOgre()
   Ogre::Root* root = new Ogre::Root();
   root->loadPlugin( "RenderSystem_GL" );
   root->loadPlugin( "Plugin_OctreeSceneManager" );
+  root->loadPlugin( "Plugin_ParticleFX" );
 
   // Taken from gazebo
   Ogre::RenderSystemList *rsList = root->getAvailableRenderers();
