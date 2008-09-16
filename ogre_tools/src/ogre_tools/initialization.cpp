@@ -8,6 +8,9 @@ namespace ogre_tools
 {
 void initializeOgre()
 {
+  Ogre::LogManager* log_manager = new Ogre::LogManager();
+  log_manager->createLog( "Ogre.log", false, false, false );
+
   Ogre::Root* root = new Ogre::Root();
   root->loadPlugin( "RenderSystem_GL" );
   root->loadPlugin( "Plugin_OctreeSceneManager" );
