@@ -1,3 +1,37 @@
+# Software License Agreement (BSD License)
+#
+# Copyright (c) 2008, Willow Garage, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+#  * Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#  * Redistributions in binary form must reproduce the above
+#    copyright notice, this list of conditions and the following
+#    disclaimer in the documentation and/or other materials provided
+#    with the distribution.
+#  * Neither the name of the Willow Garage nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+## Some common ROS communication utilities. See the wiki documentation and the demo scripts for how to use it.
+
 import rostools
 rostools.update_path('rospy')
 from rostools import msgspec as msgspec
@@ -12,22 +46,26 @@ _time_class_name = 'rostools.msg._Time.Time'
 import wxplot
 import wxros
 
-__all__ = ['RosChannel', 'RosSubscriber', 'RosMessageHandler', 'getTopicsList']
+__all__ = ['RosChannel', 'RosSubscriber', 'RosMessageHandler', 'getTopicsList', 'getHandler']
 
 _ros_timestamp = None
 
+## @brief converts a timespamp into a duration in seconds
 def _convert_time(stamp):
     return stamp.secs + 0.000000001 * stamp.nsecs
 
-## Channel communication class
+## @class RosChannel
+## @brief Channel communication class
 #  Gets called by a RosSubscriber and acts as a buffer between ROS and the user event loop
 class RosChannel(wxplot.Channel):
     
     def __init__(self, slotName, style):
         wxplot.Channel.__init__(self, style)
         self.slotName = slotName
-        #print 'Created ROS channel'
-    
+
+    ## The fucntion that gets called by ROS
+    ## @param value: the value to be stored (any type)
+    ## @param time: an optional timestamp. If no timestamp is provided, RosChannel will try to use a global timestamp advertised through ROS. If it not available, it will use an internal integer counter as time source 
     def callback(self, value, time=None):
       global _ros_timestamp
       # So far, no use of a time value even if it is possible
@@ -208,26 +246,6 @@ class RosMessageHandler:
         wxros.ROSListener(name).start() 
         self.topics = {} 
         self.queryTopicsTree()
-    
-    #def subscribeTopic(self, topicName, topicType):
-        #if self.topicsSubs.has_key(topicName):
-            ## Registration already done.
-            #return
-        #self.topicsSubs[topicName] = RosSubscriber()
-       
-    #def registerTopic(self,topicName, topicTypeName, callback):
-        #"""Register to the topic using only the names (strings) of the topic, type."""
-        ## TODO: encapsulate with exceptions
-        ## Loading the packageName
-        ## TODO: how to check if it is already loaded?
-        #print 'topic type: %s' % topicTypeName
-        #(modName, messageName) = messageNames(topicTypeName)
-        
-        #importMessageModule(modName, messageName)
-        #exec('import %s' % messageName)
-        
-        #print eval(messageName)
-        #rospy.TopicSub(topicName, eval(messageName), callback)
         
     def subscribe(self, itemPath, style, ChannelType=RosChannel):
         
@@ -237,10 +255,7 @@ class RosMessageHandler:
         if not self.topics[topicName].isRegistered:
             self.topicsSubs[topicName] = RosSubscriber(self.topics[topicName])
             messageName, messageModName, messageType = self.topics[topicName].qualifiedMessageType
-            print messageType
-            print self._getTopic(itemPath)
             exec('import %s' % messageModName)
-            print eval(messageType)
             rospy.TopicSub(self._getTopic(itemPath), eval(messageType), self.topicsSubs[topicName].callback)
         channel = ChannelType(itemPath, style)
         item.channels.append(channel)
@@ -257,7 +272,6 @@ class RosMessageHandler:
             if itemPath.count('[]')>0:
                 return False
             l = self._getItem(itemPath)
-            print l
             if l and l.isNumeric:
                 return True
         except:
@@ -267,7 +281,6 @@ class RosMessageHandler:
         l = itemPath.split('/')
         topic = '/%s'%l[1]
         assert topic in self.topics
-        print 'XXX', l[2:], self.topics[ topic ].getSlot(l[2:])
         return self.topics[ topic ].getSlot(l[2:])
 
     
@@ -279,7 +292,6 @@ class RosMessageHandler:
             (modName, messageModName, messageName) = messageNames(topic_type)
             msgspec.load_package(modName)
             importMessageModule(modName, messageModName)
-            print 'import %s' % messageModName
             exec('import %s' % messageModName)
             #print 'import %s' % modName
             #exec('import %s' % modName)
@@ -291,8 +303,6 @@ class RosMessageHandler:
             topicQualifiedType = messageNames(topic_type)
             self.topics[topic_name] = RosMessageRoot(topicQualifiedType)                       
             self._buildMessageTree(self.topics[topic_name], msgspec.REGISTERED_TYPES[topic_type], _getContext(topic_type))
-        print self.topics
-        print 'done'
     
     def _buildMessageTree(self, messageItem, messageType, context=None):
         
@@ -344,9 +354,14 @@ def importMessageModule(moduleName, messageModName):
     """Given the fully qualified name of the message class, tries to import the message class.
     Will add some exception handling."""
     upp_com = 'rostools.update_path(\'%s\')'%moduleName
-    print upp_com
     exec(upp_com)
     print messageModName
     exec('import %s' % messageModName)
-    
 
+_handler = RosMessageHandler()
+
+## @brief Returns a handler
+#This should be the only way to get a handler. This way, only one handler is created per process. This minimiizes the workload on ROS.   
+def getHandler():
+    global _handler
+    return _handler

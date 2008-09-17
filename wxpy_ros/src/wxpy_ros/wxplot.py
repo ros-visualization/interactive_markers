@@ -35,6 +35,11 @@
 ##A small utility class for embedding dynamic plots in WXpython.
 ##"""
 
+"""
+WXPlot, some utility panels and classes for embedding dynamic plots in WXPython.
+@author: Timothy Hunter <tjhunter@willowgarage.com>
+"""
+
 import wx
 
 # Check for numpy and matplotlib
@@ -73,12 +78,49 @@ if BAD_MPL_VERSION:
   raise ImportError('wrong version of matplotlib')
 
 
-__all__ = ['Channel','WXPlot','WXSlidingPlot']
+__all__ = ['Channel','WXPlot','WXSlidingPlot','NestPanel']
+
+
+def NestPanel(top_panel, sub_panel):
+  """A wrapper method to embed panels into XRC-managed panels.
+  @author: Jeremy Wright
+  Imported from the qualification module and adapted for WXPlot by Timothy Hunter."""
+
+  # Cache the original size of the top-level frame
+  start_size = top_panel.GetTopLevelParent().GetSize()
+
+  # Get the top_level's sizer
+  sizer = top_panel.GetSizer()
+
+  # Create a new one if it doesn't exist
+  if (sizer == None):
+    sizer = wx.BoxSizer()
+    top_panel.SetSizer(sizer)
+
+  # Clear the sizer (destructively)
+  sizer.Clear(True)
+
+  # Add our sub_panel to the sizer
+  sizer.Add(sub_panel,1,wx.EXPAND)
+
+  # Reset size hints for the top_panel
+  sizer.SetSizeHints(top_panel)
+
+  # Also reset size hints for the top level frame
+  sizer2 = top_panel.GetTopLevelParent().GetSizer()
+  if not sizer2:
+      sizer2 = wx.BoxSizer()
+      top_panel.GetTopLevelParent().SetSizer(sizer2)
+  sizer2.SetSizeHints(top_panel.GetTopLevelParent())
+
+  # Reset size to our cached size, and then layout
+  top_panel.GetTopLevelParent().SetSize(start_size)
+  top_panel.GetTopLevelParent().Layout()
 
 
 class Channel:
     """The interaction class with the plot panel.
-    Note you have to generatoe one instance for each panel (i.e. you cannot 
+    Note you have to generate one instance for each panel (i.e. you cannot 
     share a Channel between several plots.
     Channel acts as a buffer between the data input and the plot widget."""
     def __init__(self, style='b'):

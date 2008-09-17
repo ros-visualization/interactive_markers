@@ -1,3 +1,3 @@
-from wxplot import Channel, WXPlot, WXSlidingPlot
+from wxplot import *
 from wxros import ROSListener
 from roscom import *

@@ -69,14 +69,15 @@ class RosFrame(wx.Frame):
         self.path_txt = xrc.XRCCTRL(self,'path_txt')
         
         self.plot = wxpy_ros.WXSlidingPlot(self.plot_panel)
-        hb = wx.BoxSizer(wx.VERTICAL)
-        hb.Add(self.plot)
-        hb.Add(self.values_lctr, wx.ALL|wx.EXPAND)
-        self.plot_panel.SetSizer(hb)
+#        hb = wx.BoxSizer(wx.VERTICAL)
+#        self.plot_panel.SetSizer(hb)
+#        hb.Add(self.plot)
+#        hb.Add(self.values_lctr, wx.ALL|wx.EXPAND)
+        wxpy_ros.NestPanel(self.plot_panel,self.plot)
         
-        #disabled for nw due to a frustrating layout problem
-        self.values_lctr.InsertColumn(0,'Slot')
-        self.values_lctr.InsertColumn(1,'Value')
+        #disabled for now due to a frustrating layout problem
+        #self.values_lctr.InsertColumn(0,'Slot')
+        #self.values_lctr.InsertColumn(1,'Value')
 
 
         self.Center()
