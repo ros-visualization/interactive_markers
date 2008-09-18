@@ -148,6 +148,7 @@ public:
     bridge_out = 
       new CvBridge<std_msgs::Image>
       (&labelMask, 
+
        CvBridge<std_msgs::Image>::CORRECT_BGR | 
        CvBridge<std_msgs::Image>::MAXDEPTH_8U);
     subscribe("videre/images", frame_msg, &ImgBGSubtr::processFrame, this, 1);
@@ -165,10 +166,13 @@ public:
   {
     frame_mutex_.lock();
 
+   
     if(!builtBridge) {
+	int imgIndex = 0;
+	if(frame_msg.get_images_size() > 1) imgIndex = 1;
       bridge_in = 
 	new CvBridge<std_msgs::Image>
-	(&frame_msg.images[1], 
+	(&frame_msg.images[imgIndex], 
 	 CvBridge<std_msgs::Image>::CORRECT_BGR | 
 	 CvBridge<std_msgs::Image>::MAXDEPTH_8U);
       builtBridge = true;
@@ -466,13 +470,17 @@ int main( int argc, char** argv )
  
 
   // -- Set up for getting images from ROS.
+printf("1\n");
   ros::init(argc, argv);
+printf("2\n");
   ImgBGSubtr node;
+printf("3\n");
   while(!node.hasNewFrameMsg) {
     usleep(1000);
   }
+printf("4\n");
   IplImage* frame = cvCreateImage(cvGetSize(node.frame), 8, 3);
-
+printf("5\n");
   // -- Set up for sending labeled images over ROS.
   std_msgs::ImageArray lb;
   std::vector<std_msgs::Image> v;
@@ -482,7 +490,7 @@ int main( int argc, char** argv )
   time_t start, end;
   int secs = 0;
   time(&start);
-
+printf("6\n");
   /////////////////FRAME PROCESS LOOP////////////////////////////
   for(;;)
     {
