@@ -184,6 +184,7 @@ private:
   void onFakeRefresh( wxCommandEvent& event );
 
   void onScrollComplete( wxTimerEvent& event );
+  void onSize( wxSizeEvent& event );
 
 
   // private variables

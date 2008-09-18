@@ -71,6 +71,7 @@ DEFINE_EVENT_TYPE(EVT_FAKE_REFRESH)
 CameraPanel::CameraPanel(wxWindow* parent)
 : CameraPanelBase( parent )
 , enabled_( false )
+, ptz_enabled_( false )
 , image_data_( NULL )
 , image_( NULL )
 , image_codec_( &image_message_ )
@@ -393,9 +394,9 @@ void CameraPanel::onImageSize( wxSizeEvent& event )
   if ( image_ )
   {
     recreate_bitmap_ = true;
-
-    image_panel_->Refresh();
   }
+
+  image_panel_->Refresh();
 
   event.Skip();
 }
