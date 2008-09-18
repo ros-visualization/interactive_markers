@@ -142,13 +142,6 @@ void PointCloudVisualizer::unsubscribe()
   if ( !topic_.empty() )
   {
     ros_node_->unsubscribe( topic_ );
-
-    // block if our callback is still running
-    message_.lock();
-    message_.unlock();
-
-    // ugh -- race condition, so sleep for a bit
-    usleep( 100000 );
   }
 }
 
