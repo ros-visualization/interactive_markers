@@ -5,32 +5,31 @@ rostools.update_path('wx_camera_panel')
 
 import wx
 import wx_camera_panel
+import sys
 from optparse import OptionParser
 
-parser = OptionParser()
-parser.add_option( "-i", "--image", action="store", type="string", dest="image_topic", help="Set the image topic to subscribe to" )
-parser.add_option( "-s", "--ptz_state", action="store", type="string", dest="ptz_state_topic", help="Set the incoming ptz state topic to subscribe to" )
-parser.add_option( "-c", "--ptz_control", action="store", type="string", dest="ptz_control_topic", help="Set the outgoing ptz control topic to advertise on" )
-parser.add_option( "-n", "--name", action="store", type="string", dest="name", help="Set the name of the camera" )
+parser = OptionParser(usage="usage: %prog camera_namespace [options]")
+parser.add_option( "--ptz", action="store_true", dest="ptz", help="Enable PTZ controls" )
 (options, args) = parser.parse_args()
 
+if ( len(args) == 0 ):
+    print( "No namespace specified!\n" )
+    parser.print_usage()
+    sys.exit(1)
+    
+name = args[0]
+
 app = wx.PySimpleApp()
-titlebar_string = "Camera"
-if ( options.name != None ):
-    titlebar_string = titlebar_string + " " + options.name
+titlebar_string = "Camera " + name
 frame = wx.Frame(None, wx.ID_ANY, titlebar_string, wx.DefaultPosition, wx.Size( 500, 500 ) )
 
 camera_panel = wx_camera_panel.CameraPanel(frame)
-camera_panel.SetEnabled(True)
+camera_panel.setEnabled(True)
 
-if ( options.image_topic != None ):
-    camera_panel.SetImageSubscription( options.image_topic )
-
-if ( options.ptz_state_topic != None ):
-    camera_panel.SetPTZStateSubscription( options.ptz_state_topic )
+if ( options.ptz != None ):
+    camera_panel.setPTZEnabled(options.ptz)
     
-if ( options.ptz_control_topic != None ):
-    camera_panel.SetPTZControlCommand( options.ptz_control_topic )    
+camera_panel.setName(name)
 
 frame.Show(True)
 app.MainLoop()

@@ -34,23 +34,23 @@ class CameraPanelBase : public wxPanel
 	private:
 	
 	protected:
-		wxCheckBox* m_Enable;
-		wxButton* m_Setup;
-		wxPanel* m_ImagePanel;
+		wxCheckBox* enable_;
+		wxButton* setup_;
+		wxPanel* image_panel_;
 		
 		// Virtual event handlers, overide them in your derived class
-		virtual void OnEnable( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnSetup( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnLeftMouseDown( wxMouseEvent& event ){ event.Skip(); }
-		virtual void OnLeftMouseUp( wxMouseEvent& event ){ event.Skip(); }
-		virtual void OnMiddleMouseDown( wxMouseEvent& event ){ event.Skip(); }
-		virtual void OnMiddleMouseUp( wxMouseEvent& event ){ event.Skip(); }
-		virtual void OnMouseMotion( wxMouseEvent& event ){ event.Skip(); }
-		virtual void OnMouseWheel( wxMouseEvent& event ){ event.Skip(); }
-		virtual void OnImagePaint( wxPaintEvent& event ){ event.Skip(); }
-		virtual void OnRightMouseDown( wxMouseEvent& event ){ event.Skip(); }
-		virtual void OnRightMouseUp( wxMouseEvent& event ){ event.Skip(); }
-		virtual void OnImageSize( wxSizeEvent& event ){ event.Skip(); }
+		virtual void onEnable( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onSetup( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onLeftMouseDown( wxMouseEvent& event ){ event.Skip(); }
+		virtual void onLeftMouseUp( wxMouseEvent& event ){ event.Skip(); }
+		virtual void onMiddleMouseDown( wxMouseEvent& event ){ event.Skip(); }
+		virtual void onMiddleMouseUp( wxMouseEvent& event ){ event.Skip(); }
+		virtual void onMouseMotion( wxMouseEvent& event ){ event.Skip(); }
+		virtual void onMouseWheel( wxMouseEvent& event ){ event.Skip(); }
+		virtual void onImagePaint( wxPaintEvent& event ){ event.Skip(); }
+		virtual void onRightMouseDown( wxMouseEvent& event ){ event.Skip(); }
+		virtual void onRightMouseUp( wxMouseEvent& event ){ event.Skip(); }
+		virtual void onImageSize( wxSizeEvent& event ){ event.Skip(); }
 		
 	
 	public:
@@ -68,42 +68,33 @@ class CameraSetupDialogBase : public wxDialog
 	
 	protected:
 		wxStaticText* m_staticText711;
-		wxTextCtrl* m_ImageSubscriptionText;
-		wxButton* m_ImageSubscriptionBrowse;
-		wxCheckBox* m_EnablePTZCheck;
+		wxTextCtrl* camera_name_;
+		wxCheckBox* enable_ptz_;
 		wxStaticText* m_staticText4;
 		wxStaticText* m_staticText5;
-		wxSpinCtrl* m_PanMinSpin;
+		wxSpinCtrl* pan_min_;
 		wxStaticText* m_staticText6;
-		wxSpinCtrl* m_PanMaxSpin;
+		wxSpinCtrl* pan_max_;
 		wxStaticText* m_staticText411;
 		wxStaticText* m_staticText511;
-		wxSpinCtrl* m_TiltMinSpin;
+		wxSpinCtrl* tilt_min_;
 		wxStaticText* m_staticText611;
-		wxSpinCtrl* m_TiltMaxSpin;
+		wxSpinCtrl* tilt_max_;
 		wxStaticText* m_staticText41;
 		wxStaticText* m_staticText51;
-		wxSpinCtrl* m_ZoomMinSpin;
+		wxSpinCtrl* zoom_min_;
 		wxStaticText* m_staticText61;
-		wxSpinCtrl* m_ZoomMaxSpin;
-		wxStaticText* m_staticText71;
-		wxTextCtrl* m_PTZStateSubscriptionText;
-		wxButton* m_PTZStateSubscriptionBrowse;
-		wxStaticText* m_staticText712;
-		wxTextCtrl* m_PTZControlCommandText;
-		wxButton* m_Ok;
-		wxButton* m_Cancel;
+		wxSpinCtrl* zoom_max_;
+		wxButton* ok_;
+		wxButton* cancel_;
 		
 		// Virtual event handlers, overide them in your derived class
-		virtual void OnImageSubscriptionBrowse( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnPTZEnableChecked( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnPTZStateSubscriptionBrowse( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnOk( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnCancel( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onOk( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onCancel( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:
-		CameraSetupDialogBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Camera Setup"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 472,400 ), long style = wxDEFAULT_DIALOG_STYLE );
+		CameraSetupDialogBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Camera Setup"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 472,333 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~CameraSetupDialogBase();
 	
 };

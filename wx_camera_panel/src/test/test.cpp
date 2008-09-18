@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2008, Willow Garage, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of the Willow Garage, Inc. nor the names of its
  *       contributors may be used to endorse or promote products derived from
  *       this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -34,32 +34,31 @@
 
 #include "ros/node.h"
 
-class MyFrame : public wxFrame 
+class MyFrame : public wxFrame
 {
 public:
   MyFrame(wxWindow* parent) : wxFrame(parent, -1, _("Camera Panels Test App"),
 				      wxDefaultPosition, wxSize(800,600),
-				      wxDEFAULT_FRAME_STYLE)                              
+				      wxDEFAULT_FRAME_STYLE)
   {
     CameraPanel* cameraPanel = new CameraPanel( this );
 
-	cameraPanel->SetSize( this->GetSize() );
-	cameraPanel->SetImageSubscription( "/PTZR_image" );
-	cameraPanel->SetPTZStateSubscription( "/PTZR_state" );
-	cameraPanel->SetPTZControlCommand( "/PTZR_cmd" );
-	cameraPanel->SetEnabled( true );
+    cameraPanel->SetSize( this->GetSize() );
+    cameraPanel->setName( "PTZR" );
+    cameraPanel->setEnabled( true );
+    cameraPanel->setPTZEnabled( true );
   }
-  
+
   ~MyFrame()
   {
   }
 };
 
 // our normal wxApp-derived class, as usual
-class MyApp : public wxApp 
+class MyApp : public wxApp
 {
 public:
-  
+
   bool OnInit()
   {
 	ros::init(argc, (char**)argv);
@@ -67,7 +66,7 @@ public:
     wxFrame* frame = new MyFrame(NULL);
     SetTopWindow(frame);
     frame->Show();
-    return true;                    
+    return true;
   }
 
   int OnExit()

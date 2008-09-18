@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2008, Willow Garage, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of the Willow Garage, Inc. nor the names of its
  *       contributors may be used to endorse or promote products derived from
  *       this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -60,193 +60,204 @@ public:
   ~CameraPanel();
 
   /// Set whether this panel is enabled or not.  Subscribes/unsubscribes from all messages, and disables PTZ control
-  void SetEnabled( bool enabled );
+  void setEnabled( bool enabled );
 
-  /// Set the subscription topic for the image display
-  void SetImageSubscription( const std::string& topic );
+  /// Set whether the PTZ functionality is enabled
+  void setPTZEnabled( bool enabled );
 
-  /// Set the subscription topic for the PTZ state display
-  void SetPTZStateSubscription( const std::string& topic );
+  /// Set the name of the camera this panel is connected to
+  void setName( const std::string& name );
 
-  /// Set the advertised topic for the PTZ control commands
-  void SetPTZControlCommand( const std::string& topic );
-  
   /// Set the pan limits for this camera.  Note that the values are arbitrary, and are not in any defined units -- they just need
   /// to match what the camera is expecting.
-  void SetPanLimits( float min, float max );
-  
+  void setPanLimits( float min, float max );
+
   /// Set the tilt limits for this camera.  Note that the values are arbitrary, and are not in any defined units -- they just need
   /// to match what the camera is expecting.
-  void SetTiltLimits( float min, float max );
-  
+  void setTiltLimits( float min, float max );
+
   /// Set the zoom limits for this camera.  Note that the values are arbitrary, and are not in any defined units -- they just need
   /// to match what the camera is expecting.
-  void SetZoomLimits( float min, float max );
+  void setZoomLimits( float min, float max );
 
 private:
+  /// Set the subscription topic for the image display
+  void setImageSubscription( const std::string& topic );
+
+  /// Set the subscription topic for the PTZ state display
+  void setPTZStateSubscription( const std::string& topic );
+
+  /// Set the advertised topic for the PTZ control commands
+  void setPTZControlCommand( const std::string& topic );
+
   /// Subscribes to the current image topic, unless disabled
-  void SubscribeImage();
+  void subscribeImage();
   /// Unsubscribes from the current image topic, unless disabled
-  void UnsubscribeImage();
+  void unsubscribeImage();
 
   /// Subscribes to the current PTZ state topic, unless disabled
-  void SubscribePTZState();
+  void subscribePTZState();
   /// Unsubscribes from the current PTZ state topic, unless disabled
-  void UnsubscribePTZState();
+  void unsubscribePTZState();
 
   /// Begins advertising on the current PTZ control topic, unless disabled
-  void AdvertisePTZControl();
+  void advertisePTZControl();
   /// Stops advertising on the current PTZ control topic, unless disabled
-  void StopPTZControl();
+  void stopPTZControl();
 
   /// Returns whether or not the image message + display are enabled
-  bool IsImageEnabled() { return m_Enabled && !m_ImageTopic.empty();}
+  bool isImageEnabled() { return enabled_ && !image_topic_.empty();}
   /// Returns whether or not the state message + display are enabled
-  bool IsPTZStateEnabled() { return m_Enabled && !m_PTZStateTopic.empty();}
+  bool isPTZStateEnabled() { return enabled_ && ptz_enabled_ && !ptz_state_topic_.empty();}
   /// Returns whether or not the control message + display are enabled
-  bool IsPTZControlEnabled() { return m_Enabled && !m_PTZControlTopic.empty();}
+  bool isPTZControlEnabled() { return enabled_ && ptz_enabled_ && !ptz_control_topic_.empty();}
 
   /// Start all enabled subscriptions and advertisements
-  void StartAll();
+  void startAll();
   /// Stop all enabled subscriptions and advertizements
-  void StopAll();
+  void stopAll();
 
   /// ROS callback for an incoming image message
-  void IncomingImage();
+  void incomingImage();
   /// ROS callback for an incoming PTZ state message
-  void IncomingPTZState();
+  void incomingPTZState();
 
   /// Compute a new pan value, given a mouse start/end position
-  float ComputeNewPan( int32_t startX, int32_t endX );
+  float computeNewPan( int32_t startX, int32_t endX );
   /// Compute a new tilt value, given a mouse start/end position
-  float ComputeNewTilt( int32_t startY, int32_t endY );
+  float computeNewTilt( int32_t startY, int32_t endY );
   /// Compute a new zoom value, given a mouse start/end position
-  float ComputeNewZoom( int32_t startY, int32_t endY );
+  float computeNewZoom( int32_t startY, int32_t endY );
 
   // custom draw functions
 
   /// Draws the new pan/tilt locations (when dragging the mouse)
-  void DrawNewPanTiltLocations( wxDC& dc );
+  void drawNewPanTiltLocations( wxDC& dc );
   /// Draws the current pan/tilt locations (current meaning the latest data from the camera)
-  void DrawCurrentPanTiltLocations( wxDC& dc );
+  void drawCurrentPanTiltLocations( wxDC& dc );
 
   /// Draws the new zoom location (when dragging the mouse)
-  void DrawNewZoomLocation( wxDC& dc );
+  void drawNewZoomLocation( wxDC& dc );
   /// Draws the current zoom location (latest data from the camera)
-  void DrawCurrentZoomLocation( wxDC& dc );
+  void drawCurrentZoomLocation( wxDC& dc );
   /// Draw a pan tickmark
-  void DrawPan( wxDC& dc, wxPen& pen, float pan );
+  void drawPan( wxDC& dc, wxPen& pen, float pan );
   /// Draw a tilt tickmark
-  void DrawTilt( wxDC& dc, wxPen& pen, float tilt );
+  void drawTilt( wxDC& dc, wxPen& pen, float tilt );
   /// Draw a zoom tickmark
-  void DrawZoom( wxDC& dc, wxPen& pen, float zoom );
+  void drawZoom( wxDC& dc, wxPen& pen, float zoom );
 
   /// Draw the pan measurement bar
-  void DrawPanBar( wxDC& dc );
+  void drawPanBar( wxDC& dc );
   /// Draw the tilt measurement bar
-  void DrawTiltBar( wxDC& dc );
+  void drawTiltBar( wxDC& dc );
   /// Draw the zoom measurement bar
-  void DrawZoomBar( wxDC& dc );
+  void drawZoomBar( wxDC& dc );
 
   // wx callbacks
   /// wx callback, called when the setup button is pressed
-  void OnSetup( wxCommandEvent& event );
+  void onSetup( wxCommandEvent& event );
   /// wx callback, called when the enable checkbox changes
-  void OnEnable( wxCommandEvent& event );
+  void onEnable( wxCommandEvent& event );
   /// wx callback, called to paint the image panel
-  void OnImagePaint( wxPaintEvent& event );
+  void onImagePaint( wxPaintEvent& event );
   /// wx callback, called when the image panel is resized
-  void OnImageSize( wxSizeEvent& event );
+  void onImageSize( wxSizeEvent& event );
 
   /// wx callback, called when the right mouse button is pressed on the image panel
-  void OnRightMouseDown( wxMouseEvent& event );
+  void onRightMouseDown( wxMouseEvent& event );
   /// wx callback, called when the right mouse button is released on the image panel
-  void OnRightMouseUp( wxMouseEvent& event );
+  void onRightMouseUp( wxMouseEvent& event );
   /// wx callback, called when the middle mouse button is released on the image panel
-  void OnMiddleMouseUp( wxMouseEvent& event );
+  void onMiddleMouseUp( wxMouseEvent& event );
   /// wx callback, called when the scroll wheel is spun on the image panel
-  void OnMouseWheel(wxMouseEvent& event);
+  void onMouseWheel(wxMouseEvent& event);
   /// wx callback, called when the left mouse button is pressed on the image panel
-  void OnLeftMouseDown( wxMouseEvent& event );
+  void onLeftMouseDown( wxMouseEvent& event );
   /// wx callback, called when the left mouse button is released on the image panel
-  void OnLeftMouseUp( wxMouseEvent& event );
+  void onLeftMouseUp( wxMouseEvent& event );
 
   /// wx callback, called when the mouse moves over the image panel
-  void OnMouseMotion( wxMouseEvent& event );
+  void onMouseMotion( wxMouseEvent& event );
 
   /// wx callback for a custom event, called to force a refresh from another thread
-  void OnFakeRefresh( wxCommandEvent& event );
-  
-  void OnScrollComplete( wxTimerEvent& event );
+  void onFakeRefresh( wxCommandEvent& event );
+
+  void onScrollComplete( wxTimerEvent& event );
 
 
   // private variables
 
   /// Are we enabled?
-  bool m_Enabled;
+  bool enabled_;
+  /// Is the PTZ functionality enabled?
+  bool ptz_enabled_;
+
+  /// Name of the camera we're listening to
+  std::string name_;
 
   /// ROS topic for the incoming image
-  std::string m_ImageTopic;
+  std::string image_topic_;
   /// ROS topic for the incoming PTZ state
-  std::string m_PTZStateTopic;
+  std::string ptz_state_topic_;
   /// ROS topic for the outgoing PTZ control
-  std::string m_PTZControlTopic;
+  std::string ptz_control_topic_;
 
   /// Our ROS node
-  ros::node* m_ROSNode;
+  ros::node* ros_node_;
 
-  std_msgs::Image   m_ImageMessage;
-  uint8_t*      m_ImageData;
-  wxImage*      m_Image;
-  ros::thread::mutex  m_ImageMutex;
-  ImageCodec<std_msgs::Image> m_ImageCodec;
-  wxBitmap      m_Bitmap;
-  bool        m_RecreateBitmap;
+  std_msgs::Image   image_message_;
+  uint8_t*      image_data_;
+  wxImage*      image_;
+  ros::thread::mutex  image_mutex_;
+  ImageCodec<std_msgs::Image> image_codec_;
+  wxBitmap      bitmap_;
+  bool        recreate_bitmap_;
 
-  axis_cam::PTZActuatorState m_PTZStateMessage;
-  axis_cam::PTZActuatorCmd   m_PTZControlMessage;
+  axis_cam::PTZActuatorState ptz_state_message_;
+  axis_cam::PTZActuatorCmd   ptz_command_message_;
 
   /// Latest pan received from ROS
-  float m_CurrentPan;
+  float current_pan_;
   /// Latest tilt received from ROS
-  float m_CurrentTilt;
+  float current_tilt_;
   /// Latest zoom received from ROS
-  float m_CurrentZoom;
+  float current_zoom_;
 
-  bool m_HasPanTarget;
-  float m_PanTarget;
+  bool has_pan_target_;
+  float pan_target_;
 
-  bool m_HasTiltTarget;
-  float m_TiltTarget;
+  bool has_tilt_target_;
+  float tilt_target_;
 
-  bool m_HasZoomTarget;
-  float m_ZoomTarget;
+  bool has_zoom_target_;
+  float zoom_target_;
 
   // Mouse handling
   /// Is the left mouse button currently pressed?
-  bool m_LeftMouseDown;
+  bool left_mouse_down_;
   /// Is the right mouse button currently pressed?
-  bool m_RightMouseDown;
+  bool right_mouse_down_;
 
   /// X pixel location at which the mouse was pressed (relative to the image panel)
-  int32_t m_StartMouseX;
+  int32_t start_mouse_x_;
   /// Y pixel location at which the mouse was pressed (relative to the image panel)
-  int32_t m_StartMouseY;
+  int32_t start_mouse_y_;
   /// X pixel location of the mouse right now (relative to the image panel)
-  int32_t m_CurrentMouseX;
+  int32_t current_mouse_x_;
   /// Y pixel location of the mouse right now (relative to the image panel)
-  int32_t m_CurrentMouseY;
-  
-  float m_PanMin;
-  float m_PanMax;
-  
-  float m_TiltMin;
-  float m_TiltMax;
-  
-  float m_ZoomMin;
-  float m_ZoomMax;
-  
-  wxTimer m_ZoomScrollTimer;
+  int32_t current_mouse_y_;
+
+  float pan_min_;
+  float pan_max_;
+
+  float tilt_min_;
+  float tilt_max_;
+
+  float zoom_min_;
+  float zoom_max_;
+
+  wxTimer zoom_scroll_timer_;
 };
 
 #endif

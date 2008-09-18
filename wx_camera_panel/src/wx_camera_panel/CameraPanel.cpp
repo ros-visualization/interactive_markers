@@ -70,321 +70,339 @@ DEFINE_EVENT_TYPE(EVT_FAKE_REFRESH)
 
 CameraPanel::CameraPanel(wxWindow* parent)
 : CameraPanelBase( parent )
-, m_Enabled( false )
-, m_ImageData( NULL )
-, m_Image( NULL )
-, m_ImageCodec( &m_ImageMessage )
-, m_RecreateBitmap( false )
-, m_CurrentPan( 0.0f )
-, m_CurrentTilt( 0.0f )
-, m_CurrentZoom( 0.0f )
-, m_HasPanTarget( false )
-, m_PanTarget( 0.0f )
-, m_HasTiltTarget( false )
-, m_TiltTarget( 0.0f )
-, m_HasZoomTarget( false )
-, m_ZoomTarget( 0.0f )
-, m_LeftMouseDown( false )
-, m_RightMouseDown( false )
-, m_StartMouseX( 0 )
-, m_StartMouseY( 0 )
-, m_CurrentMouseX( 0 )
-, m_CurrentMouseY( 0 )
-, m_PanMin( -169.0f )
-, m_PanMax( 169.0f )
-, m_TiltMin( -10.0f )
-, m_TiltMax( 90.0f )
-, m_ZoomMin( 1.0f )
-, m_ZoomMax( 9999.0f )
-, m_ZoomScrollTimer( this )
+, enabled_( false )
+, image_data_( NULL )
+, image_( NULL )
+, image_codec_( &image_message_ )
+, recreate_bitmap_( false )
+, current_pan_( 0.0f )
+, current_tilt_( 0.0f )
+, current_zoom_( 0.0f )
+, has_pan_target_( false )
+, pan_target_( 0.0f )
+, has_tilt_target_( false )
+, tilt_target_( 0.0f )
+, has_zoom_target_( false )
+, zoom_target_( 0.0f )
+, left_mouse_down_( false )
+, right_mouse_down_( false )
+, start_mouse_x_( 0 )
+, start_mouse_y_( 0 )
+, current_mouse_x_( 0 )
+, current_mouse_y_( 0 )
+, pan_min_( -169.0f )
+, pan_max_( 169.0f )
+, tilt_min_( -10.0f )
+, tilt_max_( 90.0f )
+, zoom_min_( 1.0f )
+, zoom_max_( 9999.0f )
+, zoom_scroll_timer_( this )
 {
   wxInitAllImageHandlers();
 
-  Connect( wxEVT_TIMER, wxTimerEventHandler(CameraPanel::OnScrollComplete), NULL, this);
+  Connect( wxEVT_TIMER, wxTimerEventHandler(CameraPanel::onScrollComplete), NULL, this);
 
-  m_ROSNode = ros::node::instance();
+  ros_node_ = ros::node::instance();
 
   /// @todo This should go away once creation of the ros::node is more well-defined
-  if (!m_ROSNode)
+  if (!ros_node_)
   {
     int argc = 0;
     ros::init( argc, 0 );
-    m_ROSNode = new ros::node( "CameraPanel" );
+    ros_node_ = new ros::node( "CameraPanel" );
   }
-  ROS_ASSERT( m_ROSNode );
+  ROS_ASSERT( ros_node_ );
 
-  m_ImagePanel->Connect( EVT_FAKE_REFRESH, wxCommandEventHandler( CameraPanel::OnFakeRefresh ), NULL, this );
+  image_panel_->Connect( EVT_FAKE_REFRESH, wxCommandEventHandler( CameraPanel::onFakeRefresh ), NULL, this );
 }
 
 CameraPanel::~CameraPanel()
 {
-  m_ImagePanel->Disconnect( EVT_FAKE_REFRESH, wxCommandEventHandler( CameraPanel::OnFakeRefresh ), NULL, this );
+  image_panel_->Disconnect( EVT_FAKE_REFRESH, wxCommandEventHandler( CameraPanel::onFakeRefresh ), NULL, this );
 
-  SetEnabled( false );
+  setEnabled( false );
 
-  m_ROSNode->shutdown();
-  delete m_ROSNode;
-
-  delete [] m_ImageData;
-  delete m_Image;
+  delete [] image_data_;
+  delete image_;
 }
 
-void CameraPanel::SetImageSubscription( const std::string& subscription )
+void CameraPanel::setName( const std::string& name )
 {
-  if ( m_ImageTopic == subscription )
+  name_ = name;
+
+  setImageSubscription( name + "/image" );
+  setPTZStateSubscription( name + "/ptz_state" );
+  setPTZControlCommand( name + "/ptz_cmd" );
+}
+
+void CameraPanel::setImageSubscription( const std::string& subscription )
+{
+  if ( image_topic_ == subscription )
   {
     return;
   }
 
   // if we already have a subscription, unsubscribe
-  if ( !m_ImageTopic.empty() )
+  if ( !image_topic_.empty() )
   {
-    UnsubscribeImage();
+    unsubscribeImage();
   }
 
-  m_ImageTopic = subscription;
+  image_topic_ = subscription;
 
-  if ( !m_ImageTopic.empty() )
+  if ( !image_topic_.empty() )
   {
-    SubscribeImage();
+    subscribeImage();
   }
 }
 
-void CameraPanel::SetPTZStateSubscription( const std::string& subscription )
+void CameraPanel::setPTZStateSubscription( const std::string& subscription )
 {
-  if ( m_PTZStateTopic == subscription )
+  if ( ptz_state_topic_ == subscription )
   {
     return;
   }
 
   // if we already have a subscription, unsubscribe
-  if ( !m_PTZStateTopic.empty() )
+  if ( !ptz_state_topic_.empty() )
   {
-    UnsubscribePTZState();
+    unsubscribePTZState();
   }
 
-  m_PTZStateTopic = subscription;
+  ptz_state_topic_ = subscription;
 
-  if ( !m_PTZStateTopic.empty() )
+  if ( !ptz_state_topic_.empty() )
   {
-    SubscribePTZState();
+    subscribePTZState();
   }
 }
 
-void CameraPanel::SetPTZControlCommand( const std::string& command )
+void CameraPanel::setPTZControlCommand( const std::string& command )
 {
-  if ( m_PTZControlTopic == command )
+  if ( ptz_control_topic_ == command )
   {
     return;
   }
 
   // if we already have a command we're advertising, stop
-  if ( !m_PTZControlTopic.empty() )
+  if ( !ptz_control_topic_.empty() )
   {
-    StopPTZControl();
+    stopPTZControl();
   }
 
-  m_PTZControlTopic = command;
+  ptz_control_topic_ = command;
 
-  if ( !m_PTZControlTopic.empty() )
+  if ( !ptz_control_topic_.empty() )
   {
-    AdvertisePTZControl();
+    advertisePTZControl();
   }
 }
 
-void CameraPanel::SetEnabled( bool enabled )
+void CameraPanel::setEnabled( bool enabled )
 {
-  if ( m_Enabled == enabled )
+  if ( enabled_ == enabled )
   {
     return;
   }
 
   if ( enabled )
   {
-    m_Enabled = true;
-    StartAll();
+    enabled_ = true;
+    startAll();
   }
   else
   {
-    StopAll();
-    m_Enabled = false;
+    stopAll();
+    enabled_ = false;
   }
 
-  m_Enable->SetValue( enabled );
+  enable_->SetValue( enabled );
 }
 
-void CameraPanel::SetPanLimits( float min, float max )
+void CameraPanel::setPTZEnabled( bool enabled )
 {
-  m_PanMin = min;
-  m_PanMax = max;
-}
-
-void CameraPanel::SetTiltLimits( float min, float max )
-{
-  m_TiltMin = min;
-  m_TiltMax = max;
-}
-
-void CameraPanel::SetZoomLimits( float min, float max )
-{
-  m_ZoomMin = min;
-  m_ZoomMax = max;
-}
-
-void CameraPanel::StartAll()
-{
-  SubscribeImage();
-  SubscribePTZState();
-  AdvertisePTZControl();
-}
-
-void CameraPanel::StopAll()
-{
-  UnsubscribeImage();
-  UnsubscribePTZState();
-  StopPTZControl();
-}
-
-void CameraPanel::SubscribeImage()
-{
-  if ( IsImageEnabled() )
+  if ( ptz_enabled_ == enabled )
   {
-    m_ROSNode->subscribe( m_ImageTopic, m_ImageMessage, &CameraPanel::IncomingImage, this, 1 );
+    return;
+  }
+
+  ptz_enabled_ = enabled;
+
+  if ( enabled )
+  {
+    subscribePTZState();
+    advertisePTZControl();
+  }
+  else
+  {
+    unsubscribePTZState();
+    stopPTZControl();
   }
 }
 
-void CameraPanel::UnsubscribeImage()
+void CameraPanel::setPanLimits( float min, float max )
 {
-  if ( IsImageEnabled() )
+  pan_min_ = min;
+  pan_max_ = max;
+}
+
+void CameraPanel::setTiltLimits( float min, float max )
+{
+  tilt_min_ = min;
+  tilt_max_ = max;
+}
+
+void CameraPanel::setZoomLimits( float min, float max )
+{
+  zoom_min_ = min;
+  zoom_max_ = max;
+}
+
+void CameraPanel::startAll()
+{
+  subscribeImage();
+  subscribePTZState();
+  advertisePTZControl();
+}
+
+void CameraPanel::stopAll()
+{
+  unsubscribeImage();
+  unsubscribePTZState();
+  stopPTZControl();
+}
+
+void CameraPanel::subscribeImage()
+{
+  if ( isImageEnabled() )
   {
-    m_ROSNode->unsubscribe( m_ImageTopic );
+    ros_node_->subscribe( image_topic_, image_message_, &CameraPanel::incomingImage, this, 1 );
   }
 }
 
-void CameraPanel::SubscribePTZState()
+void CameraPanel::unsubscribeImage()
 {
-  if ( IsPTZStateEnabled() )
+  ros_node_->unsubscribe( image_topic_ );
+}
+
+void CameraPanel::subscribePTZState()
+{
+  if ( isPTZStateEnabled() )
   {
-    m_ROSNode->subscribe( m_PTZStateTopic, m_PTZStateMessage, &CameraPanel::IncomingPTZState, this, 0 );
+    ros_node_->subscribe( ptz_state_topic_, ptz_state_message_, &CameraPanel::incomingPTZState, this, 0 );
   }
 }
 
-void CameraPanel::UnsubscribePTZState()
+void CameraPanel::unsubscribePTZState()
 {
-  if ( IsPTZStateEnabled() )
+  ros_node_->unsubscribe( ptz_state_topic_ );
+}
+
+void CameraPanel::advertisePTZControl()
+{
+  if ( isPTZControlEnabled() )
   {
-    m_ROSNode->unsubscribe( m_PTZStateTopic );
+    ros_node_->advertise<axis_cam::PTZActuatorCmd>(ptz_control_topic_, 0);
   }
 }
 
-void CameraPanel::AdvertisePTZControl()
+void CameraPanel::stopPTZControl()
 {
-  if ( IsPTZControlEnabled() )
-  {
-    m_ROSNode->advertise<axis_cam::PTZActuatorCmd>(m_PTZControlTopic, 0);
-  }
+  ros_node_->unadvertise(ptz_control_topic_);
 }
 
-void CameraPanel::StopPTZControl()
+void CameraPanel::incomingPTZState()
 {
-  if ( IsPTZControlEnabled() )
+  if ( ptz_state_message_.pan.pos_valid )
   {
-    // jfaust TODO: once there is support for stopping an advertisement
-  }
-}
-
-void CameraPanel::IncomingPTZState()
-{
-  if ( m_PTZStateMessage.pan.pos_valid )
-  {
-    m_CurrentPan = m_PTZStateMessage.pan.pos;
+    current_pan_ = ptz_state_message_.pan.pos;
   }
 
-  if ( m_PTZStateMessage.tilt.pos_valid )
+  if ( ptz_state_message_.tilt.pos_valid )
   {
-    m_CurrentTilt = m_PTZStateMessage.tilt.pos;
+    current_tilt_ = ptz_state_message_.tilt.pos;
   }
 
-  if ( m_PTZStateMessage.zoom.pos_valid )
+  if ( ptz_state_message_.zoom.pos_valid )
   {
-    m_CurrentZoom = m_PTZStateMessage.zoom.pos;
+    current_zoom_ = ptz_state_message_.zoom.pos;
   }
 
-  if ( m_HasPanTarget && abs( m_CurrentPan - m_PanTarget ) < TARGET_PAN_EPSILON )
+  if ( has_pan_target_ && abs( current_pan_ - pan_target_ ) < TARGET_PAN_EPSILON )
   {
-    m_HasPanTarget = false;
+    has_pan_target_ = false;
   }
 
-  if ( m_HasTiltTarget && abs( m_CurrentTilt - m_TiltTarget ) < TARGET_TILT_EPSILON )
+  if ( has_tilt_target_ && abs( current_tilt_ - tilt_target_ ) < TARGET_TILT_EPSILON )
   {
-    m_HasTiltTarget = false;
+    has_tilt_target_ = false;
   }
 
-  if ( m_HasZoomTarget && abs( m_CurrentZoom - m_ZoomTarget ) < TARGET_ZOOM_EPSILON )
+  if ( has_zoom_target_ && abs( current_zoom_ - zoom_target_ ) < TARGET_ZOOM_EPSILON )
   {
-    m_HasZoomTarget = false;
+    has_zoom_target_ = false;
   }
 
   // wx really doesn't like a Refresh call coming from a separate thread
   // send a fake refresh event, so that the call to Refresh comes from the main thread
-  wxCommandEvent evt( EVT_FAKE_REFRESH, m_ImagePanel->GetId() );
-  wxPostEvent( m_ImagePanel, evt );
+  wxCommandEvent evt( EVT_FAKE_REFRESH, image_panel_->GetId() );
+  wxPostEvent( image_panel_, evt );
 }
 
-void CameraPanel::IncomingImage()
+void CameraPanel::incomingImage()
 {
-  m_ImageMutex.lock();
+  image_mutex_.lock();
 
   // if this image is raw, compress it as jpeg since wx doesn't support the raw format
-  if (m_ImageMessage.compression == "raw")
+  if (image_message_.compression == "raw")
   {
-    m_ImageCodec.inflate();
-    m_ImageMessage.compression = "jpeg";
+    image_codec_.inflate();
+    image_message_.compression = "jpeg";
 
-    if (!m_ImageCodec.deflate(100))
+    if (!image_codec_.deflate(100))
       return;
   }
 
 
-  delete [] m_ImageData;
-  const uint32_t dataSize = m_ImageMessage.get_data_size();
-  m_ImageData = new uint8_t[ dataSize ];
-  memcpy( m_ImageData, m_ImageMessage.data, dataSize );
+  delete [] image_data_;
+  const uint32_t dataSize = image_message_.get_data_size();
+  image_data_ = new uint8_t[ dataSize ];
+  memcpy( image_data_, image_message_.data, dataSize );
 
-  delete m_Image;
-  wxMemoryInputStream memoryStream( m_ImageData, dataSize );
-  m_Image = new wxImage( memoryStream, wxBITMAP_TYPE_ANY, -1 );
+  delete image_;
+  wxMemoryInputStream memoryStream( image_data_, dataSize );
+  image_ = new wxImage( memoryStream, wxBITMAP_TYPE_ANY, -1 );
 
-  m_RecreateBitmap = true;
+  recreate_bitmap_ = true;
 
   // wx really doesn't like a Refresh call coming from a separate thread
   // send a fake refresh event, so that the call to Refresh comes from the main thread
-  wxCommandEvent evt( EVT_FAKE_REFRESH, m_ImagePanel->GetId() );
-  wxPostEvent( m_ImagePanel, evt );
+  wxCommandEvent evt( EVT_FAKE_REFRESH, image_panel_->GetId() );
+  wxPostEvent( image_panel_, evt );
 
-  m_ImageMutex.unlock();
+  image_mutex_.unlock();
 }
 
-void CameraPanel::OnFakeRefresh( wxCommandEvent& event )
+void CameraPanel::onFakeRefresh( wxCommandEvent& event )
 {
-  m_ImagePanel->Refresh();
+  image_panel_->Refresh();
 }
 
-void CameraPanel::OnImageSize( wxSizeEvent& event )
+void CameraPanel::onImageSize( wxSizeEvent& event )
 {
-  if ( m_Image )
+  if ( image_ )
   {
-    m_RecreateBitmap = true;
+    recreate_bitmap_ = true;
 
-    m_ImagePanel->Refresh();
+    image_panel_->Refresh();
   }
 
   event.Skip();
 }
 
-void CameraPanel::DrawPan( wxDC& dc, wxPen& pen, float pan )
+void CameraPanel::drawPan( wxDC& dc, wxPen& pen, float pan )
 {
-  wxSize panelSize = m_ImagePanel->GetSize();
+  wxSize panelSize = image_panel_->GetSize();
   int panelWidth = panelSize.GetWidth();
   int panelHeight = panelSize.GetHeight();
 
@@ -393,8 +411,8 @@ void CameraPanel::DrawPan( wxDC& dc, wxPen& pen, float pan )
   int padWidth = (panelWidth - adjustedWidth) / 2;
 
   // Normalize pan to the measure bar
-  pan -= m_PanMin;
-  pan /= (m_PanMax - m_PanMin);
+  pan -= pan_min_;
+  pan /= (pan_max_ - pan_min_);
   pan *= adjustedWidth;
 
   dc.SetPen( pen );
@@ -402,9 +420,9 @@ void CameraPanel::DrawPan( wxDC& dc, wxPen& pen, float pan )
   dc.DrawLine( padWidth + (int)pan, panelHeight, padWidth + (int)pan, panelHeight - POSITION_TICK_LENGTH );
 }
 
-void CameraPanel::DrawTilt( wxDC& dc, wxPen& pen, float tilt )
+void CameraPanel::drawTilt( wxDC& dc, wxPen& pen, float tilt )
 {
-  wxSize panelSize = m_ImagePanel->GetSize();
+  wxSize panelSize = image_panel_->GetSize();
   int panelWidth = panelSize.GetWidth();
   int panelHeight = panelSize.GetHeight();
 
@@ -413,8 +431,8 @@ void CameraPanel::DrawTilt( wxDC& dc, wxPen& pen, float tilt )
   int padHeight = (panelHeight - adjustedHeight) / 2;
 
   // Normalize tilt to the measure bar
-  tilt -= m_TiltMin;
-  tilt /= (m_TiltMax - m_TiltMin);
+  tilt -= tilt_min_;
+  tilt /= (tilt_max_ - tilt_min_);
   tilt *= adjustedHeight;
 
   dc.SetPen( pen );
@@ -423,39 +441,39 @@ void CameraPanel::DrawTilt( wxDC& dc, wxPen& pen, float tilt )
                panelWidth - POSITION_TICK_LENGTH, adjustedHeight + padHeight - (int)tilt );
 }
 
-void CameraPanel::DrawNewPanTiltLocations( wxDC& dc )
+void CameraPanel::drawNewPanTiltLocations( wxDC& dc )
 {
 	float newPan, newTilt;
-	if( m_LeftMouseDown )
+	if( left_mouse_down_ )
 	{
-	  newPan = ComputeNewPan( m_StartMouseX, m_CurrentMouseX );
-	  newTilt = ComputeNewTilt( m_StartMouseY, m_CurrentMouseY );
+	  newPan = computeNewPan( start_mouse_x_, current_mouse_x_ );
+	  newTilt = computeNewTilt( start_mouse_y_, current_mouse_y_ );
 	}
 	else
 	{
-		newPan = m_PanTarget;
-		newTilt = m_TiltTarget;
+		newPan = pan_target_;
+		newTilt = tilt_target_;
 	}
 
   wxPen pen( *wxRED_PEN );
   pen.SetWidth( POSITION_TICK_WIDTH );
 
-  DrawPan( dc, pen, newPan );
-  DrawTilt( dc, pen, newTilt );
+  drawPan( dc, pen, newPan );
+  drawTilt( dc, pen, newTilt );
 }
 
-void CameraPanel::DrawCurrentPanTiltLocations( wxDC& dc )
+void CameraPanel::drawCurrentPanTiltLocations( wxDC& dc )
 {
   wxPen pen( *wxWHITE_PEN );
   pen.SetWidth( POSITION_TICK_WIDTH );
 
-  DrawPan( dc, pen, m_CurrentPan );
-  DrawTilt( dc, pen, m_CurrentTilt );
+  drawPan( dc, pen, current_pan_ );
+  drawTilt( dc, pen, current_tilt_ );
 }
 
-void CameraPanel::DrawZoom( wxDC& dc, wxPen& pen, float zoom )
+void CameraPanel::drawZoom( wxDC& dc, wxPen& pen, float zoom )
 {
-  wxSize panelSize = m_ImagePanel->GetSize();
+  wxSize panelSize = image_panel_->GetSize();
   int panelHeight = panelSize.GetHeight();
 
   int adjustedHeight = panelHeight * BAR_WINDOW_PROPORTION;
@@ -463,8 +481,8 @@ void CameraPanel::DrawZoom( wxDC& dc, wxPen& pen, float zoom )
   int padHeight = (panelHeight - adjustedHeight) / 2;
 
   // Normalize zoom to the window
-  zoom -= m_ZoomMin;
-  zoom /= (m_ZoomMax - m_ZoomMin);
+  zoom -= zoom_min_;
+  zoom /= (zoom_max_ - zoom_min_);
   zoom *= adjustedHeight;
 
   dc.SetPen( pen );
@@ -473,34 +491,34 @@ void CameraPanel::DrawZoom( wxDC& dc, wxPen& pen, float zoom )
   dc.DrawLine( 0, adjustedHeight + padHeight - (int)zoom, POSITION_TICK_LENGTH, adjustedHeight + padHeight - (int)zoom );
 }
 
-void CameraPanel::DrawNewZoomLocation( wxDC& dc )
+void CameraPanel::drawNewZoomLocation( wxDC& dc )
 {
 	float newZoom;
-	if( m_RightMouseDown )
+	if( right_mouse_down_ )
 	{
-		newZoom = ComputeNewZoom( m_StartMouseY, m_CurrentMouseY );
+		newZoom = computeNewZoom( start_mouse_y_, current_mouse_y_ );
 	}
 	else
 	{
-		newZoom = m_ZoomTarget;
+		newZoom = zoom_target_;
 	}
   wxPen pen( *wxRED_PEN );
   pen.SetWidth( POSITION_TICK_WIDTH );
 
-  DrawZoom( dc, pen, newZoom );
+  drawZoom( dc, pen, newZoom );
 }
 
-void CameraPanel::DrawCurrentZoomLocation( wxDC& dc )
+void CameraPanel::drawCurrentZoomLocation( wxDC& dc )
 {
   wxPen pen( *wxWHITE_PEN );
   pen.SetWidth( POSITION_TICK_WIDTH );
 
-  DrawZoom( dc, pen, m_CurrentZoom );
+  drawZoom( dc, pen, current_zoom_ );
 }
 
-void CameraPanel::DrawPanBar( wxDC& dc )
+void CameraPanel::drawPanBar( wxDC& dc )
 {
-  wxSize panelSize = m_ImagePanel->GetSize();
+  wxSize panelSize = image_panel_->GetSize();
   int panelWidth = panelSize.GetWidth();
   int panelHeight = panelSize.GetHeight();
 
@@ -516,9 +534,9 @@ void CameraPanel::DrawPanBar( wxDC& dc )
   dc.DrawRectangle( padWidth, panelHeight - BAR_WIDTH, adjustedWidth, BAR_WIDTH );
 }
 
-void CameraPanel::DrawTiltBar( wxDC& dc )
+void CameraPanel::drawTiltBar( wxDC& dc )
 {
-  wxSize panelSize = m_ImagePanel->GetSize();
+  wxSize panelSize = image_panel_->GetSize();
   int panelWidth = panelSize.GetWidth();
   int panelHeight = panelSize.GetHeight();
 
@@ -534,9 +552,9 @@ void CameraPanel::DrawTiltBar( wxDC& dc )
   dc.DrawRectangle( panelWidth - BAR_WIDTH, padHeight, BAR_WIDTH, adjustedHeight );
 }
 
-void CameraPanel::DrawZoomBar( wxDC& dc )
+void CameraPanel::drawZoomBar( wxDC& dc )
 {
-  wxSize panelSize = m_ImagePanel->GetSize();
+  wxSize panelSize = image_panel_->GetSize();
   int panelHeight = panelSize.GetHeight();
 
   int adjustedHeight = panelHeight * BAR_WINDOW_PROPORTION;
@@ -551,271 +569,270 @@ void CameraPanel::DrawZoomBar( wxDC& dc )
   dc.DrawRectangle( 0, padHeight, BAR_WIDTH, adjustedHeight );
 }
 
-void CameraPanel::OnImagePaint( wxPaintEvent& event )
+void CameraPanel::onImagePaint( wxPaintEvent& event )
 {
-  wxPaintDC dc( m_ImagePanel );
+  wxPaintDC dc( image_panel_ );
 
   // Draw the image as the background
-  if ( m_Image )
+  if ( image_ )
   {
-    m_ImageMutex.lock();
+    image_mutex_.lock();
 
-    if ( m_RecreateBitmap )
+    if ( recreate_bitmap_ )
     {
-      wxSize scale = m_ImagePanel->GetSize();
-      m_Bitmap = m_Image->Scale( scale.GetWidth(), scale.GetHeight() );
+      wxSize scale = image_panel_->GetSize();
+      bitmap_ = image_->Scale( scale.GetWidth(), scale.GetHeight() );
 
-      m_RecreateBitmap = false;
+      recreate_bitmap_ = false;
     }
 
-    dc.DrawBitmap( m_Bitmap, 0, 0, false );
+    dc.DrawBitmap( bitmap_, 0, 0, false );
 
-    m_ImageMutex.unlock();
+    image_mutex_.unlock();
   }
   else
   {
     dc.DrawText( wxT( "No image to display" ), 0, 0 );
   }
 
-  bool ptzStateEnabled = IsPTZStateEnabled();
-  bool ptzControlEnabled = IsPTZControlEnabled();
+  bool ptzStateEnabled = isPTZStateEnabled();
+  bool ptzControlEnabled = isPTZControlEnabled();
 
   if ( ptzStateEnabled || ptzControlEnabled )
   {
-    DrawPanBar( dc );
-    DrawTiltBar( dc );
-    DrawZoomBar( dc );
+    drawPanBar( dc );
+    drawTiltBar( dc );
+    drawZoomBar( dc );
 
-	if ( !( m_LeftMouseDown && m_RightMouseDown ) && ptzControlEnabled )
+	if ( !( left_mouse_down_ && right_mouse_down_ ) && ptzControlEnabled )
 	{
 		// Now draw pan/tilt if necessary
-		if ( m_LeftMouseDown || m_HasPanTarget || m_HasTiltTarget )
+		if ( left_mouse_down_ || has_pan_target_ || has_tilt_target_ )
 		{
-		  DrawNewPanTiltLocations( dc );
+		  drawNewPanTiltLocations( dc );
 		}
 
-		if ( m_RightMouseDown || m_HasZoomTarget )
+		if ( right_mouse_down_ || has_zoom_target_ )
 		{
-		  DrawNewZoomLocation( dc );
+		  drawNewZoomLocation( dc );
 		}
 	}
 
 	if ( ptzStateEnabled )
 	{
-		DrawCurrentPanTiltLocations( dc );
-		DrawCurrentZoomLocation( dc );
+		drawCurrentPanTiltLocations( dc );
+		drawCurrentZoomLocation( dc );
 	}
   }
 }
 
-void CameraPanel::OnSetup( wxCommandEvent& event )
+void CameraPanel::onSetup( wxCommandEvent& event )
 {
-  CameraSetupDialog dialog( this, m_ROSNode, m_ImageTopic, m_PTZStateTopic, m_PTZControlTopic, m_PanMin, m_PanMax, m_TiltMin, m_TiltMax, m_ZoomMin, m_ZoomMax );
+  CameraSetupDialog dialog( this, ros_node_, name_, pan_min_, pan_max_, tilt_min_, tilt_max_, zoom_min_, zoom_max_, ptz_enabled_ );
 
-  if (dialog.ShowModal() == wxID_OK)
+  if (dialog.ShowModal() == wxOK)
   {
-    SetImageSubscription( dialog.GetImageSubscription() );
-    SetPTZStateSubscription( dialog.GetPTZStateSubscription() );
-    SetPTZControlCommand( dialog.GetPTZControlCommand() );
-    m_PanMin = dialog.GetPanMin();
-    m_PanMax = dialog.GetPanMax();
-    m_TiltMin = dialog.GetTiltMin();
-    m_TiltMax = dialog.GetTiltMax();
-    m_ZoomMin = dialog.GetZoomMin();
-    m_ZoomMax = dialog.GetZoomMax();
+    setName( dialog.getName() );
+    setPTZEnabled( dialog.getPTZEnabled() );
+    pan_min_ = dialog.getPanMin();
+    pan_max_ = dialog.getPanMax();
+    tilt_min_ = dialog.getTiltMin();
+    tilt_max_ = dialog.getTiltMax();
+    zoom_min_ = dialog.getZoomMin();
+    zoom_max_ = dialog.getZoomMax();
   }
-  m_ImagePanel->Refresh();
+  image_panel_->Refresh();
 }
 
-void CameraPanel::OnEnable( wxCommandEvent& event )
+void CameraPanel::onEnable( wxCommandEvent& event )
 {
-  SetEnabled( event.IsChecked() );
+  setEnabled( event.IsChecked() );
 }
 
-void CameraPanel::OnLeftMouseDown( wxMouseEvent& event )
+void CameraPanel::onLeftMouseDown( wxMouseEvent& event )
 {
-  if ( !IsPTZControlEnabled() )
+  if ( !isPTZControlEnabled() )
   {
     return;
   }
 
-  m_LeftMouseDown = true;
+  left_mouse_down_ = true;
 
-  m_StartMouseX = m_CurrentMouseX = event.GetX();
-  m_StartMouseY = m_CurrentMouseY = event.GetY();
+  start_mouse_x_ = current_mouse_x_ = event.GetX();
+  start_mouse_y_ = current_mouse_y_ = event.GetY();
 }
 
-void CameraPanel::OnLeftMouseUp( wxMouseEvent& event )
+void CameraPanel::onLeftMouseUp( wxMouseEvent& event )
 {
-  if ( !m_LeftMouseDown || !IsPTZControlEnabled() )
+  if ( !left_mouse_down_ || !isPTZControlEnabled() )
   {
-    m_LeftMouseDown = false;
+    left_mouse_down_ = false;
     return;
   }
 
-  float newPan = ComputeNewPan( m_StartMouseX, event.GetX() );
-  float newTilt = ComputeNewTilt( m_StartMouseY, event.GetY() );
+  float newPan = computeNewPan( start_mouse_x_, event.GetX() );
+  float newTilt = computeNewTilt( start_mouse_y_, event.GetY() );
 
-  m_PTZControlMessage.pan.valid = 1;
-  m_PTZControlMessage.pan.cmd = newPan;
-  m_PTZControlMessage.tilt.valid = 1;
-  m_PTZControlMessage.tilt.cmd = newTilt;
-  m_PTZControlMessage.zoom.valid = 0;
+  ptz_command_message_.pan.valid = 1;
+  ptz_command_message_.pan.cmd = newPan;
+  ptz_command_message_.tilt.valid = 1;
+  ptz_command_message_.tilt.cmd = newTilt;
+  ptz_command_message_.zoom.valid = 0;
 
-  m_ROSNode->publish(m_PTZControlTopic, m_PTZControlMessage);
+  ros_node_->publish(ptz_control_topic_, ptz_command_message_);
 
-  m_LeftMouseDown = false;
+  left_mouse_down_ = false;
 
-  m_HasPanTarget = true;
-  m_HasTiltTarget = true;
-  m_PanTarget = newPan;
-  m_TiltTarget = newTilt;
+  has_pan_target_ = true;
+  has_tilt_target_ = true;
+  pan_target_ = newPan;
+  tilt_target_ = newTilt;
 
-  m_StartMouseX = m_CurrentMouseX = event.GetX();
-  m_StartMouseY = m_CurrentMouseY = event.GetY();
+  start_mouse_x_ = current_mouse_x_ = event.GetX();
+  start_mouse_y_ = current_mouse_y_ = event.GetY();
 
-  m_ImagePanel->Refresh();
+  image_panel_->Refresh();
 }
 
-void CameraPanel::OnMiddleMouseUp( wxMouseEvent& event )
+void CameraPanel::onMiddleMouseUp( wxMouseEvent& event )
 {
-	if ( !IsPTZControlEnabled() )
+	if ( !isPTZControlEnabled() )
 		return;
 
-	wxSize scale = m_ImagePanel->GetSize();
+	wxSize scale = image_panel_->GetSize();
 
 	float pan_mid = ((float)scale.GetWidth())/2.0f;
 	float tilt_mid = ((float)scale.GetHeight())/2.0f;
 
-	float pan_change = (event.m_x - pan_mid)/pan_mid*(21.0f-(m_CurrentZoom)/500.0f);
-	float tilt_change = -(event.m_y - tilt_mid)/tilt_mid*(15.0f-(m_CurrentZoom)/700.0f);
+	float pan_change = (event.m_x - pan_mid)/pan_mid*(21.0f-(current_zoom_)/500.0f);
+	float tilt_change = -(event.m_y - tilt_mid)/tilt_mid*(15.0f-(current_zoom_)/700.0f);
 
-	if( m_HasPanTarget )
-		m_PanTarget = m_PanTarget + pan_change;
+	if( has_pan_target_ )
+		pan_target_ = pan_target_ + pan_change;
 	else
-		m_PanTarget = m_CurrentPan + pan_change;
+		pan_target_ = current_pan_ + pan_change;
 
-	if( m_HasTiltTarget )
-		m_TiltTarget = m_TiltTarget + tilt_change;
+	if( has_tilt_target_ )
+		tilt_target_ = tilt_target_ + tilt_change;
 	else
-		m_TiltTarget = m_CurrentTilt + tilt_change;
+		tilt_target_ = current_tilt_ + tilt_change;
 
-	m_HasPanTarget = true;
-	m_HasTiltTarget = true;
+	has_pan_target_ = true;
+	has_tilt_target_ = true;
 
-	m_PTZControlMessage.pan.valid = 1;
-	m_PTZControlMessage.pan.cmd = std::min(std::max(m_PanTarget, m_PanMin), m_PanMax);
-	m_PTZControlMessage.tilt.valid = 1;
-	m_PTZControlMessage.tilt.cmd = std::min(std::max(m_TiltTarget, m_TiltMin), m_TiltMax);
-	m_PTZControlMessage.zoom.valid = 0;
+	ptz_command_message_.pan.valid = 1;
+	ptz_command_message_.pan.cmd = std::min(std::max(pan_target_, pan_min_), pan_max_);
+	ptz_command_message_.tilt.valid = 1;
+	ptz_command_message_.tilt.cmd = std::min(std::max(tilt_target_, tilt_min_), tilt_max_);
+	ptz_command_message_.zoom.valid = 0;
 
-	m_ROSNode->publish(m_PTZControlTopic, m_PTZControlMessage);
+	ros_node_->publish(ptz_control_topic_, ptz_command_message_);
 
-	m_ImagePanel->Refresh();
+	image_panel_->Refresh();
 }
 
-void CameraPanel::OnMouseWheel( wxMouseEvent& event )
+void CameraPanel::onMouseWheel( wxMouseEvent& event )
 {
-	if( !IsPTZControlEnabled() )
+	if( !isPTZControlEnabled() )
 	{
 		return;
 	}
 
-	float zoom = m_HasZoomTarget ? m_ZoomTarget : m_CurrentZoom;
-	m_HasZoomTarget = true;
-	zoom = std::min(std::max(zoom + (float)event.GetWheelRotation()*(m_ZoomMax-m_ZoomMin)/ZOOM_SCROLL_STEPS/(float)event.GetWheelDelta(), m_ZoomMin), m_ZoomMax);
-	if(zoom != m_ZoomTarget)
+	float zoom = has_zoom_target_ ? zoom_target_ : current_zoom_;
+	has_zoom_target_ = true;
+	zoom = std::min(std::max(zoom + (float)event.GetWheelRotation()*(zoom_max_-zoom_min_)/ZOOM_SCROLL_STEPS/(float)event.GetWheelDelta(), zoom_min_), zoom_max_);
+	if(zoom != zoom_target_)
 	{
-		m_ZoomTarget = zoom;
-		m_ZoomScrollTimer.Start(SCROLL_WAIT_INTERVAL,true);
+		zoom_target_ = zoom;
+		zoom_scroll_timer_.Start(SCROLL_WAIT_INTERVAL,true);
 	}
 }
 
-void CameraPanel::OnScrollComplete( wxTimerEvent& event )
+void CameraPanel::onScrollComplete( wxTimerEvent& event )
 {
-  m_PTZControlMessage.pan.valid = 0;
-  m_PTZControlMessage.tilt.valid = 0;
-  m_PTZControlMessage.zoom.valid = 1;
-  m_PTZControlMessage.zoom.cmd = m_ZoomTarget;
+  ptz_command_message_.pan.valid = 0;
+  ptz_command_message_.tilt.valid = 0;
+  ptz_command_message_.zoom.valid = 1;
+  ptz_command_message_.zoom.cmd = zoom_target_;
 
-  m_ROSNode->publish(m_PTZControlTopic, m_PTZControlMessage);
+  ros_node_->publish(ptz_control_topic_, ptz_command_message_);
 }
 
-void CameraPanel::OnRightMouseDown( wxMouseEvent& event )
+void CameraPanel::onRightMouseDown( wxMouseEvent& event )
 {
-  if ( !IsPTZControlEnabled() )
+  if ( !isPTZControlEnabled() )
   {
     return;
   }
 
-  m_RightMouseDown = true;
+  right_mouse_down_ = true;
 
-  m_StartMouseX = m_CurrentMouseX = event.GetX();
-  m_StartMouseY = m_CurrentMouseY = event.GetY();
+  start_mouse_x_ = current_mouse_x_ = event.GetX();
+  start_mouse_y_ = current_mouse_y_ = event.GetY();
 }
 
-void CameraPanel::OnRightMouseUp( wxMouseEvent& event )
+void CameraPanel::onRightMouseUp( wxMouseEvent& event )
 {
-  if ( !m_RightMouseDown || !IsPTZControlEnabled() )
+  if ( !right_mouse_down_ || !isPTZControlEnabled() )
   {
-    m_RightMouseDown = false;
+    right_mouse_down_ = false;
     return;
   }
 
-  float newZoom = ComputeNewZoom( m_StartMouseY, event.GetY() );
+  float newZoom = computeNewZoom( start_mouse_y_, event.GetY() );
 
-  m_PTZControlMessage.pan.valid = 0;
-  m_PTZControlMessage.tilt.valid = 0;
-  m_PTZControlMessage.zoom.valid = 1;
-  m_PTZControlMessage.zoom.cmd = newZoom;
+  ptz_command_message_.pan.valid = 0;
+  ptz_command_message_.tilt.valid = 0;
+  ptz_command_message_.zoom.valid = 1;
+  ptz_command_message_.zoom.cmd = newZoom;
 
-  m_ROSNode->publish(m_PTZControlTopic, m_PTZControlMessage);
+  ros_node_->publish(ptz_control_topic_, ptz_command_message_);
 
-  m_RightMouseDown = false;
+  right_mouse_down_ = false;
 
-  m_HasZoomTarget = true;
-  m_ZoomTarget = newZoom;
+  has_zoom_target_ = true;
+  zoom_target_ = newZoom;
 
-  m_StartMouseX = m_CurrentMouseX = event.GetX();
-  m_StartMouseY = m_CurrentMouseY = event.GetY();
+  start_mouse_x_ = current_mouse_x_ = event.GetX();
+  start_mouse_y_ = current_mouse_y_ = event.GetY();
 
-  m_ImagePanel->Refresh();
+  image_panel_->Refresh();
 }
 
-void CameraPanel::OnMouseMotion( wxMouseEvent& event )
+void CameraPanel::onMouseMotion( wxMouseEvent& event )
 {
-  if ( m_LeftMouseDown && m_RightMouseDown
-       || !(m_LeftMouseDown || m_RightMouseDown) )
+  if ( left_mouse_down_ && right_mouse_down_
+       || !(left_mouse_down_ || right_mouse_down_) )
   {
     return;
   }
 
-  m_CurrentMouseX = event.GetX();
-  m_CurrentMouseY = event.GetY();
+  current_mouse_x_ = event.GetX();
+  current_mouse_y_ = event.GetY();
 
-  m_ImagePanel->Refresh();
+  image_panel_->Refresh();
 }
 
-float CameraPanel::ComputeNewPan( int32_t startX, int32_t endX )
+float CameraPanel::computeNewPan( int32_t startX, int32_t endX )
 {
-  float pan = m_HasPanTarget ? m_PanTarget : m_CurrentPan;
+  float pan = has_pan_target_ ? pan_target_ : current_pan_;
   int32_t diffX = endX - startX;
 
-  return std::min(std::max(pan  + PAN_SCALE*(float)diffX, m_PanMin), m_PanMax);
+  return std::min(std::max(pan  + PAN_SCALE*(float)diffX, pan_min_), pan_max_);
 }
 
-float CameraPanel::ComputeNewTilt( int32_t startY, int32_t endY )
+float CameraPanel::computeNewTilt( int32_t startY, int32_t endY )
 {
-  float tilt = m_HasTiltTarget ? m_TiltTarget : m_CurrentTilt;
+  float tilt = has_tilt_target_ ? tilt_target_ : current_tilt_;
   int32_t diffY = startY - endY;
 
-  return std::min(std::max(tilt + TILT_SCALE*(float)diffY, m_TiltMin), m_TiltMax);
+  return std::min(std::max(tilt + TILT_SCALE*(float)diffY, tilt_min_), tilt_max_);
 }
 
-float CameraPanel::ComputeNewZoom( int32_t startY, int32_t endY )
+float CameraPanel::computeNewZoom( int32_t startY, int32_t endY )
 {
-  float zoom = m_HasZoomTarget ? m_ZoomTarget : m_CurrentZoom;
+  float zoom = has_zoom_target_ ? zoom_target_ : current_zoom_;
   int32_t diffY = startY - endY;
 
-  return std::min(std::max(zoom + ZOOM_SCALE*(float)diffY, m_ZoomMin), m_ZoomMax);
+  return std::min(std::max(zoom + ZOOM_SCALE*(float)diffY, zoom_min_), zoom_max_);
 }

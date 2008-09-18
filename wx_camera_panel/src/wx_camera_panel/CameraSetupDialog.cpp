@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2008, Willow Garage, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of the Willow Garage, Inc. nor the names of its
  *       contributors may be used to endorse or promote products derived from
  *       this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -32,29 +32,23 @@
 
 #include "wx_topic_display/TopicDisplayDialog.h"
 
-CameraSetupDialog::CameraSetupDialog(wxWindow* parent, ros::node* node, const std::string& imageSubscription, const std::string& ptzStateSubscription, 
-									 const std::string& ptzControlCommand, float panMin, float panMax, float tiltMin, float tiltMax, float zoomMin,
-									 float zoomMax)
+CameraSetupDialog::CameraSetupDialog(wxWindow* parent, ros::node* node, const std::string& name, float panMin, float panMax,
+                                     float tiltMin, float tiltMax, float zoomMin, float zoomMax, bool ptz_enabled)
 : CameraSetupDialogBase( parent )
-, m_ROSNode( node )
+, ros_node_( node )
 {
-	m_ImageSubscriptionText->SetValue( wxString::FromAscii( imageSubscription.c_str() ) );
-	m_PTZStateSubscriptionText->SetValue( wxString::FromAscii( ptzStateSubscription.c_str() ) );
-	m_PTZControlCommandText->SetValue( wxString::FromAscii( ptzControlCommand.c_str() ) );
-	
-	m_PanMinSpin->SetValue((int)panMin);
-	m_PanMaxSpin->SetValue((int)panMax);
-	m_TiltMinSpin->SetValue((int)tiltMin);
-	m_TiltMaxSpin->SetValue((int)tiltMax);
-	m_ZoomMinSpin->SetValue((int)zoomMin);
-	m_ZoomMaxSpin->SetValue((int)zoomMax);
-	
-	if(ptzStateSubscription == std::string("") && ptzControlCommand == std::string(""))
+	camera_name_->SetValue( wxString::FromAscii( name.c_str() ) );
+
+	pan_min_->SetValue((int)panMin);
+	pan_max_->SetValue((int)panMax);
+	tilt_min_->SetValue((int)tiltMin);
+	tilt_max_->SetValue((int)tiltMax);
+	zoom_min_->SetValue((int)zoomMin);
+	zoom_max_->SetValue((int)zoomMax);
+
+	if( !ptz_enabled )
 	{
-		m_EnablePTZCheck->SetValue(false);
-		m_PTZStateSubscriptionText->Enable(false);
-		m_PTZStateSubscriptionBrowse->Enable(false);
-		m_PTZControlCommandText->Enable(false);
+		enable_ptz_->SetValue(false);
 	}
 }
 
@@ -62,104 +56,47 @@ CameraSetupDialog::~CameraSetupDialog()
 {
 }
 
-void CameraSetupDialog::OnOk( wxCommandEvent& event )
+void CameraSetupDialog::onOk( wxCommandEvent& event )
 {
-	EndModal( wxID_OK );
+	EndModal( wxOK );
 }
 
-void CameraSetupDialog::OnCancel( wxCommandEvent& event )
+void CameraSetupDialog::onCancel( wxCommandEvent& event )
 {
-	EndModal( wxID_CANCEL );
+	EndModal( wxCANCEL );
 }
 
-void CameraSetupDialog::OnImageSubscriptionBrowse( wxCommandEvent& event )
+bool CameraSetupDialog::getPTZEnabled()
 {
-	TopicDisplayDialog dialog(this, m_ROSNode, false);
-
-	if (dialog.ShowModal() == wxID_OK)
-	{
-		std::vector<std::string> selection;
-		dialog.getSelection(selection);
-
-		if (!selection.empty())
-		{
-			m_ImageSubscriptionText->SetValue( wxString::FromAscii( selection[0].c_str() ) );
-		}
-	}
+  return enable_ptz_->IsChecked();
 }
 
-void CameraSetupDialog::OnPTZStateSubscriptionBrowse( wxCommandEvent& event )
+std::string CameraSetupDialog::getName()
 {
-	TopicDisplayDialog dialog(this, m_ROSNode, false);
-
-	if (dialog.ShowModal() == wxID_OK)
-	{
-		std::vector<std::string> selection;
-		dialog.getSelection(selection);
-
-		if (!selection.empty())
-		{
-			m_PTZStateSubscriptionText->SetValue( wxString::FromAscii( selection[0].c_str() ) );
-		}
-	}
+	return (const char*)camera_name_->GetValue().mb_str();
 }
 
-void CameraSetupDialog::OnPTZEnableChecked( wxCommandEvent& event)
+float CameraSetupDialog::getPanMin()
 {
-	if(m_EnablePTZCheck->IsChecked())
-	{
-		m_PTZStateSubscriptionText->SetValue( wxString() );
-		m_PTZControlCommandText->SetValue( wxString() );
-		m_PTZStateSubscriptionText->Enable(true);
-		m_PTZStateSubscriptionBrowse->Enable(true);
-		m_PTZControlCommandText->Enable(true);
-	}
-	else
-	{
-		m_PTZStateSubscriptionText->SetValue( wxString() );
-		m_PTZControlCommandText->SetValue( wxString() );
-		m_PTZStateSubscriptionText->Enable(false);
-		m_PTZStateSubscriptionBrowse->Enable(false);
-		m_PTZControlCommandText->Enable(false);
-	}
+	return (float)pan_min_->GetValue();
 }
-
-std::string CameraSetupDialog::GetImageSubscription()
+float CameraSetupDialog::getPanMax()
 {
-	return (const char*)m_ImageSubscriptionText->GetValue().mb_str();
+	return (float)pan_max_->GetValue();
 }
-
-std::string CameraSetupDialog::GetPTZStateSubscription()
+float CameraSetupDialog::getTiltMin()
 {
-	return (const char*)m_PTZStateSubscriptionText->GetValue().mb_str();
+	return (float)tilt_min_->GetValue();
 }
-
-std::string CameraSetupDialog::GetPTZControlCommand()
+float CameraSetupDialog::getTiltMax()
 {
-	return (const char*)m_PTZControlCommandText->GetValue().mb_str();
+	return (float)tilt_max_->GetValue();
 }
-
-float CameraSetupDialog::GetPanMin()
+float CameraSetupDialog::getZoomMin()
 {
-	return (float)m_PanMinSpin->GetValue();
+	return (float)zoom_min_->GetValue();
 }
-float CameraSetupDialog::GetPanMax()
+float CameraSetupDialog::getZoomMax()
 {
-	return (float)m_PanMaxSpin->GetValue();
-}
-float CameraSetupDialog::GetTiltMin()
-{
-	return (float)m_TiltMinSpin->GetValue();
-}
-float CameraSetupDialog::GetTiltMax()
-{
-	return (float)m_TiltMaxSpin->GetValue();
-}
-float CameraSetupDialog::GetZoomMin()
-{
-	return (float)m_ZoomMinSpin->GetValue();
-}
-float CameraSetupDialog::GetZoomMax()
-{
-	return (float)m_ZoomMaxSpin->GetValue();
+	return (float)zoom_max_->GetValue();
 }
