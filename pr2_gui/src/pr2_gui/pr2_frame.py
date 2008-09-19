@@ -75,7 +75,6 @@ class PR2Frame(wx.Frame):
         self._visualizer_panel.createDefaultVisualizers()
         
         self._rosout_panel = wx_rosout.RosoutPanel(self)
-        self._rosout_panel.setEnabled(True)
         
         self._aui_manager.AddPane(self._visualizer_panel, wx.aui.AuiPaneInfo().CenterPane().Center().Name('3dvis').Caption('3D Visualization'), '3D Visualization')
         self._aui_manager.AddPane(self._rosout_panel, wx.aui.AuiPaneInfo().BottomDockable().Bottom().Name('rosout').Caption('Rosout'), 'Rosout')
@@ -88,17 +87,16 @@ class PR2Frame(wx.Frame):
         
         self._aui_manager.Update()
         
-        self.create_menu_bar()
-        
         self.load_config()
+        
+        self.create_menu_bar()
         
         self.Bind(wx.aui.EVT_AUI_PANE_CLOSE, self.on_pane_close)
         self.Bind(wx.EVT_CLOSE, self.on_close)
         
-    def add_camera_pane(self, name, ptz_enabled):
+    def add_camera_pane(self, name, ptz_enabled):   
         panel = wx_camera_panel.CameraPanel(self)
         panel.setName(name)
-        panel.setEnabled(True)
         panel.setPTZEnabled(ptz_enabled)
         
         caption = 'Camera ' + name
@@ -132,6 +130,13 @@ class PR2Frame(wx.Frame):
             if (version == self._PERSPECTIVE_VERSION):
                 perspective = self._config.Read(self._CONFIG_PERSPECTIVE)
                 self._aui_manager.LoadPerspective(perspective, True)
+                
+        # Enable/disable the panels depending on whether they're shown or not
+        panes = self._aui_manager.GetAllPanes()
+        for pane in panes:
+            set_enabled_func = getattr(pane.window, "setEnabled", None)
+            if (set_enabled_func != None):
+                set_enabled_func(pane.IsShown()) 
                 
         # Load our window options
         (x, y) = self.GetPositionTuple()
@@ -173,7 +178,9 @@ class PR2Frame(wx.Frame):
         window = pane.window
         self.GetMenuBar().Check(window.GetId(), False)
         
-        window.setEnabled(False)
+        set_enabled_func = getattr(window, "setEnabled", None)
+        if (set_enabled_func != None):
+            set_enabled_func(pane.IsShown()) 
         
         self._aui_manager.Update()
         
