@@ -8,14 +8,17 @@ import wx
 import ogre_visualizer
 import ogre_tools
 
-class VisualizerApp(wx.App):
-    def OnInit(self):
-        frame = wx.Frame(None, wx.ID_ANY, "Standalone Visualizer", wx.DefaultPosition, wx.Size( 800, 600 ) )
-        frame.Show(True)
+class VisualizerFrame(wx.Frame):
+    def __init__(self, parent, id=wx.ID_ANY, title='Standalone Visualizer', pos=wx.DefaultPosition, size=(800, 600), style=wx.DEFAULT_FRAME_STYLE):
+        wx.Frame.__init__(self, parent, id, title, pos, size, style)
+        
+        self._config = wx.Config("standalone_visualizer")
 
         ogre_tools.initializeOgre()
         
-        visualizer_panel = ogre_visualizer.VisualizationPanel(frame)
+        visualizer_panel = ogre_visualizer.VisualizationPanel(self)
+        
+        self._visualizer_panel = visualizer_panel
         
         media_path = rostools.packspec.get_pkg_dir( "gazebo_robot_description" )
         media_path += "/world/Media/";
@@ -67,12 +70,24 @@ class VisualizerApp(wx.App):
         
         visualizer_panel.createOctreeVisualizer( "Octree", True ).setOctreeTopic( "full_octree" )
         
-        frame.Layout()
-        frame.Fit()
+        visualizer_panel.loadConfig(self._config)
         
+        self.Layout()
+        self.Fit()
+        
+        self.Bind(wx.EVT_CLOSE, self.on_close)
+        
+    def on_close(self, event):
+        self._visualizer_panel.saveConfig(self._config)
+        self.Destroy()
+
+class VisualizerApp(wx.App):
+    def OnInit(self):
+        frame = VisualizerFrame(None, wx.ID_ANY, "Standalone Visualizer", wx.DefaultPosition, wx.Size( 800, 600 ) )
+        frame.Show(True)
         return True
         
-    def OnExit(self):
+    def OnExit(self):        
         ogre_tools.cleanupOgre()
         
         
