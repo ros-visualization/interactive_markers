@@ -349,7 +349,7 @@ void Robot::update( rosTFClient* tf_client, const std::string& target_frame )
     }
     catch(libTF::Exception& e)
     {
-      printf( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), target_frame.c_str(), e.what() );
+      printf( "Error transforming from frame '%s' to frame '%s'\n", name.c_str(), target_frame.c_str() );
     }
 
     Ogre::Vector3 position( pose.x, pose.y, pose.z );
