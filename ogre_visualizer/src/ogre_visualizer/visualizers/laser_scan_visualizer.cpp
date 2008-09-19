@@ -40,6 +40,7 @@
 #include <wx/wx.h>
 #include <wx/propgrid/propgrid.h>
 #include <wx/propgrid/advprops.h>
+#include <wx/confbase.h>
 
 #define SCAN_TOPIC_PROPERTY wxT("Scan Topic")
 #define CLOUD_TOPIC_PROPERTY wxT("Cloud Topic")
@@ -374,6 +375,58 @@ void LaserScanVisualizer::propertyChanged( wxPropertyGridEvent& event )
     float val = value.GetDouble();
     setBillboardSize( val );
   }
+}
+
+void LaserScanVisualizer::loadProperties( wxConfigBase* config )
+{
+  wxString scan_topic, cloud_topic;
+  double r, g, b;
+  double decay_time;
+  long style;
+  double billboard_size;
+
+  {
+    config->Read( SCAN_TOPIC_PROPERTY, &scan_topic, wxString::FromAscii( scan_topic_.c_str() ) );
+    config->Read( CLOUD_TOPIC_PROPERTY, &cloud_topic, wxString::FromAscii( cloud_topic_.c_str() ) );
+  }
+
+  {
+    config->Read( wxString(COLOR_PROPERTY) + wxT("R"), &r, r_ );
+    config->Read( wxString(COLOR_PROPERTY) + wxT("G"), &g, g_ );
+    config->Read( wxString(COLOR_PROPERTY) + wxT("B"), &b, b_ );
+  }
+
+  {
+    config->Read( DECAY_TIME_PROPERTY, &decay_time, point_decay_time_ );
+  }
+
+  {
+    config->Read( STYLE_PROPERTY, &style, style_ );
+  }
+
+  {
+    config->Read( BILLBOARD_SIZE_PROPERTY, &billboard_size, billboard_size_ );
+  }
+
+  setScanTopic( (const char*)scan_topic.fn_str() );
+  setCloudTopic( (const char*)cloud_topic.fn_str() );
+  setColor( r, g, b );
+  setStyle( (Style)style );
+  setBillboardSize( billboard_size );
+}
+
+void LaserScanVisualizer::saveProperties( wxConfigBase* config )
+{
+  config->Write( SCAN_TOPIC_PROPERTY, wxString::FromAscii( scan_topic_.c_str() ) );
+  config->Write( CLOUD_TOPIC_PROPERTY, wxString::FromAscii( cloud_topic_.c_str() ) );
+
+  config->Write( wxString(COLOR_PROPERTY) + wxT("R"), r_ );
+  config->Write( wxString(COLOR_PROPERTY) + wxT("G"), g_ );
+  config->Write( wxString(COLOR_PROPERTY) + wxT("B"), b_ );
+
+  config->Write( DECAY_TIME_PROPERTY, point_decay_time_ );
+  config->Write( STYLE_PROPERTY, style_ );
+  config->Write( BILLBOARD_SIZE_PROPERTY, billboard_size_ );
 }
 
 } // namespace ogre_vis

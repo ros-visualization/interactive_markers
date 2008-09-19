@@ -40,6 +40,7 @@
 #include <wx/wx.h>
 #include <wx/propgrid/propgrid.h>
 #include <wx/propgrid/advprops.h>
+#include <wx/confbase.h>
 
 #define TOPIC_PROPERTY wxT("Topic")
 #define COLOR_PROPERTY wxT("Color")
@@ -286,6 +287,49 @@ void PointCloudVisualizer::propertyChanged( wxPropertyGridEvent& event )
     float val = value.GetDouble();
     setBillboardSize( val );
   }
+}
+
+void PointCloudVisualizer::loadProperties( wxConfigBase* config )
+{
+  wxString topic;
+  double r, g, b;
+  long style;
+  double billboard_size;
+
+  {
+    config->Read( TOPIC_PROPERTY, &topic, wxString::FromAscii( topic_.c_str() ) );
+  }
+
+  {
+    config->Read( wxString(COLOR_PROPERTY) + wxT("R"), &r, r_ );
+    config->Read( wxString(COLOR_PROPERTY) + wxT("G"), &g, g_ );
+    config->Read( wxString(COLOR_PROPERTY) + wxT("B"), &b, b_ );
+  }
+
+  {
+    config->Read( STYLE_PROPERTY, &style, style_ );
+  }
+
+  {
+    config->Read( BILLBOARD_SIZE_PROPERTY, &billboard_size, billboard_size_ );
+  }
+
+  setTopic( (const char*)topic.fn_str() );
+  setColor( r, g, b );
+  setStyle( (Style)style );
+  setBillboardSize( billboard_size );
+}
+
+void PointCloudVisualizer::saveProperties( wxConfigBase* config )
+{
+  config->Write( TOPIC_PROPERTY, wxString::FromAscii( topic_.c_str() ) );
+
+  config->Write( wxString(COLOR_PROPERTY) + wxT("R"), r_ );
+  config->Write( wxString(COLOR_PROPERTY) + wxT("G"), g_ );
+  config->Write( wxString(COLOR_PROPERTY) + wxT("B"), b_ );
+
+  config->Write( STYLE_PROPERTY, style_ );
+  config->Write( BILLBOARD_SIZE_PROPERTY, billboard_size_ );
 }
 
 } // namespace ogre_vis

@@ -46,6 +46,7 @@
 #include <wx/wx.h>
 #include <wx/propgrid/propgrid.h>
 #include <wx/propgrid/advprops.h>
+#include <wx/confbase.h>
 
 #include "common.h"
 
@@ -251,6 +252,34 @@ void OctreeVisualizer::propertyChanged( wxPropertyGridEvent& event )
 
     setColor( color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f );
   }
+}
+
+void OctreeVisualizer::loadProperties( wxConfigBase* config )
+{
+  wxString topic;
+  double r, g, b;
+
+  {
+    config->Read( TOPIC_PROPERTY, &topic, wxString::FromAscii( octree_topic_.c_str() ) );
+  }
+
+  {
+    config->Read( wxString(COLOR_PROPERTY) + wxT("R"), &r, r_ );
+    config->Read( wxString(COLOR_PROPERTY) + wxT("G"), &g, g_ );
+    config->Read( wxString(COLOR_PROPERTY) + wxT("B"), &b, b_ );
+  }
+
+  setOctreeTopic( (const char*)topic.fn_str() );
+  setColor( r, g, b );
+}
+
+void OctreeVisualizer::saveProperties( wxConfigBase* config )
+{
+  config->Write( TOPIC_PROPERTY, wxString::FromAscii( octree_topic_.c_str() ) );
+
+  config->Write( wxString(COLOR_PROPERTY) + wxT("R"), r_ );
+  config->Write( wxString(COLOR_PROPERTY) + wxT("G"), g_ );
+  config->Write( wxString(COLOR_PROPERTY) + wxT("B"), b_ );
 }
 
 }

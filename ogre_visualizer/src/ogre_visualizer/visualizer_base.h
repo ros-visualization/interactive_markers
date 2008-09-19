@@ -49,6 +49,7 @@ class wxWindow;
 class rosTFClient;
 class wxPropertyGrid;
 class wxPropertyGridEvent;
+class wxConfigBase;
 
 namespace ogre_vis
 {
@@ -117,6 +118,17 @@ public:
    * @param event The changed event
    */
   virtual void propertyChanged( wxPropertyGridEvent& event ) {}
+
+  /**
+   * \brief Load any properties from this config
+   * @param config The wx config object to load from
+   */
+  virtual void loadProperties( wxConfigBase* config ) {}
+  /**
+   * \brief Save any properties to this config
+   * @param config The wx config object to save to
+   */
+  virtual void saveProperties( wxConfigBase* config ) {}
 
   /// Set the target frame of this visualizer. This is a frame id which should match something being broadcast through libTF.
   void setTargetFrame( const std::string& frame ) { target_frame_ = frame; }

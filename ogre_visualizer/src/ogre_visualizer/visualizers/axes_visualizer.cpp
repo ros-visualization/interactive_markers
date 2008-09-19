@@ -36,6 +36,7 @@
 #include <wx/wx.h>
 #include <wx/propgrid/propgrid.h>
 #include <wx/propgrid/advprops.h>
+#include <wx/confbase.h>
 
 #define LENGTH_PROPERTY wxT("Length")
 #define RADIUS_PROPERTY wxT("Radius")
@@ -113,6 +114,27 @@ void AxesVisualizer::propertyChanged( wxPropertyGridEvent& event )
     float radius = value.GetDouble();
     set( length_, radius );
   }
+}
+
+void AxesVisualizer::loadProperties( wxConfigBase* config )
+{
+  double length, radius;
+
+  {
+    config->Read( LENGTH_PROPERTY, &length, length_ );
+  }
+
+  {
+    config->Read( RADIUS_PROPERTY, &radius, radius_ );
+  }
+
+  set( length, radius );
+}
+
+void AxesVisualizer::saveProperties( wxConfigBase* config )
+{
+  config->Write( LENGTH_PROPERTY, length_ );
+  config->Write( RADIUS_PROPERTY, radius_ );
 }
 
 } // namespace ogre_vis

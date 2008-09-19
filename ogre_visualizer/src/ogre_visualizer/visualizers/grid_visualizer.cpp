@@ -35,6 +35,7 @@
 #include <wx/wx.h>
 #include <wx/propgrid/propgrid.h>
 #include <wx/propgrid/advprops.h>
+#include <wx/confbase.h>
 
 #define COLOR_PROPERTY wxT("Color")
 #define CELLSIZE_PROPERTY wxT("CellSize")
@@ -146,6 +147,38 @@ void GridVisualizer::getColor( float& r, float& g, float& b )
   r = r_;
   g = g_;
   b = b_;
+}
+
+void GridVisualizer::loadProperties( wxConfigBase* config )
+{
+  long cell_count = 0;
+  double cell_size = 0.0f;
+  double r, g, b;
+
+  {
+    config->Read( CELLCOUNT_PROPERTY, &cell_count, cell_count_ );
+  }
+
+  {
+    config->Read( CELLSIZE_PROPERTY, &cell_size, cell_size_ );
+  }
+
+  {
+    config->Read( wxString(COLOR_PROPERTY) + wxT("R"), &r, r_ );
+    config->Read( wxString(COLOR_PROPERTY) + wxT("G"), &g, g_ );
+    config->Read( wxString(COLOR_PROPERTY) + wxT("B"), &b, b_ );
+  }
+
+  set( cell_count, cell_size, r, g, b );
+}
+
+void GridVisualizer::saveProperties( wxConfigBase* config )
+{
+  config->Write( CELLCOUNT_PROPERTY, (int)cell_count_ );
+  config->Write( CELLSIZE_PROPERTY, (double)cell_size_ );
+  config->Write( wxString(COLOR_PROPERTY) + wxT("R"), r_ );
+  config->Write( wxString(COLOR_PROPERTY) + wxT("G"), g_ );
+  config->Write( wxString(COLOR_PROPERTY) + wxT("B"), b_ );
 }
 
 } // namespace ogre_vis

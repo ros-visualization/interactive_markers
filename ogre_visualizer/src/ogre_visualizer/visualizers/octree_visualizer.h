@@ -71,6 +71,8 @@ public:
   // Overrides from VisualizerBase
   virtual void fillPropertyGrid( wxPropertyGrid* property_grid );
   virtual void propertyChanged( wxPropertyGridEvent& event );
+  virtual void loadProperties( wxConfigBase* config );
+  virtual void saveProperties( wxConfigBase* config );
 
   virtual void update( float dt );
 

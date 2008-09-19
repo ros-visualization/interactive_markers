@@ -41,6 +41,7 @@
 #include <wx/wx.h>
 #include <wx/propgrid/propgrid.h>
 #include <wx/propgrid/advprops.h>
+#include <wx/confbase.h>
 
 #define VISUAL_ENABLED_PROPERTY wxT("Show Visual")
 #define COLLISION_ENABLED_PROPERTY wxT("Show Collision")
@@ -257,6 +258,32 @@ void PlanningVisualizer::propertyChanged( wxPropertyGridEvent& event )
   }
 
   causeRender();
+}
+
+void PlanningVisualizer::loadProperties( wxConfigBase* config )
+{
+  bool visual_enabled, collision_enabled;
+  double state_display_time;
+
+  {
+    config->Read( VISUAL_ENABLED_PROPERTY, &visual_enabled, robot_->isVisualVisible() );
+    config->Read( COLLISION_ENABLED_PROPERTY, &collision_enabled, robot_->isCollisionVisible() );
+  }
+
+  {
+    config->Read( STATE_DISPLAY_TIME_PROPERTY, &state_display_time, state_display_time_ );
+  }
+
+  robot_->setVisualVisible( visual_enabled );
+  robot_->setCollisionVisible( collision_enabled );
+  setStateDisplayTime( state_display_time );
+}
+
+void PlanningVisualizer::saveProperties( wxConfigBase* config )
+{
+  config->Write( VISUAL_ENABLED_PROPERTY, robot_->isVisualVisible() );
+  config->Write( COLLISION_ENABLED_PROPERTY, robot_->isCollisionVisible() );
+  config->Write( STATE_DISPLAY_TIME_PROPERTY, state_display_time_ );
 }
 
 } // namespace ogre_vis

@@ -40,6 +40,7 @@
 #include <wx/wx.h>
 #include <wx/propgrid/propgrid.h>
 #include <wx/propgrid/advprops.h>
+#include <wx/confbase.h>
 
 #define VISUAL_ENABLED_PROPERTY wxT("Show Visual")
 #define COLLISION_ENABLED_PROPERTY wxT("Show Collision")
@@ -199,6 +200,32 @@ void RobotModelVisualizer::propertyChanged( wxPropertyGridEvent& event )
   }
 
   causeRender();
+}
+
+void RobotModelVisualizer::loadProperties( wxConfigBase* config )
+{
+  bool visual_enabled, collision_enabled;
+  double update_rate;
+
+  {
+    config->Read( VISUAL_ENABLED_PROPERTY, &visual_enabled, robot_->isVisualVisible() );
+    config->Read( COLLISION_ENABLED_PROPERTY, &collision_enabled, robot_->isCollisionVisible() );
+  }
+
+  {
+    config->Read( UPDATE_RATE_PROPERTY, &update_rate, update_rate_ );
+  }
+
+  robot_->setVisualVisible( visual_enabled );
+  robot_->setCollisionVisible( collision_enabled );
+  update_rate_ = update_rate;
+}
+
+void RobotModelVisualizer::saveProperties( wxConfigBase* config )
+{
+  config->Write( VISUAL_ENABLED_PROPERTY, robot_->isVisualVisible() );
+  config->Write( COLLISION_ENABLED_PROPERTY, robot_->isCollisionVisible() );
+  config->Write( UPDATE_RATE_PROPERTY, update_rate_ );
 }
 
 } // namespace ogre_vis

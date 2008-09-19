@@ -91,6 +91,7 @@ class wxTimerEvent;
 class wxTimer;
 class wxPropertyGrid;
 class wxPropertyGridEvent;
+class wxConfigBase;
 
 class rosTFClient;
 
@@ -155,12 +156,36 @@ public:
     return visualizer;
   }
 
+  /**
+   * \brief Load configuration
+   * @param config The wx config object to load from
+   */
+  virtual void loadConfig( wxConfigBase* config );
+  /**
+   * \brief Save configuration
+   * @param config The wx config object to save to
+   */
+  virtual void saveConfig( wxConfigBase* config );
+
 protected:
   /**
    * \brief Add a visualizer to be managed by this panel
    * @param visualizer The visualizer to be added
    */
   void addVisualizer( VisualizerBase* visualizer );
+
+  /**
+   * \brief Performs a linear search to find a visualizer based on its name
+   * @param name Name of the visualizer to search for
+   */
+  VisualizerBase* getVisualizer( const std::string& name );
+
+  /**
+   * \brief Enables/disables a visualizer, including changing any necessary UI
+   * @param visualizer The visualizer to act on
+   * @param enabled Whether or not it should be enabled
+   */
+  void setVisualizerEnabled( VisualizerBase* visualizer, bool enabled );
 
   void pick( int mouse_x, int mouse_y );
 

@@ -42,6 +42,7 @@
 #include <Ogre.h>
 #include <wx/timer.h>
 #include <wx/propgrid/propgrid.h>
+#include <wx/confbase.h>
 
 #include <boost/bind.hpp>
 
@@ -521,6 +522,89 @@ void VisualizationPanel::pick( int mouse_x, int mouse_y )
 
       queueRender();
     }
+  }
+}
+
+VisualizerBase* VisualizationPanel::getVisualizer( const std::string& name )
+{
+  V_Visualizer::iterator vis_it = visualizers_.begin();
+  V_Visualizer::iterator vis_end = visualizers_.end();
+  for ( ; vis_it != vis_end; ++vis_it )
+  {
+    VisualizerBase* visualizer = *vis_it;
+
+    if ( visualizer->getName() == name )
+    {
+      return visualizer;
+    }
+  }
+
+  return NULL;
+}
+
+void VisualizationPanel::setVisualizerEnabled( VisualizerBase* visualizer, bool enabled )
+{
+  if ( enabled )
+  {
+    visualizer->enable();
+  }
+  else
+  {
+    visualizer->disable();
+  }
+
+  int num_displays = displays_->GetCount();
+  for ( int i = 0; i < num_displays; ++i )
+  {
+    if ( displays_->GetClientData(i) == visualizer )
+    {
+      displays_->Check( i, enabled );
+      break;
+    }
+  }
+}
+
+void VisualizationPanel::loadConfig( wxConfigBase* config )
+{
+  V_Visualizer::iterator vis_it = visualizers_.begin();
+  V_Visualizer::iterator vis_end = visualizers_.end();
+  for ( ; vis_it != vis_end; ++vis_it )
+  {
+    VisualizerBase* visualizer = *vis_it;
+
+    wxString old_path = config->GetPath();
+    wxString sub_path = old_path + wxT("/") + wxString::FromAscii(visualizer->getName().c_str());
+
+    config->SetPath(sub_path);
+
+    bool enabled;
+    config->Read(wxT("Enabled"), &enabled, visualizer->isEnabled());
+
+    setVisualizerEnabled( visualizer, enabled );
+
+    visualizer->loadProperties(config);
+
+    config->SetPath(old_path);
+  }
+}
+
+void VisualizationPanel::saveConfig( wxConfigBase* config )
+{
+  V_Visualizer::iterator vis_it = visualizers_.begin();
+  V_Visualizer::iterator vis_end = visualizers_.end();
+  for ( ; vis_it != vis_end; ++vis_it )
+  {
+    VisualizerBase* visualizer = *vis_it;
+
+    wxString old_path = config->GetPath();
+
+    config->SetPath(old_path + wxT("/") + wxString::FromAscii(visualizer->getName().c_str()));
+
+    config->Write(wxT("Enabled"), visualizer->isEnabled());
+
+    visualizer->saveProperties(config);
+
+    config->SetPath(old_path);
   }
 }
 
