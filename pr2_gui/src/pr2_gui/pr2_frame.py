@@ -153,6 +153,16 @@ class PR2Frame(wx.Frame):
         self.SetPosition((x, y))
         self.SetSize((width, height))
         
+        # load panel-specific configurations
+        panes = self._aui_manager.GetAllPanes()
+        for pane in panes:
+            load_config_func = getattr(pane.window, "loadConfig", None)
+            if (load_config_func != None):
+                old_path = self._config.GetPath()
+                self._config.SetPath(old_path + "/" + pane.name)
+                load_config_func(self._config)
+                self._config.SetPath(old_path)
+        
     def save_config(self):
         config = self._config
         config.WriteInt(self._CONFIG_PERSPECTIVE_VERSION, self._PERSPECTIVE_VERSION)
@@ -164,6 +174,18 @@ class PR2Frame(wx.Frame):
         config.WriteInt(self._CONFIG_WINDOW_Y, y)
         config.WriteInt(self._CONFIG_WINDOW_WIDTH, width)
         config.WriteInt(self._CONFIG_WINDOW_HEIGHT, height)
+        
+        # save out panel-specific configurations
+        panes = self._aui_manager.GetAllPanes()
+        for pane in panes:
+            save_config_func = getattr(pane.window, "saveConfig", None)
+            if (save_config_func != None):
+                old_path = config.GetPath()
+                sub_path = old_path + "/" + pane.name;
+                config.DeleteGroup(sub_path)
+                config.SetPath(sub_path)
+                save_config_func(config)
+                config.SetPath(old_path)
         
         config.Flush()
         
