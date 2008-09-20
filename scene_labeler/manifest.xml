@@ -14,7 +14,7 @@
 <depend package="rosTF"/>
 <depend package="newmat10"/>
 <export>
-  <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib"/>
+  <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -lscene_labeler"/>
 </export>
 </package>
 
