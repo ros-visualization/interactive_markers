@@ -27,60 +27,36 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_VISUALIZER_AXES_VISUALIZER_H
-#define OGRE_VISUALIZER_AXES_VISUALIZER_H
+#ifndef OGRE_VISUALIZER_NEW_DISPLAY_DIALOG_H
+#define OGRE_VISUALIZER_NEW_DISPLAY_DIALOG_H
 
-#include "visualizer_base.h"
+#include "generated/visualization_panel_generated.h"
 
-namespace ogre_tools
-{
-class Axes;
-}
+#include <vector>
+#include <string>
 
 namespace ogre_vis
 {
 
-/**
- * \class AxesVisualizer
- * \brief Displays a set of XYZ axes at the origin
- */
-class AxesVisualizer : public VisualizerBase
+typedef std::vector<std::string> V_string;
+
+class NewDisplayDialog : public NewDisplayDialogGenerated
 {
 public:
-  AxesVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name );
-  virtual ~AxesVisualizer();
+  NewDisplayDialog( wxWindow* parent, const V_string& types );
 
-  /**
-   * \brief Set the parameters for the axes
-   * @param length Length of each axis
-   * @param radius Radius of each axis
-   */
-  void set( float length, float radius );
-
-  // Overrides from VisualizerBase
-  virtual void fillPropertyGrid( wxPropertyGrid* property_grid );
-  virtual void propertyChanged( wxPropertyGridEvent& event );
-  virtual void loadProperties( wxConfigBase* config );
-  virtual void saveProperties( wxConfigBase* config );
-
-  static const char* getTypeStatic() { return "Axes"; }
-  virtual const char* getType() { return getTypeStatic(); }
+  std::string getTypeName();
+  std::string getVisualizerName();
 
 protected:
-  /**
-   * \brief Create the axes with the current parameters
-   */
-  void create();
+  void onOK( wxCommandEvent& event );
+  void onCancel( wxCommandEvent& event );
+  void onNameEnter( wxCommandEvent& event );
 
-  // overrides from VisualizerBase
-  virtual void onEnable();
-  virtual void onDisable();
-
-  float length_;                ///< Length of each axis
-  float radius_;                ///< Radius of each axis
-  ogre_tools::Axes* axes_;      ///< Handles actually drawing the axes
+  std::string type_name_;
+  std::string visualizer_name_;
 };
 
-} // namespace ogre_vis
+} //namespace ogre_vis
 
- #endif
+#endif

@@ -72,6 +72,9 @@ public:
   virtual void saveProperties( wxConfigBase* config );
   virtual bool isObjectPickable( const Ogre::MovableObject* object ) const { return true; }
 
+  static const char* getTypeStatic() { return "Robot Model"; }
+  virtual const char* getType() { return getTypeStatic(); }
+
 protected:
   /**
    * \brief Subscribes to any ROS topics we need to subscribe to

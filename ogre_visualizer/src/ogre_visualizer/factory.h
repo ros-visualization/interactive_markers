@@ -27,60 +27,48 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_VISUALIZER_AXES_VISUALIZER_H
-#define OGRE_VISUALIZER_AXES_VISUALIZER_H
+#ifndef OGRE_VISUALIZER_FACTORY_H
+#define OGRE_VISUALIZER_FACTORY_H
 
-#include "visualizer_base.h"
+#include <string>
 
-namespace ogre_tools
+namespace Ogre
 {
-class Axes;
+class SceneManager;
 }
+
+namespace ros
+{
+class node;
+}
+
+class rosTFClient;
 
 namespace ogre_vis
 {
 
-/**
- * \class AxesVisualizer
- * \brief Displays a set of XYZ axes at the origin
- */
-class AxesVisualizer : public VisualizerBase
+class VisualizerBase;
+
+class VisualizerFactory
 {
 public:
-  AxesVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name );
-  virtual ~AxesVisualizer();
-
-  /**
-   * \brief Set the parameters for the axes
-   * @param length Length of each axis
-   * @param radius Radius of each axis
-   */
-  void set( float length, float radius );
-
-  // Overrides from VisualizerBase
-  virtual void fillPropertyGrid( wxPropertyGrid* property_grid );
-  virtual void propertyChanged( wxPropertyGridEvent& event );
-  virtual void loadProperties( wxConfigBase* config );
-  virtual void saveProperties( wxConfigBase* config );
-
-  static const char* getTypeStatic() { return "Axes"; }
-  virtual const char* getType() { return getTypeStatic(); }
-
-protected:
-  /**
-   * \brief Create the axes with the current parameters
-   */
-  void create();
-
-  // overrides from VisualizerBase
-  virtual void onEnable();
-  virtual void onDisable();
-
-  float length_;                ///< Length of each axis
-  float radius_;                ///< Radius of each axis
-  ogre_tools::Axes* axes_;      ///< Handles actually drawing the axes
+  virtual VisualizerBase* create(Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name) = 0;
 };
 
-} // namespace ogre_vis
+template<typename T>
+class VisualizerFactoryImpl : public VisualizerFactory
+{
+public:
+  virtual VisualizerBase* create(Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name)
+  {
+    return new T(scene_manager, node, tf_client, name);
+  }
+};
 
- #endif
+class VisualizationPanel;
+
+void registerFactories(VisualizationPanel* vis_panel);
+
+} // ogre_vis
+
+#endif

@@ -105,6 +105,9 @@ public:
   virtual void loadProperties( wxConfigBase* config );
   virtual void saveProperties( wxConfigBase* config );
 
+  static const char* getTypeStatic() { return "Grid"; }
+  virtual const char* getType() { return getTypeStatic(); }
+
 protected:
   /**
    * \brief Creates the grid with the currently-set parameters

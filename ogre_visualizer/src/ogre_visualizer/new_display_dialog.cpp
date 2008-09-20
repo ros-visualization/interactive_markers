@@ -27,60 +27,60 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_VISUALIZER_AXES_VISUALIZER_H
-#define OGRE_VISUALIZER_AXES_VISUALIZER_H
+#include "new_display_dialog.h"
 
-#include "visualizer_base.h"
-
-namespace ogre_tools
-{
-class Axes;
-}
+#include <wx/wx.h>
 
 namespace ogre_vis
 {
 
-/**
- * \class AxesVisualizer
- * \brief Displays a set of XYZ axes at the origin
- */
-class AxesVisualizer : public VisualizerBase
+NewDisplayDialog::NewDisplayDialog( wxWindow* parent, const V_string& types )
+: NewDisplayDialogGenerated( parent )
 {
-public:
-  AxesVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name );
-  virtual ~AxesVisualizer();
+  V_string::const_iterator it = types.begin();
+  V_string::const_iterator end = types.end();
+  for ( ; it != end; ++it )
+  {
+    types_->Append( wxString::FromAscii( it->c_str() ) );
+  }
+}
 
-  /**
-   * \brief Set the parameters for the axes
-   * @param length Length of each axis
-   * @param radius Radius of each axis
-   */
-  void set( float length, float radius );
+void NewDisplayDialog::onOK( wxCommandEvent& event )
+{
+  if ( types_->GetSelection() == wxNOT_FOUND )
+  {
+    wxMessageBox( wxT("You must select a type!"), wxT("No selection"), wxICON_ERROR | wxOK, this );
+    return;
+  }
 
-  // Overrides from VisualizerBase
-  virtual void fillPropertyGrid( wxPropertyGrid* property_grid );
-  virtual void propertyChanged( wxPropertyGridEvent& event );
-  virtual void loadProperties( wxConfigBase* config );
-  virtual void saveProperties( wxConfigBase* config );
+  if ( name_->GetValue().IsEmpty() )
+  {
+    wxMessageBox( wxT("You must enter a name!"), wxT("No name"), wxICON_ERROR | wxOK, this );
+    return;
+  }
 
-  static const char* getTypeStatic() { return "Axes"; }
-  virtual const char* getType() { return getTypeStatic(); }
+  EndModal(wxOK);
+}
 
-protected:
-  /**
-   * \brief Create the axes with the current parameters
-   */
-  void create();
+void NewDisplayDialog::onCancel( wxCommandEvent& event )
+{
+  EndModal(wxCANCEL);
+}
 
-  // overrides from VisualizerBase
-  virtual void onEnable();
-  virtual void onDisable();
+void NewDisplayDialog::onNameEnter( wxCommandEvent& event )
+{
+  onOK( event );
+}
 
-  float length_;                ///< Length of each axis
-  float radius_;                ///< Radius of each axis
-  ogre_tools::Axes* axes_;      ///< Handles actually drawing the axes
-};
+std::string NewDisplayDialog::getTypeName()
+{
+  return (const char*)types_->GetStringSelection().fn_str();
+}
 
-} // namespace ogre_vis
+std::string NewDisplayDialog::getVisualizerName()
+{
+  return (const char*)name_->GetValue().fn_str();
+}
 
- #endif
+} // ogre_vis
+

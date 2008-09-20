@@ -139,6 +139,12 @@ public:
    */
   virtual bool isObjectPickable( const Ogre::MovableObject* object ) const { return false; }
 
+  /**
+   * \brief Returns the type name of this visualizer.  Does not need to be exactly the same as the class name.  Can contains spaces/punctuation, etc.
+   * @return The type name
+   */
+  virtual const char* getType() = 0;
+
 protected:
   /// Derived classes override this to do the actual work of enabling themselves
   virtual void onEnable() = 0;

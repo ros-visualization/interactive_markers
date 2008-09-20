@@ -61,6 +61,7 @@ AxesVisualizer::AxesVisualizer( Ogre::SceneManager* scene_manager, ros::node* no
 
 AxesVisualizer::~AxesVisualizer()
 {
+  delete axes_;
 }
 
 void AxesVisualizer::onEnable()

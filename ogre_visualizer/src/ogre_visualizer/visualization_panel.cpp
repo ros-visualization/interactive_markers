@@ -30,6 +30,8 @@
 #include "visualization_panel.h"
 #include "visualizer_base.h"
 #include "common.h"
+#include "factory.h"
+#include "new_display_dialog.h"
 
 #include "ogre_tools/wx_ogre_render_window.h"
 #include "ogre_tools/fps_camera.h"
@@ -76,6 +78,7 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent )
     , mouse_y_( 0 )
 {
   initializeCommon();
+  registerFactories( this );
 
   ros_node_ = ros::node::instance();
 
@@ -190,6 +193,14 @@ VisualizationPanel::~VisualizationPanel()
   }
   visualizers_.clear();
 
+  M_Factory::iterator factory_it = factories_.begin();
+  M_Factory::iterator factory_end = factories_.end();
+  for ( ; factory_it != factory_end; ++factory_it )
+  {
+    delete factory_it->second;
+  }
+  factories_.clear();
+
   render_panel_->Destroy();
 
   delete fps_camera_;
@@ -256,6 +267,10 @@ void VisualizationPanel::onDisplayToggled( wxCommandEvent& event )
 void VisualizationPanel::onDisplaySelected( wxCommandEvent& event )
 {
   int selectionIndex = event.GetSelection();
+  if ( selectionIndex == wxNOT_FOUND )
+  {
+    return;
+  }
 
   selected_visualizer_ = (VisualizerBase*)displays_->GetClientData( selectionIndex );
 
@@ -566,6 +581,29 @@ void VisualizationPanel::setVisualizerEnabled( VisualizerBase* visualizer, bool 
 
 void VisualizationPanel::loadConfig( wxConfigBase* config )
 {
+  int i = 0;
+  while (1)
+  {
+    wxString type, name;
+    type.Printf( wxT("Display%d_Type"), i );
+    name.Printf( wxT("Display%d_Name"), i );
+
+    wxString vis_type, vis_name;
+    if ( !config->Read( type, &vis_type ) )
+    {
+      break;
+    }
+
+    if ( !config->Read( name, &vis_name ) )
+    {
+      break;
+    }
+
+    createVisualizer( (const char*)vis_type.fn_str(), (const char*)vis_name.fn_str(), false );
+
+    ++i;
+  }
+
   V_Visualizer::iterator vis_it = visualizers_.begin();
   V_Visualizer::iterator vis_end = visualizers_.end();
   for ( ; vis_it != vis_end; ++vis_it )
@@ -590,11 +628,18 @@ void VisualizationPanel::loadConfig( wxConfigBase* config )
 
 void VisualizationPanel::saveConfig( wxConfigBase* config )
 {
+  int i = 0;
   V_Visualizer::iterator vis_it = visualizers_.begin();
   V_Visualizer::iterator vis_end = visualizers_.end();
-  for ( ; vis_it != vis_end; ++vis_it )
+  for ( ; vis_it != vis_end; ++vis_it, ++i )
   {
     VisualizerBase* visualizer = *vis_it;
+
+    wxString type, name;
+    type.Printf( wxT("Display%d_Type"), i );
+    name.Printf( wxT("Display%d_Name"), i );
+    config->Write( type, wxString::FromAscii( visualizer->getType() ) );
+    config->Write( name, wxString::FromAscii( visualizer->getName().c_str() ) );
 
     wxString old_path = config->GetPath();
 
@@ -606,6 +651,135 @@ void VisualizationPanel::saveConfig( wxConfigBase* config )
 
     config->SetPath(old_path);
   }
+}
+
+bool VisualizationPanel::registerFactory( const std::string& type, VisualizerFactory* factory )
+{
+  M_Factory::iterator it = factories_.find( type );
+  if ( it != factories_.end() )
+  {
+    return false;
+  }
+
+  factories_.insert( std::make_pair( type, factory ) );
+
+  return true;
+}
+
+VisualizerBase* VisualizationPanel::createVisualizer( const std::string& type, const std::string& name, bool enabled )
+{
+  M_Factory::iterator it = factories_.find( type );
+  if ( it == factories_.end() )
+  {
+    return NULL;
+  }
+
+  VisualizerBase* current_vis = getVisualizer( name );
+  if ( current_vis )
+  {
+    return NULL;
+  }
+
+  VisualizerFactory* factory = it->second;
+  VisualizerBase* visualizer = factory->create( scene_manager_, ros_node_, tf_client_, name );
+  if ( enabled )
+  {
+    visualizer->enable( true );
+  }
+  else
+  {
+    visualizer->disable( true );
+  }
+
+  addVisualizer( visualizer );
+
+  return visualizer;
+}
+
+void VisualizationPanel::removeVisualizer( VisualizerBase* visualizer )
+{
+  int num_displays = displays_->GetCount();
+  for ( int i = 0; i < num_displays; ++i )
+  {
+    if ( displays_->GetClientData( i ) == visualizer )
+    {
+      displays_->Delete( i );
+      break;
+    }
+  }
+
+  V_Visualizer::iterator it = std::find( visualizers_.begin(), visualizers_.end(), visualizer );
+  ROS_ASSERT( it != visualizers_.end() );
+
+  visualizers_.erase( it );
+
+  property_grid_->Clear();
+  selected_visualizer_ = NULL;
+
+  delete visualizer;
+
+  queueRender();
+}
+
+void VisualizationPanel::removeVisualizer( const std::string& name )
+{
+  VisualizerBase* visualizer = getVisualizer( name );
+
+  if ( !visualizer )
+  {
+    return;
+  }
+
+  removeVisualizer( visualizer );
+}
+
+void VisualizationPanel::onNewDisplay( wxCommandEvent& event )
+{
+  std::vector<std::string> types;
+  M_Factory::iterator factory_it = factories_.begin();
+  M_Factory::iterator factory_end = factories_.end();
+  for ( ; factory_it != factory_end; ++factory_it )
+  {
+    types.push_back( factory_it->first );
+  }
+
+  NewDisplayDialog dialog( this, types );
+  while (1)
+  {
+    if ( dialog.ShowModal() == wxOK )
+    {
+      std::string type = dialog.getTypeName();
+      std::string name = dialog.getVisualizerName();
+
+      if ( getVisualizer( name ) != NULL )
+      {
+        wxMessageBox( wxT("A visualizer with that name already exists!"), wxT("Invalid name"), wxICON_ERROR | wxOK, this );
+        continue;
+      }
+
+      VisualizerBase* visualizer = createVisualizer( type, name, true );
+      ROS_ASSERT(visualizer);
+
+      break;
+    }
+    else
+    {
+      break;
+    }
+  }
+}
+
+void VisualizationPanel::onDeleteDisplay( wxCommandEvent& event )
+{
+  int selection = displays_->GetSelection();
+  if ( selection == wxNOT_FOUND )
+  {
+    wxMessageBox( wxT("No display selected"), wxT("No selection"), wxICON_ERROR | wxOK, this );
+    return;
+  }
+
+  VisualizerBase* visualizer = (VisualizerBase*)displays_->GetClientData(selection);
+  removeVisualizer( visualizer );
 }
 
 } // namespace ogre_vis

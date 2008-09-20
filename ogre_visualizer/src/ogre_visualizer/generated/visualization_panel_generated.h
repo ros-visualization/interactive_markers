@@ -15,10 +15,15 @@
 #include <wx/colour.h>
 #include <wx/settings.h>
 #include <wx/checklst.h>
+#include <wx/button.h>
 #include <wx/sizer.h>
 #include <wx/panel.h>
 #include <wx/splitter.h>
 #include <wx/toolbar.h>
+#include <wx/listbox.h>
+#include <wx/statbox.h>
+#include <wx/textctrl.h>
+#include <wx/dialog.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -37,6 +42,8 @@ class VisualizationPanelGenerated : public wxPanel
 		wxPanel* m_panel5;
 		wxStaticText* m_staticText1;
 		wxCheckListBox* displays_;
+		wxButton* new_display_;
+		wxButton* delete_display_;
 		wxPanel* m_panel6;
 		wxStaticText* m_staticText2;
 		wxPanel* properties_panel_;
@@ -44,6 +51,11 @@ class VisualizationPanelGenerated : public wxPanel
 		wxPanel* render_panel_;
 		wxBoxSizer* render_sizer_;
 		wxToolBar* views_;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void onNewDisplay( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onDeleteDisplay( wxCommandEvent& event ){ event.Skip(); }
+		
 	
 	public:
 		VisualizationPanelGenerated( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 765,578 ), long style = wxTAB_TRAVERSAL );
@@ -60,6 +72,32 @@ class VisualizationPanelGenerated : public wxPanel
 		m_splitter2->Disconnect( wxEVT_IDLE, wxIdleEventHandler( VisualizationPanelGenerated::m_splitter2OnIdle ), NULL, this );
 		}
 		
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class NewDisplayDialogGenerated
+///////////////////////////////////////////////////////////////////////////////
+class NewDisplayDialogGenerated : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxListBox* types_;
+		wxTextCtrl* name_;
+		wxStdDialogButtonSizer* m_sdbSizer1;
+		wxButton* m_sdbSizer1OK;
+		wxButton* m_sdbSizer1Cancel;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void onNameEnter( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onCancel( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onOK( wxCommandEvent& event ){ event.Skip(); }
+		
+	
+	public:
+		NewDisplayDialogGenerated( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("New Display"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 394,351 ), long style = wxDEFAULT_DIALOG_STYLE );
+		~NewDisplayDialogGenerated();
 	
 };
 

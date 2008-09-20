@@ -80,6 +80,9 @@ public:
 
   virtual bool isObjectPickable( const Ogre::MovableObject* object ) const { return true; }
 
+  static const char* getTypeStatic() { return "Planning"; }
+  virtual const char* getType() { return getTypeStatic(); }
+
 
 protected:
   /**

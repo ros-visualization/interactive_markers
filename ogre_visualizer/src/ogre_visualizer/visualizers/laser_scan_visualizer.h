@@ -116,6 +116,9 @@ public:
   virtual void loadProperties( wxConfigBase* config );
   virtual void saveProperties( wxConfigBase* config );
 
+  static const char* getTypeStatic() { return "Laser Scan"; }
+  virtual const char* getType() { return getTypeStatic(); }
+
 protected:
   virtual void onEnable();
   virtual void onDisable();

@@ -9,6 +9,11 @@ import ogre_visualizer
 import ogre_tools
 
 class VisualizerFrame(wx.Frame):
+    _CONFIG_WINDOW_X="/Window/X"
+    _CONFIG_WINDOW_Y="/Window/Y"
+    _CONFIG_WINDOW_WIDTH="/Window/Width"
+    _CONFIG_WINDOW_HEIGHT="/Window/Height"
+    
     def __init__(self, parent, id=wx.ID_ANY, title='Standalone Visualizer', pos=wx.DefaultPosition, size=(800, 600), style=wx.DEFAULT_FRAME_STYLE):
         wx.Frame.__init__(self, parent, id, title, pos, size, style)
         
@@ -70,14 +75,35 @@ class VisualizerFrame(wx.Frame):
         
         visualizer_panel.createOctreeVisualizer( "Octree", True ).setOctreeTopic( "full_octree" )
         
-        visualizer_panel.loadConfig(self._config)
+        # Load our window options
+        (x, y) = self.GetPositionTuple()
+        (width, height) = self.GetSizeTuple()
+        if (self._config.HasEntry(self._CONFIG_WINDOW_X)):
+            x = self._config.ReadInt(self._CONFIG_WINDOW_X)
+        if (self._config.HasEntry(self._CONFIG_WINDOW_Y)):
+            y = self._config.ReadInt(self._CONFIG_WINDOW_Y)
+        if (self._config.HasEntry(self._CONFIG_WINDOW_WIDTH)):
+            width = self._config.ReadInt(self._CONFIG_WINDOW_WIDTH)
+        if (self._config.HasEntry(self._CONFIG_WINDOW_HEIGHT)):
+            height = self._config.ReadInt(self._CONFIG_WINDOW_HEIGHT)
+            
+        self.SetPosition((x, y))
+        self.SetSize((width, height))
         
-        self.Layout()
-        self.Fit()
+        visualizer_panel.loadConfig(self._config)
         
         self.Bind(wx.EVT_CLOSE, self.on_close)
         
     def on_close(self, event):
+        self._config.DeleteAll()
+        
+        (x, y) = self.GetPositionTuple()
+        (width, height) = self.GetSizeTuple()
+        self._config.WriteInt(self._CONFIG_WINDOW_X, x)
+        self._config.WriteInt(self._CONFIG_WINDOW_Y, y)
+        self._config.WriteInt(self._CONFIG_WINDOW_WIDTH, width)
+        self._config.WriteInt(self._CONFIG_WINDOW_HEIGHT, height)
+        
         self._visualizer_panel.saveConfig(self._config)
         self.Destroy()
 

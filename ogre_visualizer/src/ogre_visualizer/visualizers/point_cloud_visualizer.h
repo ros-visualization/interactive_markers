@@ -100,6 +100,9 @@ public:
   virtual void loadProperties( wxConfigBase* config );
   virtual void saveProperties( wxConfigBase* config );
 
+  static const char* getTypeStatic() { return "Point Cloud"; }
+  virtual const char* getType() { return getTypeStatic(); }
+
 protected:
   virtual void onEnable();
   virtual void onDisable();

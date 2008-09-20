@@ -47,7 +47,9 @@ add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE}
 rospack_add_library(${PROJECT_NAME} src/ogre_visualizer/visualization_panel.cpp
 				   												 src/ogre_visualizer/visualizer_base.cpp
                                    src/ogre_visualizer/common.cpp
+                                   src/ogre_visualizer/factory.cpp
                                    src/ogre_visualizer/ros_topic_property.cpp
+                                   src/ogre_visualizer/new_display_dialog.cpp
                                    src/ogre_visualizer/visualizers/marker_visualizer.cpp
                                    src/ogre_visualizer/visualizers/axes_visualizer.cpp
 				   												 src/ogre_visualizer/visualizers/grid_visualizer.cpp

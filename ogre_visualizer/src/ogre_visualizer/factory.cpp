@@ -27,60 +27,31 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_VISUALIZER_AXES_VISUALIZER_H
-#define OGRE_VISUALIZER_AXES_VISUALIZER_H
+#include "factory.h"
 
-#include "visualizer_base.h"
-
-namespace ogre_tools
-{
-class Axes;
-}
+#include "visualization_panel.h"
+#include "visualizers/grid_visualizer.h"
+#include "visualizers/axes_visualizer.h"
+#include "visualizers/point_cloud_visualizer.h"
+#include "visualizers/laser_scan_visualizer.h"
+#include "visualizers/robot_model_visualizer.h"
+#include "visualizers/marker_visualizer.h"
+#include "visualizers/octree_visualizer.h"
+#include "visualizers/planning_visualizer.h"
 
 namespace ogre_vis
 {
 
-/**
- * \class AxesVisualizer
- * \brief Displays a set of XYZ axes at the origin
- */
-class AxesVisualizer : public VisualizerBase
+void registerFactories(VisualizationPanel* vis_panel)
 {
-public:
-  AxesVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name );
-  virtual ~AxesVisualizer();
+  vis_panel->registerFactory( GridVisualizer::getTypeStatic(), new VisualizerFactoryImpl<GridVisualizer>() );
+  vis_panel->registerFactory( AxesVisualizer::getTypeStatic(), new VisualizerFactoryImpl<AxesVisualizer>() );
+  vis_panel->registerFactory( PointCloudVisualizer::getTypeStatic(), new VisualizerFactoryImpl<PointCloudVisualizer>() );
+  vis_panel->registerFactory( LaserScanVisualizer::getTypeStatic(), new VisualizerFactoryImpl<LaserScanVisualizer>() );
+  vis_panel->registerFactory( RobotModelVisualizer::getTypeStatic(), new VisualizerFactoryImpl<RobotModelVisualizer>() );
+  vis_panel->registerFactory( MarkerVisualizer::getTypeStatic(), new VisualizerFactoryImpl<MarkerVisualizer>() );
+  vis_panel->registerFactory( OctreeVisualizer::getTypeStatic(), new VisualizerFactoryImpl<OctreeVisualizer>() );
+  vis_panel->registerFactory( PlanningVisualizer::getTypeStatic(), new VisualizerFactoryImpl<PlanningVisualizer>() );
+}
 
-  /**
-   * \brief Set the parameters for the axes
-   * @param length Length of each axis
-   * @param radius Radius of each axis
-   */
-  void set( float length, float radius );
-
-  // Overrides from VisualizerBase
-  virtual void fillPropertyGrid( wxPropertyGrid* property_grid );
-  virtual void propertyChanged( wxPropertyGridEvent& event );
-  virtual void loadProperties( wxConfigBase* config );
-  virtual void saveProperties( wxConfigBase* config );
-
-  static const char* getTypeStatic() { return "Axes"; }
-  virtual const char* getType() { return getTypeStatic(); }
-
-protected:
-  /**
-   * \brief Create the axes with the current parameters
-   */
-  void create();
-
-  // overrides from VisualizerBase
-  virtual void onEnable();
-  virtual void onDisable();
-
-  float length_;                ///< Length of each axis
-  float radius_;                ///< Radius of each axis
-  ogre_tools::Axes* axes_;      ///< Handles actually drawing the axes
-};
-
-} // namespace ogre_vis
-
- #endif
+} //namespace ogre_vis

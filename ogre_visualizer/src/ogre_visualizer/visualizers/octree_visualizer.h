@@ -76,6 +76,9 @@ public:
 
   virtual void update( float dt );
 
+  static const char* getTypeStatic() { return "Octree"; }
+  virtual const char* getType() { return getTypeStatic(); }
+
 protected:
   // overrides from VisualizerBase
   virtual void onEnable();

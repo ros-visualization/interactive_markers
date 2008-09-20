@@ -64,6 +64,7 @@
 #include "wx/stopwatch.h"
 
 #include <vector>
+#include <map>
 
 namespace ogre_tools
 {
@@ -99,6 +100,7 @@ namespace ogre_vis
 {
 
 class VisualizerBase;
+class VisualizerFactory;
 
 /**
  * \class VisualizationPanel
@@ -141,6 +143,12 @@ public:
   template< class T >
   T* createVisualizer( const std::string& name, bool enabled )
   {
+    VisualizerBase* current_vis = getVisualizer( name );
+    if ( current_vis )
+    {
+      return NULL;
+    }
+
     T* visualizer = new T( scene_manager_, ros_node_, tf_client_, name );
     if ( enabled )
     {
@@ -157,15 +165,43 @@ public:
   }
 
   /**
+   * \brief Create and add a visualizer to this panel, by type name
+   * @param type Type name of the visualizer
+   * @param name Display name of the visualizer
+   * @param enabled Whether to start enabled
+   * @return A pointer to the new visualizer
+   */
+  VisualizerBase* createVisualizer( const std::string& type, const std::string& name, bool enabled );
+
+  /**
+   * \brief Remove a visualizer
+   * @param visualizer The visualizer to remove
+   */
+  void removeVisualizer( VisualizerBase* visualizer );
+  /**
+   * \brief Remove a visualizer by name
+   * @param name The name of the visualizer to remove
+   */
+  void removeVisualizer( const std::string& name );
+
+  /**
    * \brief Load configuration
    * @param config The wx config object to load from
    */
-  virtual void loadConfig( wxConfigBase* config );
+  void loadConfig( wxConfigBase* config );
   /**
    * \brief Save configuration
    * @param config The wx config object to save to
    */
-  virtual void saveConfig( wxConfigBase* config );
+  void saveConfig( wxConfigBase* config );
+
+  /**
+   * \brief Register a visualizer factory with the panel.  Allows you to create a visualizer by type.
+   * @param type Type of the visualizer.  Must be unique.
+   * @param factory The factory which will create this type of visualizer
+   * @return Whether or not the registration succeeded.  The only failure condition is a non-unique type.
+   */
+  bool registerFactory( const std::string& type, VisualizerFactory* factory );
 
 protected:
   /**
@@ -206,6 +242,12 @@ protected:
   /// Called when a property from the wxProperty
   void onPropertyChanged( wxPropertyGridEvent& event );
 
+  /// Called when the "New Display" button is pressed
+  virtual void onNewDisplay( wxCommandEvent& event );
+  /// Called when the "Delete Display" button is pressed
+  virtual void onDeleteDisplay( wxCommandEvent& event );
+
+
   Ogre::Root* ogre_root_;                                 ///< Ogre Root
   Ogre::SceneManager* scene_manager_;                     ///< Ogre scene manager associated with this panel
   Ogre::RaySceneQuery* ray_scene_query_;                  ///< Used for querying the scene based on the mouse location
@@ -227,6 +269,8 @@ protected:
   typedef std::vector< VisualizerBase* > V_Visualizer;
   V_Visualizer visualizers_;                              ///< Our list of visualizers
   VisualizerBase* selected_visualizer_;                   ///< The currently selected visualizer
+  typedef std::map<std::string, VisualizerFactory*> M_Factory;
+  M_Factory factories_;                                   ///< Factories by visualizer type name
 
   // Mouse handling
   bool left_mouse_down_;                                  ///< Is the left mouse button down?

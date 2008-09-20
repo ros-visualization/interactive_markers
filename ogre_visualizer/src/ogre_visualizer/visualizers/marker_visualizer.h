@@ -95,6 +95,9 @@ public:
 
   virtual bool isObjectPickable( const Ogre::MovableObject* object ) const { return true; }
 
+  static const char* getTypeStatic() { return "Markers"; }
+  virtual const char* getType() { return getTypeStatic(); }
+
 protected:
   virtual void onEnable();
   virtual void onDisable();
