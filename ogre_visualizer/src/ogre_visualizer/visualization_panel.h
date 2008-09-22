@@ -141,7 +141,7 @@ public:
    * @return A pointer to the new visualizer
    */
   template< class T >
-  T* createVisualizer( const std::string& name, bool enabled )
+  T* createVisualizer( const std::string& name, bool enabled, bool allow_deletion = false )
   {
     VisualizerBase* current_vis = getVisualizer( name );
     if ( current_vis )
@@ -159,7 +159,7 @@ public:
       visualizer->disable( true );
     }
 
-    addVisualizer( visualizer );
+    addVisualizer( visualizer, allow_deletion );
 
     return visualizer;
   }
@@ -171,7 +171,7 @@ public:
    * @param enabled Whether to start enabled
    * @return A pointer to the new visualizer
    */
-  VisualizerBase* createVisualizer( const std::string& type, const std::string& name, bool enabled );
+  VisualizerBase* createVisualizer( const std::string& type, const std::string& name, bool enabled, bool allow_deletion = false );
 
   /**
    * \brief Remove a visualizer
@@ -208,13 +208,20 @@ protected:
    * \brief Add a visualizer to be managed by this panel
    * @param visualizer The visualizer to be added
    */
-  void addVisualizer( VisualizerBase* visualizer );
+  void addVisualizer( VisualizerBase* visualizer, bool allow_deletion );
 
   /**
    * \brief Performs a linear search to find a visualizer based on its name
    * @param name Name of the visualizer to search for
    */
   VisualizerBase* getVisualizer( const std::string& name );
+
+  /**
+   * \brief Performs a linear search to find a VisualizerInfo struct based on the visualizer contained inside it
+   * @param visualizer The visualizer to find the info for
+   */
+  struct VisualizerInfo;
+  VisualizerInfo* getVisualizerInfo( const VisualizerBase* visualizer );
 
   /**
    * \brief Enables/disables a visualizer, including changing any necessary UI
@@ -266,8 +273,17 @@ protected:
   ros::node* ros_node_;                                   ///< Our ros::node
   rosTFClient* tf_client_;                                ///< Our rosTF client
 
-  typedef std::vector< VisualizerBase* > V_Visualizer;
-  V_Visualizer visualizers_;                              ///< Our list of visualizers
+  struct VisualizerInfo
+  {
+    VisualizerInfo()
+    : visualizer_(NULL)
+    , allow_deletion_(false)
+    {}
+    VisualizerBase* visualizer_;
+    bool allow_deletion_;
+  };
+  typedef std::vector< VisualizerInfo > V_VisualizerInfo;
+  V_VisualizerInfo visualizers_;                          ///< Our list of visualizers
   VisualizerBase* selected_visualizer_;                   ///< The currently selected visualizer
   typedef std::map<std::string, VisualizerFactory*> M_Factory;
   M_Factory factories_;                                   ///< Factories by visualizer type name

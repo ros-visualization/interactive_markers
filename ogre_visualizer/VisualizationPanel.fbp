@@ -30,7 +30,7 @@
             <property name="minimum_size"></property>
             <property name="name">VisualizationPanelGenerated</property>
             <property name="pos"></property>
-            <property name="size">765,578</property>
+            <property name="size">843,632</property>
             <property name="subclass"></property>
             <property name="tooltip"></property>
             <property name="window_extra_style"></property>
@@ -78,9 +78,9 @@
                         <property name="hidden">0</property>
                         <property name="id">wxID_ANY</property>
                         <property name="maximum_size"></property>
-                        <property name="min_pane_size">0</property>
+                        <property name="min_pane_size">100</property>
                         <property name="minimum_size"></property>
-                        <property name="name">m_splitter1</property>
+                        <property name="name">main_splitter_</property>
                         <property name="permission">protected</property>
                         <property name="pos"></property>
                         <property name="sashgravity">0.0</property>
@@ -132,7 +132,7 @@
                                 <property name="id">wxID_ANY</property>
                                 <property name="maximum_size"></property>
                                 <property name="minimum_size">200,-1</property>
-                                <property name="name">m_panel3</property>
+                                <property name="name">left_panel_</property>
                                 <property name="permission">protected</property>
                                 <property name="pos"></property>
                                 <property name="size"></property>
@@ -182,13 +182,13 @@
                                             <property name="hidden">0</property>
                                             <property name="id">wxID_ANY</property>
                                             <property name="maximum_size"></property>
-                                            <property name="min_pane_size">0</property>
+                                            <property name="min_pane_size">100</property>
                                             <property name="minimum_size"></property>
-                                            <property name="name">m_splitter2</property>
+                                            <property name="name">display_splitter_</property>
                                             <property name="permission">protected</property>
                                             <property name="pos"></property>
-                                            <property name="sashgravity">0.0</property>
-                                            <property name="sashpos">0</property>
+                                            <property name="sashgravity">1</property>
+                                            <property name="sashpos">392</property>
                                             <property name="sashsize">-1</property>
                                             <property name="size"></property>
                                             <property name="splitmode">wxSPLIT_HORIZONTAL</property>
@@ -236,7 +236,7 @@
                                                     <property name="id">wxID_ANY</property>
                                                     <property name="maximum_size"></property>
                                                     <property name="minimum_size">200,100</property>
-                                                    <property name="name">m_panel5</property>
+                                                    <property name="name">displays_panel_</property>
                                                     <property name="permission">protected</property>
                                                     <property name="pos"></property>
                                                     <property name="size"></property>
@@ -408,7 +408,7 @@
                                                                         <property name="size"></property>
                                                                         <property name="style"></property>
                                                                         <property name="subclass"></property>
-                                                                        <property name="tooltip"></property>
+                                                                        <property name="tooltip">Add a new display.</property>
                                                                         <property name="window_extra_style"></property>
                                                                         <property name="window_name"></property>
                                                                         <property name="window_style"></property>
@@ -460,7 +460,7 @@
                                                                         <property name="size"></property>
                                                                         <property name="style"></property>
                                                                         <property name="subclass"></property>
-                                                                        <property name="tooltip"></property>
+                                                                        <property name="tooltip">Remove the selected display.  Displays with a &apos;*&apos; next to them are defaults, and cannot be removed.</property>
                                                                         <property name="window_extra_style"></property>
                                                                         <property name="window_name"></property>
                                                                         <property name="window_style"></property>
@@ -506,7 +506,7 @@
                                                     <property name="id">wxID_ANY</property>
                                                     <property name="maximum_size"></property>
                                                     <property name="minimum_size">200,100</property>
-                                                    <property name="name">m_panel6</property>
+                                                    <property name="name">display_properties_panel_</property>
                                                     <property name="permission">protected</property>
                                                     <property name="pos"></property>
                                                     <property name="size"></property>

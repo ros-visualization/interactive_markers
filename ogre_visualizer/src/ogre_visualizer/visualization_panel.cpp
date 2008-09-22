@@ -156,6 +156,8 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent )
 
   property_grid_->Connect( wxEVT_PG_CHANGING, wxPropertyGridEventHandler( VisualizationPanel::onPropertyChanging ), NULL, this );
   property_grid_->Connect( wxEVT_PG_CHANGED, wxPropertyGridEventHandler( VisualizationPanel::onPropertyChanged ), NULL, this );
+
+  delete_display_->Enable( false );
 }
 
 VisualizationPanel::~VisualizationPanel()
@@ -184,11 +186,11 @@ VisualizationPanel::~VisualizationPanel()
   property_grid_->Disconnect( wxEVT_PG_CHANGED, wxPropertyGridEventHandler( VisualizationPanel::onPropertyChanged ), NULL, this );
   property_grid_->Destroy();
 
-  V_Visualizer::iterator vis_it = visualizers_.begin();
-  V_Visualizer::iterator vis_end = visualizers_.end();
+  V_VisualizerInfo::iterator vis_it = visualizers_.begin();
+  V_VisualizerInfo::iterator vis_end = visualizers_.end();
   for ( ; vis_it != vis_end; ++vis_it )
   {
-    VisualizerBase* visualizer = *vis_it;
+    VisualizerBase* visualizer = vis_it->visualizer_;
     delete visualizer;
   }
   visualizers_.clear();
@@ -264,8 +266,27 @@ void VisualizationPanel::onDisplayToggled( wxCommandEvent& event )
   queueRender();
 }
 
+VisualizationPanel::VisualizerInfo* VisualizationPanel::getVisualizerInfo( const VisualizerBase* visualizer )
+{
+  V_VisualizerInfo::iterator vis_it = visualizers_.begin();
+  V_VisualizerInfo::iterator vis_end = visualizers_.end();
+  for ( ; vis_it != vis_end; ++vis_it )
+  {
+    VisualizerBase* it_visualizer = vis_it->visualizer_;
+
+    if ( visualizer == it_visualizer )
+    {
+     return &(*vis_it);
+    }
+  }
+
+  return NULL;
+}
+
 void VisualizationPanel::onDisplaySelected( wxCommandEvent& event )
 {
+  delete_display_->Enable( false );
+
   int selectionIndex = event.GetSelection();
   if ( selectionIndex == wxNOT_FOUND )
   {
@@ -273,6 +294,12 @@ void VisualizationPanel::onDisplaySelected( wxCommandEvent& event )
   }
 
   selected_visualizer_ = (VisualizerBase*)displays_->GetClientData( selectionIndex );
+
+  VisualizerInfo* info = getVisualizerInfo( selected_visualizer_ );
+  if ( info->allow_deletion_ )
+  {
+    delete_display_->Enable( true );
+  }
 
   property_grid_->Freeze();
   property_grid_->Clear();
@@ -290,11 +317,11 @@ void VisualizationPanel::onUpdate( wxTimerEvent& event )
 
   update_stopwatch_.Start();
 
-  V_Visualizer::iterator vis_it = visualizers_.begin();
-  V_Visualizer::iterator vis_end = visualizers_.end();
+  V_VisualizerInfo::iterator vis_it = visualizers_.begin();
+  V_VisualizerInfo::iterator vis_end = visualizers_.end();
   for ( ; vis_it != vis_end; ++vis_it )
   {
-    VisualizerBase* visualizer = *vis_it;
+    VisualizerBase* visualizer = vis_it->visualizer_;
 
     if ( visualizer->isEnabled() )
     {
@@ -341,11 +368,22 @@ void VisualizationPanel::onPropertyChanged( wxPropertyGridEvent& event )
   }
 }
 
-void VisualizationPanel::addVisualizer( VisualizerBase* visualizer )
+void VisualizationPanel::addVisualizer( VisualizerBase* visualizer, bool allow_deletion )
 {
-  visualizers_.push_back( visualizer );
+  VisualizerInfo info;
+  info.visualizer_ = visualizer;
+  info.allow_deletion_ = allow_deletion;
+  visualizers_.push_back( info );
 
-  displays_->Append( wxString::FromAscii( visualizer->getName().c_str() ), visualizer );
+  std::stringstream display_name;
+  if ( !allow_deletion )
+  {
+    display_name << "* ";
+  }
+
+  display_name << visualizer->getName();
+
+  displays_->Append( wxString::FromAscii( display_name.str().c_str() ), visualizer );
   displays_->Check( displays_->GetCount() - 1, visualizer->isEnabled() );
 
   visualizer->setRenderCallback( boost::bind( &VisualizationPanel::queueRender, this ) );
@@ -542,11 +580,11 @@ void VisualizationPanel::pick( int mouse_x, int mouse_y )
 
 VisualizerBase* VisualizationPanel::getVisualizer( const std::string& name )
 {
-  V_Visualizer::iterator vis_it = visualizers_.begin();
-  V_Visualizer::iterator vis_end = visualizers_.end();
+  V_VisualizerInfo::iterator vis_it = visualizers_.begin();
+  V_VisualizerInfo::iterator vis_end = visualizers_.end();
   for ( ; vis_it != vis_end; ++vis_it )
   {
-    VisualizerBase* visualizer = *vis_it;
+    VisualizerBase* visualizer = vis_it->visualizer_;
 
     if ( visualizer->getName() == name )
     {
@@ -599,16 +637,16 @@ void VisualizationPanel::loadConfig( wxConfigBase* config )
       break;
     }
 
-    createVisualizer( (const char*)vis_type.fn_str(), (const char*)vis_name.fn_str(), false );
+    createVisualizer( (const char*)vis_type.fn_str(), (const char*)vis_name.fn_str(), false, false );
 
     ++i;
   }
 
-  V_Visualizer::iterator vis_it = visualizers_.begin();
-  V_Visualizer::iterator vis_end = visualizers_.end();
+  V_VisualizerInfo::iterator vis_it = visualizers_.begin();
+  V_VisualizerInfo::iterator vis_end = visualizers_.end();
   for ( ; vis_it != vis_end; ++vis_it )
   {
-    VisualizerBase* visualizer = *vis_it;
+    VisualizerBase* visualizer = vis_it->visualizer_;
 
     wxString old_path = config->GetPath();
     wxString sub_path = old_path + wxT("/") + wxString::FromAscii(visualizer->getName().c_str());
@@ -629,11 +667,11 @@ void VisualizationPanel::loadConfig( wxConfigBase* config )
 void VisualizationPanel::saveConfig( wxConfigBase* config )
 {
   int i = 0;
-  V_Visualizer::iterator vis_it = visualizers_.begin();
-  V_Visualizer::iterator vis_end = visualizers_.end();
+  V_VisualizerInfo::iterator vis_it = visualizers_.begin();
+  V_VisualizerInfo::iterator vis_end = visualizers_.end();
   for ( ; vis_it != vis_end; ++vis_it, ++i )
   {
-    VisualizerBase* visualizer = *vis_it;
+    VisualizerBase* visualizer = vis_it->visualizer_;
 
     wxString type, name;
     type.Printf( wxT("Display%d_Type"), i );
@@ -666,7 +704,7 @@ bool VisualizationPanel::registerFactory( const std::string& type, VisualizerFac
   return true;
 }
 
-VisualizerBase* VisualizationPanel::createVisualizer( const std::string& type, const std::string& name, bool enabled )
+VisualizerBase* VisualizationPanel::createVisualizer( const std::string& type, const std::string& name, bool enabled, bool allow_deletion )
 {
   M_Factory::iterator it = factories_.find( type );
   if ( it == factories_.end() )
@@ -691,13 +729,30 @@ VisualizerBase* VisualizationPanel::createVisualizer( const std::string& type, c
     visualizer->disable( true );
   }
 
-  addVisualizer( visualizer );
+  addVisualizer( visualizer, allow_deletion );
 
   return visualizer;
 }
 
 void VisualizationPanel::removeVisualizer( VisualizerBase* visualizer )
 {
+  V_VisualizerInfo::iterator it = visualizers_.begin();
+  V_VisualizerInfo::iterator end = visualizers_.end();
+  for ( ; it != end; ++it )
+  {
+    if ( it->visualizer_ == visualizer )
+    {
+      break;
+    }
+  }
+  ROS_ASSERT( it != visualizers_.end() );
+
+  if ( !it->allow_deletion_ )
+  {
+    wxMessageBox( wxT("The selected display is part of the default set of displays.  You cannot remove it."), wxT("Cannot remove.") );
+    return;
+  }
+
   int num_displays = displays_->GetCount();
   for ( int i = 0; i < num_displays; ++i )
   {
@@ -708,8 +763,7 @@ void VisualizationPanel::removeVisualizer( VisualizerBase* visualizer )
     }
   }
 
-  V_Visualizer::iterator it = std::find( visualizers_.begin(), visualizers_.end(), visualizer );
-  ROS_ASSERT( it != visualizers_.end() );
+
 
   visualizers_.erase( it );
 
@@ -757,7 +811,7 @@ void VisualizationPanel::onNewDisplay( wxCommandEvent& event )
         continue;
       }
 
-      VisualizerBase* visualizer = createVisualizer( type, name, true );
+      VisualizerBase* visualizer = createVisualizer( type, name, true, true );
       ROS_ASSERT(visualizer);
 
       break;

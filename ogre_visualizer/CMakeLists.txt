@@ -41,6 +41,7 @@ add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE}
                             src/ogre_visualizer/visualizers/point_cloud_visualizer.i
                             src/ogre_visualizer/visualizers/robot_model_visualizer.i
                             src/ogre_visualizer/visualization_panel.h 
+                            src/ogre_visualizer/generated/visualization_panel_generated.h
                             src/ogre_visualizer/visualizer_base.h
                             src/ogre_visualizer/visualizers/grid_visualizer.h)
 

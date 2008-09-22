@@ -36,15 +36,15 @@ class VisualizationPanelGenerated : public wxPanel
 	private:
 	
 	protected:
-		wxSplitterWindow* m_splitter1;
-		wxPanel* m_panel3;
-		wxSplitterWindow* m_splitter2;
-		wxPanel* m_panel5;
+		wxSplitterWindow* main_splitter_;
+		wxPanel* left_panel_;
+		wxSplitterWindow* display_splitter_;
+		wxPanel* displays_panel_;
 		wxStaticText* m_staticText1;
 		wxCheckListBox* displays_;
 		wxButton* new_display_;
 		wxButton* delete_display_;
-		wxPanel* m_panel6;
+		wxPanel* display_properties_panel_;
 		wxStaticText* m_staticText2;
 		wxPanel* properties_panel_;
 		wxBoxSizer* properties_panel_sizer_;
@@ -58,18 +58,18 @@ class VisualizationPanelGenerated : public wxPanel
 		
 	
 	public:
-		VisualizationPanelGenerated( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 765,578 ), long style = wxTAB_TRAVERSAL );
+		VisualizationPanelGenerated( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 843,632 ), long style = wxTAB_TRAVERSAL );
 		~VisualizationPanelGenerated();
-		void m_splitter1OnIdle( wxIdleEvent& )
+		void main_splitter_OnIdle( wxIdleEvent& )
 		{
-		m_splitter1->SetSashPosition( 200 );
-		m_splitter1->Disconnect( wxEVT_IDLE, wxIdleEventHandler( VisualizationPanelGenerated::m_splitter1OnIdle ), NULL, this );
+		main_splitter_->SetSashPosition( 200 );
+		main_splitter_->Disconnect( wxEVT_IDLE, wxIdleEventHandler( VisualizationPanelGenerated::main_splitter_OnIdle ), NULL, this );
 		}
 		
-		void m_splitter2OnIdle( wxIdleEvent& )
+		void display_splitter_OnIdle( wxIdleEvent& )
 		{
-		m_splitter2->SetSashPosition( 0 );
-		m_splitter2->Disconnect( wxEVT_IDLE, wxIdleEventHandler( VisualizationPanelGenerated::m_splitter2OnIdle ), NULL, this );
+		display_splitter_->SetSashPosition( 392 );
+		display_splitter_->Disconnect( wxEVT_IDLE, wxIdleEventHandler( VisualizationPanelGenerated::display_splitter_OnIdle ), NULL, this );
 		}
 		
 	

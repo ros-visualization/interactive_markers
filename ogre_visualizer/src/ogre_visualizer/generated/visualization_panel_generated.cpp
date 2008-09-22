@@ -14,29 +14,32 @@ VisualizationPanelGenerated::VisualizationPanelGenerated( wxWindow* parent, wxWi
 	wxBoxSizer* bSizer23;
 	bSizer23 = new wxBoxSizer( wxVERTICAL );
 	
-	m_splitter1 = new wxSplitterWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_3D );
-	m_splitter1->Connect( wxEVT_IDLE, wxIdleEventHandler( VisualizationPanelGenerated::m_splitter1OnIdle ), NULL, this );
-	m_panel3 = new wxPanel( m_splitter1, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	m_panel3->SetMinSize( wxSize( 200,-1 ) );
+	main_splitter_ = new wxSplitterWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_3D );
+	main_splitter_->SetMinimumPaneSize( 100 );
+	main_splitter_->Connect( wxEVT_IDLE, wxIdleEventHandler( VisualizationPanelGenerated::main_splitter_OnIdle ), NULL, this );
+	left_panel_ = new wxPanel( main_splitter_, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	left_panel_->SetMinSize( wxSize( 200,-1 ) );
 	
 	wxBoxSizer* bSizer25;
 	bSizer25 = new wxBoxSizer( wxVERTICAL );
 	
 	bSizer25->SetMinSize( wxSize( 200,200 ) ); 
-	m_splitter2 = new wxSplitterWindow( m_panel3, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_3D );
-	m_splitter2->Connect( wxEVT_IDLE, wxIdleEventHandler( VisualizationPanelGenerated::m_splitter2OnIdle ), NULL, this );
-	m_panel5 = new wxPanel( m_splitter2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	m_panel5->SetMinSize( wxSize( 200,100 ) );
+	display_splitter_ = new wxSplitterWindow( left_panel_, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_3D );
+	display_splitter_->SetSashGravity( 1 );
+	display_splitter_->SetMinimumPaneSize( 100 );
+	display_splitter_->Connect( wxEVT_IDLE, wxIdleEventHandler( VisualizationPanelGenerated::display_splitter_OnIdle ), NULL, this );
+	displays_panel_ = new wxPanel( display_splitter_, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	displays_panel_->SetMinSize( wxSize( 200,100 ) );
 	
 	wxBoxSizer* bSizer8;
 	bSizer8 = new wxBoxSizer( wxVERTICAL );
 	
-	m_staticText1 = new wxStaticText( m_panel5, wxID_ANY, wxT("Displays"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText1 = new wxStaticText( displays_panel_, wxID_ANY, wxT("Displays"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText1->Wrap( -1 );
 	bSizer8->Add( m_staticText1, 0, wxALL, 5 );
 	
 	wxArrayString displays_Choices;
-	displays_ = new wxCheckListBox( m_panel5, wxID_ANY, wxDefaultPosition, wxDefaultSize, displays_Choices, 0 );
+	displays_ = new wxCheckListBox( displays_panel_, wxID_ANY, wxDefaultPosition, wxDefaultSize, displays_Choices, 0 );
 	displays_->SetMinSize( wxSize( 150,-1 ) );
 	
 	bSizer8->Add( displays_, 1, wxALL|wxEXPAND, 5 );
@@ -44,28 +47,32 @@ VisualizationPanelGenerated::VisualizationPanelGenerated( wxWindow* parent, wxWi
 	wxBoxSizer* bSizer7;
 	bSizer7 = new wxBoxSizer( wxHORIZONTAL );
 	
-	new_display_ = new wxButton( m_panel5, wxID_ANY, wxT("Add"), wxDefaultPosition, wxDefaultSize, 0 );
+	new_display_ = new wxButton( displays_panel_, wxID_ANY, wxT("Add"), wxDefaultPosition, wxDefaultSize, 0 );
+	new_display_->SetToolTip( wxT("Add a new display.") );
+	
 	bSizer7->Add( new_display_, 0, wxALL, 5 );
 	
-	delete_display_ = new wxButton( m_panel5, wxID_ANY, wxT("Remove"), wxDefaultPosition, wxDefaultSize, 0 );
+	delete_display_ = new wxButton( displays_panel_, wxID_ANY, wxT("Remove"), wxDefaultPosition, wxDefaultSize, 0 );
+	delete_display_->SetToolTip( wxT("Remove the selected display.  Displays with a '*' next to them are defaults, and cannot be removed.") );
+	
 	bSizer7->Add( delete_display_, 0, wxALL, 5 );
 	
 	bSizer8->Add( bSizer7, 0, wxEXPAND, 5 );
 	
-	m_panel5->SetSizer( bSizer8 );
-	m_panel5->Layout();
-	bSizer8->Fit( m_panel5 );
-	m_panel6 = new wxPanel( m_splitter2, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	m_panel6->SetMinSize( wxSize( 200,100 ) );
+	displays_panel_->SetSizer( bSizer8 );
+	displays_panel_->Layout();
+	bSizer8->Fit( displays_panel_ );
+	display_properties_panel_ = new wxPanel( display_splitter_, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	display_properties_panel_->SetMinSize( wxSize( 200,100 ) );
 	
 	wxBoxSizer* bSizer9;
 	bSizer9 = new wxBoxSizer( wxVERTICAL );
 	
-	m_staticText2 = new wxStaticText( m_panel6, wxID_ANY, wxT("Display Properties"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText2 = new wxStaticText( display_properties_panel_, wxID_ANY, wxT("Display Properties"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText2->Wrap( -1 );
 	bSizer9->Add( m_staticText2, 0, wxALL, 5 );
 	
-	properties_panel_ = new wxPanel( m_panel6, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	properties_panel_ = new wxPanel( display_properties_panel_, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	properties_panel_sizer_ = new wxBoxSizer( wxVERTICAL );
 	
 	properties_panel_->SetSizer( properties_panel_sizer_ );
@@ -73,16 +80,16 @@ VisualizationPanelGenerated::VisualizationPanelGenerated( wxWindow* parent, wxWi
 	properties_panel_sizer_->Fit( properties_panel_ );
 	bSizer9->Add( properties_panel_, 1, wxEXPAND | wxALL, 5 );
 	
-	m_panel6->SetSizer( bSizer9 );
-	m_panel6->Layout();
-	bSizer9->Fit( m_panel6 );
-	m_splitter2->SplitHorizontally( m_panel5, m_panel6, 0 );
-	bSizer25->Add( m_splitter2, 1, wxEXPAND, 5 );
+	display_properties_panel_->SetSizer( bSizer9 );
+	display_properties_panel_->Layout();
+	bSizer9->Fit( display_properties_panel_ );
+	display_splitter_->SplitHorizontally( displays_panel_, display_properties_panel_, 392 );
+	bSizer25->Add( display_splitter_, 1, wxEXPAND, 5 );
 	
-	m_panel3->SetSizer( bSizer25 );
-	m_panel3->Layout();
-	bSizer25->Fit( m_panel3 );
-	render_panel_ = new wxPanel( m_splitter1, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	left_panel_->SetSizer( bSizer25 );
+	left_panel_->Layout();
+	bSizer25->Fit( left_panel_ );
+	render_panel_ = new wxPanel( main_splitter_, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	render_sizer_ = new wxBoxSizer( wxVERTICAL );
 	
 	views_ = new wxToolBar( render_panel_, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTB_HORIZONTAL|wxTB_NOICONS|wxTB_TEXT ); 
@@ -93,8 +100,8 @@ VisualizationPanelGenerated::VisualizationPanelGenerated( wxWindow* parent, wxWi
 	render_panel_->SetSizer( render_sizer_ );
 	render_panel_->Layout();
 	render_sizer_->Fit( render_panel_ );
-	m_splitter1->SplitVertically( m_panel3, render_panel_, 200 );
-	bSizer23->Add( m_splitter1, 1, wxEXPAND, 5 );
+	main_splitter_->SplitVertically( left_panel_, render_panel_, 200 );
+	bSizer23->Add( main_splitter_, 1, wxEXPAND, 5 );
 	
 	this->SetSizer( bSizer23 );
 	this->Layout();
