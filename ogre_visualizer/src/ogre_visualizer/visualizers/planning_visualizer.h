@@ -77,6 +77,7 @@ public:
   virtual void propertyChanged( wxPropertyGridEvent& event );
   virtual void loadProperties( wxConfigBase* config );
   virtual void saveProperties( wxConfigBase* config );
+  virtual void targetFrameChanged();
 
   virtual bool isObjectPickable( const Ogre::MovableObject* object ) const { return true; }
 
@@ -103,6 +104,11 @@ protected:
    * \brief ROS callback for an incoming kinematic path message
    */
   void incomingKinematicPath();
+
+  /**
+   * \brief Uses libTF to set the robot's position, given the target frame and the planning frame
+   */
+  void calculateRobotPosition();
 
   // overrides from VisualizerBase
   virtual void onEnable();

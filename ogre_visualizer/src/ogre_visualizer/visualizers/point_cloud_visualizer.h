@@ -99,6 +99,7 @@ public:
   virtual void propertyChanged( wxPropertyGridEvent& event );
   virtual void loadProperties( wxConfigBase* config );
   virtual void saveProperties( wxConfigBase* config );
+  virtual void targetFrameChanged();
 
   static const char* getTypeStatic() { return "Point Cloud"; }
   virtual const char* getType() { return getTypeStatic(); }
@@ -120,6 +121,11 @@ protected:
    * \brief ROS callback for an incoming point cloud message
    */
   void incomingCloudCallback();
+
+  /**
+   * \brief Transforms the cloud into the correct frame, and sets up our renderable cloud
+   */
+  void transformCloud();
 
 
 

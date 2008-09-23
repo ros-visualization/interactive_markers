@@ -115,6 +115,7 @@ public:
   virtual void propertyChanged( wxPropertyGridEvent& event );
   virtual void loadProperties( wxConfigBase* config );
   virtual void saveProperties( wxConfigBase* config );
+  virtual void targetFrameChanged();
 
   static const char* getTypeStatic() { return "Laser Scan"; }
   virtual const char* getType() { return getTypeStatic(); }
@@ -133,9 +134,9 @@ protected:
   void unsubscribe();
 
   /**
-   * \brief Transforms the current point cloud into the correct frame
+   * \brief Transforms a point cloud into the correct frame, adds it to our point list
    */
-  void transformCloud();
+  void transformCloud( std_msgs::PointCloudFloat32& message );
   /**
    * \brief Culls points that have been around for longer than the decay time
    */
@@ -156,6 +157,8 @@ protected:
   std::string scan_topic_;                        ///< The LaserScan topic we're listening on
   std_msgs::PointCloudFloat32 cloud_message_;     ///< The cloud message
   std_msgs::LaserScan scan_message_;              ///< The laser scan message
+  typedef std::deque<std_msgs::PointCloudFloat32> D_CloudMessage;
+  D_CloudMessage cloud_messages_;                 ///< The cloud messages we have received.  Required for target frame changes
 
   laser_scan::LaserProjection laser_projection_;  ///< Used to transform laser scan messages into cloud messages
 

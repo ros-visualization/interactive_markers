@@ -167,6 +167,11 @@ void RobotModelVisualizer::update( float dt )
   message_.unlock();
 }
 
+void RobotModelVisualizer::targetFrameChanged()
+{
+  has_new_transforms_ = true;
+}
+
 void RobotModelVisualizer::fillPropertyGrid( wxPropertyGrid* property_grid )
 {
   property_grid->Append( new wxBoolProperty( VISUAL_ENABLED_PROPERTY, wxPG_LABEL, robot_->isVisualVisible() ) );

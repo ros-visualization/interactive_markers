@@ -203,6 +203,12 @@ public:
    */
   bool registerFactory( const std::string& type, VisualizerFactory* factory );
 
+  /**
+   * \brief Set the coordinate frame we should be displaying in
+   * @param frame The string name -- must match the frame name broadcast to libTF
+   */
+  void setCoordinateFrame( const std::string& frame );
+
 protected:
   /**
    * \brief Add a visualizer to be managed by this panel
@@ -254,6 +260,9 @@ protected:
   /// Called when the "Delete Display" button is pressed
   virtual void onDeleteDisplay( wxCommandEvent& event );
 
+  /// Called when the coordinate frame has changed
+  virtual void onCoordinateFrameChanged( wxCommandEvent& event );
+
 
   Ogre::Root* ogre_root_;                                 ///< Ogre Root
   Ogre::SceneManager* scene_manager_;                     ///< Ogre scene manager associated with this panel
@@ -294,6 +303,8 @@ protected:
   bool right_mouse_down_;                                 ///< Is the right mouse button down?
   int mouse_x_;                                           ///< X position of the last mouse event
   int mouse_y_;                                           ///< Y position of the last mouse event
+
+  std::string target_frame_;                              ///< Target coordinate frame we're displaying everything in
 
   ros::thread::mutex render_mutex_;                       ///< Render mutex
 };

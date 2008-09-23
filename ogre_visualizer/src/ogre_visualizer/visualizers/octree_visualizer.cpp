@@ -282,4 +282,9 @@ void OctreeVisualizer::saveProperties( wxConfigBase* config )
   config->Write( wxString(COLOR_PROPERTY) + wxT("B"), b_ );
 }
 
+void OctreeVisualizer::targetFrameChanged()
+{
+  printf( "Warning: octree is always in the global frame\n" );
+}
+
 }

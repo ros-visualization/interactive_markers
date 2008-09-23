@@ -104,6 +104,7 @@ public:
   virtual void propertyChanged( wxPropertyGridEvent& event );
   virtual void loadProperties( wxConfigBase* config );
   virtual void saveProperties( wxConfigBase* config );
+  virtual void targetFrameChanged() {}
 
   static const char* getTypeStatic() { return "Grid"; }
   virtual const char* getType() { return getTypeStatic(); }

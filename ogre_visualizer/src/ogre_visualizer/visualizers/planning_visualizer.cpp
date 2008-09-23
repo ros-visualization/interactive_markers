@@ -179,26 +179,7 @@ void PlanningVisualizer::update( float dt )
     {
       ++current_state_;
 
-      // Calculate the world->base transform
-      libTF::TFPose pose = { 0, 0, 0, 0, 0, 0, 0, displaying_kinematic_path_message_.frame_id };
-
-      try
-      {
-        pose = tf_client_->transformPose( target_frame_, pose );
-      }
-      catch(libTF::Exception& e)
-      {
-        printf( "Error transforming from frame '%s' to frame '%s': %s\n", pose.frame.c_str(), target_frame_.c_str(), e.what() );
-      }
-
-      Ogre::Vector3 position( pose.x, pose.y, pose.z );
-      robotToOgre( position );
-
-      Ogre::Matrix3 orientation;
-      orientation.FromEulerAnglesYXZ( Ogre::Radian( pose.yaw ), Ogre::Radian( pose.pitch ), Ogre::Radian( pose.roll ) );
-
-      robot_->setPosition( position );
-      robot_->setOrientation( orientation );
+      calculateRobotPosition();
 
       if ( (size_t)current_state_ < displaying_kinematic_path_message_.path.get_states_size() )
       {
@@ -220,9 +201,37 @@ void PlanningVisualizer::update( float dt )
   }
 }
 
+void PlanningVisualizer::calculateRobotPosition()
+{
+  libTF::TFPose pose = { 0, 0, 0, 0, 0, 0, 0, displaying_kinematic_path_message_.frame_id };
+
+  try
+  {
+    pose = tf_client_->transformPose( target_frame_, pose );
+  }
+  catch(libTF::Exception& e)
+  {
+    printf( "Error transforming from frame '%s' to frame '%s'\n", pose.frame.c_str(), target_frame_.c_str() );
+  }
+
+  Ogre::Vector3 position( pose.x, pose.y, pose.z );
+  robotToOgre( position );
+
+  Ogre::Matrix3 orientation;
+  orientation.FromEulerAnglesYXZ( Ogre::Radian( pose.yaw ), Ogre::Radian( pose.pitch ), Ogre::Radian( pose.roll ) );
+
+  robot_->setPosition( position );
+  robot_->setOrientation( orientation );
+}
+
 void PlanningVisualizer::incomingKinematicPath()
 {
   new_kinematic_path_ = true;
+}
+
+void PlanningVisualizer::targetFrameChanged()
+{
+  calculateRobotPosition();
 }
 
 void PlanningVisualizer::fillPropertyGrid( wxPropertyGrid* property_grid )

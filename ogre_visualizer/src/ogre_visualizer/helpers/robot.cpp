@@ -339,9 +339,7 @@ void Robot::update( rosTFClient* tf_client, const std::string& target_frame )
     const std::string& name = link_it->first;
     const LinkInfo& info = link_it->second;
 
-    libTF::TFPose pose = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0, "" };
-
-    pose.frame = name;
+    libTF::TFPose pose = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0, name };
 
     try
     {
@@ -351,6 +349,8 @@ void Robot::update( rosTFClient* tf_client, const std::string& target_frame )
     {
       printf( "Error transforming from frame '%s' to frame '%s'\n", name.c_str(), target_frame.c_str() );
     }
+
+    //printf( "Link %s:\npose: %6f %6f %6f,\t%6f %6f %6f\n", name.c_str(), pose.x, pose.y, pose.z, pose.yaw, pose.pitch, pose.roll );
 
     Ogre::Vector3 position( pose.x, pose.y, pose.z );
     robotToOgre( position );

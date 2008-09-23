@@ -199,37 +199,33 @@ void LaserScanVisualizer::cullPoints()
   {
     point_times_.pop_front();
     points_.pop_front();
+    cloud_messages_.pop_front();
   }
 }
 
-void LaserScanVisualizer::transformCloud()
+void LaserScanVisualizer::transformCloud( std_msgs::PointCloudFloat32& message )
 {
-  if ( cloud_message_.header.frame_id.empty() )
+  // Push back before transforming.  This will perform a full copy.
+  cloud_messages_.push_back( message );
+
+  if ( message.header.frame_id.empty() )
   {
-    cloud_message_.header.frame_id = target_frame_;
+    message.header.frame_id = target_frame_;
   }
 
   try
   {
-    tf_client_->transformPointCloud(target_frame_, cloud_message_, cloud_message_);
+    tf_client_->transformPointCloud(target_frame_, message, message);
   }
-  catch(libTF::TransformReference::LookupException& e)
+  catch(libTF::Exception& e)
   {
-    printf( "Error transforming laser scan '%s': %s\n", name_.c_str(), e.what() );
-  }
-  catch(libTF::TransformReference::ConnectivityException& e)
-  {
-    printf( "Error transforming laser scan '%s': %s\n", name_.c_str(), e.what() );
-  }
-  catch(libTF::TransformReference::ExtrapolateException& e)
-  {
-    printf( "Error transforming laser scan '%s': %s\n", name_.c_str(), e.what() );
+    printf( "Error transforming laser scan '%s', frame '%s' to frame '%s'\n", name_.c_str(), message.header.frame_id.c_str(), target_frame_.c_str() );
   }
 
-  uint32_t point_count_ = cloud_message_.get_pts_size();
+  uint32_t point_count_ = message.get_pts_size();
   for(uint32_t i = 0; i < point_count_; i++)
   {
-    float& intensity = cloud_message_.chan[0].vals[i];
+    float& intensity = message.chan[0].vals[i];
     // arbitrarily cap to 4096 for now
     intensity = std::min( intensity, 4096.0f );
     intensity_min_ = std::min( intensity_min_, intensity );
@@ -242,6 +238,7 @@ void LaserScanVisualizer::transformCloud()
   {
     points_.clear();
     point_times_.clear();
+    cloud_messages_.clear();
   }
 
   points_.push_back( V_Point() );
@@ -251,10 +248,10 @@ void LaserScanVisualizer::transformCloud()
   point_times_.push_back( 0.0f );
   for(uint32_t i = 0; i < point_count_; i++)
   {
-    Ogre::Vector3 point( cloud_message_.pts[i].x, cloud_message_.pts[i].y, cloud_message_.pts[i].z );
+    Ogre::Vector3 point( message.pts[i].x, message.pts[i].y, message.pts[i].z );
     robotToOgre( point );
 
-    float intensity = cloud_message_.chan[0].vals[i];
+    float intensity = message.chan[0].vals[i];
 
     float normalized_intensity = (diff_intensity > 0.0f) ? ( intensity - intensity_min_ ) / diff_intensity : 1.0f;
 
@@ -296,7 +293,7 @@ void LaserScanVisualizer::transformCloud()
 
 void LaserScanVisualizer::incomingCloudCallback()
 {
-  transformCloud();
+  transformCloud( cloud_message_ );
 }
 
 void LaserScanVisualizer::incomingScanCallback()
@@ -309,7 +306,27 @@ void LaserScanVisualizer::incomingScanCallback()
   }
 
   laser_projection_.projectLaser( scan_message_, cloud_message_ );
-  transformCloud();
+  transformCloud( cloud_message_ );
+
+  cloud_message_.unlock();
+}
+
+void LaserScanVisualizer::targetFrameChanged()
+{
+  cloud_message_.lock();
+
+  D_CloudMessage messages;
+  messages.swap( cloud_messages_ );
+  points_.clear();
+  point_times_.clear();
+  cloud_messages_.clear();
+
+  D_CloudMessage::iterator it = messages.begin();
+  D_CloudMessage::iterator end = messages.end();
+  for ( ; it != end; ++it )
+  {
+    transformCloud( *it );
+  }
 
   cloud_message_.unlock();
 }

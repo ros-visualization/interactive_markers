@@ -9,16 +9,21 @@
 #define __visualization_panel_generated__
 
 #include <wx/string.h>
-#include <wx/stattext.h>
+#include <wx/checklst.h>
 #include <wx/gdicmn.h>
 #include <wx/font.h>
 #include <wx/colour.h>
 #include <wx/settings.h>
-#include <wx/checklst.h>
 #include <wx/button.h>
 #include <wx/sizer.h>
 #include <wx/panel.h>
+#include <wx/stattext.h>
 #include <wx/splitter.h>
+#include <wx/bitmap.h>
+#include <wx/image.h>
+#include <wx/icon.h>
+#include <wx/combobox.h>
+#include <wx/notebook.h>
 #include <wx/toolbar.h>
 #include <wx/listbox.h>
 #include <wx/statbox.h>
@@ -37,10 +42,11 @@ class VisualizationPanelGenerated : public wxPanel
 	
 	protected:
 		wxSplitterWindow* main_splitter_;
-		wxPanel* left_panel_;
+		wxPanel* m_panel3;
+		wxNotebook* m_notebook1;
+		wxPanel* m_panel7;
 		wxSplitterWindow* display_splitter_;
 		wxPanel* displays_panel_;
-		wxStaticText* m_staticText1;
 		wxCheckListBox* displays_;
 		wxButton* new_display_;
 		wxButton* delete_display_;
@@ -48,6 +54,9 @@ class VisualizationPanelGenerated : public wxPanel
 		wxStaticText* m_staticText2;
 		wxPanel* properties_panel_;
 		wxBoxSizer* properties_panel_sizer_;
+		wxPanel* m_panel9;
+		wxStaticText* m_staticText3;
+		wxComboBox* coordinate_frame_;
 		wxPanel* render_panel_;
 		wxBoxSizer* render_sizer_;
 		wxToolBar* views_;
@@ -55,6 +64,7 @@ class VisualizationPanelGenerated : public wxPanel
 		// Virtual event handlers, overide them in your derived class
 		virtual void onNewDisplay( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onDeleteDisplay( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onCoordinateFrameChanged( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:
@@ -62,7 +72,7 @@ class VisualizationPanelGenerated : public wxPanel
 		~VisualizationPanelGenerated();
 		void main_splitter_OnIdle( wxIdleEvent& )
 		{
-		main_splitter_->SetSashPosition( 200 );
+		main_splitter_->SetSashPosition( 265 );
 		main_splitter_->Disconnect( wxEVT_IDLE, wxIdleEventHandler( VisualizationPanelGenerated::main_splitter_OnIdle ), NULL, this );
 		}
 		

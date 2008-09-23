@@ -131,7 +131,12 @@ public:
   virtual void saveProperties( wxConfigBase* config ) {}
 
   /// Set the target frame of this visualizer. This is a frame id which should match something being broadcast through libTF.
-  void setTargetFrame( const std::string& frame ) { target_frame_ = frame; }
+  void setTargetFrame( const std::string& frame );
+
+  /**
+   * \brief Called from within setTargetFrame, notifying child classes that the target frame has changed
+   */
+  virtual void targetFrameChanged() = 0;
 
   /**
    * \brief Returns whether an object owned by this visualizer is pickable/mouse selectable

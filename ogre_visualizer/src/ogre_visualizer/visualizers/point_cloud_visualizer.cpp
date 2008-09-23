@@ -146,7 +146,7 @@ void PointCloudVisualizer::unsubscribe()
   }
 }
 
-void PointCloudVisualizer::incomingCloudCallback()
+void PointCloudVisualizer::transformCloud()
 {
   if ( message_.header.frame_id.empty() )
   {
@@ -157,17 +157,9 @@ void PointCloudVisualizer::incomingCloudCallback()
   {
     tf_client_->transformPointCloud(target_frame_, message_, message_);
   }
-  catch(libTF::TransformReference::LookupException& e)
+  catch(libTF::Exception& e)
   {
-    printf( "Error transforming point cloud '%s': %s\n", name_.c_str(), e.what() );
-  }
-  catch(libTF::TransformReference::ConnectivityException& e)
-  {
-    printf( "Error transforming point cloud '%s': %s\n", name_.c_str(), e.what() );
-  }
-  catch(libTF::TransformReference::ExtrapolateException& e)
-  {
-    printf( "Error transforming point cloud '%s': %s\n", name_.c_str(), e.what() );
+    printf( "Error transforming point cloud '%s' from frame '%s' to frame '%s'\n", name_.c_str(), message_.header.frame_id.c_str(), target_frame_.c_str() );
   }
 
   bool has_channel_0 = message_.get_chan_size() > 0;
@@ -239,6 +231,20 @@ void PointCloudVisualizer::incomingCloudCallback()
   }
 
   causeRender();
+}
+
+void PointCloudVisualizer::incomingCloudCallback()
+{
+  transformCloud();
+}
+
+void PointCloudVisualizer::targetFrameChanged()
+{
+  message_.lock();
+
+  transformCloud();
+
+  message_.unlock();
 }
 
 void PointCloudVisualizer::fillPropertyGrid( wxPropertyGrid* property_grid )

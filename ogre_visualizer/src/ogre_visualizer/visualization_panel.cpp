@@ -158,6 +158,8 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent )
   property_grid_->Connect( wxEVT_PG_CHANGED, wxPropertyGridEventHandler( VisualizationPanel::onPropertyChanged ), NULL, this );
 
   delete_display_->Enable( false );
+
+  setCoordinateFrame( "base" );
 }
 
 VisualizationPanel::~VisualizationPanel()
@@ -389,6 +391,8 @@ void VisualizationPanel::addVisualizer( VisualizerBase* visualizer, bool allow_d
   visualizer->setRenderCallback( boost::bind( &VisualizationPanel::queueRender, this ) );
   visualizer->setLockRenderCallback( boost::bind( &VisualizationPanel::lockRender, this ) );
   visualizer->setUnlockRenderCallback( boost::bind( &VisualizationPanel::unlockRender, this ) );
+
+  visualizer->setTargetFrame( target_frame_ );
 }
 
 void VisualizationPanel::onRenderWindowMouseEvents( wxMouseEvent& event )
@@ -617,8 +621,16 @@ void VisualizationPanel::setVisualizerEnabled( VisualizerBase* visualizer, bool 
   }
 }
 
+#define COORDINATE_FRAME_CONFIG wxT("Coordinate Frame")
+
 void VisualizationPanel::loadConfig( wxConfigBase* config )
 {
+  wxString coordinate_frame;
+  if ( config->Read( COORDINATE_FRAME_CONFIG, &coordinate_frame ) )
+  {
+    setCoordinateFrame( (const char*)coordinate_frame.fn_str() );
+  }
+
   int i = 0;
   while (1)
   {
@@ -666,6 +678,8 @@ void VisualizationPanel::loadConfig( wxConfigBase* config )
 
 void VisualizationPanel::saveConfig( wxConfigBase* config )
 {
+  config->Write( COORDINATE_FRAME_CONFIG, wxString::FromAscii( target_frame_.c_str() ) );
+
   int i = 0;
   V_VisualizerInfo::iterator vis_it = visualizers_.begin();
   V_VisualizerInfo::iterator vis_end = visualizers_.end();
@@ -834,6 +848,27 @@ void VisualizationPanel::onDeleteDisplay( wxCommandEvent& event )
 
   VisualizerBase* visualizer = (VisualizerBase*)displays_->GetClientData(selection);
   removeVisualizer( visualizer );
+}
+
+void VisualizationPanel::onCoordinateFrameChanged( wxCommandEvent& event )
+{
+  setCoordinateFrame( (const char*)coordinate_frame_->GetValue().fn_str() );
+}
+
+void VisualizationPanel::setCoordinateFrame( const std::string& frame )
+{
+  target_frame_ = frame;
+
+  V_VisualizerInfo::iterator it = visualizers_.begin();
+  V_VisualizerInfo::iterator end = visualizers_.end();
+  for ( ; it != end; ++it )
+  {
+    VisualizerBase* visualizer = it->visualizer_;
+
+    visualizer->setTargetFrame(frame);
+  }
+
+  coordinate_frame_->SetValue( wxString::FromAscii( frame.c_str() ) );
 }
 
 } // namespace ogre_vis

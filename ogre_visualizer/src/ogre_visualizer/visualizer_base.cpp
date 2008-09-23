@@ -111,4 +111,14 @@ void VisualizerBase::unlockRender()
   }
 }
 
+void VisualizerBase::setTargetFrame( const std::string& frame )
+{
+  target_frame_ = frame;
+
+  if ( isEnabled() )
+  {
+    targetFrameChanged();
+  }
+}
+
 } // namespace ogre_vis

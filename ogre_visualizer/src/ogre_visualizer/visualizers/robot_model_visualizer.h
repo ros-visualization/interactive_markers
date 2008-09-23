@@ -70,6 +70,7 @@ public:
   virtual void propertyChanged( wxPropertyGridEvent& event );
   virtual void loadProperties( wxConfigBase* config );
   virtual void saveProperties( wxConfigBase* config );
+  virtual void targetFrameChanged();
   virtual bool isObjectPickable( const Ogre::MovableObject* object ) const { return true; }
 
   static const char* getTypeStatic() { return "Robot Model"; }
