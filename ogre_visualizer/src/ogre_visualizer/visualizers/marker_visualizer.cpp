@@ -230,6 +230,7 @@ void MarkerVisualizer::setCommonValues( const std_msgs::VisualizationMarker& mes
   }
 
   libTF::TFPose pose = { message.x, message.y, message.z, message.yaw, message.pitch, message.roll, 0, frame_id };
+  //printf( "pre transform (%s to %s) yaw: %f, pitch: %f, roll: %f\n", frame_id.c_str(), target_frame_.c_str(), pose.yaw, pose.pitch, pose.roll );
   try
   {
     pose = tf_client_->transformPose( target_frame_, pose );
@@ -243,7 +244,8 @@ void MarkerVisualizer::setCommonValues( const std_msgs::VisualizationMarker& mes
   robotToOgre( position );
 
   Ogre::Matrix3 orientation;
-  orientation.FromEulerAnglesYXZ( Ogre::Radian( pose.yaw ), Ogre::Radian( -pose.pitch ), Ogre::Radian( pose.roll ) );
+  //printf( "post transform yaw: %f, pitch: %f, roll: %f\n", pose.yaw, pose.pitch, pose.roll );
+  orientation.FromEulerAnglesYXZ( Ogre::Radian( pose.yaw ), Ogre::Radian( pose.pitch ), Ogre::Radian( pose.roll ) );
   //Ogre::Matrix3 orientation( ogreMatrixFromRobotEulers( pose.yaw, pose.pitch, pose.roll ) );
   Ogre::Vector3 scale( message.xScale, message.yScale, message.zScale );
   scaleRobotToOgre( scale );
