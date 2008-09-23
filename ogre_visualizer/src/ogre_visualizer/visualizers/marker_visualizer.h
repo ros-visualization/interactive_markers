@@ -95,7 +95,7 @@ public:
 
   virtual bool isObjectPickable( const Ogre::MovableObject* object ) const { return true; }
 
-  virtual void targetFrameChanged() {}
+  virtual void targetFrameChanged();
 
   static const char* getTypeStatic() { return "Markers"; }
   virtual const char* getType() { return getTypeStatic(); }
@@ -150,8 +150,18 @@ protected:
    */
   void incomingMarker();
 
-  typedef std::map<int, ogre_tools::Object*> M_IDToObject;
-  M_IDToObject markers_;                                ///< Map of marker id to the object that displays the marker
+  struct MarkerInfo
+  {
+    MarkerInfo( ogre_tools::Object* object, const std_msgs::VisualizationMarker& message )
+    : object_(object)
+    , message_(message)
+    {}
+    ogre_tools::Object* object_;
+    std_msgs::VisualizationMarker message_;
+  };
+
+  typedef std::map<int, MarkerInfo> M_IDToMarker;
+  M_IDToMarker markers_;                                ///< Map of marker id to the marker info structure
 
   std_msgs::VisualizationMarker current_message_;       ///< Incoming marker message
 

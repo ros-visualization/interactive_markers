@@ -57,11 +57,12 @@ MarkerVisualizer::~MarkerVisualizer()
 
 void MarkerVisualizer::clearMarkers()
 {
-  M_IDToObject::iterator marker_it = markers_.begin();
-  M_IDToObject::iterator marker_end = markers_.end();
+  M_IDToMarker::iterator marker_it = markers_.begin();
+  M_IDToMarker::iterator marker_end = markers_.end();
   for ( ; marker_it != marker_end; ++marker_it )
   {
-    delete marker_it->second;
+    MarkerInfo& info = marker_it->second;
+    delete info.object_;
   }
   markers_.clear();
 }
@@ -125,53 +126,67 @@ void MarkerVisualizer::processMessage( const std_msgs::VisualizationMarker& mess
 
 void MarkerVisualizer::processAdd( const std_msgs::VisualizationMarker& message )
 {
-  {
-    M_IDToObject::iterator it = markers_.find( message.id );
-    if ( it != markers_.end() )
-    {
-      printf( "Marker with id %d already exists, replacing...\n", message.id );
+  ogre_tools::Object* object = NULL;
+  bool create = true;
 
-      delete it->second;
+  M_IDToMarker::iterator it = markers_.find( message.id );
+  if ( it != markers_.end() )
+  {
+    MarkerInfo& info = it->second;
+    if ( message.type == info.message_.type )
+    {
+      object = info.object_;
+
+      info.message_ = message;
+      create = false;
+    }
+    else
+    {
+      delete it->second.object_;
       markers_.erase( it );
     }
   }
 
-  ogre_tools::Object* object = NULL;
-
-  switch ( message.type )
+  if ( create )
   {
-  case MarkerTypes::Cube:
+    switch ( message.type )
     {
-      ogre_tools::SuperEllipsoid* cube = new ogre_tools::SuperEllipsoid( scene_manager_, scene_node_ );
-      cube->create( ogre_tools::SuperEllipsoid::Cube, 10, Ogre::Vector3( 1.0f, 1.0f, 1.0f ) );
+    case MarkerTypes::Cube:
+      {
+        ogre_tools::SuperEllipsoid* cube = new ogre_tools::SuperEllipsoid( scene_manager_, scene_node_ );
+        cube->create( ogre_tools::SuperEllipsoid::Cube, 10, Ogre::Vector3( 1.0f, 1.0f, 1.0f ) );
 
-      object = cube;
+        object = cube;
+      }
+      break;
+
+    case MarkerTypes::Sphere:
+      {
+        ogre_tools::SuperEllipsoid* sphere = new ogre_tools::SuperEllipsoid( scene_manager_, scene_node_ );
+        sphere->create( ogre_tools::SuperEllipsoid::Sphere, 20, Ogre::Vector3( 1.0f, 1.0f, 1.0f ) );
+
+        object = sphere;
+      }
+      break;
+
+    case MarkerTypes::Arrow:
+      {
+        object = new ogre_tools::Arrow( scene_manager_, scene_node_, 0.8, 0.5, 0.2, 1.0 );
+      }
+      break;
+
+    default:
+      printf( "Unknown marker type: %d\n", message.type );
     }
-    break;
 
-  case MarkerTypes::Sphere:
+    if ( object )
     {
-      ogre_tools::SuperEllipsoid* sphere = new ogre_tools::SuperEllipsoid( scene_manager_, scene_node_ );
-      sphere->create( ogre_tools::SuperEllipsoid::Sphere, 20, Ogre::Vector3( 1.0f, 1.0f, 1.0f ) );
-
-      object = sphere;
+      markers_.insert( std::make_pair( message.id, MarkerInfo(object, message) ) );
     }
-    break;
-
-  case MarkerTypes::Arrow:
-    {
-      object = new ogre_tools::Arrow( scene_manager_, scene_node_, 0.8, 0.5, 0.2, 1.0 );
-    }
-    break;
-
-  default:
-    printf( "Unknown marker type: %d\n", message.type );
   }
 
   if ( object )
   {
-    markers_.insert( std::make_pair( message.id, object ) );
-
     setCommonValues( message, object );
 
     causeRender();
@@ -180,24 +195,26 @@ void MarkerVisualizer::processAdd( const std_msgs::VisualizationMarker& message 
 
 void MarkerVisualizer::processModify( const std_msgs::VisualizationMarker& message )
 {
-  M_IDToObject::iterator it = markers_.find( message.id );
+  M_IDToMarker::iterator it = markers_.find( message.id );
   if ( it == markers_.end() )
   {
     printf( "Tried to modify marker with id %d that does not exist\n", message.id );
     return;
   }
 
-  setCommonValues( message, it->second );
+  MarkerInfo& info = it->second;
+  info.message_ = message;
+  setCommonValues( message, info.object_ );
 
   causeRender();
 }
 
 void MarkerVisualizer::processDelete( const std_msgs::VisualizationMarker& message )
 {
-  M_IDToObject::iterator it = markers_.find( message.id );
+  M_IDToMarker::iterator it = markers_.find( message.id );
   if ( it != markers_.end() )
   {
-    delete it->second;
+    delete it->second.object_;
     markers_.erase( it );
   }
 
@@ -219,14 +236,15 @@ void MarkerVisualizer::setCommonValues( const std_msgs::VisualizationMarker& mes
   }
   catch(libTF::Exception& e)
   {
-    printf( "Error transforming marker '%d': %s\n", message.id, e.what() );
+    printf( "Error transforming marker '%d' from frame '%s' to frame '%s'\n", message.id, frame_id.c_str(), target_frame_.c_str() );
   }
 
   Ogre::Vector3 position( pose.x, pose.y, pose.z );
   robotToOgre( position );
 
   Ogre::Matrix3 orientation;
-  orientation.FromEulerAnglesYXZ( Ogre::Radian( pose.yaw ), Ogre::Radian( pose.pitch ), Ogre::Radian( pose.roll ) );
+  orientation.FromEulerAnglesYXZ( Ogre::Radian( pose.yaw ), Ogre::Radian( -pose.pitch ), Ogre::Radian( pose.roll ) );
+  //Ogre::Matrix3 orientation( ogreMatrixFromRobotEulers( pose.yaw, pose.pitch, pose.roll ) );
   Ogre::Vector3 scale( message.xScale, message.yScale, message.zScale );
   scaleRobotToOgre( scale );
 
@@ -256,6 +274,20 @@ void MarkerVisualizer::update( float dt )
   }
 
   current_message_.unlock();
+}
+
+void MarkerVisualizer::targetFrameChanged()
+{
+  M_IDToMarker::iterator marker_it = markers_.begin();
+  M_IDToMarker::iterator marker_end = markers_.end();
+  for ( ; marker_it != marker_end; )
+  {
+    MarkerInfo& info = marker_it->second;
+
+    ++marker_it;
+
+    processMessage( info.message_ );
+  }
 }
 
 } // namespace ogre_vis
