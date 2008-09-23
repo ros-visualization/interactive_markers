@@ -209,7 +209,7 @@ void Robot::createCollisionForLink( LinkInfo& info, robot_desc::URDF::Link* link
     info.collision_offset_position_ = position;
     info.collision_offset_orientation_ = orientation;
 
-    info.collision_object_->setColor( 0.0f, 0.6f, 1.0f );
+    info.collision_object_->setColor( 0.0f, 0.6f, 1.0f, 1.0f );
 
     if ( user_data_ )
     {

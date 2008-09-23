@@ -68,28 +68,28 @@ Arrow::~Arrow()
 void Arrow::set( float shaft_length, float shaft_radius, float head_length, float head_radius )
 {
   shaft_->create( SuperEllipsoid::Cylinder, 20, Ogre::Vector3( shaft_radius, shaft_length, shaft_radius ) );
-  shaft_->setColor( 0.5f, 0.5f, 0.5f );
+  shaft_->setColor( 0.5f, 0.5f, 0.5f, 1.0f );
   shaft_->setPosition( Ogre::Vector3( 0.0f, shaft_length/2.0f, 0.0f ) );
 
   head_->setScale( Ogre::Vector3( head_radius, head_length, head_radius ) );
-  head_->setColor( 0.5f, 0.5f, 0.5f );
+  head_->setColor( 0.5f, 0.5f, 0.5f, 1.0f );
   head_->setPosition( Ogre::Vector3( 0.0f, shaft_length, 0.0f ) );
 }
 
-void Arrow::setColor( float r, float g, float b )
+void Arrow::setColor( float r, float g, float b, float a )
 {
-  shaft_->setColor( r, g, b );
-  head_->setColor( r, g, b );
+  shaft_->setColor( r, g, b, a );
+  head_->setColor( r, g, b, a );
 }
 
-void Arrow::setShaftColor( float r, float g, float b )
+void Arrow::setShaftColor( float r, float g, float b, float a )
 {
-  shaft_->setColor( r, g, b );
+  shaft_->setColor( r, g, b, a );
 }
 
-void Arrow::setHeadColor( float r, float g, float b )
+void Arrow::setHeadColor( float r, float g, float b, float a )
 {
-  head_->setColor( r, g, b );
+  head_->setColor( r, g, b, a );
 }
 
 void Arrow::setPosition( const Ogre::Vector3& position )

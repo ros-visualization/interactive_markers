@@ -80,7 +80,7 @@ public:
    * @param g Green component
    * @param b Blue component
    */
-  virtual void setColor( float r, float g, float b ) = 0;
+  virtual void setColor( float r, float g, float b, float a ) = 0;
 
   /**
    * \brief Get the local position of this object

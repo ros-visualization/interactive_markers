@@ -84,7 +84,7 @@ public:
    * @param g Green component
    * @param b Blue component
    */
-  virtual void setColor( float r, float g, float b );
+  virtual void setColor( float r, float g, float b, float a );
 
   /**
    * \brief Set the color of the arrow's head.  Values are in the range [0, 1]
@@ -93,7 +93,7 @@ public:
    * @param g Green component
    * @param b Blue component
    */
-  void setHeadColor( float r, float g, float b );
+  void setHeadColor( float r, float g, float b, float a = 1.0f );
   /**
    * \brief Set the color of the arrow's shaft.  Values are in the range [0, 1]
    *
@@ -101,7 +101,7 @@ public:
    * @param g Green component
    * @param b Blue component
    */
-  void setShaftColor( float r, float g, float b );
+  void setShaftColor( float r, float g, float b, float a = 1.0f );
 
   virtual void setOrientation( const Ogre::Quaternion& orientation );
   virtual void setPosition( const Ogre::Vector3& position );

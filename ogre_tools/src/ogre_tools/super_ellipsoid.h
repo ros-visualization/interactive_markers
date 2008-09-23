@@ -95,7 +95,7 @@ public:
    */
   void setOffset( const Ogre::Vector3&  offset );
 
-  virtual void setColor( float r, float g, float b );
+  virtual void setColor( float r, float g, float b, float a );
   virtual void setPosition( const Ogre::Vector3& position );
   virtual void setOrientation( const Ogre::Quaternion& orientation );
   virtual void setScale( const Ogre::Vector3& scale );

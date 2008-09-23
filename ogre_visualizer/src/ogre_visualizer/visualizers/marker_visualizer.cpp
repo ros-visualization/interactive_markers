@@ -206,71 +206,34 @@ void MarkerVisualizer::processDelete( const std_msgs::VisualizationMarker& messa
 
 void MarkerVisualizer::setCommonValues( const std_msgs::VisualizationMarker& message, ogre_tools::Object* object )
 {
-  uint32_t frameId = 1;
-  /*if ( !message.frame.empty() )
+  std::string frame_id = message.header.frame_id;
+  if ( frame_id.empty() )
   {
-    frameId = tf_client_->lookup( message.frame );
-  }*/
+    frame_id = target_frame_;
+  }
 
-  libTF::TFPoint tf_point;
-  tf_point.x = message.x;
-  tf_point.y = message.y;
-  tf_point.z = message.z;
-  tf_point.time = 0;
-  tf_point.frame = frameId;
+  libTF::TFPose pose = { message.x, message.y, message.z, message.yaw, message.pitch, message.roll, 0, frame_id };
   try
   {
-    tf_point = tf_client_->transformPoint( target_frame_, tf_point );
+    pose = tf_client_->transformPose( target_frame_, pose );
   }
-  catch(libTF::TransformReference::LookupException& e)
-  {
-    printf( "Error transforming marker '%d': %s\n", message.id, e.what() );
-  }
-  catch(libTF::TransformReference::ConnectivityException& e)
-  {
-    printf( "Error transforming marker '%d': %s\n", message.id, e.what() );
-  }
-  catch(libTF::TransformReference::ExtrapolateException& e)
+  catch(libTF::Exception& e)
   {
     printf( "Error transforming marker '%d': %s\n", message.id, e.what() );
   }
 
-  libTF::TFEulerYPR tf_eulers;
-  tf_eulers.yaw = message.yaw;
-  tf_eulers.pitch = message.pitch;
-  tf_eulers.roll = message.roll;
-  tf_eulers.time = 0;
-  tf_eulers.frame = frameId;
-  try
-  {
-    tf_eulers = tf_client_->transformEulerYPR( target_frame_, tf_eulers );
-  }
-  catch(libTF::TransformReference::LookupException& e)
-  {
-    printf( "Error transforming marker '%d': %s\n", message.id, e.what() );
-  }
-  catch(libTF::TransformReference::ConnectivityException& e)
-  {
-    printf( "Error transforming marker '%d': %s\n", message.id, e.what() );
-  }
-  catch(libTF::TransformReference::ExtrapolateException& e)
-  {
-    printf( "Error transforming marker '%d': %s\n", message.id, e.what() );
-  }
-
-  Ogre::Vector3 position( tf_point.x, tf_point.y, tf_point.z );
+  Ogre::Vector3 position( pose.x, pose.y, pose.z );
   robotToOgre( position );
 
   Ogre::Matrix3 orientation;
-  orientation.FromEulerAnglesYXZ( Ogre::Radian( tf_eulers.yaw ), Ogre::Radian( tf_eulers.pitch ), Ogre::Radian( tf_eulers.roll ) );
-  //Ogre::Matrix3 orientation( OgreMatrixFromRobotEulers( tf_eulers.yaw, tf_eulers.pitch, tf_eulers.roll ) );
+  orientation.FromEulerAnglesYXZ( Ogre::Radian( pose.yaw ), Ogre::Radian( pose.pitch ), Ogre::Radian( pose.roll ) );
   Ogre::Vector3 scale( message.xScale, message.yScale, message.zScale );
   scaleRobotToOgre( scale );
 
   object->setPosition( position );
   object->setOrientation( orientation );
   object->setScale( scale );
-  object->setColor( message.r / 255.0f, message.g / 255.0f, message.b / 255.0f );
+  object->setColor( message.r / 255.0f, message.g / 255.0f, message.b / 255.0f, message.alpha / 255.0f );
   object->setUserData( Ogre::Any( (void*)this ) );
 }
 

@@ -75,9 +75,9 @@ void Axes::set( float length, float radius )
   z_axis_->setPosition( Ogre::Vector3( 0.0, 0.0f, length/2.0f ) );
   z_axis_->setOrientation( Ogre::Quaternion( Ogre::Degree( 90 ), Ogre::Vector3::UNIT_X ) );
 
-  x_axis_->setColor( 1.0f, 0.0f, 0.0f );
-  y_axis_->setColor( 0.0f, 1.0f, 0.0f );
-  z_axis_->setColor( 0.0f, 0.0f, 1.0f );
+  x_axis_->setColor( 1.0f, 0.0f, 0.0f, 1.0f );
+  y_axis_->setColor( 0.0f, 1.0f, 0.0f, 1.0f );
+  z_axis_->setColor( 0.0f, 0.0f, 1.0f, 1.0f );
 }
 
 void Axes::setPosition( const Ogre::Vector3& position )
@@ -95,7 +95,7 @@ void Axes::setScale( const Ogre::Vector3& scale )
   scene_node_->setScale( scale );
 }
 
-void Axes::setColor( float r, float g, float b )
+void Axes::setColor( float r, float g, float b, float a )
 {
   // for now, do nothing
   /// \todo should anything be done here?

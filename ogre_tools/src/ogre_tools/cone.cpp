@@ -162,10 +162,19 @@ void Cone::getNormal(double theta, double h, Ogre::Vector3 & normal)
   normal.z = 0.5*sin(theta);
 }
 
-void Cone::setColor( float r, float g, float b )
+void Cone::setColor( float r, float g, float b, float a )
 {
   material_->getTechnique(0)->setAmbient( r*0.5, g*0.5, b*0.5 );
-  material_->getTechnique(0)->setDiffuse( r, g, b, 1.0f );
+  material_->getTechnique(0)->setDiffuse( r, g, b, a );
+
+  if ( a < 0.9998 )
+  {
+    material_->setSceneBlending( Ogre::SBT_TRANSPARENT_ALPHA );
+  }
+  else
+  {
+    material_->setSceneBlending( Ogre::SBT_REPLACE );
+  }
 }
 
 void Cone::setOffset( const Ogre::Vector3& offset )

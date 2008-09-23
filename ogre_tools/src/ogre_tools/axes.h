@@ -77,7 +77,7 @@ public:
   virtual void setOrientation( const Ogre::Quaternion& orientation );
   virtual void setPosition( const Ogre::Vector3& position );
   virtual void setScale( const Ogre::Vector3& scale );
-  virtual void setColor( float r, float g, float b );
+  virtual void setColor( float r, float g, float b, float a );
   virtual const Ogre::Vector3& getPosition();
   virtual const Ogre::Quaternion& getOrientation();
 

@@ -72,5 +72,5 @@ set_target_properties(${PROJECT_NAME}
 rospack_add_executable(visualizer_test src/test/visualizer_test.cpp)
 target_link_libraries(visualizer_test ${PROJECT_NAME} ${wxWidgets_LIBRARIES})
 
-#rospack_add_executable(marker_test src/test/marker_test.cpp)
+rospack_add_executable(marker_test src/test/marker_test.cpp)
  

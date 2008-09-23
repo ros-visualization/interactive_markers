@@ -15,7 +15,7 @@ int main( int argc, char** argv )
 
   node->advertise<std_msgs::VisualizationMarker>( "visualizationMarker", 1 );
 
-  usleep( 100000 );
+  usleep( 1000000 );
 
   std_msgs::VisualizationMarker marker;
   marker.id = 0;
@@ -30,11 +30,13 @@ int main( int argc, char** argv )
   marker.xScale = 1;
   marker.yScale = 0.1;
   marker.zScale = 0.1;
-  marker.alpha = 255;
+  marker.alpha = 100;
   marker.r = 0;
   marker.g = 255;
   marker.b = 0;
   node->publish( "visualizationMarker", marker );
+
+  usleep( 1000000 );
 
   node->shutdown();
   delete node;
