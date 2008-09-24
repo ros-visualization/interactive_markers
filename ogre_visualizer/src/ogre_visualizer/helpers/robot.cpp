@@ -42,7 +42,7 @@ namespace ogre_vis
 {
 
 Robot::Robot( Ogre::SceneManager* scene_manager )
-: scene_manager_( scene_manager )
+: ogre_tools::Object( scene_manager )
 , visual_visible_( true )
 , collision_visible_( false )
 , user_data_( NULL )
@@ -98,7 +98,7 @@ bool Robot::isCollisionVisible()
   return collision_visible_;
 }
 
-void Robot::setUserData( void* user_data )
+void Robot::setUserData( const Ogre::Any& user_data )
 {
   user_data_ = user_data;
   M_NameToLinkInfo::iterator it = links_.begin();
@@ -109,17 +109,17 @@ void Robot::setUserData( void* user_data )
 
     if ( info.visual_mesh_ )
     {
-      info.visual_mesh_->setUserAny( Ogre::Any( user_data_ ) );
+      info.visual_mesh_->setUserAny( user_data_ );
     }
 
     if ( info.collision_mesh_ )
     {
-      info.collision_mesh_->setUserAny( Ogre::Any( user_data_ ) );
+      info.collision_mesh_->setUserAny( user_data_ );
     }
 
     if ( info.collision_object_ )
     {
-      info.collision_object_->setUserData( Ogre::Any( user_data_ ) );
+      info.collision_object_->setUserData( user_data_ );
     }
   }
 }
@@ -132,7 +132,11 @@ void Robot::clear()
   {
     LinkInfo& info = it->second;
 
-    scene_manager_->destroyEntity( info.visual_mesh_ );
+    if ( info.visual_mesh_ )
+    {
+      scene_manager_->destroyEntity( info.visual_mesh_ );
+    }
+
     delete info.collision_object_;
   }
 
@@ -178,7 +182,7 @@ void Robot::createCollisionForLink( LinkInfo& info, robot_desc::URDF::Link* link
       Ogre::Vector3 scale( sphere->radius, sphere->radius, sphere->radius );
       // No need to convert robot->ogre because a sphere is uniform
 
-      obj->create( ogre_tools::SuperEllipsoid::Sphere, 20, scale );
+      obj->create( ogre_tools::SuperEllipsoid::Sphere, 10, scale );
       info.collision_object_ = obj;
     }
     break;
@@ -190,7 +194,7 @@ void Robot::createCollisionForLink( LinkInfo& info, robot_desc::URDF::Link* link
       ogre_tools::SuperEllipsoid* obj = new ogre_tools::SuperEllipsoid( scene_manager_, info.collision_node_ );
       Ogre::Vector3 scale( cylinder->radius*2, cylinder->length, cylinder->radius*2 );
 
-      obj->create( ogre_tools::SuperEllipsoid::Cylinder, 20, scale );
+      obj->create( ogre_tools::SuperEllipsoid::Cylinder, 10, scale );
 
       info.collision_object_ = obj;
     }
@@ -211,14 +215,76 @@ void Robot::createCollisionForLink( LinkInfo& info, robot_desc::URDF::Link* link
 
     info.collision_object_->setColor( 0.0f, 0.6f, 1.0f, 1.0f );
 
-    if ( user_data_ )
+    if ( !user_data_.isEmpty() )
     {
-      info.collision_object_->setUserData( Ogre::Any( user_data_ ) );
+      info.collision_object_->setUserData( user_data_ );
     }
   }
 }
 
-void Robot::load( robot_desc::URDF* urdf )
+void Robot::createVisualForLink( ogre_vis::Robot::LinkInfo& info, robot_desc::URDF::Link* link )
+{
+  robot_desc::URDF::Link::Geometry::Mesh* mesh = static_cast<robot_desc::URDF::Link::Geometry::Mesh*>(link->visual->geometry->shape);
+  if ( mesh->filename.empty() )
+  {
+    return;
+  }
+
+  std::string model_name = mesh->filename + "_hi.mesh";
+
+  static int count = 0;
+  std::stringstream ss;
+  ss << "RobotVis" << count++ << " Link " << link->name ;
+
+  try
+  {
+    info.visual_mesh_ = scene_manager_->createEntity( ss.str(), model_name );
+  }
+  catch( Ogre::Exception& e )
+  {
+    printf( "Could not load model '%s' for link '%s': %s\n", model_name.c_str(), link->name.c_str(), e.what() );
+  }
+
+  if ( info.visual_mesh_ )
+  {
+    if ( !user_data_.isEmpty() )
+    {
+      info.visual_mesh_->setUserAny( user_data_ );
+    }
+
+    info.visual_node_ = root_visual_node_->createChildSceneNode();
+    info.visual_node_->attachObject( info.visual_mesh_ );
+
+    // assign the material from the link
+    uint16_t num_sub_entities = info.visual_mesh_->getNumSubEntities();
+    for ( uint16_t i = 0; i < num_sub_entities; ++i )
+    {
+      Ogre::SubEntity* subEntity = info.visual_mesh_->getSubEntity( i );
+
+      typedef std::vector<std::string> V_string;
+      V_string gazebo_names;
+      link->visual->data.getMapTagNames("gazebo", gazebo_names);
+
+      V_string::iterator name_it = gazebo_names.begin();
+      V_string::iterator name_end = gazebo_names.end();
+      for ( ; name_it != name_end; ++name_it )
+      {
+        typedef std::map<std::string, std::string> M_string;
+        M_string m = link->visual->data.getMapTagValues("gazebo", *name_it);
+
+        M_string::iterator it = m.find( "material" );
+        if ( it != m.end() )
+        {
+          info.material_name_ = it->second;
+          subEntity->setMaterialName( info.material_name_ );
+          break;
+        }
+      }
+    }
+  }
+}
+
+void Robot::load( robot_desc::URDF* urdf, bool visual, bool collision )
 {
   clear();
 
@@ -231,70 +297,19 @@ void Robot::load( robot_desc::URDF* urdf )
   for ( ; link_it != link_end; ++link_it )
   {
     robot_desc::URDF::Link* link = *link_it;
-    robot_desc::URDF::Link::Geometry::Mesh* mesh = static_cast<robot_desc::URDF::Link::Geometry::Mesh*>(link->visual->geometry->shape);
-    if ( mesh->filename.empty() )
-    {
-      continue;
-    }
-
-    std::string model_name = mesh->filename + "_hi.mesh";
-
-    static int count = 0;
-    std::stringstream ss;
-    ss << "RobotVis" << count++ << " Link " << link->name ;
 
     LinkInfo info;
-
     info.name_ = link->name;
 
-    try
+    if ( visual )
     {
-      info.visual_mesh_ = scene_manager_->createEntity( ss.str(), model_name );
-    }
-    catch( Ogre::Exception& e )
-    {
-      printf( "Could not load model '%s' for link '%s': %s\n", model_name.c_str(), link->name.c_str(), e.what() );
+      createVisualForLink( info, link );
     }
 
-    if ( info.visual_mesh_ )
+    if ( collision )
     {
-      if ( user_data_ )
-      {
-        info.visual_mesh_->setUserAny( Ogre::Any( user_data_ ) );
-      }
-
-      info.visual_node_ = root_visual_node_->createChildSceneNode();
-      info.visual_node_->attachObject( info.visual_mesh_ );
-
-      // assign the material from the link
-      uint16_t num_sub_entities = info.visual_mesh_->getNumSubEntities();
-      for ( uint16_t i = 0; i < num_sub_entities; ++i )
-      {
-        Ogre::SubEntity* subEntity = info.visual_mesh_->getSubEntity( i );
-
-        typedef std::vector<std::string> V_string;
-        V_string gazebo_names;
-        link->visual->data.getMapTagNames("gazebo", gazebo_names);
-
-        V_string::iterator name_it = gazebo_names.begin();
-        V_string::iterator name_end = gazebo_names.end();
-        for ( ; name_it != name_end; ++name_it )
-        {
-          typedef std::map<std::string, std::string> M_string;
-          M_string m = link->visual->data.getMapTagValues("gazebo", *name_it);
-
-          M_string::iterator it = m.find( "material" );
-          if ( it != m.end() )
-          {
-            info.material_name_ = it->second;
-            subEntity->setMaterialName( info.material_name_ );
-            break;
-          }
-        }
-      }
+      createCollisionForLink( info, link );
     }
-
-    createCollisionForLink( info, link );
 
     links_.insert( std::make_pair( info.name_, info ) );
   }
@@ -406,6 +421,35 @@ void Robot::setOrientation( const Ogre::Quaternion& orientation )
 {
   root_visual_node_->setOrientation( orientation );
   root_collision_node_->setOrientation( orientation );
+}
+
+void Robot::setScale( const Ogre::Vector3& scale )
+{
+  root_visual_node_->setScale( scale );
+  root_collision_node_->setScale( scale );
+}
+
+const Ogre::Vector3& Robot::getPosition()
+{
+  return root_visual_node_->getPosition();
+}
+
+const Ogre::Quaternion& Robot::getOrientation()
+{
+  return root_visual_node_->getOrientation();
+}
+
+void Robot::setColor( float r, float g, float b, float a )
+{
+  /// @todo Make this work on the meshes as well?
+
+  M_NameToLinkInfo::iterator link_it = links_.begin();
+  M_NameToLinkInfo::iterator link_end = links_.end();
+  for ( ; link_it != link_end; ++link_it )
+  {
+    const LinkInfo& info = link_it->second;
+    info.collision_object_->setColor( r, g, b, a );
+  }
 }
 
 } // namespace ogre_vis

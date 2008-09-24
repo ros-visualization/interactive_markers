@@ -29,12 +29,16 @@
 
 #include "marker_visualizer.h"
 #include "common.h"
+#include "helpers/robot.h"
 
 #include <ogre_tools/arrow.h>
 #include <ogre_tools/super_ellipsoid.h>
 
 #include <ros/node.h>
 #include <rosTF/rosTF.h>
+
+#include <urdf/URDF.h>
+#include <planning_models/kinematic.h>
 
 #include <Ogre.h>
 
@@ -46,10 +50,18 @@ MarkerVisualizer::MarkerVisualizer( Ogre::SceneManager* scene_manager, ros::node
 : VisualizerBase( scene_manager, node, tf_client, name )
 {
   scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
+
+  urdf_ = new robot_desc::URDF();
+
+  kinematic_model_ = new planning_models::KinematicModel();
+  kinematic_model_->setVerbose( false );
 }
 
 MarkerVisualizer::~MarkerVisualizer()
 {
+  delete urdf_;
+  delete kinematic_model_;
+
   unsubscribe();
 
   clearMarkers();
@@ -72,6 +84,14 @@ void MarkerVisualizer::onEnable()
   subscribe();
 
   scene_node_->setVisible( true );
+
+  std::string content;
+  /// @todo pass this in
+  ros_node_->get_param("robotdesc/pr2", content);
+  urdf_->loadString(content.c_str());
+
+  kinematic_model_->build( *urdf_ );
+  kinematic_model_->defaultState();
 }
 
 void MarkerVisualizer::onDisable()
@@ -172,6 +192,16 @@ void MarkerVisualizer::processAdd( const std_msgs::VisualizationMarker& message 
     case MarkerTypes::Arrow:
       {
         object = new ogre_tools::Arrow( scene_manager_, scene_node_, 0.8, 0.5, 0.2, 1.0 );
+      }
+      break;
+
+    case MarkerTypes::Robot:
+      {
+        Robot* robot = new Robot( scene_manager_ );
+        robot->load( urdf_, false, true );
+        robot->update( kinematic_model_, target_frame_ );
+
+        object = robot;
       }
       break;
 

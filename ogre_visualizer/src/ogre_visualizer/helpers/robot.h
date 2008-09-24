@@ -30,6 +30,8 @@
 #ifndef OGRE_VISUALIZER_ROBOT_H_
 #define OGRE_VISUALIZER_ROBOT_H_
 
+#include <ogre_tools/object.h>
+
 #include <string>
 #include <map>
 
@@ -37,6 +39,7 @@
 
 #include <OgreVector3.h>
 #include <OgreQuaternion.h>
+#include <OgreAny.h>
 
 namespace Ogre
 {
@@ -45,6 +48,7 @@ class Entity;
 class SceneNode;
 class Vector3;
 class Quaternion;
+class Any;
 }
 
 namespace ogre_tools
@@ -73,7 +77,7 @@ namespace ogre_vis
  * A helper class to draw a representation of a robot, as specified by a URDF.  Can display either the visual models of the robot,
  * or the collision models.
  */
-class Robot
+class Robot : public ogre_tools::Object
 {
 public:
   Robot( Ogre::SceneManager* scene_manager );
@@ -83,8 +87,10 @@ public:
    * \brief Loads meshes/primitives from a robot description.  Calls clear() before loading.
    *
    * @param urdf The robot description to read from
+   * @param visual Whether or not to load the visual representation
+   * @param collision Whether or not to load the collision representation
    */
-  void load( robot_desc::URDF* urdf );
+  void load( robot_desc::URDF* urdf, bool visual = true, bool collision = true );
   /**
    * \brief Clears all data loaded from a URDF
    */
@@ -133,14 +139,14 @@ public:
    */
   bool isCollisionVisible();
 
-  void setPosition( const Ogre::Vector3& position );
-  void setOrientation( const Ogre::Quaternion& orientation );
-
-  /**
-   * \brief Set the user data that should be set on any ogre objects created by this class
-   * @param user_data The user data
-   */
-  void setUserData( void* user_data );
+  // Overrides from ogre_tools::Object
+  virtual void setPosition( const Ogre::Vector3& position );
+  virtual void setOrientation( const Ogre::Quaternion& orientation );
+  virtual void setScale( const Ogre::Vector3& scale );
+  virtual void setColor( float r, float g, float b, float a );
+  virtual void setUserData( const Ogre::Any& user_data );
+  virtual const Ogre::Vector3& getPosition();
+  virtual const Ogre::Quaternion& getOrientation();
 
   /**
    * \struct LinkInfo
@@ -173,20 +179,20 @@ public:
 
 protected:
 
+  void createVisualForLink( LinkInfo& info, robot_desc::URDF::Link* link );
   void createCollisionForLink( LinkInfo& info, robot_desc::URDF::Link* link );
 
 
   typedef std::map< std::string, LinkInfo > M_NameToLinkInfo;
   M_NameToLinkInfo links_;                      ///< Map of name to link info, stores all loaded links.
 
-  Ogre::SceneManager* scene_manager_;
   Ogre::SceneNode* root_visual_node_;           ///< Node all our visual nodes are children of
   Ogre::SceneNode* root_collision_node_;        ///< Node all our collision nodes are children of
 
   bool visual_visible_;                         ///< Should we show the visual representation?
   bool collision_visible_;                      ///< Should we show the collision representation?
 
-  void* user_data_;
+  Ogre::Any user_data_;
 };
 
 } // namespace ogre_vis

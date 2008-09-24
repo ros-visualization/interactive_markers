@@ -52,6 +52,16 @@ namespace ogre_tools
 class Object;
 }
 
+namespace robot_desc
+{
+class URDF;
+}
+
+namespace planning_models
+{
+class KinematicModel;
+}
+
 class rosTFClient;
 
 namespace ogre_vis
@@ -64,6 +74,7 @@ enum MarkerType
   Arrow,
   Cube,
   Sphere,
+  Robot,
 };
 }
 typedef MarkerTypes::MarkerType MarkerType;
@@ -170,6 +181,9 @@ protected:
                                                         ///< in our update() function
 
   Ogre::SceneNode* scene_node_;                         ///< Scene node all the marker objects are parented to
+
+  robot_desc::URDF* urdf_;
+  planning_models::KinematicModel* kinematic_model_;
 };
 
 } // namespace ogre_vis

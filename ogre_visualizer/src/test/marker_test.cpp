@@ -13,29 +13,32 @@ int main( int argc, char** argv )
     usleep( 10000 );
   }
 
-  node->advertise<std_msgs::VisualizationMarker>( "visualizationMarker", 1 );
+  node->advertise<std_msgs::VisualizationMarker>( "visualizationMarker", 0 );
 
   usleep( 1000000 );
 
-  std_msgs::VisualizationMarker marker;
-  marker.header.frame_id = "base";
-  marker.id = 0;
-  marker.type = 0;
-  marker.action = 0;
-  marker.x = 1;
-  marker.y = 0;
-  marker.z = 0;
-  marker.yaw = 0;
-  marker.pitch = 0;
-  marker.roll = 0.0;
-  marker.xScale = 1;
-  marker.yScale = 0.1;
-  marker.zScale = 0.1;
-  marker.alpha = 100;
-  marker.r = 0;
-  marker.g = 255;
-  marker.b = 0;
-  node->publish( "visualizationMarker", marker );
+  for ( int i = -50; i < 50; ++i )
+  {
+    std_msgs::VisualizationMarker marker;
+    marker.header.frame_id = "base";
+    marker.id = i;
+    marker.type = 3;
+    marker.action = 0;
+    marker.x = 1;
+    marker.y = (i*2);
+    marker.z = 0;
+    marker.yaw = 0.0;
+    marker.pitch = 0.0;
+    marker.roll = 0.0;
+    marker.xScale = 1;
+    marker.yScale = 1;
+    marker.zScale = 1;
+    marker.alpha = 100;
+    marker.r = 0;
+    marker.g = 255;
+    marker.b = 0;
+    node->publish( "visualizationMarker", marker );
+  }
 
   usleep( 1000000 );
 

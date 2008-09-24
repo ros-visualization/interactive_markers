@@ -53,7 +53,7 @@ namespace ogre_vis
 PlanningVisualizer::PlanningVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name )
 : VisualizerBase( scene_manager, node, tf_client, name )
 , initialized_( false )
-, kinematic_model_( false )
+, kinematic_model_( NULL )
 , new_kinematic_path_( false )
 , animating_path_( false )
 , state_display_time_( 0.05f )
@@ -62,7 +62,7 @@ PlanningVisualizer::PlanningVisualizer( Ogre::SceneManager* scene_manager, ros::
 
   robot_->setVisualVisible( false );
   robot_->setCollisionVisible( true );
-  robot_->setUserData( (void*)this );
+  robot_->setUserData( Ogre::Any( (void*)this ) );
 }
 
 PlanningVisualizer::~PlanningVisualizer()
