@@ -283,7 +283,7 @@ void CameraPanel::subscribeImage()
 
 void CameraPanel::unsubscribeImage()
 {
-  ros_node_->unsubscribe( image_topic_ );
+  ros_node_->unsubscribe( image_topic_, &CameraPanel::incomingImage, this );
 }
 
 void CameraPanel::subscribePTZState()
@@ -296,7 +296,7 @@ void CameraPanel::subscribePTZState()
 
 void CameraPanel::unsubscribePTZState()
 {
-  ros_node_->unsubscribe( ptz_state_topic_ );
+  ros_node_->unsubscribe( ptz_state_topic_, &CameraPanel::incomingPTZState, this );
 }
 
 void CameraPanel::advertisePTZControl()

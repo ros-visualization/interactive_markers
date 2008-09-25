@@ -164,7 +164,7 @@ void PointCloudVisualizer::unsubscribe()
 {
   if ( !topic_.empty() )
   {
-    ros_node_->unsubscribe( topic_ );
+    ros_node_->unsubscribe( topic_, &PointCloudVisualizer::incomingCloudCallback, this );
   }
 }
 

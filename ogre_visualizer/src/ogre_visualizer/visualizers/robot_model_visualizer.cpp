@@ -170,7 +170,7 @@ void RobotModelVisualizer::unsubscribe()
 {
   if ( initialized_ && !transform_topic_.empty() )
   {
-    ros_node_->unsubscribe( transform_topic_ );
+    ros_node_->unsubscribe( transform_topic_, &RobotModelVisualizer::incomingTransform, this );
   }
 }
 

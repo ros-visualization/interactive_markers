@@ -180,7 +180,7 @@ void PlanningVisualizer::unsubscribe()
 {
   if ( initialized_ && !kinematic_path_topic_.empty() )
   {
-    ros_node_->unsubscribe( kinematic_path_topic_ );
+    ros_node_->unsubscribe( kinematic_path_topic_, &PlanningVisualizer::incomingKinematicPath, this );
   }
 }
 

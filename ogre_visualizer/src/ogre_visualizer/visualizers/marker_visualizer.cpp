@@ -110,12 +110,12 @@ void MarkerVisualizer::subscribe()
     return;
   }
 
-  ros_node_->subscribe("visualizationMarker", current_message_, &MarkerVisualizer::incomingMarker,this, 0);
+  ros_node_->subscribe("visualizationMarker", current_message_, &MarkerVisualizer::incomingMarker, this, 0);
 }
 
 void MarkerVisualizer::unsubscribe()
 {
-  ros_node_->unsubscribe( "visualizationMarker" );
+  ros_node_->unsubscribe( "visualizationMarker", &MarkerVisualizer::incomingMarker, this );
 }
 
 void MarkerVisualizer::incomingMarker()

@@ -117,7 +117,7 @@ void OctreeVisualizer::unsubscribe()
 {
   if (!octree_topic_.empty())
   {
-    ros_node_->unsubscribe(octree_topic_);
+    ros_node_->unsubscribe(octree_topic_, &OctreeVisualizer::incomingOctreeCallback, this);
   }
 }
 

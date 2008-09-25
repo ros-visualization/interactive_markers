@@ -128,7 +128,7 @@ void RosoutPanel::unsubscribe()
     return;
   }
 
-  ros_node_->unsubscribe( topic_ );
+  ros_node_->unsubscribe( topic_, &RosoutPanel::incomingMessage, this );
 }
 
 void RosoutPanel::forEachLogPage( boost::function<void (NodePage* node_page, LogPage* log_page)> f )

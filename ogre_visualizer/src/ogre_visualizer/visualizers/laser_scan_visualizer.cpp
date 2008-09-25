@@ -200,12 +200,12 @@ void LaserScanVisualizer::unsubscribe()
 {
   if ( !cloud_topic_.empty() )
   {
-    ros_node_->unsubscribe( cloud_topic_ );
+    ros_node_->unsubscribe( cloud_topic_, &LaserScanVisualizer::incomingCloudCallback, this );
   }
 
   if ( !scan_topic_.empty() )
   {
-    ros_node_->unsubscribe( scan_topic_ );
+    ros_node_->unsubscribe( scan_topic_, &LaserScanVisualizer::incomingScanCallback, this );
   }
 }
 
