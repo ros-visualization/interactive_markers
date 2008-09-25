@@ -65,8 +65,26 @@ public:
 
   virtual void update( float dt );
 
+  /**
+   * \brief Set whether the visual mesh representation should be displayed
+   * @param visible
+   */
+  void setVisualVisible( bool visible );
+
+  /**
+   * \brief Set whether the collision representation should be displayed
+   * @param visible
+   */
+  void setCollisionVisible( bool visible );
+
+  /**
+   * \brief Set the rate at which we request new transforms from libTF
+   * @param rate The rate, in seconds
+   */
+  void setUpdateRate( float rate );
+
   // Overrides from VisualizerBase
-  virtual void fillPropertyGrid( wxPropertyGrid* property_grid );
+  virtual void fillPropertyGrid();
   virtual void propertyChanged( wxPropertyGridEvent& event );
   virtual void loadProperties( wxConfigBase* config );
   virtual void saveProperties( wxConfigBase* config );

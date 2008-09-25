@@ -83,6 +83,11 @@ void LaserScanVisualizer::setCloudTopic( const std::string& topic )
   cloud_topic_ = topic;
 
   subscribe();
+
+  if ( property_grid_ )
+  {
+    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + CLOUD_TOPIC_PROPERTY ), wxString::FromAscii( cloud_topic_.c_str() ) );
+  }
 }
 
 void LaserScanVisualizer::setScanTopic( const std::string& topic )
@@ -92,6 +97,11 @@ void LaserScanVisualizer::setScanTopic( const std::string& topic )
   scan_topic_ = topic;
 
   subscribe();
+
+  if ( property_grid_ )
+  {
+    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + SCAN_TOPIC_PROPERTY ), wxString::FromAscii( scan_topic_.c_str() ) );
+  }
 }
 
 void LaserScanVisualizer::setColor( float r, float g, float b )
@@ -99,6 +109,13 @@ void LaserScanVisualizer::setColor( float r, float g, float b )
   r_ = r;
   g_ = g;
   b_ = b;
+
+  if ( property_grid_ )
+  {
+    wxVariant color;
+    color << wxColour( r_ * 255, g_ * 255, b_ * 255 );
+    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + COLOR_PROPERTY ), color );
+  }
 }
 
 void LaserScanVisualizer::setStyle( Style style )
@@ -111,6 +128,11 @@ void LaserScanVisualizer::setStyle( Style style )
   }
 
   causeRender();
+
+  if ( property_grid_ )
+  {
+    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + STYLE_PROPERTY ), (long)style_ );
+  }
 }
 
 void LaserScanVisualizer::setBillboardSize( float size )
@@ -123,6 +145,21 @@ void LaserScanVisualizer::setBillboardSize( float size )
   }
 
   causeRender();
+
+  if ( property_grid_ )
+  {
+    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + BILLBOARD_SIZE_PROPERTY ), billboard_size_ );
+  }
+}
+
+void LaserScanVisualizer::setDecayTime( float time )
+{
+  point_decay_time_ = time;
+
+  if ( property_grid_ )
+  {
+    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + DECAY_TIME_PROPERTY ), point_decay_time_ );
+  }
 }
 
 void LaserScanVisualizer::onEnable()
@@ -331,7 +368,7 @@ void LaserScanVisualizer::targetFrameChanged()
   cloud_message_.unlock();
 }
 
-void LaserScanVisualizer::fillPropertyGrid( wxPropertyGrid* property_grid )
+void LaserScanVisualizer::fillPropertyGrid()
 {
   wxArrayString style_names;
   style_names.Add( wxT("Billboards") );
@@ -340,17 +377,17 @@ void LaserScanVisualizer::fillPropertyGrid( wxPropertyGrid* property_grid )
   style_ids.Add( Billboards );
   style_ids.Add( Points );
 
-  property_grid->Append( new wxEnumProperty( STYLE_PROPERTY, wxPG_LABEL, style_names, style_ids, style_ ) );
+  property_grid_->Append( new wxEnumProperty( STYLE_PROPERTY, property_prefix_ + STYLE_PROPERTY, style_names, style_ids, style_ ) );
 
-  property_grid->Append( new ROSTopicProperty( ros_node_, SCAN_TOPIC_PROPERTY, wxPG_LABEL, wxString::FromAscii( scan_topic_.c_str() ) ) );
-  property_grid->Append( new ROSTopicProperty( ros_node_, CLOUD_TOPIC_PROPERTY, wxPG_LABEL, wxString::FromAscii( cloud_topic_.c_str() ) ) );
-  property_grid->Append( new wxColourProperty( COLOR_PROPERTY, wxPG_LABEL, wxColour( r_ * 255, g_ * 255, b_ * 255 ) ) );
-  wxPGId prop = property_grid->Append( new wxFloatProperty( DECAY_TIME_PROPERTY, wxPG_LABEL, point_decay_time_ ) );
+  property_grid_->Append( new ROSTopicProperty( ros_node_, SCAN_TOPIC_PROPERTY, property_prefix_ + SCAN_TOPIC_PROPERTY, wxString::FromAscii( scan_topic_.c_str() ) ) );
+  property_grid_->Append( new ROSTopicProperty( ros_node_, CLOUD_TOPIC_PROPERTY, property_prefix_ + CLOUD_TOPIC_PROPERTY, wxString::FromAscii( cloud_topic_.c_str() ) ) );
+  property_grid_->Append( new wxColourProperty( COLOR_PROPERTY, property_prefix_ + COLOR_PROPERTY, wxColour( r_ * 255, g_ * 255, b_ * 255 ) ) );
+  wxPGId prop = property_grid_->Append( new wxFloatProperty( DECAY_TIME_PROPERTY, property_prefix_ + DECAY_TIME_PROPERTY, point_decay_time_ ) );
 
-  property_grid->SetPropertyAttribute( prop, wxT("Min"), 0.0 );
+  property_grid_->SetPropertyAttribute( prop, wxT("Min"), 0.0 );
 
-  prop = property_grid->Append( new wxFloatProperty( BILLBOARD_SIZE_PROPERTY, wxPG_LABEL, billboard_size_ ) );
-  property_grid->SetPropertyAttribute( prop, wxT("Min"), 0.0 );
+  prop = property_grid_->Append( new wxFloatProperty( BILLBOARD_SIZE_PROPERTY, property_prefix_ + BILLBOARD_SIZE_PROPERTY, billboard_size_ ) );
+  property_grid_->SetPropertyAttribute( prop, wxT("Min"), 0.0 );
 }
 
 void LaserScanVisualizer::propertyChanged( wxPropertyGridEvent& event )
@@ -360,34 +397,34 @@ void LaserScanVisualizer::propertyChanged( wxPropertyGridEvent& event )
   const wxString& name = property->GetName();
   wxVariant value = property->GetValue();
 
-  if ( name == SCAN_TOPIC_PROPERTY )
+  if ( name == property_prefix_ + SCAN_TOPIC_PROPERTY )
   {
     wxString topic = value.GetString();
     setScanTopic( std::string(topic.fn_str()) );
   }
-  else if ( name == CLOUD_TOPIC_PROPERTY )
+  else if ( name == property_prefix_ + CLOUD_TOPIC_PROPERTY )
   {
     wxString topic = value.GetString();
     setCloudTopic( std::string(topic.fn_str()) );
   }
-  else if ( name == COLOR_PROPERTY )
+  else if ( name == property_prefix_ + COLOR_PROPERTY )
   {
     wxColour color;
     color << value;
 
     setColor( color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f );
   }
-  else if ( name == DECAY_TIME_PROPERTY )
+  else if ( name == property_prefix_ + DECAY_TIME_PROPERTY )
   {
     float val = value.GetDouble();
     setDecayTime( val );
   }
-  else if ( name == STYLE_PROPERTY )
+  else if ( name == property_prefix_ + STYLE_PROPERTY )
   {
     int val = value.GetLong();
     setStyle( (Style)val );
   }
-  else if ( name == BILLBOARD_SIZE_PROPERTY )
+  else if ( name == property_prefix_ + BILLBOARD_SIZE_PROPERTY )
   {
     float val = value.GetDouble();
     setBillboardSize( val );

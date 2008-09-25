@@ -78,6 +78,11 @@ void PointCloudVisualizer::setTopic( const std::string& topic )
   topic_ = topic;
 
   subscribe();
+
+  if ( property_grid_ )
+  {
+    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + TOPIC_PROPERTY ), wxString::FromAscii( topic_.c_str() ) );
+  }
 }
 
 void PointCloudVisualizer::setColor( float r, float g, float b )
@@ -85,6 +90,13 @@ void PointCloudVisualizer::setColor( float r, float g, float b )
   r_ = r;
   g_ = g;
   b_ = b;
+
+  if ( property_grid_ )
+  {
+    wxVariant color;
+    color << wxColour( r_ * 255, g_ * 255, b_ * 255 );
+    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + COLOR_PROPERTY ), color );
+  }
 }
 
 void PointCloudVisualizer::setStyle( Style style )
@@ -97,6 +109,11 @@ void PointCloudVisualizer::setStyle( Style style )
   }
 
   causeRender();
+
+  if ( property_grid_ )
+  {
+    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + STYLE_PROPERTY ), (long)style_ );
+  }
 }
 
 void PointCloudVisualizer::setBillboardSize( float size )
@@ -109,6 +126,11 @@ void PointCloudVisualizer::setBillboardSize( float size )
   }
 
   causeRender();
+
+  if ( property_grid_ )
+  {
+    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + BILLBOARD_SIZE_PROPERTY ), billboard_size_ );
+  }
 }
 
 void PointCloudVisualizer::onEnable()
@@ -247,7 +269,7 @@ void PointCloudVisualizer::targetFrameChanged()
   message_.unlock();
 }
 
-void PointCloudVisualizer::fillPropertyGrid( wxPropertyGrid* property_grid )
+void PointCloudVisualizer::fillPropertyGrid()
 {
   wxArrayString style_names;
   style_names.Add( wxT("Billboards") );
@@ -256,12 +278,12 @@ void PointCloudVisualizer::fillPropertyGrid( wxPropertyGrid* property_grid )
   style_ids.Add( Billboards );
   style_ids.Add( Points );
 
-  property_grid->Append( new wxEnumProperty( STYLE_PROPERTY, wxPG_LABEL, style_names, style_ids, style_ ) );
+  property_grid_->Append( new wxEnumProperty( STYLE_PROPERTY, property_prefix_ + STYLE_PROPERTY, style_names, style_ids, style_ ) );
 
-  property_grid->Append( new ROSTopicProperty( ros_node_, TOPIC_PROPERTY, wxPG_LABEL, wxString::FromAscii( topic_.c_str() ) ) );
-  property_grid->Append( new wxColourProperty( COLOR_PROPERTY, wxPG_LABEL, wxColour( r_ * 255, g_ * 255, b_ * 255 ) ) );
-  wxPGId prop = property_grid->Append( new wxFloatProperty( BILLBOARD_SIZE_PROPERTY, wxPG_LABEL, billboard_size_ ) );
-  property_grid->SetPropertyAttribute( prop, wxT("Min"), 0.0 );
+  property_grid_->Append( new ROSTopicProperty( ros_node_, TOPIC_PROPERTY, property_prefix_ + TOPIC_PROPERTY, wxString::FromAscii( topic_.c_str() ) ) );
+  property_grid_->Append( new wxColourProperty( COLOR_PROPERTY, property_prefix_ + COLOR_PROPERTY, wxColour( r_ * 255, g_ * 255, b_ * 255 ) ) );
+  wxPGId prop = property_grid_->Append( new wxFloatProperty( BILLBOARD_SIZE_PROPERTY, property_prefix_ + BILLBOARD_SIZE_PROPERTY, billboard_size_ ) );
+  property_grid_->SetPropertyAttribute( prop, wxT("Min"), 0.0 );
 }
 
 void PointCloudVisualizer::propertyChanged( wxPropertyGridEvent& event )
@@ -271,24 +293,24 @@ void PointCloudVisualizer::propertyChanged( wxPropertyGridEvent& event )
   const wxString& name = property->GetName();
   wxVariant value = property->GetValue();
 
-  if ( name == TOPIC_PROPERTY )
+  if ( name == property_prefix_ + TOPIC_PROPERTY )
   {
     wxString topic = value.GetString();
     setTopic( std::string(topic.fn_str()) );
   }
-  else if ( name == COLOR_PROPERTY )
+  else if ( name == property_prefix_ + COLOR_PROPERTY )
   {
     wxColour color;
     color << value;
 
     setColor( color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f );
   }
-  else if ( name == STYLE_PROPERTY )
+  else if ( name == property_prefix_ + STYLE_PROPERTY )
   {
     int val = value.GetLong();
     setStyle( (Style)val );
   }
-  else if ( name == BILLBOARD_SIZE_PROPERTY )
+  else if ( name == property_prefix_ + BILLBOARD_SIZE_PROPERTY )
   {
     float val = value.GetDouble();
     setBillboardSize( val );

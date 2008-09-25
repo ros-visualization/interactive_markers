@@ -60,8 +60,8 @@ PlanningVisualizer::PlanningVisualizer( Ogre::SceneManager* scene_manager, ros::
 {
   robot_ = new Robot( scene_manager );
 
-  robot_->setVisualVisible( false );
-  robot_->setCollisionVisible( true );
+  setVisualVisible( false );
+  setCollisionVisible( true );
   robot_->setUserData( Ogre::Any( (void*)this ) );
 }
 
@@ -87,6 +87,36 @@ void PlanningVisualizer::initialize( const std::string& description_param, const
   else
   {
     onDisable();
+  }
+}
+
+void PlanningVisualizer::setStateDisplayTime( float time )
+{
+  state_display_time_ = time;
+
+  if ( property_grid_ )
+  {
+    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + STATE_DISPLAY_TIME_PROPERTY ), state_display_time_ );
+  }
+}
+
+void PlanningVisualizer::setVisualVisible( bool visible )
+{
+  robot_->setVisualVisible( visible );
+
+  if ( property_grid_ )
+  {
+    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + VISUAL_ENABLED_PROPERTY ), visible );
+  }
+}
+
+void PlanningVisualizer::setCollisionVisible( bool visible )
+{
+  robot_->setCollisionVisible( visible );
+
+  if ( property_grid_ )
+  {
+    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + COLLISION_ENABLED_PROPERTY ), visible );
   }
 }
 
@@ -234,14 +264,14 @@ void PlanningVisualizer::targetFrameChanged()
   calculateRobotPosition();
 }
 
-void PlanningVisualizer::fillPropertyGrid( wxPropertyGrid* property_grid )
+void PlanningVisualizer::fillPropertyGrid()
 {
-  property_grid->Append( new wxBoolProperty( VISUAL_ENABLED_PROPERTY, wxPG_LABEL, robot_->isVisualVisible() ) );
-  property_grid->Append( new wxBoolProperty( COLLISION_ENABLED_PROPERTY, wxPG_LABEL, robot_->isCollisionVisible() ) );
-  property_grid->Append( new wxFloatProperty( STATE_DISPLAY_TIME_PROPERTY, wxPG_LABEL, state_display_time_ ) );
+  wxPGProperty* prop = property_grid_->Append( new wxBoolProperty( VISUAL_ENABLED_PROPERTY, property_prefix_ + VISUAL_ENABLED_PROPERTY, robot_->isVisualVisible() ) );
+  prop->SetAttribute( wxPG_BOOL_USE_CHECKBOX, true );
+  prop = property_grid_->Append( new wxBoolProperty( COLLISION_ENABLED_PROPERTY, property_prefix_ + COLLISION_ENABLED_PROPERTY, robot_->isCollisionVisible() ) );
+  prop->SetAttribute( wxPG_BOOL_USE_CHECKBOX, true );
 
-  property_grid->SetPropertyAttribute( VISUAL_ENABLED_PROPERTY, wxPG_BOOL_USE_CHECKBOX, true );
-  property_grid->SetPropertyAttribute( COLLISION_ENABLED_PROPERTY, wxPG_BOOL_USE_CHECKBOX, true );
+  property_grid_->Append( new wxFloatProperty( STATE_DISPLAY_TIME_PROPERTY, property_prefix_ + STATE_DISPLAY_TIME_PROPERTY, state_display_time_ ) );
 }
 
 void PlanningVisualizer::propertyChanged( wxPropertyGridEvent& event )
@@ -251,17 +281,17 @@ void PlanningVisualizer::propertyChanged( wxPropertyGridEvent& event )
   const wxString& name = property->GetName();
   wxVariant value = property->GetValue();
 
-  if ( name == VISUAL_ENABLED_PROPERTY )
+  if ( name == property_prefix_ + VISUAL_ENABLED_PROPERTY )
   {
     bool visible = value.GetBool();
-    robot_->setVisualVisible( visible );
+    setVisualVisible( visible );
   }
-  else if ( name == COLLISION_ENABLED_PROPERTY )
+  else if ( name == property_prefix_ + COLLISION_ENABLED_PROPERTY )
   {
     bool visible = value.GetBool();
-    robot_->setCollisionVisible( visible );
+    setCollisionVisible( visible );
   }
-  else if ( name == STATE_DISPLAY_TIME_PROPERTY )
+  else if ( name == property_prefix_ + STATE_DISPLAY_TIME_PROPERTY )
   {
     setStateDisplayTime( value.GetDouble() );
   }
@@ -283,8 +313,8 @@ void PlanningVisualizer::loadProperties( wxConfigBase* config )
     config->Read( STATE_DISPLAY_TIME_PROPERTY, &state_display_time, state_display_time_ );
   }
 
-  robot_->setVisualVisible( visual_enabled );
-  robot_->setCollisionVisible( collision_enabled );
+  setVisualVisible( visual_enabled );
+  setCollisionVisible( collision_enabled );
   setStateDisplayTime( state_display_time );
 }
 

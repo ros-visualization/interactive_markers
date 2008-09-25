@@ -259,7 +259,8 @@ void MarkerVisualizer::setCommonValues( const std_msgs::VisualizationMarker& mes
     frame_id = target_frame_;
   }
 
-  libTF::TFPose pose = { message.x, message.y, message.z, message.yaw, message.pitch, message.roll, 0, frame_id };
+  libTF::TFPose pose = { message.x, message.y, message.z,
+                         message.yaw, message.pitch, message.roll, 0, frame_id };
   //printf( "pre transform (%s to %s) yaw: %f, pitch: %f, roll: %f\n", frame_id.c_str(), target_frame_.c_str(), pose.yaw, pose.pitch, pose.roll );
   try
   {

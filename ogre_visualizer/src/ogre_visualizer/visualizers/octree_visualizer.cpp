@@ -215,6 +215,11 @@ void OctreeVisualizer::setOctreeTopic(const std::string& topic)
   octree_topic_ = topic;
 
   subscribe();
+
+  if ( property_grid_ )
+  {
+    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + TOPIC_PROPERTY ), wxString::FromAscii( octree_topic_.c_str() ) );
+  }
 }
 
 void OctreeVisualizer::setColor(float r, float g, float b)
@@ -225,12 +230,19 @@ void OctreeVisualizer::setColor(float r, float g, float b)
   r_ = r;
   g_ = g;
   b_ = b;
+
+  if ( property_grid_ )
+  {
+    wxVariant color;
+    color << wxColour( r_ * 255, g_ * 255, b_ * 255 );
+    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + COLOR_PROPERTY ), color );
+  }
 }
 
-void OctreeVisualizer::fillPropertyGrid( wxPropertyGrid* property_grid )
+void OctreeVisualizer::fillPropertyGrid()
 {
-  property_grid->Append( new ROSTopicProperty( ros_node_, TOPIC_PROPERTY, wxPG_LABEL, wxString::FromAscii( octree_topic_.c_str() ) ) );
-  property_grid->Append( new wxColourProperty( COLOR_PROPERTY, wxPG_LABEL, wxColour( r_ * 255, g_ * 255, b_ * 255 ) ) );
+  property_grid_->Append( new ROSTopicProperty( ros_node_, TOPIC_PROPERTY, property_prefix_ + TOPIC_PROPERTY, wxString::FromAscii( octree_topic_.c_str() ) ) );
+  property_grid_->Append( new wxColourProperty( COLOR_PROPERTY, property_prefix_ + COLOR_PROPERTY, wxColour( r_ * 255, g_ * 255, b_ * 255 ) ) );
 }
 
 void OctreeVisualizer::propertyChanged( wxPropertyGridEvent& event )
@@ -240,12 +252,12 @@ void OctreeVisualizer::propertyChanged( wxPropertyGridEvent& event )
   const wxString& name = property->GetName();
   wxVariant value = property->GetValue();
 
-  if ( name == TOPIC_PROPERTY )
+  if ( name == property_prefix_ + TOPIC_PROPERTY )
   {
     wxString topic = value.GetString();
     setOctreeTopic( std::string(topic.fn_str()) );
   }
-  else if ( name == COLOR_PROPERTY )
+  else if ( name == property_prefix_ + COLOR_PROPERTY )
   {
     wxColour color;
     color << value;

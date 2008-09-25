@@ -87,15 +87,21 @@ void AxesVisualizer::set( float length, float radius )
   radius_ = radius;
 
   create();
+
+  if ( property_grid_ )
+  {
+    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + LENGTH_PROPERTY ), length_ );
+    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + RADIUS_PROPERTY ), radius_ );
+  }
 }
 
-void AxesVisualizer::fillPropertyGrid( wxPropertyGrid* property_grid )
+void AxesVisualizer::fillPropertyGrid()
 {
-  wxPGId prop = property_grid->Append( new wxFloatProperty( LENGTH_PROPERTY, wxPG_LABEL, length_ ) );
-  property_grid->SetPropertyAttribute( prop, wxT("Min"), 0.0001 );
+  wxPGId prop = property_grid_->Append( new wxFloatProperty( LENGTH_PROPERTY, property_prefix_ + LENGTH_PROPERTY, length_ ) );
+  property_grid_->SetPropertyAttribute( prop, wxT("Min"), 0.0001 );
 
-  prop = property_grid->Append( new wxFloatProperty( RADIUS_PROPERTY, wxPG_LABEL, radius_ ) );
-  property_grid->SetPropertyAttribute( prop, wxT("Min"), 0.0001 );
+  prop = property_grid_->Append( new wxFloatProperty( RADIUS_PROPERTY, property_prefix_ + RADIUS_PROPERTY, radius_ ) );
+  property_grid_->SetPropertyAttribute( prop, wxT("Min"), 0.0001 );
 }
 
 void AxesVisualizer::propertyChanged( wxPropertyGridEvent& event )
@@ -105,12 +111,12 @@ void AxesVisualizer::propertyChanged( wxPropertyGridEvent& event )
   const wxString& name = property->GetName();
   wxVariant value = property->GetValue();
 
-  if ( name == LENGTH_PROPERTY )
+  if ( name == property_prefix_ + LENGTH_PROPERTY )
   {
     float length = value.GetDouble();
     set( length, radius_ );
   }
-  else if ( name == RADIUS_PROPERTY )
+  else if ( name == property_prefix_ + RADIUS_PROPERTY )
   {
     float radius = value.GetDouble();
     set( length_, radius );

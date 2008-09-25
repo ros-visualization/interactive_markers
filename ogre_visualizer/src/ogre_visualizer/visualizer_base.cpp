@@ -40,6 +40,7 @@ VisualizerBase::VisualizerBase( Ogre::SceneManager* scene_manager, ros::node* no
 , target_frame_( "base" )
 , ros_node_( node )
 , tf_client_( tf_client )
+, property_grid_( NULL )
 {
 }
 
@@ -119,6 +120,14 @@ void VisualizerBase::setTargetFrame( const std::string& frame )
   {
     targetFrameChanged();
   }
+}
+
+void VisualizerBase::setPropertyGrid( wxPropertyGrid* property_grid )
+{
+  property_grid_ = property_grid;
+  property_prefix_ = wxString::FromAscii( name_.c_str() ) + wxT(".");
+
+  fillPropertyGrid();
 }
 
 } // namespace ogre_vis

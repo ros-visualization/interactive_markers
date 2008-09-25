@@ -68,12 +68,28 @@ public:
    */
   void initialize( const std::string& description_param, const std::string& kinematic_path_topic );
 
-  void setStateDisplayTime( float time ) { state_display_time_ = time; }
+  /**
+   * \brief Set the amount of time each state should display for
+   * @param time The length of time, in seconds
+   */
+  void setStateDisplayTime( float time );
+
+  /**
+   * \brief Set whether the visual mesh representation should be displayed
+   * @param visible
+   */
+  void setVisualVisible( bool visible );
+
+  /**
+   * \brief Set whether the collision representation should be displayed
+   * @param visible
+   */
+  void setCollisionVisible( bool visible );
 
   virtual void update( float dt );
 
   // Overrides from VisualizerBase
-  virtual void fillPropertyGrid( wxPropertyGrid* property_grid );
+  virtual void fillPropertyGrid();
   virtual void propertyChanged( wxPropertyGridEvent& event );
   virtual void loadProperties( wxConfigBase* config );
   virtual void saveProperties( wxConfigBase* config );

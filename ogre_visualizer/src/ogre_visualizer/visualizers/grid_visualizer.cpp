@@ -86,6 +86,15 @@ void GridVisualizer::set( uint32_t cell_count, float cell_size, float r, float g
   b_ = b;
 
   create();
+
+  if ( property_grid_ )
+  {
+    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + CELLCOUNT_PROPERTY ), (long)cell_count_ );
+    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + CELLSIZE_PROPERTY ), cell_size_ );
+    wxVariant color;
+    color << wxColour( r_ * 255, g_ * 255, b_ * 255 );
+    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + COLOR_PROPERTY ), color );
+  }
 }
 
 void GridVisualizer::setCellSize( float size )
@@ -103,17 +112,17 @@ void GridVisualizer::setColor( float r, float g, float b )
   set( cell_count_, cell_size_, r, g, b );
 }
 
-void GridVisualizer::fillPropertyGrid( wxPropertyGrid* property_grid )
+void GridVisualizer::fillPropertyGrid()
 {
-  wxPGId prop = property_grid->Append( new wxIntProperty( CELLCOUNT_PROPERTY, wxPG_LABEL, cell_count_ ) );
-  property_grid->SetPropertyAttribute( prop, wxT("Min"), 1 );
-  property_grid->SetPropertyAttribute( prop, wxT("Step"), 1 );
-  property_grid->SetPropertyEditor( prop, wxPG_EDITOR(SpinCtrl) );
+  wxPGId prop = property_grid_->Append( new wxIntProperty( CELLCOUNT_PROPERTY, property_prefix_ + CELLCOUNT_PROPERTY, cell_count_ ) );
+  property_grid_->SetPropertyAttribute( prop, wxT("Min"), 1 );
+  property_grid_->SetPropertyAttribute( prop, wxT("Step"), 1 );
+  property_grid_->SetPropertyEditor( prop, wxPG_EDITOR(SpinCtrl) );
 
-  prop = property_grid->Append( new wxFloatProperty( CELLSIZE_PROPERTY, wxPG_LABEL, cell_size_ ) );
-  property_grid->SetPropertyAttribute( prop, wxT("Min"), 0.0001 );
+  prop = property_grid_->Append( new wxFloatProperty( CELLSIZE_PROPERTY, property_prefix_ + CELLSIZE_PROPERTY, cell_size_ ) );
+  property_grid_->SetPropertyAttribute( prop, wxT("Min"), 0.0001 );
 
-  property_grid->Append( new wxColourProperty( COLOR_PROPERTY, wxPG_LABEL, wxColour( r_ * 255, g_ * 255, b_ * 255 ) ) );
+  property_grid_->Append( new wxColourProperty( COLOR_PROPERTY, property_prefix_ + COLOR_PROPERTY, wxColour( r_ * 255, g_ * 255, b_ * 255 ) ) );
 }
 
 void GridVisualizer::propertyChanged( wxPropertyGridEvent& event )
@@ -123,17 +132,17 @@ void GridVisualizer::propertyChanged( wxPropertyGridEvent& event )
   const wxString& name = property->GetName();
   wxVariant value = property->GetValue();
 
-  if ( name == CELLCOUNT_PROPERTY )
+  if ( name == property_prefix_ + CELLCOUNT_PROPERTY )
   {
     int cell_count = value.GetLong();
     setCellCount( cell_count );
   }
-  else if ( name == CELLSIZE_PROPERTY )
+  else if ( name == property_prefix_ + CELLSIZE_PROPERTY )
   {
     float cell_size = value.GetDouble();
     setCellSize( cell_size );
   }
-  else if ( name == COLOR_PROPERTY )
+  else if ( name == property_prefix_ + COLOR_PROPERTY )
   {
     wxColour color;
     color << value;

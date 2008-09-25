@@ -150,16 +150,7 @@ public:
     }
 
     T* visualizer = new T( scene_manager_, ros_node_, tf_client_, name );
-    if ( enabled )
-    {
-      visualizer->enable( true );
-    }
-    else
-    {
-      visualizer->disable( true );
-    }
-
-    addVisualizer( visualizer, allow_deletion );
+    addVisualizer( visualizer, allow_deletion, enabled );
 
     return visualizer;
   }
@@ -214,7 +205,7 @@ protected:
    * \brief Add a visualizer to be managed by this panel
    * @param visualizer The visualizer to be added
    */
-  void addVisualizer( VisualizerBase* visualizer, bool allow_deletion );
+  void addVisualizer( VisualizerBase* visualizer, bool allow_deletion, bool enabled );
 
   /**
    * \brief Performs a linear search to find a visualizer based on its name
@@ -240,10 +231,6 @@ protected:
 
   /// Called when a "view" (camera) is selected from the list
   void onViewClicked( wxCommandEvent& event );
-  /// Called when a visualizer is toggled on/off from the display checklist
-  void onDisplayToggled( wxCommandEvent& event );
-  /// Called when a visualizer is selected in the display checklist
-  void onDisplaySelected( wxCommandEvent& event );
   /// Called when a mouse event happens inside the render window
   void onRenderWindowMouseEvents( wxMouseEvent& event );
   /// Called from the update timer
@@ -254,14 +241,13 @@ protected:
   void onPropertyChanging( wxPropertyGridEvent& event );
   /// Called when a property from the wxProperty
   void onPropertyChanged( wxPropertyGridEvent& event );
+  /// Called when a property is selected
+  void onPropertySelected( wxPropertyGridEvent& event );
 
   /// Called when the "New Display" button is pressed
   virtual void onNewDisplay( wxCommandEvent& event );
   /// Called when the "Delete Display" button is pressed
   virtual void onDeleteDisplay( wxCommandEvent& event );
-
-  /// Called when the coordinate frame has changed
-  virtual void onCoordinateFrameChanged( wxCommandEvent& event );
 
 
   Ogre::Root* ogre_root_;                                 ///< Ogre Root

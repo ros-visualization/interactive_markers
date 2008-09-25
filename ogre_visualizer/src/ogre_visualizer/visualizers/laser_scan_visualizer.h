@@ -95,7 +95,7 @@ public:
    * \brief Set the amount of time each scan should stick around for
    * @param time Decay time, in seconds
    */
-  void setDecayTime( float time ) { point_decay_time_ = time; }
+  void setDecayTime( float time );
   /**
    * \brief Set the rendering style
    * @param style The rendering style
@@ -111,7 +111,7 @@ public:
   virtual void update( float dt );
 
   // Overrides from VisualizerBase
-  virtual void fillPropertyGrid( wxPropertyGrid* property_grid );
+  virtual void fillPropertyGrid();
   virtual void propertyChanged( wxPropertyGridEvent& event );
   virtual void loadProperties( wxConfigBase* config );
   virtual void saveProperties( wxConfigBase* config );

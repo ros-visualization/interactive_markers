@@ -24,28 +24,19 @@ VisualizationPanelGenerated::VisualizationPanelGenerated( wxWindow* parent, wxWi
 	bSizer25 = new wxBoxSizer( wxVERTICAL );
 	
 	bSizer25->SetMinSize( wxSize( 200,200 ) ); 
-	m_notebook1 = new wxNotebook( m_panel3, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
-	m_notebook1->SetMinSize( wxSize( 0,0 ) );
-	
-	m_panel7 = new wxPanel( m_notebook1, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	wxBoxSizer* bSizer91;
-	bSizer91 = new wxBoxSizer( wxVERTICAL );
-	
-	display_splitter_ = new wxSplitterWindow( m_panel7, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_3D );
-	display_splitter_->SetSashGravity( 1 );
-	display_splitter_->SetMinimumPaneSize( 100 );
-	display_splitter_->Connect( wxEVT_IDLE, wxIdleEventHandler( VisualizationPanelGenerated::display_splitter_OnIdle ), NULL, this );
-	displays_panel_ = new wxPanel( display_splitter_, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	displays_panel_ = new wxPanel( m_panel3, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	displays_panel_->SetMinSize( wxSize( 200,100 ) );
 	
 	wxBoxSizer* bSizer8;
 	bSizer8 = new wxBoxSizer( wxVERTICAL );
 	
-	wxArrayString displays_Choices;
-	displays_ = new wxCheckListBox( displays_panel_, wxID_ANY, wxDefaultPosition, wxDefaultSize, displays_Choices, 0 );
-	displays_->SetMinSize( wxSize( 150,-1 ) );
+	properties_panel_ = new wxPanel( displays_panel_, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	properties_panel_sizer_ = new wxBoxSizer( wxVERTICAL );
 	
-	bSizer8->Add( displays_, 1, wxALL|wxEXPAND, 5 );
+	properties_panel_->SetSizer( properties_panel_sizer_ );
+	properties_panel_->Layout();
+	properties_panel_sizer_->Fit( properties_panel_ );
+	bSizer8->Add( properties_panel_, 1, wxEXPAND, 5 );
 	
 	wxBoxSizer* bSizer7;
 	bSizer7 = new wxBoxSizer( wxHORIZONTAL );
@@ -65,56 +56,7 @@ VisualizationPanelGenerated::VisualizationPanelGenerated( wxWindow* parent, wxWi
 	displays_panel_->SetSizer( bSizer8 );
 	displays_panel_->Layout();
 	bSizer8->Fit( displays_panel_ );
-	display_properties_panel_ = new wxPanel( display_splitter_, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	display_properties_panel_->SetMinSize( wxSize( 200,100 ) );
-	
-	wxBoxSizer* bSizer9;
-	bSizer9 = new wxBoxSizer( wxVERTICAL );
-	
-	m_staticText2 = new wxStaticText( display_properties_panel_, wxID_ANY, wxT("Properties"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText2->Wrap( -1 );
-	bSizer9->Add( m_staticText2, 0, wxALL, 5 );
-	
-	properties_panel_ = new wxPanel( display_properties_panel_, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	properties_panel_sizer_ = new wxBoxSizer( wxVERTICAL );
-	
-	properties_panel_->SetSizer( properties_panel_sizer_ );
-	properties_panel_->Layout();
-	properties_panel_sizer_->Fit( properties_panel_ );
-	bSizer9->Add( properties_panel_, 1, wxEXPAND | wxALL, 5 );
-	
-	display_properties_panel_->SetSizer( bSizer9 );
-	display_properties_panel_->Layout();
-	bSizer9->Fit( display_properties_panel_ );
-	display_splitter_->SplitHorizontally( displays_panel_, display_properties_panel_, 392 );
-	bSizer91->Add( display_splitter_, 1, wxEXPAND, 5 );
-	
-	m_panel7->SetSizer( bSizer91 );
-	m_panel7->Layout();
-	bSizer91->Fit( m_panel7 );
-	m_notebook1->AddPage( m_panel7, wxT("Displays"), true );
-	m_panel9 = new wxPanel( m_notebook1, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	wxBoxSizer* bSizer10;
-	bSizer10 = new wxBoxSizer( wxVERTICAL );
-	
-	wxBoxSizer* bSizer11;
-	bSizer11 = new wxBoxSizer( wxHORIZONTAL );
-	
-	m_staticText3 = new wxStaticText( m_panel9, wxID_ANY, wxT("Coordinate Frame"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText3->Wrap( -1 );
-	bSizer11->Add( m_staticText3, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	coordinate_frame_ = new wxComboBox( m_panel9, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, wxCB_SORT|wxTE_PROCESS_ENTER ); 
-	bSizer11->Add( coordinate_frame_, 1, wxALL, 5 );
-	
-	bSizer10->Add( bSizer11, 0, wxEXPAND, 5 );
-	
-	m_panel9->SetSizer( bSizer10 );
-	m_panel9->Layout();
-	bSizer10->Fit( m_panel9 );
-	m_notebook1->AddPage( m_panel9, wxT("Visualizer Options"), false );
-	
-	bSizer25->Add( m_notebook1, 1, wxEXPAND | wxALL, 5 );
+	bSizer25->Add( displays_panel_, 1, wxEXPAND | wxALL, 5 );
 	
 	m_panel3->SetSizer( bSizer25 );
 	m_panel3->Layout();
@@ -139,8 +81,6 @@ VisualizationPanelGenerated::VisualizationPanelGenerated( wxWindow* parent, wxWi
 	// Connect Events
 	new_display_->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( VisualizationPanelGenerated::onNewDisplay ), NULL, this );
 	delete_display_->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( VisualizationPanelGenerated::onDeleteDisplay ), NULL, this );
-	coordinate_frame_->Connect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( VisualizationPanelGenerated::onCoordinateFrameChanged ), NULL, this );
-	coordinate_frame_->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( VisualizationPanelGenerated::onCoordinateFrameChanged ), NULL, this );
 }
 
 VisualizationPanelGenerated::~VisualizationPanelGenerated()
@@ -148,8 +88,6 @@ VisualizationPanelGenerated::~VisualizationPanelGenerated()
 	// Disconnect Events
 	new_display_->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( VisualizationPanelGenerated::onNewDisplay ), NULL, this );
 	delete_display_->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( VisualizationPanelGenerated::onDeleteDisplay ), NULL, this );
-	coordinate_frame_->Disconnect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( VisualizationPanelGenerated::onCoordinateFrameChanged ), NULL, this );
-	coordinate_frame_->Disconnect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( VisualizationPanelGenerated::onCoordinateFrameChanged ), NULL, this );
 }
 
 NewDisplayDialogGenerated::NewDisplayDialogGenerated( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )

@@ -33,6 +33,8 @@
 #include <string>
 #include <boost/function.hpp>
 
+#include <wx/string.h>
+
 namespace Ogre
 {
 class SceneManager;
@@ -50,6 +52,7 @@ class rosTFClient;
 class wxPropertyGrid;
 class wxPropertyGridEvent;
 class wxConfigBase;
+class wxString;
 
 namespace ogre_vis
 {
@@ -99,12 +102,15 @@ public:
   /// Set the callback used to unlock the renderer
   void setUnlockRenderCallback( boost::function<void ()> func );
 
+  /// Set the prefix to be prepended to this visualizer's properties
+  void setPropertyGrid( wxPropertyGrid* property_grid );
+
   /**
    * \brief Override this to fill out the property grid when this visualizer is selected
    *
    * @param property_grid The wxPropertyGrid to add properties to.
    */
-  virtual void fillPropertyGrid( wxPropertyGrid* property_grid ) {}
+  virtual void fillPropertyGrid() {}
 
   /**
    * \brief Override this to handle a changing property value.
@@ -180,6 +186,9 @@ protected:
 
   ros::node* ros_node_;                               ///< ros node
   rosTFClient* tf_client_;                            ///< rosTF client
+
+  wxString property_prefix_;                          ///< Prefix to prepend to our properties
+  wxPropertyGrid* property_grid_;                     ///< Property grid
 
   friend class RenderAutoLock;
 };
