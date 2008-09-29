@@ -43,7 +43,14 @@ add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE}
                             src/ogre_visualizer/visualization_panel.h 
                             src/ogre_visualizer/generated/visualization_panel_generated.h
                             src/ogre_visualizer/visualizer_base.h
-                            src/ogre_visualizer/visualizers/grid_visualizer.h)
+                            src/ogre_visualizer/visualizers/axes_visualizer.h
+                            src/ogre_visualizer/visualizers/grid_visualizer.h
+                            src/ogre_visualizer/visualizers/laser_scan_visualizer.h
+                            src/ogre_visualizer/visualizers/marker_visualizer.h
+                            src/ogre_visualizer/visualizers/octree_visualizer.h
+                            src/ogre_visualizer/visualizers/planning_visualizer.h
+                            src/ogre_visualizer/visualizers/point_cloud_visualizer.h
+                            src/ogre_visualizer/visualizers/robot_model_visualizer.h)
 
 rospack_add_library(${PROJECT_NAME} src/ogre_visualizer/visualization_panel.cpp
 				   												 src/ogre_visualizer/visualizer_base.cpp

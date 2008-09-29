@@ -313,6 +313,9 @@ void Robot::load( robot_desc::URDF* urdf, bool visual, bool collision )
 
     links_.insert( std::make_pair( info.name_, info ) );
   }
+
+  setVisualVisible(isVisualVisible());
+  setCollisionVisible(isCollisionVisible());
 }
 
 void setTransformsOnLink( const Robot::LinkInfo& info, const Ogre::Vector3& visual_position, const Ogre::Quaternion& visual_orientation,

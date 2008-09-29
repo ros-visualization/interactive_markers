@@ -46,13 +46,14 @@
 #define VISUAL_ENABLED_PROPERTY wxT("Show Visual")
 #define COLLISION_ENABLED_PROPERTY wxT("Show Collision")
 #define STATE_DISPLAY_TIME_PROPERTY wxT("State Display Time")
+#define ROBOT_DESCRIPTION_PROPERTY wxT("Robot Description")
+#define TOPIC_PROPERTY wxT("Topic")
 
 namespace ogre_vis
 {
 
 PlanningVisualizer::PlanningVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name )
 : VisualizerBase( scene_manager, node, tf_client, name )
-, initialized_( false )
 , kinematic_model_( NULL )
 , new_kinematic_path_( false )
 , animating_path_( false )
@@ -74,19 +75,35 @@ PlanningVisualizer::~PlanningVisualizer()
 
 void PlanningVisualizer::initialize( const std::string& description_param, const std::string& kinematic_path_topic )
 {
-  description_param_ = description_param;
-  kinematic_path_topic_ = kinematic_path_topic;
+  setRobotDescription( description_param );
+  setTopic( kinematic_path_topic );
+}
 
-  initialized_ = true;
+void PlanningVisualizer::setRobotDescription( const std::string& description_param )
+{
+  description_param_ = description_param;
+
+  if ( property_grid_ )
+  {
+    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + ROBOT_DESCRIPTION_PROPERTY ), wxString::FromAscii( description_param_.c_str() ) );
+  }
 
   if ( isEnabled() )
   {
-    onEnable();
+    load();
     causeRender();
   }
-  else
+}
+
+void PlanningVisualizer::setTopic( const std::string& topic )
+{
+  unsubscribe();
+  kinematic_path_topic_ = topic;
+  subscribe();
+
+  if ( property_grid_ )
   {
-    onDisable();
+    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + TOPIC_PROPERTY ), wxString::FromAscii( kinematic_path_topic_.c_str() ) );
   }
 }
 
@@ -140,11 +157,6 @@ void PlanningVisualizer::load()
 
 void PlanningVisualizer::onEnable()
 {
-  if ( !initialized_ )
-  {
-    return;
-  }
-
   subscribe();
 
   load();
@@ -153,18 +165,13 @@ void PlanningVisualizer::onEnable()
 
 void PlanningVisualizer::onDisable()
 {
-  if ( !initialized_ )
-  {
-    return;
-  }
-
   unsubscribe();
   robot_->setVisible( false );
 }
 
 void PlanningVisualizer::subscribe()
 {
-  if ( !isEnabled() || !initialized_ )
+  if ( !isEnabled() )
   {
     return;
   }
@@ -178,7 +185,7 @@ void PlanningVisualizer::subscribe()
 
 void PlanningVisualizer::unsubscribe()
 {
-  if ( initialized_ && !kinematic_path_topic_.empty() )
+  if ( !kinematic_path_topic_.empty() )
   {
     ros_node_->unsubscribe( kinematic_path_topic_, &PlanningVisualizer::incomingKinematicPath, this );
   }
@@ -266,6 +273,8 @@ void PlanningVisualizer::targetFrameChanged()
 
 void PlanningVisualizer::fillPropertyGrid()
 {
+  property_grid_->Append( new wxStringProperty( ROBOT_DESCRIPTION_PROPERTY, property_prefix_ + ROBOT_DESCRIPTION_PROPERTY, wxString::FromAscii( description_param_.c_str() ) ) );
+  property_grid_->Append( new wxStringProperty( TOPIC_PROPERTY, property_prefix_ + TOPIC_PROPERTY, wxString::FromAscii( kinematic_path_topic_.c_str() ) ) );
   wxPGProperty* prop = property_grid_->Append( new wxBoolProperty( VISUAL_ENABLED_PROPERTY, property_prefix_ + VISUAL_ENABLED_PROPERTY, robot_->isVisualVisible() ) );
   prop->SetAttribute( wxPG_BOOL_USE_CHECKBOX, true );
   prop = property_grid_->Append( new wxBoolProperty( COLLISION_ENABLED_PROPERTY, property_prefix_ + COLLISION_ENABLED_PROPERTY, robot_->isCollisionVisible() ) );
@@ -295,6 +304,16 @@ void PlanningVisualizer::propertyChanged( wxPropertyGridEvent& event )
   {
     setStateDisplayTime( value.GetDouble() );
   }
+  else if ( name == property_prefix_ + ROBOT_DESCRIPTION_PROPERTY )
+  {
+    wxString prop = value.GetString();
+    setRobotDescription( (const char*)prop.fn_str() );
+  }
+  else if ( name == property_prefix_ + TOPIC_PROPERTY )
+  {
+    wxString prop = value.GetString();
+    setTopic( (const char*)prop.fn_str() );
+  }
 
   causeRender();
 }
@@ -303,6 +322,7 @@ void PlanningVisualizer::loadProperties( wxConfigBase* config )
 {
   bool visual_enabled, collision_enabled;
   double state_display_time;
+  wxString robot_description, topic;
 
   {
     config->Read( VISUAL_ENABLED_PROPERTY, &visual_enabled, robot_->isVisualVisible() );
@@ -311,6 +331,14 @@ void PlanningVisualizer::loadProperties( wxConfigBase* config )
 
   {
     config->Read( STATE_DISPLAY_TIME_PROPERTY, &state_display_time, state_display_time_ );
+  }
+
+  {
+    config->Read( ROBOT_DESCRIPTION_PROPERTY, &robot_description, wxString::FromAscii( description_param_.c_str() ) );
+  }
+
+  {
+    config->Read( TOPIC_PROPERTY, &topic, wxString::FromAscii( kinematic_path_topic_.c_str() ) );
   }
 
   setVisualVisible( visual_enabled );
@@ -323,6 +351,8 @@ void PlanningVisualizer::saveProperties( wxConfigBase* config )
   config->Write( VISUAL_ENABLED_PROPERTY, robot_->isVisualVisible() );
   config->Write( COLLISION_ENABLED_PROPERTY, robot_->isCollisionVisible() );
   config->Write( STATE_DISPLAY_TIME_PROPERTY, state_display_time_ );
+  config->Write( ROBOT_DESCRIPTION_PROPERTY, wxString::FromAscii( description_param_.c_str() ) );
+  config->Write( TOPIC_PROPERTY, wxString::FromAscii( kinematic_path_topic_.c_str() ) );
 }
 
 } // namespace ogre_vis

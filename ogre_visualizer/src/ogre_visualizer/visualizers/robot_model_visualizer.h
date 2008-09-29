@@ -57,11 +57,10 @@ public:
   virtual ~RobotModelVisualizer();
 
   /**
-   * \brief Initializes the visualizer.  The visualizer will not show anything until this is called.
+   * \brief Set the robot description parameter
    * @param description_param The ROS parameter name which contains the robot xml description
-   * @param transform_topic The topic to listen on that notifies us there is new transform data
    */
-  void initialize( const std::string& description_param, const std::string& transform_topic );
+  void setRobotDescription( const std::string& description_param );
 
   virtual void update( float dt );
 
@@ -95,19 +94,6 @@ public:
   virtual const char* getType() { return getTypeStatic(); }
 
 protected:
-  /**
-   * \brief Subscribes to any ROS topics we need to subscribe to
-   */
-  void subscribe();
-  /**
-   * \brief Unsubscribes from all ROS topics we're currently subscribed to
-   */
-  void unsubscribe();
-
-  /**
-   * \brief ROS callback for an incoming transform message
-   */
-  void incomingTransform();
 
   /**
    * \brief Loads a URDF from our #description_param_, iterates through the links and loads any necessary models
@@ -118,15 +104,12 @@ protected:
   virtual void onEnable();
   virtual void onDisable();
 
-  std_msgs::Empty message_;                   ///< new transforms message
   std::string transform_topic_;               ///< ROS topic we're listening to for new transforms
   std::string description_param_;             ///< ROS parameter that contains the robot xml description
 
   Robot* robot_;                              ///< Handles actually drawing the robot
 
   bool has_new_transforms_;                   ///< Callback sets this to tell our update function it needs to update the transforms
-
-  bool initialized_;                          ///< Are we initialized?
 
   float time_since_last_transform_;
   float update_rate_;

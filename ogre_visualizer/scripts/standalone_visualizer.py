@@ -45,7 +45,7 @@ class VisualizerFrame(wx.Frame):
         visualizer_panel.createMarkerVisualizer( "Visualization Markers", True )
         
         robot_vis = visualizer_panel.createRobotModelVisualizer( "Robot Model", False )
-        robot_vis.initialize( "robotdesc/pr2", "transform" )
+        robot_vis.setRobotDescription( "robotdesc/pr2" )
         
         planning = visualizer_panel.createPlanningVisualizer( "Planning", False )
         planning.initialize( "robotdesc/pr2", "display_kinematic_path" )

@@ -33,6 +33,9 @@
 
 #include <wx/wx.h>
 
+#include "ros/node.h"
+#include "ros/common.h"
+
 #include "ogre_tools/initialization.h"
 
 #include "visualization_panel.h"
@@ -46,9 +49,6 @@
 #include "visualizers/planning_visualizer.h"
 
 #include "Ogre.h"
-
-#include "ros/node.h"
-#include "ros/common.h"
 
 using namespace ogre_vis;
 
@@ -83,7 +83,7 @@ public:
     visualization_panel_->createVisualizer<AxesVisualizer>( "Origin Axes", true );
 
     RobotModelVisualizer* model = visualization_panel_->createVisualizer<RobotModelVisualizer>( "Robot Model", false );
-    model->initialize( "robotdesc/pr2", "transform" );
+    model->setRobotDescription( "robotdesc/pr2" );
     PlanningVisualizer* planning = visualization_panel_->createVisualizer<PlanningVisualizer>( "Planning", false );
     planning->initialize( "robotdesc/pr2", "display_kinematic_path" );
 

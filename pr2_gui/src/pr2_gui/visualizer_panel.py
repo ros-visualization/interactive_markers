@@ -46,7 +46,7 @@ class DefaultVisualizationPanel(ogre_visualizer.VisualizationPanel):
         self.createMarkerVisualizer( "Visualization Markers", True )
         
         robot_vis = self.createRobotModelVisualizer( "Robot Model", False )
-        robot_vis.initialize( "robotdesc/pr2", "transform" )
+        robot_vis.setRobotDescription( "robotdesc/pr2" )
         
         planning = self.createPlanningVisualizer( "Planning", False )
         planning.initialize( "robotdesc/pr2", "display_kinematic_path" )

@@ -62,11 +62,23 @@ public:
   virtual ~PlanningVisualizer();
 
   /**
-   * \brief Initializes the visualizer.  The visualizer will not show anything until this is called.
+   * \brief Initializes the visualizer.
    * @param description_param The ROS parameter name which contains the robot xml description
    * @param kinematic_path_topic The topic to listen on for a NamedKinematicPath
    */
   void initialize( const std::string& description_param, const std::string& kinematic_path_topic );
+
+  /**
+   * \brief Set the robot description parameter
+   * @param description_param The ROS parameter name which contains the robot xml description
+   */
+  void setRobotDescription( const std::string& description_param );
+
+  /**
+   * \brief Set the topic to listen on for the DisplayKinematicPath message
+   * @param topic The ROS topic
+   */
+  void setTopic( const std::string& topic );
 
   /**
    * \brief Set the amount of time each state should display for
@@ -130,7 +142,6 @@ protected:
   virtual void onEnable();
   virtual void onDisable();
 
-  bool initialized_;                          ///< Are we initialized?
   std::string description_param_;             ///< ROS parameter that contains the robot xml description
 
   Robot* robot_;                              ///< Handles actually drawing the robot
