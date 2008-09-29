@@ -368,7 +368,7 @@ void CameraPanel::incomingImage()
   delete [] image_data_;
   const uint32_t dataSize = image_message_.get_data_size();
   image_data_ = new uint8_t[ dataSize ];
-  memcpy( image_data_, image_message_.data, dataSize );
+  memcpy( image_data_, &image_message_.data[0], dataSize );
 
   delete image_;
   wxMemoryInputStream memoryStream( image_data_, dataSize );
