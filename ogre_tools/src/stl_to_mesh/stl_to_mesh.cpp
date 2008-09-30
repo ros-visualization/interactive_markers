@@ -17,6 +17,19 @@
 
 using namespace Ogre;
 
+void calculateUV(float x, float y, float z, float& u, float& v)
+{
+  Ogre::Vector3 pos(x,y,z);
+  pos.normalise();
+  u = acos( pos.y / pos.length() );
+
+  float val = pos.x / ( sin( u ) );
+  v = acos( val );
+
+  u /= Ogre::Math::PI;
+  v /= Ogre::Math::PI;
+}
+
 int main( int argc, char** argv )
 {
   if ( argc < 3 )
@@ -183,14 +196,22 @@ int main( int argc, char** argv )
 
         pos += attributeByteCount;
 
+        float u, v;
+
         object->position( v1X, v1Y, v1Z );
         object->normal( nX, nY, nZ );
+        calculateUV( v1X, v1Y, v1Z, u, v );
+        object->textureCoord( u, v );
 
         object->position( v2X, v2Y, v2Z );
         object->normal( nX, nY, nZ );
+        calculateUV( v2X, v2Y, v2Z, u, v );
+        object->textureCoord( u, v );
 
         object->position( v3X, v3Y, v3Z );
         object->normal( nX, nY, nZ );
+        calculateUV( v3X, v3Y, v3Z, u, v );
+        object->textureCoord( u, v );
 
         object->triangle( vertexCount + 0, vertexCount + 1, vertexCount + 2 );
 
