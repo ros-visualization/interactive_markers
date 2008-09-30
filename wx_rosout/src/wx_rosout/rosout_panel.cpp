@@ -50,7 +50,7 @@ RosoutPanel::RosoutPanel( wxWindow* parent )
   {
     int argc = 0;
     ros::init( argc, 0 );
-    ros_node_ = new ros::node( "RosoutPanel" );
+    ros_node_ = new ros::node( "RosoutPanel", ros::node::DONT_HANDLE_SIGINT );
   }
   ROS_ASSERT( ros_node_ );
 

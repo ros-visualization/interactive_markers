@@ -148,7 +148,7 @@ public:
     }
 
     ros::init(argc, localArgv);
-    new ros::node( "Visualizer Test" );
+    new ros::node( "Visualizer Test", ros::node::DONT_HANDLE_SIGINT );
 
     wxFrame* frame = new MyFrame(NULL);
     SetTopWindow(frame);
