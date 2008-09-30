@@ -39,6 +39,10 @@ import wx_camera_panel
 import wx_rosout
 import ogre_tools
 import visualizer_panel
+import runtime_monitor
+from runtime_monitor.monitor_panel import *
+
+import rospy
 
 class PR2Frame(wx.Frame):
     _PERSPECTIVE_VERSION=1
@@ -52,6 +56,8 @@ class PR2Frame(wx.Frame):
     
     def __init__(self, parent, id=wx.ID_ANY, title='PR2 GUI', pos=wx.DefaultPosition, size=(1280, 1024), style=wx.DEFAULT_FRAME_STYLE):
         wx.Frame.__init__(self, parent, id, title, pos, size, style)
+        
+        rospy.ready('pr2_gui', anonymous=True)
         
         self._config = wx.Config("pr2_gui")
         self._aui_manager = wx.aui.AuiManager(self)
@@ -76,8 +82,12 @@ class PR2Frame(wx.Frame):
         
         self._rosout_panel = wx_rosout.RosoutPanel(self)
         
+        self._monitor_panel = MonitorPanel(self)
+        self._monitor_panel.set_new_errors_callback(self.on_monitor_errors_received)
+        
         self._aui_manager.AddPane(self._visualizer_panel, wx.aui.AuiPaneInfo().CenterPane().Center().Name('3dvis').Caption('3D Visualization'), '3D Visualization')
         self._aui_manager.AddPane(self._rosout_panel, wx.aui.AuiPaneInfo().BottomDockable().Bottom().Name('rosout').Caption('Rosout'), 'Rosout')
+        self._aui_manager.AddPane(self._monitor_panel, wx.aui.AuiPaneInfo().BottomDockable().Bottom().BestSize(wx.Size(500,600)).Name('runtime_monitor').Caption('Runtime Monitor'), 'Runtime Monitor')
         
         self.add_camera_pane("forearm_right", False)
         self.add_camera_pane("forearm_left", False)
@@ -217,7 +227,16 @@ class PR2Frame(wx.Frame):
             for pane in panes:
                 if (pane.window.GetId() == event.GetId()):
                     pane.Show(event.IsChecked())
-                    pane.window.setEnabled(event.IsChecked())
+                    
+                    set_enabled_func = getattr(pane.window, "setEnabled", None)
+                    if (set_enabled_func != None):
+                        set_enabled_func(event.IsChecked()) 
                     break
                 
+            self._aui_manager.Update()
+
+    def on_monitor_errors_received(self):
+        pane = self._aui_manager.GetPane(self._monitor_panel)
+        if (not pane.IsShown()):
+            pane.Show()
             self._aui_manager.Update()
