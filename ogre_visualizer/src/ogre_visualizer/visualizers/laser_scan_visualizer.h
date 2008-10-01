@@ -151,6 +151,8 @@ protected:
    */
   void incomingScanCallback();
 
+  void updateCloud();
+
   ogre_tools::PointCloud* cloud_;                 ///< Handles actually rendering the point cloud
 
   std::string cloud_topic_;                       ///< The PointCloudFloat32 topic we're listening on

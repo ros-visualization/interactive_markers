@@ -176,6 +176,7 @@ void LaserScanVisualizer::onDisable()
   cloud_->clear();
   points_.clear();
   point_times_.clear();
+  cloud_messages_.clear();
 }
 
 void LaserScanVisualizer::subscribe()
@@ -232,16 +233,31 @@ void LaserScanVisualizer::cullPoints()
     return;
   }
 
+  bool removed = false;
   while ( !point_times_.empty() && point_times_.front() > point_decay_time_ )
   {
     point_times_.pop_front();
     points_.pop_front();
     cloud_messages_.pop_front();
+
+    removed = true;
+  }
+
+  if ( removed )
+  {
+    updateCloud();
   }
 }
 
 void LaserScanVisualizer::transformCloud( std_msgs::PointCloudFloat32& message )
 {
+  if ( point_decay_time_ == 0.0f )
+  {
+    points_.clear();
+    point_times_.clear();
+    cloud_messages_.clear();
+  }
+
   // Push back before transforming.  This will perform a full copy.
   cloud_messages_.push_back( message );
 
@@ -271,12 +287,7 @@ void LaserScanVisualizer::transformCloud( std_msgs::PointCloudFloat32& message )
 
   float diff_intensity = intensity_max_ - intensity_min_;
 
-  if ( point_decay_time_ == 0.0f )
-  {
-    points_.clear();
-    point_times_.clear();
-    cloud_messages_.clear();
-  }
+
 
   points_.push_back( V_Point() );
   V_Point& points = points_.back();
@@ -304,6 +315,11 @@ void LaserScanVisualizer::transformCloud( std_msgs::PointCloudFloat32& message )
     current_point.b_ = color.z;
   }
 
+  updateCloud();
+}
+
+void LaserScanVisualizer::updateCloud()
+{
   {
     RenderAutoLock render_lock( this );
 
