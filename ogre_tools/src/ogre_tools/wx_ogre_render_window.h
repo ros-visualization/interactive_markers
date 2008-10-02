@@ -90,24 +90,30 @@ public:
    */
   void setCamera( Ogre::Camera* camera );
 
+  /**
+   * \brief Set the scale of the orthographic window.  Only valid for an orthographic camera.
+   * @param scale The scale
+   */
+  void setOrthoScale( float scale );
+
+protected:
   /** Painting event callback.
-  	@param evt Data regarding the painting event.
+    @param evt Data regarding the painting event.
    */
   virtual void onPaint (wxPaintEvent &evt);
 
   /** Resizing events callback.
-  	@param evt Data regarding the resize event.
+    @param evt Data regarding the resize event.
    */
   virtual void onSize (wxSizeEvent &evt);
 
   /** Mouse events callback.
-  	@remarks Note this will call the specified callback function to process
-  		the event.
-  	@param evt Data regarding the mouse event.
+    @remarks Note this will call the specified callback function to process
+      the event.
+    @param evt Data regarding the mouse event.
    */
   virtual void onMouseEvents (wxMouseEvent &evt);
 
-protected:
   /** Creates an Ogre render window for this widget.
    */
   virtual void createRenderWindow ();
@@ -124,6 +130,8 @@ protected:
 
   boost::function<void ()> pre_render_callback_;      ///< Functor which is called before each render
   boost::function<void ()> post_render_callback_;     ///< Functor which is called after each render
+
+  float ortho_scale_;
 };
 
 } // namespace ogre_tools

@@ -1,4 +1,5 @@
 #include "wx_ogre_render_window.h"
+#include "orthographic.h"
 
 #include "Ogre.h"
 
@@ -29,6 +30,7 @@ wxOgreRenderWindow::wxOgreRenderWindow (Ogre::Root* ogre_root, wxWindow *parent,
     : wxControl( parent, id, pos, size, style, validator )
     , render_window_( 0 )
     , ogre_root_( ogre_root )
+    , ortho_scale_( 1.0f )
 {
   SetBackgroundStyle(wxBG_STYLE_CUSTOM);
 
@@ -83,8 +85,24 @@ void wxOgreRenderWindow::setCameraAspectRatio()
     int width;
     int height;
     GetSize( &width, &height );
+
     camera->setAspectRatio( Ogre::Real( width ) / Ogre::Real( height ) );
+
+    if ( camera->getProjectionType() == Ogre::PT_ORTHOGRAPHIC )
+    {
+      Ogre::Matrix4 proj;
+      buildScaledOrthoMatrix( proj, -width / ortho_scale_ / 2, width / ortho_scale_ / 2, -height / ortho_scale_ / 2, height / ortho_scale_ / 2,
+                              camera->getNearClipDistance(), camera->getFarClipDistance() );
+      camera->setCustomProjectionMatrix(true, proj);
+    }
   }
+}
+
+void wxOgreRenderWindow::setOrthoScale( float scale )
+{
+  ortho_scale_ = scale;
+
+  setCameraAspectRatio();
 }
 
 void wxOgreRenderWindow::setPreRenderCallback( boost::function<void ()> func )

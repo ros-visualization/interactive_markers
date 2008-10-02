@@ -54,6 +54,7 @@ rospack_add_library(${PROJECT_NAME} src/ogre_tools/point_cloud.cpp
 			      src/ogre_tools/orbit_camera.cpp
 			      src/ogre_tools/wx_ogre_render_window.cpp
 			      src/ogre_tools/initialization.cpp
+			      src/ogre_tools/orthographic.cpp
 			      ${SWIG_OUTPUT_CPP_FILE})
 target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} ${GTK2_LIBRARIES} ${OPENGL_gl_LIBRARY})
 # swig python needs a shared library named _<modulename>.[so|dll|...]
