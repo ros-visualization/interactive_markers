@@ -31,6 +31,7 @@
 #define OGRE_VISUALIZER_GRID_VISUALIZER_H
 
 #include "visualizer_base.h"
+#include "helpers/color.h"
 
 namespace ogre_tools
 {
@@ -44,6 +45,10 @@ class GridOptionsPanel;
 
 namespace ogre_vis
 {
+
+class IntProperty;
+class FloatProperty;
+class ColorProperty;
 
 /**
  * \class GridVisualizer
@@ -65,22 +70,14 @@ public:
    * @return The cell size for this grid
    */
   float getCellSize() { return cell_size_; }
-  /**
-   * @param r (return) The red color component, range [0,1]
-   * @param g (return) The green color component, range [0,1]
-   * @param b (return) The blue color component, range [0,1]
-   */
-  void getColor( float& r, float& g, float& b );
 
   /**
    * \brief Set all the parameters of the grid
    * @param cell_count The number of cells
    * @param cell_size The size of each cell
-   * @param r Red color component, range [0,1]
-   * @param g Green color component, range [0,1]
-   * @param b Blue color component, range [0,1]
+   * @param color The color
    */
-  void set( uint32_t cell_count, float cell_size, float r, float g, float b );
+  void set( uint32_t cell_count, float cell_size, const Color& color );
   /**
    * \brief Set the number of cells
    * @param cell_count The number of cells
@@ -93,18 +90,13 @@ public:
   void setCellSize( float cell_size );
   /**
    * \brief Set the color
-   * @param r Red color component, range [0,1]
-   * @param g Green color component, range [0,1]
-   * @param b Blue color component, range [0,1]
    */
-  void setColor( float r, float g, float b );
+  void setColor( const Color& color );
+  const Color& getColor() { return color_; }
 
   // Overrides from VisualizerBase
-  virtual void fillPropertyGrid();
-  virtual void propertyChanged( wxPropertyGridEvent& event );
-  virtual void loadProperties( wxConfigBase* config );
-  virtual void saveProperties( wxConfigBase* config );
   virtual void targetFrameChanged() {}
+  virtual void createProperties();
 
   static const char* getTypeStatic() { return "Grid"; }
   virtual const char* getType() { return getTypeStatic(); }
@@ -121,10 +113,12 @@ protected:
 
   float cell_size_;                   ///< The size of each cell drawn.  Cells are square.
   uint32_t cell_count_;               ///< The number of rows/columns to draw.
-  float r_;                           ///< Red color component, range [0,1]
-  float g_;                           ///< Green color component, range [0,1]
-  float b_;                           ///< Blue color component, range [0,1]
+  Color color_;
   ogre_tools::Grid* grid_;            ///< Handles actually drawing the grid
+
+  IntProperty* cellcount_property_;
+  FloatProperty* cellsize_property_;
+  ColorProperty* color_property_;
 };
 
 } // namespace ogre_vis

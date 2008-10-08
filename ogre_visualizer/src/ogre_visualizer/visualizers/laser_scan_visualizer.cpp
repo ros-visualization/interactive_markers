@@ -28,8 +28,10 @@
  */
 
 #include "laser_scan_visualizer.h"
+#include "properties/property.h"
+#include "properties/property_manager.h"
 #include "common.h"
-#include "../ros_topic_property.h"
+#include "ros_topic_property.h"
 
 #include "ros/node.h"
 #include "ogre_tools/point_cloud.h"
@@ -42,26 +44,23 @@
 #include <wx/propgrid/advprops.h>
 #include <wx/confbase.h>
 
-#define SCAN_TOPIC_PROPERTY wxT("Scan Topic")
-#define CLOUD_TOPIC_PROPERTY wxT("Cloud Topic")
-#define COLOR_PROPERTY wxT("Color")
-#define DECAY_TIME_PROPERTY wxT("Decay Time")
-#define STYLE_PROPERTY wxT("Style")
-#define BILLBOARD_SIZE_PROPERTY wxT("Billboard Size")
-
 namespace ogre_vis
 {
 
 LaserScanVisualizer::LaserScanVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name )
 : VisualizerBase( scene_manager, node, tf_client, name )
-, r_( 1.0 )
-, g_( 0.0 )
-, b_( 0.0 )
+, color_( 1.0f, 0.0f, 0.0f )
 , intensity_min_( 999999.0f )
 , intensity_max_( -999999.0f )
 , point_decay_time_( 20.0f )
 , style_( Billboards )
 , billboard_size_( 0.003 )
+, scan_topic_property_( NULL )
+, cloud_topic_property_( NULL )
+, billboard_size_property_( NULL )
+, decay_time_property_( NULL )
+, color_property_( NULL )
+, style_property_( NULL )
 {
   cloud_ = new ogre_tools::PointCloud( scene_manager_ );
 
@@ -84,10 +83,12 @@ void LaserScanVisualizer::setCloudTopic( const std::string& topic )
 
   subscribe();
 
-  if ( property_grid_ )
+  if ( cloud_topic_property_ )
   {
-    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + CLOUD_TOPIC_PROPERTY ), wxString::FromAscii( cloud_topic_.c_str() ) );
+    cloud_topic_property_->changed();
   }
+
+  causeRender();
 }
 
 void LaserScanVisualizer::setScanTopic( const std::string& topic )
@@ -98,30 +99,32 @@ void LaserScanVisualizer::setScanTopic( const std::string& topic )
 
   subscribe();
 
-  if ( property_grid_ )
+  if ( scan_topic_property_ )
   {
-    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + SCAN_TOPIC_PROPERTY ), wxString::FromAscii( scan_topic_.c_str() ) );
+    scan_topic_property_->changed();
   }
+
+  causeRender();
 }
 
-void LaserScanVisualizer::setColor( float r, float g, float b )
+void LaserScanVisualizer::setColor( const Color& color )
 {
-  r_ = r;
-  g_ = g;
-  b_ = b;
+  color_ = color;
 
-  if ( property_grid_ )
+  if ( color_property_ )
   {
-    wxVariant color;
-    color << wxColour( r_ * 255, g_ * 255, b_ * 255 );
-    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + COLOR_PROPERTY ), color );
+    color_property_->changed();
   }
+
+  causeRender();
 }
 
-void LaserScanVisualizer::setStyle( Style style )
+void LaserScanVisualizer::setStyle( int style )
 {
   {
     RenderAutoLock render_lock( this );
+
+    ROS_ASSERT(style < StyleCount);
 
     style_ = style;
     cloud_->setUsePoints( style == Points );
@@ -129,10 +132,12 @@ void LaserScanVisualizer::setStyle( Style style )
 
   causeRender();
 
-  if ( property_grid_ )
+  if ( style_property_ )
   {
-    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + STYLE_PROPERTY ), (long)style_ );
+    style_property_->changed();
   }
+
+  causeRender();
 }
 
 void LaserScanVisualizer::setBillboardSize( float size )
@@ -146,20 +151,24 @@ void LaserScanVisualizer::setBillboardSize( float size )
 
   causeRender();
 
-  if ( property_grid_ )
+  if ( billboard_size_property_ )
   {
-    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + BILLBOARD_SIZE_PROPERTY ), billboard_size_ );
+    billboard_size_property_->changed();
   }
+
+  causeRender();
 }
 
 void LaserScanVisualizer::setDecayTime( float time )
 {
   point_decay_time_ = time;
 
-  if ( property_grid_ )
+  if ( decay_time_property_ )
   {
-    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + DECAY_TIME_PROPERTY ), point_decay_time_ );
+    decay_time_property_->changed();
   }
+
+  causeRender();
 }
 
 void LaserScanVisualizer::onEnable()
@@ -303,7 +312,7 @@ void LaserScanVisualizer::transformCloud( std_msgs::PointCloudFloat32& message )
 
     float normalized_intensity = (diff_intensity > 0.0f) ? ( intensity - intensity_min_ ) / diff_intensity : 1.0f;
 
-    Ogre::Vector3 color( r_, g_, b_ );
+    Ogre::Vector3 color( color_.r_, color_.g_, color_.b_ );
     color *= normalized_intensity;
 
     ogre_tools::PointCloud::Point& current_point = points[ i ];
@@ -384,119 +393,25 @@ void LaserScanVisualizer::targetFrameChanged()
   cloud_message_.unlock();
 }
 
-void LaserScanVisualizer::fillPropertyGrid()
+void LaserScanVisualizer::createProperties()
 {
-  wxArrayString style_names;
-  style_names.Add( wxT("Billboards") );
-  style_names.Add( wxT("Points") );
-  wxArrayInt style_ids;
-  style_ids.Add( Billboards );
-  style_ids.Add( Points );
+  style_property_ = property_manager_->createProperty<EnumProperty>( "Style", property_prefix_, boost::bind( &LaserScanVisualizer::getStyle, this ),
+                                                                     boost::bind( &LaserScanVisualizer::setStyle, this, _1 ), parent_category_, this );
+  style_property_->addOption( "Billboards", Billboards );
+  style_property_->addOption( "Points", Points );
 
-  property_grid_->Append( new wxEnumProperty( STYLE_PROPERTY, property_prefix_ + STYLE_PROPERTY, style_names, style_ids, style_ ) );
+  color_property_ = property_manager_->createProperty<ColorProperty>( "Color", property_prefix_, boost::bind( &LaserScanVisualizer::getColor, this ),
+                                                                        boost::bind( &LaserScanVisualizer::setColor, this, _1 ), parent_category_, this );
 
-  property_grid_->Append( new ROSTopicProperty( ros_node_, SCAN_TOPIC_PROPERTY, property_prefix_ + SCAN_TOPIC_PROPERTY, wxString::FromAscii( scan_topic_.c_str() ) ) );
-  property_grid_->Append( new ROSTopicProperty( ros_node_, CLOUD_TOPIC_PROPERTY, property_prefix_ + CLOUD_TOPIC_PROPERTY, wxString::FromAscii( cloud_topic_.c_str() ) ) );
-  property_grid_->Append( new wxColourProperty( COLOR_PROPERTY, property_prefix_ + COLOR_PROPERTY, wxColour( r_ * 255, g_ * 255, b_ * 255 ) ) );
-  wxPGId prop = property_grid_->Append( new wxFloatProperty( DECAY_TIME_PROPERTY, property_prefix_ + DECAY_TIME_PROPERTY, point_decay_time_ ) );
+  billboard_size_property_ = property_manager_->createProperty<FloatProperty>( "Billboard Size", property_prefix_, boost::bind( &LaserScanVisualizer::getBillboardSize, this ),
+                                                                                boost::bind( &LaserScanVisualizer::setBillboardSize, this, _1 ), parent_category_, this );
+  decay_time_property_ = property_manager_->createProperty<FloatProperty>( "Decay Time", property_prefix_, boost::bind( &LaserScanVisualizer::getDecayTime, this ),
+                                                                                  boost::bind( &LaserScanVisualizer::setDecayTime, this, _1 ), parent_category_, this );
 
-  property_grid_->SetPropertyAttribute( prop, wxT("Min"), 0.0 );
-
-  prop = property_grid_->Append( new wxFloatProperty( BILLBOARD_SIZE_PROPERTY, property_prefix_ + BILLBOARD_SIZE_PROPERTY, billboard_size_ ) );
-  property_grid_->SetPropertyAttribute( prop, wxT("Min"), 0.0 );
-}
-
-void LaserScanVisualizer::propertyChanged( wxPropertyGridEvent& event )
-{
-  wxPGProperty* property = event.GetProperty();
-
-  const wxString& name = property->GetName();
-  wxVariant value = property->GetValue();
-
-  if ( name == property_prefix_ + SCAN_TOPIC_PROPERTY )
-  {
-    wxString topic = value.GetString();
-    setScanTopic( std::string(topic.fn_str()) );
-  }
-  else if ( name == property_prefix_ + CLOUD_TOPIC_PROPERTY )
-  {
-    wxString topic = value.GetString();
-    setCloudTopic( std::string(topic.fn_str()) );
-  }
-  else if ( name == property_prefix_ + COLOR_PROPERTY )
-  {
-    wxColour color;
-    color << value;
-
-    setColor( color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f );
-  }
-  else if ( name == property_prefix_ + DECAY_TIME_PROPERTY )
-  {
-    float val = value.GetDouble();
-    setDecayTime( val );
-  }
-  else if ( name == property_prefix_ + STYLE_PROPERTY )
-  {
-    int val = value.GetLong();
-    setStyle( (Style)val );
-  }
-  else if ( name == property_prefix_ + BILLBOARD_SIZE_PROPERTY )
-  {
-    float val = value.GetDouble();
-    setBillboardSize( val );
-  }
-}
-
-void LaserScanVisualizer::loadProperties( wxConfigBase* config )
-{
-  wxString scan_topic, cloud_topic;
-  double r, g, b;
-  double decay_time;
-  long style;
-  double billboard_size;
-
-  {
-    config->Read( SCAN_TOPIC_PROPERTY, &scan_topic, wxString::FromAscii( scan_topic_.c_str() ) );
-    config->Read( CLOUD_TOPIC_PROPERTY, &cloud_topic, wxString::FromAscii( cloud_topic_.c_str() ) );
-  }
-
-  {
-    config->Read( wxString(COLOR_PROPERTY) + wxT("R"), &r, r_ );
-    config->Read( wxString(COLOR_PROPERTY) + wxT("G"), &g, g_ );
-    config->Read( wxString(COLOR_PROPERTY) + wxT("B"), &b, b_ );
-  }
-
-  {
-    config->Read( DECAY_TIME_PROPERTY, &decay_time, point_decay_time_ );
-  }
-
-  {
-    config->Read( STYLE_PROPERTY, &style, style_ );
-  }
-
-  {
-    config->Read( BILLBOARD_SIZE_PROPERTY, &billboard_size, billboard_size_ );
-  }
-
-  setScanTopic( (const char*)scan_topic.fn_str() );
-  setCloudTopic( (const char*)cloud_topic.fn_str() );
-  setColor( r, g, b );
-  setStyle( (Style)style );
-  setBillboardSize( billboard_size );
-}
-
-void LaserScanVisualizer::saveProperties( wxConfigBase* config )
-{
-  config->Write( SCAN_TOPIC_PROPERTY, wxString::FromAscii( scan_topic_.c_str() ) );
-  config->Write( CLOUD_TOPIC_PROPERTY, wxString::FromAscii( cloud_topic_.c_str() ) );
-
-  config->Write( wxString(COLOR_PROPERTY) + wxT("R"), r_ );
-  config->Write( wxString(COLOR_PROPERTY) + wxT("G"), g_ );
-  config->Write( wxString(COLOR_PROPERTY) + wxT("B"), b_ );
-
-  config->Write( DECAY_TIME_PROPERTY, point_decay_time_ );
-  config->Write( STYLE_PROPERTY, style_ );
-  config->Write( BILLBOARD_SIZE_PROPERTY, billboard_size_ );
+  scan_topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Scan Topic", property_prefix_, boost::bind( &LaserScanVisualizer::getScanTopic, this ),
+                                                                            boost::bind( &LaserScanVisualizer::setScanTopic, this, _1 ), parent_category_, this );
+  cloud_topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Cloud Topic", property_prefix_, boost::bind( &LaserScanVisualizer::getCloudTopic, this ),
+                                                                              boost::bind( &LaserScanVisualizer::setCloudTopic, this, _1 ), parent_category_, this );
 }
 
 } // namespace ogre_vis

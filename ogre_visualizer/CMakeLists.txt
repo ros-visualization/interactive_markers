@@ -40,6 +40,7 @@ add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE}
                             src/ogre_visualizer/visualizers/planning_visualizer.i
                             src/ogre_visualizer/visualizers/point_cloud_visualizer.i
                             src/ogre_visualizer/visualizers/robot_model_visualizer.i
+                            src/ogre_visualizer/helpers/color.i
                             src/ogre_visualizer/visualization_panel.h 
                             src/ogre_visualizer/generated/visualization_panel_generated.h
                             src/ogre_visualizer/visualizer_base.h
@@ -50,7 +51,8 @@ add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE}
                             src/ogre_visualizer/visualizers/octree_visualizer.h
                             src/ogre_visualizer/visualizers/planning_visualizer.h
                             src/ogre_visualizer/visualizers/point_cloud_visualizer.h
-                            src/ogre_visualizer/visualizers/robot_model_visualizer.h)
+                            src/ogre_visualizer/visualizers/robot_model_visualizer.h
+                            src/ogre_visualizer/helpers/color.h)
 
 rospack_add_library(${PROJECT_NAME} src/ogre_visualizer/visualization_panel.cpp
 				   												 src/ogre_visualizer/visualizer_base.cpp
@@ -68,8 +70,10 @@ rospack_add_library(${PROJECT_NAME} src/ogre_visualizer/visualization_panel.cpp
 				   												 src/ogre_visualizer/visualizers/octree_visualizer.cpp
  				   												 src/ogre_visualizer/generated/visualization_panel_generated.cpp
  				   												 src/ogre_visualizer/helpers/robot.cpp
+ 				   												 src/ogre_visualizer/properties/property.cpp
+ 				   												 src/ogre_visualizer/properties/property_manager.cpp
  				   												 ${SWIG_OUTPUT_CPP_FILE})
-target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} boost_signals)
 # swig python needs a shared library named _<modulename>.[so|dll|...]
 # this renames the output file to conform to that by prepending an underscore and removing the "lib" prefix
 set_target_properties(${PROJECT_NAME}

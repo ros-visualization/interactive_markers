@@ -44,6 +44,10 @@ class SceneNode;
 namespace ogre_vis
 {
 
+class BoolProperty;
+class FloatProperty;
+class StringProperty;
+
 class Robot;
 
 /**
@@ -82,12 +86,14 @@ public:
    */
   void setUpdateRate( float rate );
 
+  const std::string& getRobotDescription() { return description_param_; }
+  float getUpdateRate() { return update_rate_; }
+  bool isVisualVisible();
+  bool isCollisionVisible();
+
   // Overrides from VisualizerBase
-  virtual void fillPropertyGrid();
-  virtual void propertyChanged( wxPropertyGridEvent& event );
-  virtual void loadProperties( wxConfigBase* config );
-  virtual void saveProperties( wxConfigBase* config );
   virtual void targetFrameChanged();
+  virtual void createProperties();
   virtual bool isObjectPickable( const Ogre::MovableObject* object ) const { return true; }
 
   static const char* getTypeStatic() { return "Robot Model"; }
@@ -113,6 +119,11 @@ protected:
 
   float time_since_last_transform_;
   float update_rate_;
+
+  BoolProperty* visual_enabled_property_;
+  BoolProperty* collision_enabled_property_;
+  FloatProperty* update_rate_property_;
+  StringProperty* robot_description_property_;
 };
 
 } // namespace ogre_vis

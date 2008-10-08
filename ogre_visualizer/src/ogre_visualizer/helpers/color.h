@@ -27,68 +27,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_VISUALIZER_AXES_VISUALIZER_H
-#define OGRE_VISUALIZER_AXES_VISUALIZER_H
-
-#include "visualizer_base.h"
-
-namespace ogre_tools
-{
-class Axes;
-}
+#ifndef OGRE_VISUALIZER_COLOR_H
+#define OGRE_VISUALIZER_COLOR_H
 
 namespace ogre_vis
 {
 
-class FloatProperty;
-
-/**
- * \class AxesVisualizer
- * \brief Displays a set of XYZ axes at the origin
- */
-class AxesVisualizer : public VisualizerBase
+struct Color
 {
-public:
-  AxesVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name );
-  virtual ~AxesVisualizer();
+  Color()
+  : r_( 0.0f )
+  , g_( 0.0f )
+  , b_( 0.0f )
+  {}
 
-  /**
-   * \brief Set the parameters for the axes
-   * @param length Length of each axis
-   * @param radius Radius of each axis
-   */
-  void set( float length, float radius );
+  Color( float r, float g, float b )
+  : r_( r )
+  , g_( g )
+  , b_( b )
+  {}
 
-  void setLength( float length );
-  float getLength() { return length_; }
-  void setRadius( float radius );
-  float getRadius() { return radius_; }
+  ~Color() {}
 
-  // Overrides from VisualizerBase
-  virtual void targetFrameChanged() {}
-  virtual void createProperties();
-
-  static const char* getTypeStatic() { return "Axes"; }
-  virtual const char* getType() { return getTypeStatic(); }
-
-protected:
-  /**
-   * \brief Create the axes with the current parameters
-   */
-  void create();
-
-  // overrides from VisualizerBase
-  virtual void onEnable();
-  virtual void onDisable();
-
-  float length_;                ///< Length of each axis
-  float radius_;                ///< Radius of each axis
-  ogre_tools::Axes* axes_;      ///< Handles actually drawing the axes
-
-  FloatProperty* length_property_;
-  FloatProperty* radius_property_;
+  float r_;
+  float g_;
+  float b_;
 };
 
 } // namespace ogre_vis
 
- #endif
+#endif

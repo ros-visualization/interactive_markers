@@ -35,7 +35,9 @@
  */
 
 #include "octree_visualizer.h"
-#include "../ros_topic_property.h"
+#include "ros_topic_property.h"
+#include "properties/property.h"
+#include "properties/property_manager.h"
 
 #include <dataTypes.h>
 #include <ros/node.h>
@@ -50,18 +52,15 @@
 
 #include "common.h"
 
-#define COLOR_PROPERTY wxT("Color")
-#define TOPIC_PROPERTY wxT("Topic")
-
 namespace ogre_vis
 {
 
 OctreeVisualizer::OctreeVisualizer(Ogre::SceneManager* sceneManager,ros::node* node, rosTFClient* tfClient, const std::string& name)
 : VisualizerBase(sceneManager, node, tfClient, name)
-, r_( 1.0f )
-, g_( 1.0f )
-, b_( 1.0f )
+, color_( 1.0f, 1.0f, 1.0f )
 , new_message_(false)
+, color_property_( NULL )
+, topic_property_( NULL )
 {
   static uint32_t count = 0;
   std::stringstream ss;
@@ -78,7 +77,7 @@ OctreeVisualizer::OctreeVisualizer(Ogre::SceneManager* sceneManager,ros::node* n
   material_ = Ogre::MaterialManager::getSingleton().create( material_name_, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
   material_->setReceiveShadows(false);
   material_->getTechnique(0)->setLightingEnabled(true);
-  setColor( r_, g_, b_ );
+  setColor( color_ );
 }
 
 OctreeVisualizer::~OctreeVisualizer()
@@ -216,87 +215,41 @@ void OctreeVisualizer::setOctreeTopic(const std::string& topic)
 
   subscribe();
 
-  if ( property_grid_ )
+  if ( topic_property_ )
   {
-    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + TOPIC_PROPERTY ), wxString::FromAscii( octree_topic_.c_str() ) );
+    topic_property_->changed();
   }
+
+  causeRender();
 }
 
-void OctreeVisualizer::setColor(float r, float g, float b)
+void OctreeVisualizer::setColor( const Color& color )
 {
-  material_->setAmbient( r * 0.5, g * 0.5, b * 0.5 );
-  material_->setDiffuse( r, g, b, 1.0f );
+  material_->setAmbient( color.r_ * 0.5, color.g_ * 0.5, color.b_ * 0.5 );
+  material_->setDiffuse( color.r_, color.g_, color.b_, 1.0f );
 
-  r_ = r;
-  g_ = g;
-  b_ = b;
+  color_ = color;
 
-  if ( property_grid_ )
+  if ( color_property_ )
   {
-    wxVariant color;
-    color << wxColour( r_ * 255, g_ * 255, b_ * 255 );
-    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + COLOR_PROPERTY ), color );
-  }
-}
-
-void OctreeVisualizer::fillPropertyGrid()
-{
-  property_grid_->Append( new ROSTopicProperty( ros_node_, TOPIC_PROPERTY, property_prefix_ + TOPIC_PROPERTY, wxString::FromAscii( octree_topic_.c_str() ) ) );
-  property_grid_->Append( new wxColourProperty( COLOR_PROPERTY, property_prefix_ + COLOR_PROPERTY, wxColour( r_ * 255, g_ * 255, b_ * 255 ) ) );
-}
-
-void OctreeVisualizer::propertyChanged( wxPropertyGridEvent& event )
-{
-  wxPGProperty* property = event.GetProperty();
-
-  const wxString& name = property->GetName();
-  wxVariant value = property->GetValue();
-
-  if ( name == property_prefix_ + TOPIC_PROPERTY )
-  {
-    wxString topic = value.GetString();
-    setOctreeTopic( std::string(topic.fn_str()) );
-  }
-  else if ( name == property_prefix_ + COLOR_PROPERTY )
-  {
-    wxColour color;
-    color << value;
-
-    setColor( color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f );
-  }
-}
-
-void OctreeVisualizer::loadProperties( wxConfigBase* config )
-{
-  wxString topic;
-  double r, g, b;
-
-  {
-    config->Read( TOPIC_PROPERTY, &topic, wxString::FromAscii( octree_topic_.c_str() ) );
+    color_property_->changed();
   }
 
-  {
-    config->Read( wxString(COLOR_PROPERTY) + wxT("R"), &r, r_ );
-    config->Read( wxString(COLOR_PROPERTY) + wxT("G"), &g, g_ );
-    config->Read( wxString(COLOR_PROPERTY) + wxT("B"), &b, b_ );
-  }
-
-  setOctreeTopic( (const char*)topic.fn_str() );
-  setColor( r, g, b );
-}
-
-void OctreeVisualizer::saveProperties( wxConfigBase* config )
-{
-  config->Write( TOPIC_PROPERTY, wxString::FromAscii( octree_topic_.c_str() ) );
-
-  config->Write( wxString(COLOR_PROPERTY) + wxT("R"), r_ );
-  config->Write( wxString(COLOR_PROPERTY) + wxT("G"), g_ );
-  config->Write( wxString(COLOR_PROPERTY) + wxT("B"), b_ );
+  causeRender();
 }
 
 void OctreeVisualizer::targetFrameChanged()
 {
   printf( "Warning: octree is always in the global frame\n" );
+}
+
+void OctreeVisualizer::createProperties()
+{
+  color_property_ = property_manager_->createProperty<ColorProperty>( "Color", property_prefix_, boost::bind( &OctreeVisualizer::getColor, this ),
+                                                                      boost::bind( &OctreeVisualizer::setColor, this, _1 ), parent_category_, this );
+
+  topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &OctreeVisualizer::getOctreeTopic, this ),
+                                                                              boost::bind( &OctreeVisualizer::setOctreeTopic, this, _1 ), parent_category_, this );
 }
 
 }

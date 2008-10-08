@@ -51,11 +51,15 @@ class wxWindow;
 class rosTFClient;
 class wxPropertyGrid;
 class wxPropertyGridEvent;
+class wxPGProperty;
 class wxConfigBase;
 class wxString;
 
 namespace ogre_vis
 {
+
+class PropertyManager;
+class CategoryProperty;
 
 /**
  * \class VisualizerBase
@@ -102,39 +106,19 @@ public:
   /// Set the callback used to unlock the renderer
   void setUnlockRenderCallback( boost::function<void ()> func );
 
-  /// Set the prefix to be prepended to this visualizer's properties
-  void setPropertyGrid( wxPropertyGrid* property_grid );
+  /**
+   * \brief Sets the property manager and parent category for this visualizer
+   * @param manager The property manager
+   * @param parent The parent category
+   */
+  void setPropertyManager( PropertyManager* manager, CategoryProperty* parent );
 
   /**
-   * \brief Override this to fill out the property grid when this visualizer is selected
+   * \brief Called from setPropertyManager, gives the visualizer a chance to create some properties immediately.
    *
-   * @param property_grid The wxPropertyGrid to add properties to.
+   * Once this function is called, the property_manager_ member is valid and will stay valid
    */
-  virtual void fillPropertyGrid() {}
-
-  /**
-   * \brief Override this to handle a changing property value.
-   *
-   * This provides the opportunity to veto a change if there is an invalid value: event.Veto() will prevent the change.
-   * @param event The changing event
-   */
-  virtual void propertyChanging( wxPropertyGridEvent& event ) {}
-  /**
-   * \brief Override this to handle a changed property value
-   * @param event The changed event
-   */
-  virtual void propertyChanged( wxPropertyGridEvent& event ) {}
-
-  /**
-   * \brief Load any properties from this config
-   * @param config The wx config object to load from
-   */
-  virtual void loadProperties( wxConfigBase* config ) {}
-  /**
-   * \brief Save any properties to this config
-   * @param config The wx config object to save to
-   */
-  virtual void saveProperties( wxConfigBase* config ) {}
+  virtual void createProperties() {}
 
   /// Set the target frame of this visualizer. This is a frame id which should match something being broadcast through libTF.
   void setTargetFrame( const std::string& frame );
@@ -187,8 +171,10 @@ protected:
   ros::node* ros_node_;                               ///< ros node
   rosTFClient* tf_client_;                            ///< rosTF client
 
-  wxString property_prefix_;                          ///< Prefix to prepend to our properties
-  wxPropertyGrid* property_grid_;                     ///< Property grid
+  std::string property_prefix_;                       ///< Prefix to prepend to our properties
+
+  PropertyManager* property_manager_;                 ///< The property manager to use to create properties
+  CategoryProperty* parent_category_;                 ///< The parent category to use when creating properties
 
   friend class RenderAutoLock;
 };

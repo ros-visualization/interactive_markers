@@ -31,6 +31,7 @@
 #define OGRE_VISUALIZER_POINT_CLOUD_VISUALIZER_H
 
 #include "visualizer_base.h"
+#include "helpers/color.h"
 #include "ogre_tools/point_cloud.h"
 
 #include "std_msgs/PointCloudFloat32.h"
@@ -44,6 +45,13 @@ class rosTFClient;
 
 namespace ogre_vis
 {
+
+class IntProperty;
+class FloatProperty;
+class StringProperty;
+class ROSTopicStringProperty;
+class ColorProperty;
+class EnumProperty;
 
 /**
  * \class PointCloudVisualizer
@@ -64,6 +72,8 @@ public:
   {
     Points,    ///< Points -- points are drawn as a fixed size in 2d space, ie. always 1 pixel on screen
     Billboards,///< Billboards -- points are drawn as camera-facing quads in 3d space
+
+    StyleCount,
   };
 
   PointCloudVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name );
@@ -77,16 +87,13 @@ public:
   /**
    * Set the primary color of this point cloud.  This color is used verbatim for the highest intensity points, and interpolates
    * down to black for the lowest intensity points
-   * @param r Red component, in the range [0,1]
-   * @param g Green component, in the range [0,1]
-   * @param b Blue component, in the range [0,1]
    */
-  void setColor( float r, float g, float b );
+  void setColor( const Color& color );
   /**
    * \brief Set the rendering style
    * @param style The rendering style
    */
-  void setStyle( Style style );
+  void setStyle( int style );
   /**
    * \brief Sets the size each point will be when drawn in 3D as a billboard
    * @note Only applicable if the style is set to Billboards (default)
@@ -94,12 +101,14 @@ public:
    */
   void setBillboardSize( float size );
 
+  const std::string& getTopic() { return topic_; }
+  float getBillboardSize() { return billboard_size_; }
+  const Color& getColor() { return color_; }
+  int getStyle() { return style_; }
+
   // Overrides from VisualizerBase
-  virtual void fillPropertyGrid();
-  virtual void propertyChanged( wxPropertyGridEvent& event );
-  virtual void loadProperties( wxConfigBase* config );
-  virtual void saveProperties( wxConfigBase* config );
   virtual void targetFrameChanged();
+  virtual void createProperties();
 
   static const char* getTypeStatic() { return "Point Cloud"; }
   virtual const char* getType() { return getTypeStatic(); }
@@ -134,12 +143,15 @@ protected:
   std::string topic_;                         ///< The PointCloudFloat32 topic set by setTopic()
   std_msgs::PointCloudFloat32 message_;       ///< Our point cloud message
 
-  float r_;                                   ///< Red component of our color.  Range [0,1]
-  float g_;                                   ///< Green component of our color.  Range [0,1]
-  float b_;                                   ///< Blue component of our color.  Range [0,1]
+  Color color_;
 
-  Style style_;                               ///< Our rendering style
+  int style_;                                 ///< Our rendering style
   float billboard_size_;                      ///< Size to draw our billboards
+
+  ROSTopicStringProperty* topic_property_;
+  FloatProperty* billboard_size_property_;
+  ColorProperty* color_property_;
+  EnumProperty* style_property_;
 };
 
 } // namespace ogre_vis

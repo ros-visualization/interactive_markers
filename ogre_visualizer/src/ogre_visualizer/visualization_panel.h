@@ -102,6 +102,9 @@ namespace ogre_vis
 class VisualizerBase;
 class VisualizerFactory;
 
+class PropertyManager;
+class StringProperty;
+
 /**
  * \class VisualizationPanel
  * \brief A self-contained wxPanel for 3D visualization of pretty much anything.
@@ -199,6 +202,7 @@ public:
    * @param frame The string name -- must match the frame name broadcast to libTF
    */
   void setCoordinateFrame( const std::string& frame );
+  const std::string& getCoordinateFrame() { return target_frame_; }
 
 protected:
   /**
@@ -293,6 +297,9 @@ protected:
   std::string target_frame_;                              ///< Target coordinate frame we're displaying everything in
 
   ros::thread::mutex render_mutex_;                       ///< Render mutex
+
+  PropertyManager* property_manager_;
+  StringProperty* coordinate_frame_property_;
 };
 
 } // namespace ogre_vis

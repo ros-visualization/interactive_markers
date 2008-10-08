@@ -13,6 +13,7 @@
 %import core.i
 %import windows.i
 
+%include "helpers/color.i"
 %include "visualizer_base.i"
 %include "visualization_panel.i"
 
@@ -24,6 +25,8 @@
 %include "visualizers/planning_visualizer.i"
 %include "visualizers/point_cloud_visualizer.i"
 %include "visualizers/robot_model_visualizer.i"
+
+%include "helpers/color.i"
 
 %init %{
 

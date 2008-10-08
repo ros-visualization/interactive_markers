@@ -40,7 +40,9 @@ VisualizerBase::VisualizerBase( Ogre::SceneManager* scene_manager, ros::node* no
 , target_frame_( "base" )
 , ros_node_( node )
 , tf_client_( tf_client )
-, property_grid_( NULL )
+, property_prefix_( name_ + "." )
+, property_manager_( NULL )
+, parent_category_( NULL )
 {
 }
 
@@ -122,12 +124,12 @@ void VisualizerBase::setTargetFrame( const std::string& frame )
   }
 }
 
-void VisualizerBase::setPropertyGrid( wxPropertyGrid* property_grid )
+void VisualizerBase::setPropertyManager( PropertyManager* manager, CategoryProperty* parent )
 {
-  property_grid_ = property_grid;
-  property_prefix_ = wxString::FromAscii( name_.c_str() ) + wxT(".");
+  property_manager_ = manager;
+  parent_category_ = parent;
 
-  fillPropertyGrid();
+  createProperties();
 }
 
 } // namespace ogre_vis

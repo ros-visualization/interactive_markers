@@ -29,6 +29,8 @@
 
 #include "visualization_panel.h"
 #include "visualizer_base.h"
+#include "properties/property_manager.h"
+#include "properties/property.h"
 #include "common.h"
 #include "factory.h"
 #include "new_display_dialog.h"
@@ -50,20 +52,6 @@
 
 namespace ogre_vis
 {
-
-#define COORDINATE_FRAME_PROPERTY wxT("Coordinate Frame")
-
-#define PROPERTY_TYPE_ATTRIBUTE wxT("Visualizer Property Type")
-namespace PropertyTypes
-{
-enum PropertyType
-{
-  Enable,
-  Visualizer,
-  Global,
-};
-}
-typedef PropertyTypes::PropertyType PropertyType;
 
 namespace IDs
 {
@@ -169,24 +157,28 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent )
   property_grid_->Connect( wxEVT_PG_CHANGED, wxPropertyGridEventHandler( VisualizationPanel::onPropertyChanged ), NULL, this );
   property_grid_->Connect( wxEVT_PG_SELECTED, wxPropertyGridEventHandler( VisualizationPanel::onPropertySelected ), NULL, this );
 
-  wxPGProperty* category = property_grid_->Append(  new wxPropertyCategory( wxT("Global Options") ) );
-
-  wxArrayString frames;
-  wxPGProperty* prop = property_grid_->Append( new wxEditEnumProperty( COORDINATE_FRAME_PROPERTY, wxPG_LABEL, frames ) );
-  prop->SetAttribute( PROPERTY_TYPE_ATTRIBUTE, (long)PropertyTypes::Global );
-
-  property_grid_->Collapse( category );
-
   property_grid_->SetCaptionBackgroundColour( wxColour( 2, 0, 174 ) );
   property_grid_->SetCaptionForegroundColour( *wxLIGHT_GREY );
 
-  setCoordinateFrame( "base" );
-
   delete_display_->Enable( false );
+
+  property_manager_ = new PropertyManager( property_grid_ );
+
+  CategoryProperty* category = property_manager_->createCategory( "Global Options", NULL );
+  coordinate_frame_property_ = property_manager_->createProperty<StringProperty>( "Coordinate Frame", "", boost::bind( &VisualizationPanel::getCoordinateFrame, this ),
+      boost::bind( &VisualizationPanel::setCoordinateFrame, this, _1 ), category );
+
+  property_grid_->Collapse( category->getPGProperty() );
+
+  setCoordinateFrame( "base" );
 }
 
 VisualizationPanel::~VisualizationPanel()
 {
+  property_grid_->Freeze();
+  delete property_manager_;
+  property_grid_->Thaw();
+
   views_->Disconnect( wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( VisualizationPanel::onViewClicked ), NULL, this );
 
   render_panel_->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
@@ -234,6 +226,8 @@ VisualizationPanel::~VisualizationPanel()
   scene_manager_->destroyParticleSystem( selection_bounds_particle_system_ );
   scene_manager_->destroyQuery( ray_scene_query_ );
   ogre_root_->destroySceneManager( scene_manager_ );
+
+  delete tf_client_;
 }
 
 void VisualizationPanel::queueRender()
@@ -325,18 +319,7 @@ void VisualizationPanel::onPropertyChanging( wxPropertyGridEvent& event )
     return;
   }
 
-  wxVariant type_var = property->GetAttribute( PROPERTY_TYPE_ATTRIBUTE );
-  long type = type_var.GetLong();
-
-  if ( type == PropertyTypes::Visualizer )
-  {
-    void* client_data = property->GetClientData();
-    if ( client_data )
-    {
-      VisualizerBase* visualizer = reinterpret_cast<VisualizerBase*>(client_data);
-      visualizer->propertyChanging( event );
-    }
-  }
+  property_manager_->propertyChanging( event );
 }
 
 void VisualizationPanel::onPropertyChanged( wxPropertyGridEvent& event )
@@ -348,37 +331,7 @@ void VisualizationPanel::onPropertyChanged( wxPropertyGridEvent& event )
     return;
   }
 
-  wxVariant type_var = property->GetAttribute( PROPERTY_TYPE_ATTRIBUTE );
-  long type = type_var.GetLong();
-
-  if ( type == PropertyTypes::Enable )
-  {
-    void* client_data = property->GetClientData();
-    if ( client_data )
-    {
-      VisualizerBase* visualizer = reinterpret_cast<VisualizerBase*>(client_data);
-      setVisualizerEnabled( visualizer, property->GetValue().GetBool() );
-    }
-  }
-  else if ( type == PropertyTypes::Visualizer )
-  {
-    void* client_data = property->GetClientData();
-    if ( client_data )
-    {
-      VisualizerBase* visualizer = reinterpret_cast<VisualizerBase*>(client_data);
-      visualizer->propertyChanged( event );
-    }
-  }
-  else if ( type == PropertyTypes::Global )
-  {
-    const wxString& name = property->GetName();
-    wxVariant value = property->GetValue();
-
-    if ( name == COORDINATE_FRAME_PROPERTY )
-    {
-      setCoordinateFrame( (const char*)value.GetString().fn_str() );
-    }
-  }
+  property_manager_->propertyChanged( event );
 
   queueRender();
 }
@@ -388,23 +341,29 @@ void VisualizationPanel::onPropertySelected( wxPropertyGridEvent& event )
   delete_display_->Enable( false );
   selected_visualizer_ = NULL;
 
-  wxPGProperty* property = event.GetProperty();
+  wxPGProperty* pg_property = event.GetProperty();
 
-  if ( !property )
+  if ( !pg_property )
   {
     return;
   }
 
-  void* client_data = property->GetClientData();
+  void* client_data = pg_property->GetClientData();
   if ( client_data )
   {
-    VisualizerBase* visualizer = reinterpret_cast<VisualizerBase*>(client_data);
-    selected_visualizer_ = visualizer;
+    PropertyBase* property = reinterpret_cast<PropertyBase*>(client_data);
 
-    VisualizerInfo* info = getVisualizerInfo( visualizer );
-    if ( info->allow_deletion_ )
+    void* user_data = property->getUserData();
+    if ( user_data )
     {
-      delete_display_->Enable( true );
+      VisualizerBase* visualizer = reinterpret_cast<VisualizerBase*>(user_data);
+      selected_visualizer_ = visualizer;
+
+      VisualizerInfo* info = getVisualizerInfo( visualizer );
+      if ( info->allow_deletion_ )
+      {
+        delete_display_->Enable( true );
+      }
     }
   }
 }
@@ -424,27 +383,16 @@ void VisualizationPanel::addVisualizer( VisualizerBase* visualizer, bool allow_d
 
   property_grid_->Freeze();
 
-  wxString category_name = wxString::FromAscii( visualizer->getName().c_str() );
-  wxPGProperty* category = property_grid_->Append(  new wxPropertyCategory( category_name ) );
-  category->SetClientData( visualizer );
-
-  wxPGProperty* enabled_property = property_grid_->Append( new wxBoolProperty( wxT("Enabled"), category_name + wxT(".Enabled"), enabled ) );
-  enabled_property->SetAttribute( PROPERTY_TYPE_ATTRIBUTE, (long)PropertyTypes::Enable );
-  enabled_property->SetAttribute( wxPG_BOOL_USE_CHECKBOX, true );
-  enabled_property->SetClientData( visualizer );
-
-  wxPropertyGridIterator it = property_grid_->GetIterator( wxPG_ITERATE_ALL, wxBOTTOM );
-  visualizer->setPropertyGrid( property_grid_ );
-  ++it;
-
-  for ( ; *it != NULL; ++it )
-  {
-    wxPGProperty* property = *it;
-    property->SetClientData( visualizer );
-    property->SetAttribute( PROPERTY_TYPE_ATTRIBUTE, (long)PropertyTypes::Visualizer );
-  }
+  std::string category_name = visualizer->getName();
+  CategoryProperty* category = property_manager_->createCategory( category_name, NULL );
+  category->setUserData( visualizer );
 
   setVisualizerEnabled( visualizer, enabled );
+
+  property_manager_->createProperty<BoolProperty>( "Enabled", category_name, boost::bind( &VisualizerBase::isEnabled, visualizer ),
+                                                   boost::bind( &VisualizationPanel::setVisualizerEnabled, this, visualizer, _1 ), category, visualizer );
+
+  visualizer->setPropertyManager( property_manager_, category );
 
   property_grid_->Thaw();
   property_grid_->Refresh();
@@ -725,26 +673,7 @@ void VisualizationPanel::loadConfig( wxConfigBase* config )
     ++i;
   }
 
-  V_VisualizerInfo::iterator vis_it = visualizers_.begin();
-  V_VisualizerInfo::iterator vis_end = visualizers_.end();
-  for ( ; vis_it != vis_end; ++vis_it )
-  {
-    VisualizerBase* visualizer = vis_it->visualizer_;
-
-    wxString old_path = config->GetPath();
-    wxString sub_path = old_path + wxT("/") + wxString::FromAscii(visualizer->getName().c_str());
-
-    config->SetPath(sub_path);
-
-    bool enabled;
-    config->Read(wxT("Enabled"), &enabled, visualizer->isEnabled());
-
-    setVisualizerEnabled( visualizer, enabled );
-
-    visualizer->loadProperties(config);
-
-    config->SetPath(old_path);
-  }
+  property_manager_->load( config );
 }
 
 void VisualizationPanel::saveConfig( wxConfigBase* config )
@@ -765,17 +694,9 @@ void VisualizationPanel::saveConfig( wxConfigBase* config )
     config->Write( type, wxString::FromAscii( visualizer->getType() ) );
     config->Write( name, wxString::FromAscii( visualizer->getName().c_str() ) );
     config->Write( expanded, property_grid_->IsPropertyExpanded( property_grid_->GetProperty( wxString::FromAscii( visualizer->getName().c_str() ) ) ) );
-
-    wxString old_path = config->GetPath();
-
-    config->SetPath(old_path + wxT("/") + wxString::FromAscii(visualizer->getName().c_str()));
-
-    config->Write(wxT("Enabled"), visualizer->isEnabled());
-
-    visualizer->saveProperties(config);
-
-    config->SetPath(old_path);
   }
+
+  property_manager_->save( config );
 }
 
 bool VisualizationPanel::registerFactory( const std::string& type, VisualizerFactory* factory )
@@ -834,7 +755,10 @@ void VisualizationPanel::removeVisualizer( VisualizerBase* visualizer )
 
   visualizers_.erase( it );
 
+  property_grid_->Freeze();
+  property_manager_->deleteByUserData( visualizer );
   property_grid_->DeleteProperty( property_grid_->GetProperty( wxString::FromAscii( visualizer->getName().c_str() ) ) );
+  property_grid_->Thaw();
   selected_visualizer_ = NULL;
 
   delete visualizer;
@@ -913,7 +837,7 @@ void VisualizationPanel::setCoordinateFrame( const std::string& frame )
     visualizer->setTargetFrame(frame);
   }
 
-  property_grid_->SetPropertyValue( property_grid_->GetProperty( COORDINATE_FRAME_PROPERTY ), wxString::FromAscii( frame.c_str() ) );
+  coordinate_frame_property_->changed();
 }
 
 } // namespace ogre_vis

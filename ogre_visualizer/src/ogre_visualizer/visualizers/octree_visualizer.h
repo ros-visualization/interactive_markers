@@ -38,12 +38,16 @@
 #define OCTREE_VISUALIZER_H_
 
 #include "visualizer_base.h"
+#include "helpers/color.h"
 #include <scan_utils/OctreeMsg.h>
 
 #include <Ogre.h>
 
 namespace ogre_vis
 {
+
+class ColorProperty;
+class ROSTopicStringProperty;
 
 /**
  * \class OctreeVisualizer
@@ -62,18 +66,15 @@ public:
   void setOctreeTopic( const std::string& topic );
   /**
    * \brief Set the color to display as
-   * @param r Red component, range [0,1]
-   * @param g Green component, range [0,1]
-   * @param b Blue component, range [0,1]
    */
-  void setColor( float r, float g, float b );
+  void setColor( const Color& color );
+
+  const Color& getColor() { return color_; }
+  const std::string& getOctreeTopic() { return octree_topic_; }
 
   // Overrides from VisualizerBase
-  virtual void fillPropertyGrid();
-  virtual void propertyChanged( wxPropertyGridEvent& event );
-  virtual void loadProperties( wxConfigBase* config );
-  virtual void saveProperties( wxConfigBase* config );
   virtual void targetFrameChanged();
+  virtual void createProperties();
 
   virtual void update( float dt );
 
@@ -99,9 +100,7 @@ protected:
    */
   void incomingOctreeCallback();
 
-  float r_;                             ///< Color, red component, range [0,1]
-  float g_;                             ///< Color, green component, range [0,1]
-  float b_;                             ///< Color, blue component, range [0,1]
+  Color color_;
 
   Ogre::SceneNode* scene_node_;         ///< Scene node we're attached to
   Ogre::ManualObject* manual_object_;   ///< Manual object used to display the octree
@@ -120,6 +119,9 @@ protected:
                                         ///< Must lock #octree_message_ before accessing in any way.
 
   bool new_message_;                    ///< Informs our update function that there is new data in #vertices_ and #normals_, so it can rebuild the ManualObject
+
+  ColorProperty* color_property_;
+  ROSTopicStringProperty* topic_property_;
 };
 
 }

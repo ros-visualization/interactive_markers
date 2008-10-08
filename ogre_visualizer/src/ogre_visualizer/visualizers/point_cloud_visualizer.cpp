@@ -29,7 +29,9 @@
 
 #include "point_cloud_visualizer.h"
 #include "common.h"
-#include "../ros_topic_property.h"
+#include "ros_topic_property.h"
+#include "properties/property.h"
+#include "properties/property_manager.h"
 
 #include "ros/node.h"
 #include "ogre_tools/point_cloud.h"
@@ -42,21 +44,18 @@
 #include <wx/propgrid/advprops.h>
 #include <wx/confbase.h>
 
-#define TOPIC_PROPERTY wxT("Topic")
-#define COLOR_PROPERTY wxT("Color")
-#define STYLE_PROPERTY wxT("Style")
-#define BILLBOARD_SIZE_PROPERTY wxT("Billboard Size")
-
 namespace ogre_vis
 {
 
 PointCloudVisualizer::PointCloudVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name )
 : VisualizerBase( scene_manager, node, tf_client, name )
-, r_( 1.0 )
-, g_( 1.0 )
-, b_( 1.0 )
+, color_( 1.0f, 1.0f, 1.0f )
 , style_( Billboards )
 , billboard_size_( 0.003 )
+, topic_property_( NULL )
+, billboard_size_property_( NULL )
+, color_property_( NULL )
+, style_property_( NULL )
 {
   cloud_ = new ogre_tools::PointCloud( scene_manager_ );
 
@@ -79,28 +78,30 @@ void PointCloudVisualizer::setTopic( const std::string& topic )
 
   subscribe();
 
-  if ( property_grid_ )
+  if ( topic_property_ )
   {
-    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + TOPIC_PROPERTY ), wxString::FromAscii( topic_.c_str() ) );
+    topic_property_->changed();
   }
+
+  causeRender();
 }
 
-void PointCloudVisualizer::setColor( float r, float g, float b )
+void PointCloudVisualizer::setColor( const Color& color )
 {
-  r_ = r;
-  g_ = g;
-  b_ = b;
+  color_ = color;
 
-  if ( property_grid_ )
+  if ( color_property_ )
   {
-    wxVariant color;
-    color << wxColour( r_ * 255, g_ * 255, b_ * 255 );
-    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + COLOR_PROPERTY ), color );
+    color_property_->changed();
   }
+
+  causeRender();
 }
 
-void PointCloudVisualizer::setStyle( Style style )
+void PointCloudVisualizer::setStyle( int style )
 {
+  ROS_ASSERT( style < StyleCount );
+
   {
     RenderAutoLock renderLock( this );
 
@@ -110,10 +111,12 @@ void PointCloudVisualizer::setStyle( Style style )
 
   causeRender();
 
-  if ( property_grid_ )
+  if ( style_property_ )
   {
-    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + STYLE_PROPERTY ), (long)style_ );
+    style_property_->changed();
   }
+
+  causeRender();
 }
 
 void PointCloudVisualizer::setBillboardSize( float size )
@@ -127,10 +130,12 @@ void PointCloudVisualizer::setBillboardSize( float size )
 
   causeRender();
 
-  if ( property_grid_ )
+  if ( billboard_size_property_ )
   {
-    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + BILLBOARD_SIZE_PROPERTY ), billboard_size_ );
+    billboard_size_property_->changed();
   }
+
+  causeRender();
 }
 
 void PointCloudVisualizer::onEnable()
@@ -216,7 +221,7 @@ void PointCloudVisualizer::transformCloud()
 
     float channel = has_channel_0 ? message_.chan[0].vals[i] : 1.0f;
 
-    Ogre::Vector3 color( r_, g_, b_ );
+    Ogre::Vector3 color( color_.r_, color_.g_, color_.b_ );
 
     if ( channel_is_rgb )
     {
@@ -269,95 +274,21 @@ void PointCloudVisualizer::targetFrameChanged()
   message_.unlock();
 }
 
-void PointCloudVisualizer::fillPropertyGrid()
+void PointCloudVisualizer::createProperties()
 {
-  wxArrayString style_names;
-  style_names.Add( wxT("Billboards") );
-  style_names.Add( wxT("Points") );
-  wxArrayInt style_ids;
-  style_ids.Add( Billboards );
-  style_ids.Add( Points );
+  style_property_ = property_manager_->createProperty<EnumProperty>( "Style", property_prefix_, boost::bind( &PointCloudVisualizer::getStyle, this ),
+                                                                     boost::bind( &PointCloudVisualizer::setStyle, this, _1 ), parent_category_, this );
+  style_property_->addOption( "Billboards", Billboards );
+  style_property_->addOption( "Points", Points );
 
-  property_grid_->Append( new wxEnumProperty( STYLE_PROPERTY, property_prefix_ + STYLE_PROPERTY, style_names, style_ids, style_ ) );
+  color_property_ = property_manager_->createProperty<ColorProperty>( "Color", property_prefix_, boost::bind( &PointCloudVisualizer::getColor, this ),
+                                                                        boost::bind( &PointCloudVisualizer::setColor, this, _1 ), parent_category_, this );
 
-  property_grid_->Append( new ROSTopicProperty( ros_node_, TOPIC_PROPERTY, property_prefix_ + TOPIC_PROPERTY, wxString::FromAscii( topic_.c_str() ) ) );
-  property_grid_->Append( new wxColourProperty( COLOR_PROPERTY, property_prefix_ + COLOR_PROPERTY, wxColour( r_ * 255, g_ * 255, b_ * 255 ) ) );
-  wxPGId prop = property_grid_->Append( new wxFloatProperty( BILLBOARD_SIZE_PROPERTY, property_prefix_ + BILLBOARD_SIZE_PROPERTY, billboard_size_ ) );
-  property_grid_->SetPropertyAttribute( prop, wxT("Min"), 0.0 );
-}
+  billboard_size_property_ = property_manager_->createProperty<FloatProperty>( "Billboard Size", property_prefix_, boost::bind( &PointCloudVisualizer::getBillboardSize, this ),
+                                                                                boost::bind( &PointCloudVisualizer::setBillboardSize, this, _1 ), parent_category_, this );
 
-void PointCloudVisualizer::propertyChanged( wxPropertyGridEvent& event )
-{
-  wxPGProperty* property = event.GetProperty();
-
-  const wxString& name = property->GetName();
-  wxVariant value = property->GetValue();
-
-  if ( name == property_prefix_ + TOPIC_PROPERTY )
-  {
-    wxString topic = value.GetString();
-    setTopic( std::string(topic.fn_str()) );
-  }
-  else if ( name == property_prefix_ + COLOR_PROPERTY )
-  {
-    wxColour color;
-    color << value;
-
-    setColor( color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f );
-  }
-  else if ( name == property_prefix_ + STYLE_PROPERTY )
-  {
-    int val = value.GetLong();
-    setStyle( (Style)val );
-  }
-  else if ( name == property_prefix_ + BILLBOARD_SIZE_PROPERTY )
-  {
-    float val = value.GetDouble();
-    setBillboardSize( val );
-  }
-}
-
-void PointCloudVisualizer::loadProperties( wxConfigBase* config )
-{
-  wxString topic;
-  double r, g, b;
-  long style;
-  double billboard_size;
-
-  {
-    config->Read( TOPIC_PROPERTY, &topic, wxString::FromAscii( topic_.c_str() ) );
-  }
-
-  {
-    config->Read( wxString(COLOR_PROPERTY) + wxT("R"), &r, r_ );
-    config->Read( wxString(COLOR_PROPERTY) + wxT("G"), &g, g_ );
-    config->Read( wxString(COLOR_PROPERTY) + wxT("B"), &b, b_ );
-  }
-
-  {
-    config->Read( STYLE_PROPERTY, &style, style_ );
-  }
-
-  {
-    config->Read( BILLBOARD_SIZE_PROPERTY, &billboard_size, billboard_size_ );
-  }
-
-  setTopic( (const char*)topic.fn_str() );
-  setColor( r, g, b );
-  setStyle( (Style)style );
-  setBillboardSize( billboard_size );
-}
-
-void PointCloudVisualizer::saveProperties( wxConfigBase* config )
-{
-  config->Write( TOPIC_PROPERTY, wxString::FromAscii( topic_.c_str() ) );
-
-  config->Write( wxString(COLOR_PROPERTY) + wxT("R"), r_ );
-  config->Write( wxString(COLOR_PROPERTY) + wxT("G"), g_ );
-  config->Write( wxString(COLOR_PROPERTY) + wxT("B"), b_ );
-
-  config->Write( STYLE_PROPERTY, style_ );
-  config->Write( BILLBOARD_SIZE_PROPERTY, billboard_size_ );
+  topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &PointCloudVisualizer::getTopic, this ),
+                                                                              boost::bind( &PointCloudVisualizer::setTopic, this, _1 ), parent_category_, this );
 }
 
 } // namespace ogre_vis

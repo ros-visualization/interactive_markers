@@ -33,6 +33,7 @@
 #include "visualizer_base.h"
 #include "laser_scan_utils/laser_scan.h"
 #include "ogre_tools/point_cloud.h"
+#include "helpers/color.h"
 
 #include "std_msgs/LaserScan.h"
 #include "std_msgs/PointCloudFloat32.h"
@@ -49,6 +50,13 @@ class rosTFClient;
 
 namespace ogre_vis
 {
+
+class IntProperty;
+class FloatProperty;
+class StringProperty;
+class ROSTopicStringProperty;
+class ColorProperty;
+class EnumProperty;
 
 /**
  * \class LaserScanVisualizer
@@ -67,6 +75,8 @@ public:
   {
     Points,    ///< Points -- points are drawn as a fixed size in 2d space, ie. always 1 pixel on screen
     Billboards,///< Billboards -- points are drawn as camera-facing quads in 3d space
+
+    StyleCount,
   };
 
   LaserScanVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name );
@@ -86,11 +96,8 @@ public:
   /**
    * Set the primary color of this point cloud.  This color is used verbatim for the highest intensity points, and interpolates
    * down to black for the lowest intensity points
-   * @param r Red component, in the range [0,1]
-   * @param g Green component, in the range [0,1]
-   * @param b Blue component, in the range [0,1]
    */
-  void setColor( float r, float g, float b );
+  void setColor( const Color& color );
   /**
    * \brief Set the amount of time each scan should stick around for
    * @param time Decay time, in seconds
@@ -100,7 +107,7 @@ public:
    * \brief Set the rendering style
    * @param style The rendering style
    */
-  void setStyle( Style style );
+  void setStyle( int style );
   /**
    * \brief Sets the size each point will be when drawn in 3D as a billboard
    * @note Only applicable if the style is set to Billboards (default)
@@ -108,14 +115,18 @@ public:
    */
   void setBillboardSize( float size );
 
+  const std::string& getScanTopic() { return scan_topic_; }
+  const std::string& getCloudTopic() { return cloud_topic_; }
+  float getBillboardSize() { return billboard_size_; }
+  float getDecayTime() { return point_decay_time_; }
+  const Color& getColor() { return color_; }
+  int getStyle() { return style_; }
+
   virtual void update( float dt );
 
   // Overrides from VisualizerBase
-  virtual void fillPropertyGrid();
-  virtual void propertyChanged( wxPropertyGridEvent& event );
-  virtual void loadProperties( wxConfigBase* config );
-  virtual void saveProperties( wxConfigBase* config );
   virtual void targetFrameChanged();
+  virtual void createProperties();
 
   static const char* getTypeStatic() { return "Laser Scan"; }
   virtual const char* getType() { return getTypeStatic(); }
@@ -164,9 +175,7 @@ protected:
 
   laser_scan::LaserProjection laser_projection_;  ///< Used to transform laser scan messages into cloud messages
 
-  float r_;                                       ///< Red component of our color.  Range [0,1]
-  float g_;                                       ///< Green component of our color.  Range [0,1]
-  float b_;                                       ///< Blue component of our color.  Range [0,1]
+  Color color_;
 
   float intensity_min_;                           ///< Running min of intensity values, used for normalization
   float intensity_max_;                           ///< Running max of intensity values, used for normalization
@@ -179,8 +188,15 @@ protected:
   D_float point_times_;                           ///< A running time of how long each scan's points have been around
   float point_decay_time_;                        ///< How long scans should stick around for before they are culled
 
-  Style style_;                                   ///< Our rendering style
+  int style_;                                     ///< Our rendering style
   float billboard_size_;                          ///< Size to draw our billboards
+
+  ROSTopicStringProperty* scan_topic_property_;
+  ROSTopicStringProperty* cloud_topic_property_;
+  FloatProperty* billboard_size_property_;
+  FloatProperty* decay_time_property_;
+  ColorProperty* color_property_;
+  EnumProperty* style_property_;
 };
 
 } // namespace ogre_vis

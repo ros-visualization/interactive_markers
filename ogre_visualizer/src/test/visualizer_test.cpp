@@ -89,25 +89,25 @@ public:
 
     PointCloudVisualizer* pointCloud = visualization_panel_->createVisualizer<PointCloudVisualizer>( "Stereo Full Cloud", true );
     pointCloud->setTopic( "videre/cloud" );
-    pointCloud->setColor( 1.0, 1.0, 1.0 );
+    pointCloud->setColor( Color( 1.0, 1.0, 1.0 ) );
 
     pointCloud = visualization_panel_->createVisualizer<PointCloudVisualizer>( "Head Full Cloud", true );
     pointCloud->setTopic( "full_cloud" );
-    pointCloud->setColor( 1.0, 1.0, 0.0 );
+    pointCloud->setColor( Color( 1.0, 1.0, 0.0 ) );
 
     pointCloud = visualization_panel_->createVisualizer<PointCloudVisualizer>( "World 3D Map", true );
     pointCloud->setTopic( "world_3d_map" );
-    pointCloud->setColor( 1.0f, 0.0f, 0.0f );
+    pointCloud->setColor( Color( 1.0f, 0.0f, 0.0f ) );
     pointCloud->setBillboardSize( 0.01 );
 
     LaserScanVisualizer* laserScan = visualization_panel_->createVisualizer<LaserScanVisualizer>( "Head Scan", true );
     laserScan->setScanTopic( "tilt_scan" );
-    laserScan->setColor( 1.0, 0.0, 0.0 );
+    laserScan->setColor( Color( 1.0, 0.0, 0.0 ) );
     laserScan->setDecayTime( 30.0f );
 
     laserScan = visualization_panel_->createVisualizer<LaserScanVisualizer>( "Floor Scan", true );
     laserScan->setScanTopic( "base_scan" );
-    laserScan->setColor( 0.0f, 1.0f, 0.0f );
+    laserScan->setColor( Color( 0.0f, 1.0f, 0.0f ) );
     laserScan->setDecayTime( 0.0f );
 
     visualization_panel_->createVisualizer<OctreeVisualizer>( "Octree", false )->setOctreeTopic( "full_octree" );

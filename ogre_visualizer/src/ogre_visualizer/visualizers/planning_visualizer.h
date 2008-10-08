@@ -49,6 +49,11 @@ class KinematicModel;
 namespace ogre_vis
 {
 
+class BoolProperty;
+class FloatProperty;
+class StringProperty;
+class ROSTopicStringProperty;
+
 class Robot;
 
 /**
@@ -98,14 +103,17 @@ public:
    */
   void setCollisionVisible( bool visible );
 
+  const std::string& getRobotDescription() { return description_param_; }
+  const std::string& getTopic() { return kinematic_path_topic_; }
+  float getStateDisplayTime() { return state_display_time_; }
+  bool isVisualVisible();
+  bool isCollisionVisible();
+
   virtual void update( float dt );
 
   // Overrides from VisualizerBase
-  virtual void fillPropertyGrid();
-  virtual void propertyChanged( wxPropertyGridEvent& event );
-  virtual void loadProperties( wxConfigBase* config );
-  virtual void saveProperties( wxConfigBase* config );
   virtual void targetFrameChanged();
+  virtual void createProperties();
 
   virtual bool isObjectPickable( const Ogre::MovableObject* object ) const { return true; }
 
@@ -155,6 +163,12 @@ protected:
   int current_state_;
   float state_display_time_;
   float current_state_time_;
+
+  BoolProperty* visual_enabled_property_;
+  BoolProperty* collision_enabled_property_;
+  FloatProperty* state_display_time_property_;
+  StringProperty* robot_description_property_;
+  ROSTopicStringProperty* topic_property_;
 };
 
 } // namespace ogre_vis

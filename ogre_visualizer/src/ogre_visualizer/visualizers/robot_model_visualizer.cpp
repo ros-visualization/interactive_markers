@@ -30,6 +30,8 @@
 #include "robot_model_visualizer.h"
 #include "common.h"
 #include "helpers/robot.h"
+#include "properties/property.h"
+#include "properties/property_manager.h"
 
 #include "ogre_tools/axes.h"
 
@@ -42,10 +44,6 @@
 #include <wx/propgrid/advprops.h>
 #include <wx/confbase.h>
 
-#define VISUAL_ENABLED_PROPERTY wxT("Show Visual")
-#define COLLISION_ENABLED_PROPERTY wxT("Show Collision")
-#define UPDATE_RATE_PROPERTY wxT("Update Rate")
-#define ROBOT_DESCRIPTION_PROPERTY wxT("Robot Description")
 
 namespace ogre_vis
 {
@@ -55,6 +53,10 @@ RobotModelVisualizer::RobotModelVisualizer( Ogre::SceneManager* scene_manager, r
 , has_new_transforms_( false )
 , time_since_last_transform_( 0.0f )
 , update_rate_( 0.1f )
+, visual_enabled_property_( NULL )
+, collision_enabled_property_( NULL )
+, update_rate_property_( NULL )
+, robot_description_property_( NULL )
 {
   robot_ = new Robot( scene_manager );
 
@@ -72,9 +74,9 @@ void RobotModelVisualizer::setRobotDescription( const std::string& description_p
 {
   description_param_ = description_param;
 
-  if ( property_grid_ )
+  if ( robot_description_property_ )
   {
-    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + ROBOT_DESCRIPTION_PROPERTY ), wxString::FromAscii( description_param_.c_str() ) );
+    robot_description_property_->changed();
   }
 
   if ( isEnabled() )
@@ -88,30 +90,46 @@ void RobotModelVisualizer::setVisualVisible( bool visible )
 {
   robot_->setVisualVisible( visible );
 
-  if ( property_grid_ )
+  if ( visual_enabled_property_ )
   {
-    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + VISUAL_ENABLED_PROPERTY ), visible );
+    visual_enabled_property_->changed();
   }
+
+  causeRender();
 }
 
 void RobotModelVisualizer::setCollisionVisible( bool visible )
 {
   robot_->setCollisionVisible( visible );
 
-  if ( property_grid_ )
+  if ( collision_enabled_property_ )
   {
-    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + COLLISION_ENABLED_PROPERTY ), visible );
+    collision_enabled_property_->changed();
   }
+
+  causeRender();
 }
 
 void RobotModelVisualizer::setUpdateRate( float rate )
 {
   update_rate_ = rate;
 
-  if ( property_grid_ )
+  if ( update_rate_property_ )
   {
-    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + UPDATE_RATE_PROPERTY ), update_rate_ );
+    update_rate_property_->changed();
   }
+
+  causeRender();
+}
+
+bool RobotModelVisualizer::isVisualVisible()
+{
+  return robot_->isVisualVisible();
+}
+
+bool RobotModelVisualizer::isCollisionVisible()
+{
+  return robot_->isCollisionVisible();
 }
 
 void RobotModelVisualizer::load()
@@ -155,81 +173,16 @@ void RobotModelVisualizer::targetFrameChanged()
   has_new_transforms_ = true;
 }
 
-void RobotModelVisualizer::fillPropertyGrid()
+void RobotModelVisualizer::createProperties()
 {
-  property_grid_->Append( new wxStringProperty( ROBOT_DESCRIPTION_PROPERTY, property_prefix_ + ROBOT_DESCRIPTION_PROPERTY, wxString::FromAscii( description_param_.c_str() ) ) );
-  wxPGProperty* prop = property_grid_->Append( new wxBoolProperty( VISUAL_ENABLED_PROPERTY, property_prefix_ + VISUAL_ENABLED_PROPERTY, robot_->isVisualVisible() ) );
-  prop->SetAttribute( wxPG_BOOL_USE_CHECKBOX, true );
-  prop = property_grid_->Append( new wxBoolProperty( COLLISION_ENABLED_PROPERTY, property_prefix_ + COLLISION_ENABLED_PROPERTY, robot_->isCollisionVisible() ) );
-  prop->SetAttribute( wxPG_BOOL_USE_CHECKBOX, true );
-
-  property_grid_->Append( new wxFloatProperty( UPDATE_RATE_PROPERTY, property_prefix_ + UPDATE_RATE_PROPERTY, update_rate_ ) );
-
-  property_grid_->SetPropertyAttribute( VISUAL_ENABLED_PROPERTY, wxPG_BOOL_USE_CHECKBOX, true );
-  property_grid_->SetPropertyAttribute( COLLISION_ENABLED_PROPERTY, wxPG_BOOL_USE_CHECKBOX, true );
-}
-
-void RobotModelVisualizer::propertyChanged( wxPropertyGridEvent& event )
-{
-  wxPGProperty* property = event.GetProperty();
-
-  const wxString& name = property->GetName();
-  wxVariant value = property->GetValue();
-
-  if ( name == property_prefix_ + VISUAL_ENABLED_PROPERTY )
-  {
-    bool visible = value.GetBool();
-    setVisualVisible( visible );
-  }
-  else if ( name == property_prefix_ + COLLISION_ENABLED_PROPERTY )
-  {
-    bool visible = value.GetBool();
-    setCollisionVisible( visible );
-  }
-  else if ( name == property_prefix_ + UPDATE_RATE_PROPERTY )
-  {
-    setUpdateRate( value.GetDouble() );
-  }
-  else if ( name == property_prefix_ + ROBOT_DESCRIPTION_PROPERTY )
-  {
-    wxString prop = value.GetString();
-    setRobotDescription( (const char*)prop.fn_str() );
-  }
-
-  causeRender();
-}
-
-void RobotModelVisualizer::loadProperties( wxConfigBase* config )
-{
-  bool visual_enabled, collision_enabled;
-  double update_rate;
-  wxString robot_description;
-
-  {
-    config->Read( VISUAL_ENABLED_PROPERTY, &visual_enabled, robot_->isVisualVisible() );
-    config->Read( COLLISION_ENABLED_PROPERTY, &collision_enabled, robot_->isCollisionVisible() );
-  }
-
-  {
-    config->Read( UPDATE_RATE_PROPERTY, &update_rate, update_rate_ );
-  }
-
-  {
-    config->Read( ROBOT_DESCRIPTION_PROPERTY, &robot_description, wxString::FromAscii( description_param_.c_str() ) );
-  }
-
-  setVisualVisible( visual_enabled );
-  setCollisionVisible( collision_enabled );
-  setUpdateRate( update_rate );
-  setRobotDescription( (const char*)robot_description.fn_str() );
-}
-
-void RobotModelVisualizer::saveProperties( wxConfigBase* config )
-{
-  config->Write( VISUAL_ENABLED_PROPERTY, robot_->isVisualVisible() );
-  config->Write( COLLISION_ENABLED_PROPERTY, robot_->isCollisionVisible() );
-  config->Write( UPDATE_RATE_PROPERTY, update_rate_ );
-  config->Write( ROBOT_DESCRIPTION_PROPERTY, wxString::FromAscii( description_param_.c_str() ) );
+  visual_enabled_property_ = property_manager_->createProperty<BoolProperty>( "Visual Enabled", property_prefix_, boost::bind( &RobotModelVisualizer::isVisualVisible, this ),
+                                                                               boost::bind( &RobotModelVisualizer::setVisualVisible, this, _1 ), parent_category_, this );
+  collision_enabled_property_ = property_manager_->createProperty<BoolProperty>( "Collision Enabled", property_prefix_, boost::bind( &RobotModelVisualizer::isCollisionVisible, this ),
+                                                                                 boost::bind( &RobotModelVisualizer::setCollisionVisible, this, _1 ), parent_category_, this );
+  update_rate_property_ = property_manager_->createProperty<FloatProperty>( "Update Rate", property_prefix_, boost::bind( &RobotModelVisualizer::getUpdateRate, this ),
+                                                                                  boost::bind( &RobotModelVisualizer::setUpdateRate, this, _1 ), parent_category_, this );
+  robot_description_property_ = property_manager_->createProperty<StringProperty>( "Robot Description", property_prefix_, boost::bind( &RobotModelVisualizer::getRobotDescription, this ),
+                                                                                   boost::bind( &RobotModelVisualizer::setRobotDescription, this, _1 ), parent_category_, this );
 }
 
 } // namespace ogre_vis

@@ -51,26 +51,26 @@ class VisualizerFrame(wx.Frame):
         planning.initialize( "robotdesc/pr2", "display_kinematic_path" )
         
         point_cloud = visualizer_panel.createPointCloudVisualizer( "Stereo Full Cloud", True )
-        point_cloud.setTopic( "videre/cloud" )
-        point_cloud.setColor( 1.0, 1.0, 1.0 )
+        point_cloud.setTopic("videre/cloud")
+        point_cloud.setColor(ogre_visualizer.Color(1.0, 1.0, 1.0))
         
         point_cloud = visualizer_panel.createPointCloudVisualizer( "Head Full Cloud", True )
         point_cloud.setTopic( "full_cloud" )
-        point_cloud.setColor( 1.0, 1.0, 0.0 )
+        point_cloud.setColor(ogre_visualizer.Color(1.0, 1.0, 0.0))
         
         point_cloud = visualizer_panel.createPointCloudVisualizer( "World 3D Map", True )
         point_cloud.setTopic( "world_3d_map" )
-        point_cloud.setColor( 1.0, 0.0, 0.0 )
+        point_cloud.setColor(ogre_visualizer.Color(1.0, 0.0, 0.0))
         point_cloud.setBillboardSize( 0.01 )
         
         laser_scan = visualizer_panel.createLaserScanVisualizer( "Head Scan", True )
         laser_scan.setScanTopic( "tilt_scan" )
-        laser_scan.setColor( 1.0, 0.0, 0.0 )
+        laser_scan.setColor(ogre_visualizer.Color(1.0, 0.0, 0.0))
         laser_scan.setDecayTime( 30.0 )
         
         laser_scan = visualizer_panel.createLaserScanVisualizer( "Floor Scan", True )
         laser_scan.setScanTopic( "base_scan" )
-        laser_scan.setColor( 0.0, 1.0, 0.0 )
+        laser_scan.setColor(ogre_visualizer.Color(0.0, 1.0, 0.0))
         laser_scan.setDecayTime( 0.0 )
         
         visualizer_panel.createOctreeVisualizer( "Octree", True ).setOctreeTopic( "full_octree" )

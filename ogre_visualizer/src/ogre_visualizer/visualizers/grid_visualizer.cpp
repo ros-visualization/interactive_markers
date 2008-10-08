@@ -28,6 +28,8 @@
  */
 
 #include "grid_visualizer.h"
+#include "properties/property.h"
+#include "properties/property_manager.h"
 
 #include "ogre_tools/grid.h"
 
@@ -37,9 +39,7 @@
 #include <wx/propgrid/advprops.h>
 #include <wx/confbase.h>
 
-#define COLOR_PROPERTY wxT("Color")
-#define CELLSIZE_PROPERTY wxT("CellSize")
-#define CELLCOUNT_PROPERTY wxT("CellCount")
+#include <boost/bind.hpp>
 
 namespace ogre_vis
 {
@@ -48,11 +48,12 @@ GridVisualizer::GridVisualizer( Ogre::SceneManager* scene_manager, ros::node* no
 : VisualizerBase( scene_manager, node, tf_client, name )
 , cell_size_( 1.0f )
 , cell_count_( 10 )
-, r_( 0.5 )
-, g_( 0.5 )
-, b_( 0.5 )
+, color_( 0.5, 0.5, 0.5 )
+, cellcount_property_( NULL )
+, cellsize_property_( NULL )
+, color_property_( NULL )
 {
-  grid_ = new ogre_tools::Grid( scene_manager_, cell_count_, cell_size_, r_, g_, b_ );
+  grid_ = new ogre_tools::Grid( scene_manager_, cell_count_, cell_size_, color_.r_, color_.g_, color_.b_ );
 }
 
 GridVisualizer::~GridVisualizer()
@@ -72,122 +73,59 @@ void GridVisualizer::onDisable()
 
 void GridVisualizer::create()
 {
-  grid_->set( cell_count_, cell_size_, r_, g_, b_ );
+  grid_->set( cell_count_, cell_size_, color_.r_, color_.g_, color_.b_ );
 
   causeRender();
 }
 
-void GridVisualizer::set( uint32_t cell_count, float cell_size, float r, float g, float b )
+void GridVisualizer::set( uint32_t cell_count, float cell_size, const Color& color )
 {
   cell_count_ = cell_count;
   cell_size_ = cell_size;
-  r_ = r;
-  g_ = g;
-  b_ = b;
+  color_ = color;
 
   create();
 
-  if ( property_grid_ )
+  if ( cellcount_property_ )
   {
-    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + CELLCOUNT_PROPERTY ), (long)cell_count_ );
-    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + CELLSIZE_PROPERTY ), cell_size_ );
-    wxVariant color;
-    color << wxColour( r_ * 255, g_ * 255, b_ * 255 );
-    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + COLOR_PROPERTY ), color );
+    cellcount_property_->changed();
+  }
+
+  if ( cellsize_property_ )
+  {
+    cellsize_property_->changed();
+  }
+
+  if ( color_property_ )
+  {
+    color_property_->changed();
   }
 }
 
 void GridVisualizer::setCellSize( float size )
 {
-  set( cell_count_, size, r_, g_, b_ );
+  set( cell_count_, size, color_ );
 }
 
 void GridVisualizer::setCellCount( uint32_t count )
 {
-  set( count, cell_size_, r_, g_, b_ );
+  set( count, cell_size_, color_ );
 }
 
-void GridVisualizer::setColor( float r, float g, float b )
+void GridVisualizer::setColor( const Color& color )
 {
-  set( cell_count_, cell_size_, r, g, b );
+  set( cell_count_, cell_size_, color );
 }
 
-void GridVisualizer::fillPropertyGrid()
+void GridVisualizer::createProperties()
 {
-  wxPGId prop = property_grid_->Append( new wxIntProperty( CELLCOUNT_PROPERTY, property_prefix_ + CELLCOUNT_PROPERTY, cell_count_ ) );
-  property_grid_->SetPropertyAttribute( prop, wxT("Min"), 1 );
-  property_grid_->SetPropertyAttribute( prop, wxT("Step"), 1 );
-  property_grid_->SetPropertyEditor( prop, wxPG_EDITOR(SpinCtrl) );
+  cellcount_property_ = property_manager_->createProperty<IntProperty>( "Cell Count", property_prefix_, boost::bind( &GridVisualizer::getCellCount, this ),
+                                                           boost::bind( &GridVisualizer::setCellCount, this, _1 ), parent_category_, this );
+  cellsize_property_ = property_manager_->createProperty<FloatProperty>( "Cell Size", property_prefix_, boost::bind( &GridVisualizer::getCellSize, this ),
+                                                             boost::bind( &GridVisualizer::setCellSize, this, _1 ), parent_category_, this );
 
-  prop = property_grid_->Append( new wxFloatProperty( CELLSIZE_PROPERTY, property_prefix_ + CELLSIZE_PROPERTY, cell_size_ ) );
-  property_grid_->SetPropertyAttribute( prop, wxT("Min"), 0.0001 );
-
-  property_grid_->Append( new wxColourProperty( COLOR_PROPERTY, property_prefix_ + COLOR_PROPERTY, wxColour( r_ * 255, g_ * 255, b_ * 255 ) ) );
-}
-
-void GridVisualizer::propertyChanged( wxPropertyGridEvent& event )
-{
-  wxPGProperty* property = event.GetProperty();
-
-  const wxString& name = property->GetName();
-  wxVariant value = property->GetValue();
-
-  if ( name == property_prefix_ + CELLCOUNT_PROPERTY )
-  {
-    int cell_count = value.GetLong();
-    setCellCount( cell_count );
-  }
-  else if ( name == property_prefix_ + CELLSIZE_PROPERTY )
-  {
-    float cell_size = value.GetDouble();
-    setCellSize( cell_size );
-  }
-  else if ( name == property_prefix_ + COLOR_PROPERTY )
-  {
-    wxColour color;
-    color << value;
-
-    setColor( color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f );
-  }
-}
-
-void GridVisualizer::getColor( float& r, float& g, float& b )
-{
-  r = r_;
-  g = g_;
-  b = b_;
-}
-
-void GridVisualizer::loadProperties( wxConfigBase* config )
-{
-  long cell_count = 0;
-  double cell_size = 0.0f;
-  double r, g, b;
-
-  {
-    config->Read( CELLCOUNT_PROPERTY, &cell_count, cell_count_ );
-  }
-
-  {
-    config->Read( CELLSIZE_PROPERTY, &cell_size, cell_size_ );
-  }
-
-  {
-    config->Read( wxString(COLOR_PROPERTY) + wxT("R"), &r, r_ );
-    config->Read( wxString(COLOR_PROPERTY) + wxT("G"), &g, g_ );
-    config->Read( wxString(COLOR_PROPERTY) + wxT("B"), &b, b_ );
-  }
-
-  set( cell_count, cell_size, r, g, b );
-}
-
-void GridVisualizer::saveProperties( wxConfigBase* config )
-{
-  config->Write( CELLCOUNT_PROPERTY, (int)cell_count_ );
-  config->Write( CELLSIZE_PROPERTY, (double)cell_size_ );
-  config->Write( wxString(COLOR_PROPERTY) + wxT("R"), r_ );
-  config->Write( wxString(COLOR_PROPERTY) + wxT("G"), g_ );
-  config->Write( wxString(COLOR_PROPERTY) + wxT("B"), b_ );
+  color_property_ = property_manager_->createProperty<ColorProperty>( "Color", property_prefix_, boost::bind( &GridVisualizer::getColor, this ),
+                                                                      boost::bind( &GridVisualizer::setColor, this, _1 ), parent_category_, this );
 }
 
 } // namespace ogre_vis

@@ -28,6 +28,8 @@
  */
 
 #include "axes_visualizer.h"
+#include "properties/property.h"
+#include "properties/property_manager.h"
 #include "common.h"
 
 #include "ogre_tools/axes.h"
@@ -38,8 +40,7 @@
 #include <wx/propgrid/advprops.h>
 #include <wx/confbase.h>
 
-#define LENGTH_PROPERTY wxT("Length")
-#define RADIUS_PROPERTY wxT("Radius")
+#include <boost/bind.hpp>
 
 namespace ogre_vis
 {
@@ -88,60 +89,34 @@ void AxesVisualizer::set( float length, float radius )
 
   create();
 
-  if ( property_grid_ )
+  if ( length_property_ )
   {
-    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + LENGTH_PROPERTY ), length_ );
-    property_grid_->SetPropertyValue( property_grid_->GetProperty( property_prefix_ + RADIUS_PROPERTY ), radius_ );
+    length_property_->changed();
+  }
+
+  if ( radius_property_ )
+  {
+    radius_property_->changed();
   }
 }
 
-void AxesVisualizer::fillPropertyGrid()
+void AxesVisualizer::setLength( float length )
 {
-  wxPGId prop = property_grid_->Append( new wxFloatProperty( LENGTH_PROPERTY, property_prefix_ + LENGTH_PROPERTY, length_ ) );
-  property_grid_->SetPropertyAttribute( prop, wxT("Min"), 0.0001 );
-
-  prop = property_grid_->Append( new wxFloatProperty( RADIUS_PROPERTY, property_prefix_ + RADIUS_PROPERTY, radius_ ) );
-  property_grid_->SetPropertyAttribute( prop, wxT("Min"), 0.0001 );
+  set( length, radius_ );
 }
 
-void AxesVisualizer::propertyChanged( wxPropertyGridEvent& event )
+void AxesVisualizer::setRadius( float radius )
 {
-  wxPGProperty* property = event.GetProperty();
-
-  const wxString& name = property->GetName();
-  wxVariant value = property->GetValue();
-
-  if ( name == property_prefix_ + LENGTH_PROPERTY )
-  {
-    float length = value.GetDouble();
-    set( length, radius_ );
-  }
-  else if ( name == property_prefix_ + RADIUS_PROPERTY )
-  {
-    float radius = value.GetDouble();
-    set( length_, radius );
-  }
+  set( length_, radius );
 }
 
-void AxesVisualizer::loadProperties( wxConfigBase* config )
+void AxesVisualizer::createProperties()
 {
-  double length, radius;
+  length_property_ = property_manager_->createProperty<FloatProperty>( "Length", property_prefix_, boost::bind( &AxesVisualizer::getLength, this ),
+                                                                     boost::bind( &AxesVisualizer::setLength, this, _1 ), parent_category_, this );
 
-  {
-    config->Read( LENGTH_PROPERTY, &length, length_ );
-  }
-
-  {
-    config->Read( RADIUS_PROPERTY, &radius, radius_ );
-  }
-
-  set( length, radius );
-}
-
-void AxesVisualizer::saveProperties( wxConfigBase* config )
-{
-  config->Write( LENGTH_PROPERTY, length_ );
-  config->Write( RADIUS_PROPERTY, radius_ );
+  radius_property_ = property_manager_->createProperty<FloatProperty>( "Radius", property_prefix_, boost::bind( &AxesVisualizer::getRadius, this ),
+                                                                       boost::bind( &AxesVisualizer::setRadius, this, _1 ), parent_category_, this );
 }
 
 } // namespace ogre_vis
