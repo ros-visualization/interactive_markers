@@ -63,7 +63,7 @@ class Robot;
 class PlanningVisualizer : public VisualizerBase
 {
 public:
-  PlanningVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name );
+  PlanningVisualizer( const std::string& name, VisualizationManager* manager );
   virtual ~PlanningVisualizer();
 
   /**

@@ -49,7 +49,7 @@ class FloatProperty;
 class AxesVisualizer : public VisualizerBase
 {
 public:
-  AxesVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name );
+  AxesVisualizer( const std::string& name, VisualizationManager* manager );
   virtual ~AxesVisualizer();
 
   /**

@@ -99,7 +99,7 @@ typedef MarkerActions::MarkerAction MarkerAction;
 class MarkerVisualizer : public VisualizerBase
 {
 public:
-  MarkerVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name );
+  MarkerVisualizer( const std::string& name, VisualizationManager* manager );
   virtual ~MarkerVisualizer();
 
   virtual void update( float dt );

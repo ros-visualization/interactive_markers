@@ -39,6 +39,7 @@
 #include "ogre_tools/initialization.h"
 
 #include "visualization_panel.h"
+#include "visualization_manager.h"
 #include "visualizers/grid_visualizer.h"
 #include "visualizers/axes_visualizer.h"
 #include "visualizers/point_cloud_visualizer.h"
@@ -79,39 +80,41 @@ public:
 
     ogre_tools::initializeResources( paths );
 
-    visualization_panel_->createVisualizer<GridVisualizer>( "Grid", true );
-    visualization_panel_->createVisualizer<AxesVisualizer>( "Origin Axes", true );
+    VisualizationManager* manager = visualization_panel_->getManager();
 
-    RobotModelVisualizer* model = visualization_panel_->createVisualizer<RobotModelVisualizer>( "Robot Model", true );
+    manager->createVisualizer<GridVisualizer>( "Grid", true );
+    manager->createVisualizer<AxesVisualizer>( "Origin Axes", true );
+
+    RobotModelVisualizer* model = manager->createVisualizer<RobotModelVisualizer>( "Robot Model", true );
     model->setRobotDescription( "robotdesc/pr2" );
-    PlanningVisualizer* planning = visualization_panel_->createVisualizer<PlanningVisualizer>( "Planning", false );
+    PlanningVisualizer* planning = manager->createVisualizer<PlanningVisualizer>( "Planning", false );
     planning->initialize( "robotdesc/pr2", "display_kinematic_path" );
 
-    PointCloudVisualizer* pointCloud = visualization_panel_->createVisualizer<PointCloudVisualizer>( "Stereo Full Cloud", true );
+    PointCloudVisualizer* pointCloud = manager->createVisualizer<PointCloudVisualizer>( "Stereo Full Cloud", true );
     pointCloud->setTopic( "videre/cloud" );
     pointCloud->setColor( Color( 1.0, 1.0, 1.0 ) );
 
-    pointCloud = visualization_panel_->createVisualizer<PointCloudVisualizer>( "Head Full Cloud", true );
+    pointCloud = manager->createVisualizer<PointCloudVisualizer>( "Head Full Cloud", true );
     pointCloud->setTopic( "full_cloud" );
     pointCloud->setColor( Color( 1.0, 1.0, 0.0 ) );
 
-    pointCloud = visualization_panel_->createVisualizer<PointCloudVisualizer>( "World 3D Map", true );
+    pointCloud = manager->createVisualizer<PointCloudVisualizer>( "World 3D Map", true );
     pointCloud->setTopic( "world_3d_map" );
     pointCloud->setColor( Color( 1.0f, 0.0f, 0.0f ) );
     pointCloud->setBillboardSize( 0.01 );
 
-    LaserScanVisualizer* laserScan = visualization_panel_->createVisualizer<LaserScanVisualizer>( "Head Scan", true );
+    LaserScanVisualizer* laserScan = manager->createVisualizer<LaserScanVisualizer>( "Head Scan", true );
     laserScan->setScanTopic( "tilt_scan" );
     laserScan->setColor( Color( 1.0, 0.0, 0.0 ) );
     laserScan->setDecayTime( 30.0f );
 
-    laserScan = visualization_panel_->createVisualizer<LaserScanVisualizer>( "Floor Scan", true );
+    laserScan = manager->createVisualizer<LaserScanVisualizer>( "Floor Scan", true );
     laserScan->setScanTopic( "base_scan" );
     laserScan->setColor( Color( 0.0f, 1.0f, 0.0f ) );
     laserScan->setDecayTime( 0.0f );
 
-    visualization_panel_->createVisualizer<OctreeVisualizer>( "Octree", false )->setOctreeTopic( "full_octree" );
-    visualization_panel_->createVisualizer<MarkerVisualizer>( "Visualization Markers", true );
+    manager->createVisualizer<OctreeVisualizer>( "Octree", false )->setOctreeTopic( "full_octree" );
+    manager->createVisualizer<MarkerVisualizer>( "Visualization Markers", true );
   }
 
   ~MyFrame()

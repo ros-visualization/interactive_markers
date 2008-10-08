@@ -48,26 +48,27 @@ namespace ogre_vis
 {
 
 class VisualizerBase;
+class VisualizationManager;
 
 class VisualizerFactory
 {
 public:
-  virtual VisualizerBase* create(Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name) = 0;
+  virtual VisualizerBase* create(const std::string& name, VisualizationManager* manager) = 0;
 };
 
 template<typename T>
 class VisualizerFactoryImpl : public VisualizerFactory
 {
 public:
-  virtual VisualizerBase* create(Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name)
+  virtual VisualizerBase* create(const std::string& name, VisualizationManager* manager)
   {
-    return new T(scene_manager, node, tf_client, name);
+    return new T(name, manager);
   }
 };
 
-class VisualizationPanel;
+class VisualizationManager;
 
-void registerFactories(VisualizationPanel* vis_panel);
+void registerFactories(VisualizationManager* manager);
 
 } // ogre_vis
 

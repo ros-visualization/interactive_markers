@@ -29,7 +29,7 @@
 
 #include "factory.h"
 
-#include "visualization_panel.h"
+#include "visualization_manager.h"
 #include "visualizers/grid_visualizer.h"
 #include "visualizers/axes_visualizer.h"
 #include "visualizers/point_cloud_visualizer.h"
@@ -42,16 +42,16 @@
 namespace ogre_vis
 {
 
-void registerFactories(VisualizationPanel* vis_panel)
+void registerFactories(VisualizationManager* manager)
 {
-  vis_panel->registerFactory( GridVisualizer::getTypeStatic(), new VisualizerFactoryImpl<GridVisualizer>() );
-  vis_panel->registerFactory( AxesVisualizer::getTypeStatic(), new VisualizerFactoryImpl<AxesVisualizer>() );
-  vis_panel->registerFactory( PointCloudVisualizer::getTypeStatic(), new VisualizerFactoryImpl<PointCloudVisualizer>() );
-  vis_panel->registerFactory( LaserScanVisualizer::getTypeStatic(), new VisualizerFactoryImpl<LaserScanVisualizer>() );
-  vis_panel->registerFactory( RobotModelVisualizer::getTypeStatic(), new VisualizerFactoryImpl<RobotModelVisualizer>() );
-  vis_panel->registerFactory( MarkerVisualizer::getTypeStatic(), new VisualizerFactoryImpl<MarkerVisualizer>() );
-  vis_panel->registerFactory( OctreeVisualizer::getTypeStatic(), new VisualizerFactoryImpl<OctreeVisualizer>() );
-  vis_panel->registerFactory( PlanningVisualizer::getTypeStatic(), new VisualizerFactoryImpl<PlanningVisualizer>() );
+  manager->registerFactory( GridVisualizer::getTypeStatic(), new VisualizerFactoryImpl<GridVisualizer>() );
+  manager->registerFactory( AxesVisualizer::getTypeStatic(), new VisualizerFactoryImpl<AxesVisualizer>() );
+  manager->registerFactory( PointCloudVisualizer::getTypeStatic(), new VisualizerFactoryImpl<PointCloudVisualizer>() );
+  manager->registerFactory( LaserScanVisualizer::getTypeStatic(), new VisualizerFactoryImpl<LaserScanVisualizer>() );
+  manager->registerFactory( RobotModelVisualizer::getTypeStatic(), new VisualizerFactoryImpl<RobotModelVisualizer>() );
+  manager->registerFactory( MarkerVisualizer::getTypeStatic(), new VisualizerFactoryImpl<MarkerVisualizer>() );
+  manager->registerFactory( OctreeVisualizer::getTypeStatic(), new VisualizerFactoryImpl<OctreeVisualizer>() );
+  manager->registerFactory( PlanningVisualizer::getTypeStatic(), new VisualizerFactoryImpl<PlanningVisualizer>() );
 }
 
 } //namespace ogre_vis

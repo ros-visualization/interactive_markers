@@ -45,8 +45,8 @@
 namespace ogre_vis
 {
 
-AxesVisualizer::AxesVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name )
-: VisualizerBase( scene_manager, node, tf_client, name )
+AxesVisualizer::AxesVisualizer( const std::string& name, VisualizationManager* manager )
+: VisualizerBase( name, manager )
 , length_( 1.0 )
 , radius_( 0.1 )
 {

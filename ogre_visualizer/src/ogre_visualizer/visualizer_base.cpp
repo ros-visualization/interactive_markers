@@ -28,18 +28,21 @@
  */
 
 #include "visualizer_base.h"
+#include "visualization_manager.h"
+#include "properties/property_manager.h"
+#include "properties/property.h"
 
 namespace ogre_vis
 {
 
-VisualizerBase::VisualizerBase( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client,
-                                const std::string& name )
-: scene_manager_( scene_manager )
+VisualizerBase::VisualizerBase( const std::string& name, VisualizationManager* manager )
+: vis_manager_( manager )
+, scene_manager_( manager->getSceneManager() )
 , name_( name )
 , enabled_( false )
 , target_frame_( "base" )
-, ros_node_( node )
-, tf_client_( tf_client )
+, ros_node_( manager->getROSNode() )
+, tf_client_( manager->getTFClient() )
 , property_prefix_( name_ + "." )
 , property_manager_( NULL )
 , parent_category_( NULL )
@@ -128,6 +131,9 @@ void VisualizerBase::setPropertyManager( PropertyManager* manager, CategoryPrope
 {
   property_manager_ = manager;
   parent_category_ = parent;
+
+  property_manager_->createProperty<BoolProperty>( "Enabled", property_prefix_, boost::bind( &VisualizerBase::isEnabled, this ),
+                                                   boost::bind( &VisualizationManager::setVisualizerEnabled, vis_manager_, this, _1 ), parent, this );
 
   createProperties();
 }

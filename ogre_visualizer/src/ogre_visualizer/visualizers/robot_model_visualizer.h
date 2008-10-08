@@ -57,7 +57,7 @@ class Robot;
 class RobotModelVisualizer : public VisualizerBase
 {
 public:
-  RobotModelVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name );
+  RobotModelVisualizer( const std::string& name, VisualizationManager* manager );
   virtual ~RobotModelVisualizer();
 
   /**

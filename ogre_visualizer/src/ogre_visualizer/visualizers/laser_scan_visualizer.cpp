@@ -47,8 +47,8 @@
 namespace ogre_vis
 {
 
-LaserScanVisualizer::LaserScanVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name )
-: VisualizerBase( scene_manager, node, tf_client, name )
+LaserScanVisualizer::LaserScanVisualizer( const std::string& name, VisualizationManager* manager )
+: VisualizerBase( name, manager )
 , color_( 1.0f, 0.0f, 0.0f )
 , intensity_min_( 999999.0f )
 , intensity_max_( -999999.0f )

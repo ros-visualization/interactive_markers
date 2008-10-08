@@ -59,7 +59,7 @@ class ColorProperty;
 class GridVisualizer : public VisualizerBase
 {
 public:
-  GridVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name );
+  GridVisualizer( const std::string& name, VisualizationManager* manager );
   virtual ~GridVisualizer();
 
   /**

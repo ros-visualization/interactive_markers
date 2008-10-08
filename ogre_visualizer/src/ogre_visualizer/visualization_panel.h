@@ -100,10 +100,7 @@ namespace ogre_vis
 {
 
 class VisualizerBase;
-class VisualizerFactory;
-
-class PropertyManager;
-class StringProperty;
+class VisualizationManager;
 
 /**
  * \class VisualizationPanel
@@ -137,108 +134,27 @@ public:
    */
   void unlockRender() { render_mutex_.unlock(); }
 
-  /**
-   * \brief Create and then add a visualizer to this panel.
-   * @param name Display name of the visualizer
-   * @param enabled Whether to start enabled
-   * @return A pointer to the new visualizer
-   */
-  template< class T >
-  T* createVisualizer( const std::string& name, bool enabled, bool allow_deletion = false )
-  {
-    VisualizerBase* current_vis = getVisualizer( name );
-    if ( current_vis )
-    {
-      return NULL;
-    }
-
-    T* visualizer = new T( scene_manager_, ros_node_, tf_client_, name );
-    addVisualizer( visualizer, allow_deletion, enabled );
-
-    return visualizer;
-  }
+  ogre_tools::wxOgreRenderWindow* getRenderPanel() { return render_panel_; }
+  wxPropertyGrid* getPropertyGrid() { return property_grid_; }
+  VisualizationManager* getManager() { return manager_; }
+  ogre_tools::CameraBase* getCurrentCamera() { return current_camera_; }
 
   /**
-   * \brief Create and add a visualizer to this panel, by type name
-   * @param type Type name of the visualizer
-   * @param name Display name of the visualizer
-   * @param enabled Whether to start enabled
-   * @return A pointer to the new visualizer
-   */
-  VisualizerBase* createVisualizer( const std::string& type, const std::string& name, bool enabled, bool allow_deletion = false );
-
-  /**
-   * \brief Remove a visualizer
-   * @param visualizer The visualizer to remove
-   */
-  void removeVisualizer( VisualizerBase* visualizer );
-  /**
-   * \brief Remove a visualizer by name
-   * @param name The name of the visualizer to remove
-   */
-  void removeVisualizer( const std::string& name );
-
-  /**
-   * \brief Load configuration
+   * \brief Load configuration.  Simply passes through to the VisualizationManager, here for convenience
    * @param config The wx config object to load from
    */
   void loadConfig( wxConfigBase* config );
   /**
-   * \brief Save configuration
+   * \brief Save configuration.  Simply passes through to the VisualizationManager, here for convenience
    * @param config The wx config object to save to
    */
   void saveConfig( wxConfigBase* config );
 
-  /**
-   * \brief Register a visualizer factory with the panel.  Allows you to create a visualizer by type.
-   * @param type Type of the visualizer.  Must be unique.
-   * @param factory The factory which will create this type of visualizer
-   * @return Whether or not the registration succeeded.  The only failure condition is a non-unique type.
-   */
-  bool registerFactory( const std::string& type, VisualizerFactory* factory );
-
-  /**
-   * \brief Set the coordinate frame we should be displaying in
-   * @param frame The string name -- must match the frame name broadcast to libTF
-   */
-  void setCoordinateFrame( const std::string& frame );
-  const std::string& getCoordinateFrame() { return target_frame_; }
-
 protected:
-  /**
-   * \brief Add a visualizer to be managed by this panel
-   * @param visualizer The visualizer to be added
-   */
-  void addVisualizer( VisualizerBase* visualizer, bool allow_deletion, bool enabled );
-
-  /**
-   * \brief Performs a linear search to find a visualizer based on its name
-   * @param name Name of the visualizer to search for
-   */
-  VisualizerBase* getVisualizer( const std::string& name );
-
-  /**
-   * \brief Performs a linear search to find a VisualizerInfo struct based on the visualizer contained inside it
-   * @param visualizer The visualizer to find the info for
-   */
-  struct VisualizerInfo;
-  VisualizerInfo* getVisualizerInfo( const VisualizerBase* visualizer );
-
-  /**
-   * \brief Enables/disables a visualizer, including changing any necessary UI
-   * @param visualizer The visualizer to act on
-   * @param enabled Whether or not it should be enabled
-   */
-  void setVisualizerEnabled( VisualizerBase* visualizer, bool enabled );
-
-  void pick( int mouse_x, int mouse_y );
-
   /// Called when a "view" (camera) is selected from the list
   void onViewClicked( wxCommandEvent& event );
   /// Called when a mouse event happens inside the render window
   void onRenderWindowMouseEvents( wxMouseEvent& event );
-  /// Called from the update timer
-  void onUpdate( wxTimerEvent& event );
   /// Called when our custom EVT_RENDER is fired
   void onRender( wxCommandEvent& event );
   /// Called when a property from the wxPropertyGrid is changing
@@ -253,39 +169,15 @@ protected:
   /// Called when the "Delete Display" button is pressed
   virtual void onDeleteDisplay( wxCommandEvent& event );
 
-
-  Ogre::Root* ogre_root_;                                 ///< Ogre Root
-  Ogre::SceneManager* scene_manager_;                     ///< Ogre scene manager associated with this panel
-  Ogre::RaySceneQuery* ray_scene_query_;                  ///< Used for querying the scene based on the mouse location
-  Ogre::ParticleSystem* selection_bounds_particle_system_;
-
-  wxTimer* update_timer_;                                 ///< Update timer.  VisualizerBase::update is called on each visualizer whenever this timer fires
-  wxStopWatch update_stopwatch_;                          ///< Update stopwatch.  Stores how long it's been since the last update
+  void onVisualizerStateChanged( VisualizerBase* visualizer );
 
   wxPropertyGrid* property_grid_;                         ///< Visualizer property grid
 
   ogre_tools::wxOgreRenderWindow* render_panel_;          ///< Render window
+
   ogre_tools::CameraBase* current_camera_;                ///< The current camera
   ogre_tools::FPSCamera* fps_camera_;                     ///< FPS camera
   ogre_tools::OrbitCamera* orbit_camera_;                 ///< Orbit camera
-
-  ros::node* ros_node_;                                   ///< Our ros::node
-  rosTFClient* tf_client_;                                ///< Our rosTF client
-
-  struct VisualizerInfo
-  {
-    VisualizerInfo()
-    : visualizer_(NULL)
-    , allow_deletion_(false)
-    {}
-    VisualizerBase* visualizer_;
-    bool allow_deletion_;
-  };
-  typedef std::vector< VisualizerInfo > V_VisualizerInfo;
-  V_VisualizerInfo visualizers_;                          ///< Our list of visualizers
-  VisualizerBase* selected_visualizer_;                   ///< The currently selected visualizer
-  typedef std::map<std::string, VisualizerFactory*> M_Factory;
-  M_Factory factories_;                                   ///< Factories by visualizer type name
 
   // Mouse handling
   bool left_mouse_down_;                                  ///< Is the left mouse button down?
@@ -298,8 +190,7 @@ protected:
 
   ros::thread::mutex render_mutex_;                       ///< Render mutex
 
-  PropertyManager* property_manager_;
-  StringProperty* coordinate_frame_property_;
+  VisualizationManager* manager_;
 };
 
 } // namespace ogre_vis

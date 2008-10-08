@@ -44,8 +44,8 @@
 namespace ogre_vis
 {
 
-GridVisualizer::GridVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name )
-: VisualizerBase( scene_manager, node, tf_client, name )
+GridVisualizer::GridVisualizer( const std::string& name, VisualizationManager* manager )
+: VisualizerBase( name, manager )
 , cell_size_( 1.0f )
 , cell_count_( 10 )
 , color_( 0.5, 0.5, 0.5 )

@@ -55,8 +55,8 @@
 namespace ogre_vis
 {
 
-OctreeVisualizer::OctreeVisualizer(Ogre::SceneManager* sceneManager,ros::node* node, rosTFClient* tfClient, const std::string& name)
-: VisualizerBase(sceneManager, node, tfClient, name)
+OctreeVisualizer::OctreeVisualizer(const std::string& name, VisualizationManager* manager)
+: VisualizerBase(name, manager)
 , color_( 1.0f, 1.0f, 1.0f )
 , new_message_(false)
 , color_property_( NULL )

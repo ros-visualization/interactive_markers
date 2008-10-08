@@ -40,40 +40,42 @@ class VisualizerFrame(wx.Frame):
         
         ogre_tools.initializeResources( media_paths )
         
-        visualizer_panel.createGridVisualizer( "Grid", True )
-        visualizer_panel.createAxesVisualizer( "Origin Axes", False )
-        visualizer_panel.createMarkerVisualizer( "Visualization Markers", True )
+        manager = visualizer_panel.getManager()
         
-        robot_vis = visualizer_panel.createRobotModelVisualizer( "Robot Model", False )
+        manager.createGridVisualizer( "Grid", True )
+        manager.createAxesVisualizer( "Origin Axes", False )
+        manager.createMarkerVisualizer( "Visualization Markers", True )
+        
+        robot_vis = manager.createRobotModelVisualizer( "Robot Model", False )
         robot_vis.setRobotDescription( "robotdesc/pr2" )
         
-        planning = visualizer_panel.createPlanningVisualizer( "Planning", False )
+        planning = manager.createPlanningVisualizer( "Planning", False )
         planning.initialize( "robotdesc/pr2", "display_kinematic_path" )
         
-        point_cloud = visualizer_panel.createPointCloudVisualizer( "Stereo Full Cloud", True )
+        point_cloud = manager.createPointCloudVisualizer( "Stereo Full Cloud", True )
         point_cloud.setTopic("videre/cloud")
         point_cloud.setColor(ogre_visualizer.Color(1.0, 1.0, 1.0))
         
-        point_cloud = visualizer_panel.createPointCloudVisualizer( "Head Full Cloud", True )
+        point_cloud = manager.createPointCloudVisualizer( "Head Full Cloud", True )
         point_cloud.setTopic( "full_cloud" )
         point_cloud.setColor(ogre_visualizer.Color(1.0, 1.0, 0.0))
         
-        point_cloud = visualizer_panel.createPointCloudVisualizer( "World 3D Map", True )
+        point_cloud = manager.createPointCloudVisualizer( "World 3D Map", True )
         point_cloud.setTopic( "world_3d_map" )
         point_cloud.setColor(ogre_visualizer.Color(1.0, 0.0, 0.0))
         point_cloud.setBillboardSize( 0.01 )
         
-        laser_scan = visualizer_panel.createLaserScanVisualizer( "Head Scan", True )
+        laser_scan = manager.createLaserScanVisualizer( "Head Scan", True )
         laser_scan.setScanTopic( "tilt_scan" )
         laser_scan.setColor(ogre_visualizer.Color(1.0, 0.0, 0.0))
         laser_scan.setDecayTime( 30.0 )
         
-        laser_scan = visualizer_panel.createLaserScanVisualizer( "Floor Scan", True )
+        laser_scan = manager.createLaserScanVisualizer( "Floor Scan", True )
         laser_scan.setScanTopic( "base_scan" )
         laser_scan.setColor(ogre_visualizer.Color(0.0, 1.0, 0.0))
         laser_scan.setDecayTime( 0.0 )
         
-        visualizer_panel.createOctreeVisualizer( "Octree", True ).setOctreeTopic( "full_octree" )
+        manager.createOctreeVisualizer( "Octree", True ).setOctreeTopic( "full_octree" )
         
         # Load our window options
         (x, y) = self.GetPositionTuple()
@@ -90,7 +92,7 @@ class VisualizerFrame(wx.Frame):
         self.SetPosition((x, y))
         self.SetSize((width, height))
         
-        visualizer_panel.loadConfig(self._config)
+        manager.loadConfig(self._config)
         
         self.Bind(wx.EVT_CLOSE, self.on_close)
         
@@ -104,7 +106,7 @@ class VisualizerFrame(wx.Frame):
         self._config.WriteInt(self._CONFIG_WINDOW_WIDTH, width)
         self._config.WriteInt(self._CONFIG_WINDOW_HEIGHT, height)
         
-        self._visualizer_panel.saveConfig(self._config)
+        self._visualizer_panel.getManager().saveConfig(self._config)
         self.Destroy()
 
 class VisualizerApp(wx.App):

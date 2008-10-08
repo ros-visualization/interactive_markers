@@ -79,7 +79,7 @@ public:
     StyleCount,
   };
 
-  LaserScanVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name );
+  LaserScanVisualizer( const std::string& name, VisualizationManager* manager );
   ~LaserScanVisualizer();
 
   /**

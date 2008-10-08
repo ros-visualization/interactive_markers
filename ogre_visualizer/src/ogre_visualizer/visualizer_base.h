@@ -60,6 +60,9 @@ namespace ogre_vis
 
 class PropertyManager;
 class CategoryProperty;
+class BoolProperty;
+
+class VisualizationManager;
 
 /**
  * \class VisualizerBase
@@ -71,7 +74,7 @@ class CategoryProperty;
 class VisualizerBase
 {
 public:
-  VisualizerBase( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name );
+  VisualizerBase( const std::string& name, VisualizationManager* manager );
   virtual ~VisualizerBase();
 
   /**
@@ -158,6 +161,8 @@ protected:
   /// Unlock the renderer
   void unlockRender();
 
+  VisualizationManager* vis_manager_;
+
   Ogre::SceneManager* scene_manager_;                 ///< The scene manager we're associated with
   std::string name_;                                  ///< The name of this visualizer
   bool enabled_;                                      ///< Are we enabled?
@@ -175,6 +180,7 @@ protected:
 
   PropertyManager* property_manager_;                 ///< The property manager to use to create properties
   CategoryProperty* parent_category_;                 ///< The parent category to use when creating properties
+  BoolProperty* enabled_property_;
 
   friend class RenderAutoLock;
 };

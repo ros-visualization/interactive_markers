@@ -16,6 +16,7 @@
 %include "helpers/color.i"
 %include "visualizer_base.i"
 %include "visualization_panel.i"
+%include "visualization_manager.i"
 
 %include "visualizers/axes_visualizer.i"
 %include "visualizers/grid_visualizer.i"

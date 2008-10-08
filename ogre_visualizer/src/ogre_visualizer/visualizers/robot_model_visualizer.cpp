@@ -48,8 +48,8 @@
 namespace ogre_vis
 {
 
-RobotModelVisualizer::RobotModelVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name )
-: VisualizerBase( scene_manager, node, tf_client, name )
+RobotModelVisualizer::RobotModelVisualizer( const std::string& name, VisualizationManager* manager )
+: VisualizerBase( name, manager )
 , has_new_transforms_( false )
 , time_since_last_transform_( 0.0f )
 , update_rate_( 0.1f )
@@ -58,7 +58,7 @@ RobotModelVisualizer::RobotModelVisualizer( Ogre::SceneManager* scene_manager, r
 , update_rate_property_( NULL )
 , robot_description_property_( NULL )
 {
-  robot_ = new Robot( scene_manager );
+  robot_ = new Robot( scene_manager_ );
 
   setVisualVisible( true );
   setCollisionVisible( false );

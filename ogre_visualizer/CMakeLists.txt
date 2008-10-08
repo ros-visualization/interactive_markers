@@ -32,6 +32,7 @@ add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE}
                    DEPENDS  ${SWIG_INTERFACE_FILE}
                             src/ogre_visualizer/visualizer_base.i
                             src/ogre_visualizer/visualization_panel.i
+                            src/ogre_visualizer/visualization_manager.i
                             src/ogre_visualizer/visualizers/axes_visualizer.i
                             src/ogre_visualizer/visualizers/grid_visualizer.i
                             src/ogre_visualizer/visualizers/laser_scan_visualizer.i
@@ -41,7 +42,8 @@ add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE}
                             src/ogre_visualizer/visualizers/point_cloud_visualizer.i
                             src/ogre_visualizer/visualizers/robot_model_visualizer.i
                             src/ogre_visualizer/helpers/color.i
-                            src/ogre_visualizer/visualization_panel.h 
+                            src/ogre_visualizer/visualization_panel.h
+                            src/ogre_visualizer/visualization_manager.h  
                             src/ogre_visualizer/generated/visualization_panel_generated.h
                             src/ogre_visualizer/visualizer_base.h
                             src/ogre_visualizer/visualizers/axes_visualizer.h
@@ -55,6 +57,7 @@ add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE}
                             src/ogre_visualizer/helpers/color.h)
 
 rospack_add_library(${PROJECT_NAME} src/ogre_visualizer/visualization_panel.cpp
+                                   src/ogre_visualizer/visualization_manager.cpp
 				   												 src/ogre_visualizer/visualizer_base.cpp
                                    src/ogre_visualizer/common.cpp
                                    src/ogre_visualizer/factory.cpp

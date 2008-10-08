@@ -56,7 +56,7 @@ class ROSTopicStringProperty;
 class OctreeVisualizer : public VisualizerBase
 {
 public:
-  OctreeVisualizer( Ogre::SceneManager* sceneManager, ros::node* node, rosTFClient* tfClient, const std::string& name );
+  OctreeVisualizer( const std::string& name, VisualizationManager* manager );
   virtual ~OctreeVisualizer();
 
   /**

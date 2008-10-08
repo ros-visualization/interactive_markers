@@ -46,8 +46,8 @@
 namespace ogre_vis
 {
 
-MarkerVisualizer::MarkerVisualizer( Ogre::SceneManager* scene_manager, ros::node* node, rosTFClient* tf_client, const std::string& name )
-: VisualizerBase( scene_manager, node, tf_client, name )
+MarkerVisualizer::MarkerVisualizer( const std::string& name, VisualizationManager* manager )
+: VisualizerBase( name, manager )
 {
   scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
 
