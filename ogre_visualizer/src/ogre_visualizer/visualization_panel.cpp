@@ -628,26 +628,18 @@ void VisualizationPanel::setVisualizerEnabled( VisualizerBase* visualizer, bool 
   property_grid_->SetPropertyValue( enabled_property, enabled );
 }
 
-#define COORDINATE_FRAME_CONFIG wxT("Coordinate Frame")
+#define PROPERTY_GRID_CONFIG wxT("Property Grid State")
 
 void VisualizationPanel::loadConfig( wxConfigBase* config )
 {
-  wxString coordinate_frame;
-  if ( config->Read( COORDINATE_FRAME_CONFIG, &coordinate_frame ) )
-  {
-    setCoordinateFrame( (const char*)coordinate_frame.fn_str() );
-  }
-
   int i = 0;
   while (1)
   {
-    wxString type, name, expanded;
+    wxString type, name;
     type.Printf( wxT("Display%d/Type"), i );
     name.Printf( wxT("Display%d/Name"), i );
-    expanded.Printf( wxT("Display%d/Expanded"), i );
 
     wxString vis_type, vis_name;
-    bool vis_expanded;
     if ( !config->Read( type, &vis_type ) )
     {
       break;
@@ -658,28 +650,22 @@ void VisualizationPanel::loadConfig( wxConfigBase* config )
       break;
     }
 
-    if ( !config->Read( expanded, &vis_expanded ) )
-    {
-      break;
-    }
-
     createVisualizer( (const char*)vis_type.fn_str(), (const char*)vis_name.fn_str(), false, true );
-
-    if ( !vis_expanded )
-    {
-      property_grid_->Collapse( property_grid_->GetProperty( vis_name ) );
-    }
 
     ++i;
   }
 
   property_manager_->load( config );
+
+  wxString grid_state;
+  if ( config->Read( PROPERTY_GRID_CONFIG, &grid_state ) )
+  {
+    property_grid_->RestoreEditableState( grid_state );
+  }
 }
 
 void VisualizationPanel::saveConfig( wxConfigBase* config )
 {
-  config->Write( COORDINATE_FRAME_CONFIG, wxString::FromAscii( target_frame_.c_str() ) );
-
   int i = 0;
   V_VisualizerInfo::iterator vis_it = visualizers_.begin();
   V_VisualizerInfo::iterator vis_end = visualizers_.end();
@@ -687,16 +673,16 @@ void VisualizationPanel::saveConfig( wxConfigBase* config )
   {
     VisualizerBase* visualizer = vis_it->visualizer_;
 
-    wxString type, name, expanded;
+    wxString type, name;
     type.Printf( wxT("Display%d/Type"), i );
     name.Printf( wxT("Display%d/Name"), i );
-    expanded.Printf( wxT("Display%d/Expanded"), i );
     config->Write( type, wxString::FromAscii( visualizer->getType() ) );
     config->Write( name, wxString::FromAscii( visualizer->getName().c_str() ) );
-    config->Write( expanded, property_grid_->IsPropertyExpanded( property_grid_->GetProperty( wxString::FromAscii( visualizer->getName().c_str() ) ) ) );
   }
 
   property_manager_->save( config );
+
+  config->Write( PROPERTY_GRID_CONFIG, property_grid_->SaveEditableState() );
 }
 
 bool VisualizationPanel::registerFactory( const std::string& type, VisualizerFactory* factory )
