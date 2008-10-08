@@ -181,6 +181,8 @@ void RobotModelVisualizer::createProperties()
                                                                                  boost::bind( &RobotModelVisualizer::setCollisionVisible, this, _1 ), parent_category_, this );
   update_rate_property_ = property_manager_->createProperty<FloatProperty>( "Update Rate", property_prefix_, boost::bind( &RobotModelVisualizer::getUpdateRate, this ),
                                                                                   boost::bind( &RobotModelVisualizer::setUpdateRate, this, _1 ), parent_category_, this );
+  update_rate_property_->setMin( 0.0 );
+
   robot_description_property_ = property_manager_->createProperty<StringProperty>( "Robot Description", property_prefix_, boost::bind( &RobotModelVisualizer::getRobotDescription, this ),
                                                                                    boost::bind( &RobotModelVisualizer::setRobotDescription, this, _1 ), parent_category_, this );
 }

@@ -121,8 +121,11 @@ void GridVisualizer::createProperties()
 {
   cellcount_property_ = property_manager_->createProperty<IntProperty>( "Cell Count", property_prefix_, boost::bind( &GridVisualizer::getCellCount, this ),
                                                            boost::bind( &GridVisualizer::setCellCount, this, _1 ), parent_category_, this );
+  cellcount_property_->setMin( 1 );
+
   cellsize_property_ = property_manager_->createProperty<FloatProperty>( "Cell Size", property_prefix_, boost::bind( &GridVisualizer::getCellSize, this ),
                                                              boost::bind( &GridVisualizer::setCellSize, this, _1 ), parent_category_, this );
+  cellsize_property_->setMin( 0.0001 );
 
   color_property_ = property_manager_->createProperty<ColorProperty>( "Color", property_prefix_, boost::bind( &GridVisualizer::getColor, this ),
                                                                       boost::bind( &GridVisualizer::setColor, this, _1 ), parent_category_, this );

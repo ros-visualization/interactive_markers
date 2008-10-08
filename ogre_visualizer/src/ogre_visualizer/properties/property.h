@@ -227,6 +227,9 @@ public:
   {
   }
 
+  void setMin( int min );
+  void setMax( int max );
+
   virtual void writeToGrid();
   virtual void readFromGrid();
   virtual void saveToConfig( wxConfigBase* config );
@@ -240,6 +243,9 @@ public:
   : Property<float>( name, prefix, grid, parent, getter, setter )
   {
   }
+
+  void setMin( float min );
+  void setMax( float max );
 
   virtual void writeToGrid();
   virtual void readFromGrid();

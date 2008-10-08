@@ -72,6 +72,16 @@ void BoolProperty::loadFromConfig( wxConfigBase* config )
   set( val );
 }
 
+void IntProperty::setMin( int min )
+{
+  property_->SetAttribute( wxT("Min"), min );
+}
+
+void IntProperty::setMax( int max )
+{
+  property_->SetAttribute( wxT("Max"), max );
+}
+
 void IntProperty::writeToGrid()
 {
   if ( !property_ )
@@ -102,6 +112,17 @@ void IntProperty::loadFromConfig( wxConfigBase* config )
 
   set( val );
 }
+
+void FloatProperty::setMin( float min )
+{
+  property_->SetAttribute( wxT("Min"), min );
+}
+
+void FloatProperty::setMax( float max )
+{
+  property_->SetAttribute( wxT("Max"), max );
+}
+
 
 void FloatProperty::writeToGrid()
 {

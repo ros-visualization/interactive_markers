@@ -114,9 +114,11 @@ void AxesVisualizer::createProperties()
 {
   length_property_ = property_manager_->createProperty<FloatProperty>( "Length", property_prefix_, boost::bind( &AxesVisualizer::getLength, this ),
                                                                      boost::bind( &AxesVisualizer::setLength, this, _1 ), parent_category_, this );
+  length_property_->setMin( 0.0001 );
 
   radius_property_ = property_manager_->createProperty<FloatProperty>( "Radius", property_prefix_, boost::bind( &AxesVisualizer::getRadius, this ),
                                                                        boost::bind( &AxesVisualizer::setRadius, this, _1 ), parent_category_, this );
+  radius_property_->setMin( 0.0001 );
 }
 
 } // namespace ogre_vis

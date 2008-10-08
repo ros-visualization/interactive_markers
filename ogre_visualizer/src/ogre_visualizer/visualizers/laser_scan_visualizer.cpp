@@ -405,8 +405,10 @@ void LaserScanVisualizer::createProperties()
 
   billboard_size_property_ = property_manager_->createProperty<FloatProperty>( "Billboard Size", property_prefix_, boost::bind( &LaserScanVisualizer::getBillboardSize, this ),
                                                                                 boost::bind( &LaserScanVisualizer::setBillboardSize, this, _1 ), parent_category_, this );
+  billboard_size_property_->setMin( 0.0001 );
   decay_time_property_ = property_manager_->createProperty<FloatProperty>( "Decay Time", property_prefix_, boost::bind( &LaserScanVisualizer::getDecayTime, this ),
                                                                                   boost::bind( &LaserScanVisualizer::setDecayTime, this, _1 ), parent_category_, this );
+  billboard_size_property_->setMin( 0.0 );
 
   scan_topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Scan Topic", property_prefix_, boost::bind( &LaserScanVisualizer::getScanTopic, this ),
                                                                             boost::bind( &LaserScanVisualizer::setScanTopic, this, _1 ), parent_category_, this );

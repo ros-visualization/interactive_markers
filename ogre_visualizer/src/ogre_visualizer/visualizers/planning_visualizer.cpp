@@ -296,6 +296,7 @@ void PlanningVisualizer::createProperties()
                                                                                  boost::bind( &PlanningVisualizer::setCollisionVisible, this, _1 ), parent_category_, this );
   state_display_time_property_ = property_manager_->createProperty<FloatProperty>( "State Display Time", property_prefix_, boost::bind( &PlanningVisualizer::getStateDisplayTime, this ),
                                                                                   boost::bind( &PlanningVisualizer::setStateDisplayTime, this, _1 ), parent_category_, this );
+  state_display_time_property_->setMin( 0.0001 );
   robot_description_property_ = property_manager_->createProperty<StringProperty>( "Robot Description", property_prefix_, boost::bind( &PlanningVisualizer::getRobotDescription, this ),
                                                                                    boost::bind( &PlanningVisualizer::setRobotDescription, this, _1 ), parent_category_, this );
   topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &PlanningVisualizer::getTopic, this ),

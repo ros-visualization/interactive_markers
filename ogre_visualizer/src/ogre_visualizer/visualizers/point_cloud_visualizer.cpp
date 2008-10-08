@@ -286,6 +286,7 @@ void PointCloudVisualizer::createProperties()
 
   billboard_size_property_ = property_manager_->createProperty<FloatProperty>( "Billboard Size", property_prefix_, boost::bind( &PointCloudVisualizer::getBillboardSize, this ),
                                                                                 boost::bind( &PointCloudVisualizer::setBillboardSize, this, _1 ), parent_category_, this );
+  billboard_size_property_->setMin( 0.0001 );
 
   topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &PointCloudVisualizer::getTopic, this ),
                                                                               boost::bind( &PointCloudVisualizer::setTopic, this, _1 ), parent_category_, this );
