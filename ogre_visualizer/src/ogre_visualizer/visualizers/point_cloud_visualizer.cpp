@@ -34,6 +34,7 @@
 #include "properties/property_manager.h"
 
 #include "ros/node.h"
+#include <ros/time.h>
 #include "ogre_tools/point_cloud.h"
 
 #include <rosTF/rosTF.h>
@@ -57,7 +58,8 @@ PointCloudVisualizer::PointCloudVisualizer( const std::string& name, Visualizati
 , color_property_( NULL )
 , style_property_( NULL )
 {
-  cloud_ = new ogre_tools::PointCloud( scene_manager_ );
+  scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
+  cloud_ = new ogre_tools::PointCloud( scene_manager_, scene_node_ );
 
   setStyle( style_ );
   setBillboardSize( billboard_size_ );
@@ -180,14 +182,23 @@ void PointCloudVisualizer::transformCloud()
     message_.header.frame_id = target_frame_;
   }
 
+  libTF::TFPose pose = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0, message_.header.frame_id };
+
   try
   {
-    tf_client_->transformPointCloud(target_frame_, message_, message_);
+    pose = tf_client_->transformPose( target_frame_, pose );
   }
   catch(libTF::Exception& e)
   {
-    printf( "Error transforming point cloud '%s' from frame '%s' to frame '%s'\n", name_.c_str(), message_.header.frame_id.c_str(), target_frame_.c_str() );
+    ROS_ERROR( "Error transforming point cloud '%s' from frame '%s' to frame '%s'\n", name_.c_str(), message_.header.frame_id.c_str(), target_frame_.c_str() );
   }
+
+  Ogre::Vector3 position( pose.x, pose.y, pose.z );
+  robotToOgre( position );
+
+  Ogre::Matrix3 orientation( ogreMatrixFromRobotEulers( pose.yaw, pose.pitch, pose.roll ) );
+  scene_node_->setPosition( position );
+  scene_node_->setOrientation( orientation );
 
   bool has_channel_0 = message_.get_chan_size() > 0;
   bool channel_is_rgb = has_channel_0 ? message_.chan[0].name == "rgb" : false;
@@ -211,14 +222,12 @@ void PointCloudVisualizer::transformCloud()
 
   float diff_intensity = max_intensity - min_intensity;
 
+  ros::Time start_vec = ros::Time::now();
   typedef std::vector< ogre_tools::PointCloud::Point > V_Point;
   V_Point points;
   points.resize( pointCount );
   for(uint32_t i = 0; i < pointCount; i++)
   {
-    Ogre::Vector3 point( message_.pts[i].x, message_.pts[i].y, message_.pts[i].z );
-    robotToOgre( point );
-
     float channel = has_channel_0 ? message_.chan[0].vals[i] : 1.0f;
 
     Ogre::Vector3 color( color_.r_, color_.g_, color_.b_ );
@@ -238,14 +247,15 @@ void PointCloudVisualizer::transformCloud()
     }
 
     ogre_tools::PointCloud::Point& current_point = points[ i ];
-    current_point.x_ = point.x;
-    current_point.y_ = point.y;
-    current_point.z_ = point.z;
+    current_point.x_ = message_.pts[i].x;
+    current_point.y_ = message_.pts[i].y;
+    current_point.z_ = message_.pts[i].z;
     current_point.r_ = color.x;
     current_point.g_ = color.y;
     current_point.b_ = color.z;
   }
 
+  ros::Time start_add = ros::Time::now();
   {
     RenderAutoLock renderLock( this );
 
@@ -258,6 +268,7 @@ void PointCloudVisualizer::transformCloud()
   }
 
   causeRender();
+
 }
 
 void PointCloudVisualizer::incomingCloudCallback()

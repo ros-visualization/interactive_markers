@@ -139,6 +139,7 @@ protected:
 
 
   ogre_tools::PointCloud* cloud_;             ///< Handles actually drawing the point cloud
+  Ogre::SceneNode* scene_node_;
 
   std::string topic_;                         ///< The PointCloudFloat32 topic set by setTopic()
   std_msgs::PointCloudFloat32 message_;       ///< Our point cloud message

@@ -265,7 +265,7 @@ void PlanningVisualizer::calculateRobotPosition()
   }
   catch(libTF::Exception& e)
   {
-    printf( "Error transforming from frame '%s' to frame '%s'\n", pose.frame.c_str(), target_frame_.c_str() );
+    ROS_ERROR( "Error transforming from frame '%s' to frame '%s'\n", pose.frame.c_str(), target_frame_.c_str() );
   }
 
   Ogre::Vector3 position( pose.x, pose.y, pose.z );

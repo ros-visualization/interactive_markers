@@ -127,7 +127,7 @@ void OctreeVisualizer::update(float dt)
   if (new_message_)
   {
     const size_t numVertices = vertices_.size();
-    printf( "Received an octree with %d vertices\n", numVertices );
+    ROS_INFO( "Received an octree with %d vertices\n", numVertices );
 
     manual_object_->clear();
     manual_object_->estimateVertexCount( numVertices );
@@ -240,7 +240,7 @@ void OctreeVisualizer::setColor( const Color& color )
 
 void OctreeVisualizer::targetFrameChanged()
 {
-  printf( "Warning: octree is always in the global frame\n" );
+  ROS_WARN( "Warning: octree is always in the global frame\n" );
 }
 
 void OctreeVisualizer::createProperties()

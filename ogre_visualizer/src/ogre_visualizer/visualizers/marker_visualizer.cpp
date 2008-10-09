@@ -140,7 +140,7 @@ void MarkerVisualizer::processMessage( const std_msgs::VisualizationMarker& mess
     break;
 
   default:
-    printf( "Unknown marker action: %d\n", message.action );
+    ROS_ERROR( "Unknown marker action: %d\n", message.action );
   }
 }
 
@@ -206,7 +206,7 @@ void MarkerVisualizer::processAdd( const std_msgs::VisualizationMarker& message 
       break;
 
     default:
-      printf( "Unknown marker type: %d\n", message.type );
+      ROS_ERROR( "Unknown marker type: %d\n", message.type );
     }
 
     if ( object )
@@ -228,7 +228,7 @@ void MarkerVisualizer::processModify( const std_msgs::VisualizationMarker& messa
   M_IDToMarker::iterator it = markers_.find( message.id );
   if ( it == markers_.end() )
   {
-    printf( "Tried to modify marker with id %d that does not exist\n", message.id );
+    ROS_ERROR( "Tried to modify marker with id %d that does not exist\n", message.id );
     return;
   }
 
@@ -268,7 +268,7 @@ void MarkerVisualizer::setCommonValues( const std_msgs::VisualizationMarker& mes
   }
   catch(libTF::Exception& e)
   {
-    printf( "Error transforming marker '%d' from frame '%s' to frame '%s'\n", message.id, frame_id.c_str(), target_frame_.c_str() );
+    ROS_ERROR( "Error transforming marker '%d' from frame '%s' to frame '%s'\n", message.id, frame_id.c_str(), target_frame_.c_str() );
   }
 
   Ogre::Vector3 position( pose.x, pose.y, pose.z );

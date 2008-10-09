@@ -146,8 +146,6 @@ public:
     for ( int i = 0; i < argc; ++i )
     {
       localArgv[ i ] = strdup( wxString( argv[ i ] ).fn_str() );
-
-      printf( "argv[%d]: %s\n", i, localArgv[i] );
     }
 
     ros::init(argc, localArgv);

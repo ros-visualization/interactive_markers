@@ -281,7 +281,7 @@ void LaserScanVisualizer::transformCloud( std_msgs::PointCloudFloat32& message )
   }
   catch(libTF::Exception& e)
   {
-    printf( "Error transforming laser scan '%s', frame '%s' to frame '%s'\n", name_.c_str(), message.header.frame_id.c_str(), target_frame_.c_str() );
+    ROS_ERROR( "Error transforming laser scan '%s', frame '%s' to frame '%s'\n", name_.c_str(), message.header.frame_id.c_str(), target_frame_.c_str() );
   }
 
   uint32_t point_count_ = message.get_pts_size();
