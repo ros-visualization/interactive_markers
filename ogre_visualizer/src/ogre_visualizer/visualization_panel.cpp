@@ -348,6 +348,7 @@ void VisualizationPanel::onNewDisplay( wxCommandEvent& event )
 
       VisualizerBase* visualizer = manager_->createVisualizer( type, name, true, true );
       ROS_ASSERT(visualizer);
+      (void)visualizer;
 
       break;
     }

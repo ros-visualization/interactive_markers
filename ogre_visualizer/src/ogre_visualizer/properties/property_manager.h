@@ -78,6 +78,7 @@ public:
     T* property = new T( name, prefix, grid_, parent ? parent->getPGProperty() : 0, getter, setter );
     bool inserted = properties_.insert( std::make_pair( std::make_pair(name, prefix), property ) ).second;
     ROS_ASSERT(inserted);
+    (void)inserted;
 
     property->writeToGrid();
     property->getPGProperty()->SetClientData( property );
