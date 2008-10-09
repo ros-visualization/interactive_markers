@@ -64,7 +64,7 @@ namespace ogre_tools
 class PointCloud : public Ogre::MovableObject
 {
 public:
-  PointCloud( Ogre::SceneManager* manager );
+  PointCloud( Ogre::SceneManager* manager, Ogre::SceneNode* parent = NULL );
   ~PointCloud();
 
   /**
@@ -113,6 +113,7 @@ public:
   virtual const Ogre::String& getMovableType() const { return sm_Type; }
   virtual const Ogre::AxisAlignedBox& getBoundingBox() const;
   virtual float getBoundingRadius() const;
+  virtual void getWorldTransforms( Ogre::Matrix4* xform ) const;
   virtual void _updateRenderQueue( Ogre::RenderQueue* queue );
   virtual void _notifyCurrentCamera( Ogre::Camera* camera );
 

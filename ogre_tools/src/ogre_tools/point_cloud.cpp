@@ -41,7 +41,7 @@ namespace ogre_tools
 
 Ogre::String PointCloud::sm_Type = "PointCloud";
 
-PointCloud::PointCloud( Ogre::SceneManager* scene_manager )
+PointCloud::PointCloud( Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent )
 : scene_manager_( scene_manager )
 , bounding_radius_( 0.0f )
 , point_count_( 0 )
@@ -50,14 +50,16 @@ PointCloud::PointCloud( Ogre::SceneManager* scene_manager )
 , billboard_width_( 0.003f )
 , billboard_height_( 0.003f )
 {
-  static uint32_t count = 0;
-  std::stringstream ss;
-  ss << "ogre_tools::PointCloud" << count++;
+  if ( parent )
+  {
+    scene_node_ = parent->createChildSceneNode();
+  }
+  else
+  {
+    scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
+  }
 
-  scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
   scene_node_->attachObject( this );
-
-
 
   clear();
 }
@@ -83,6 +85,11 @@ const Ogre::AxisAlignedBox& PointCloud::getBoundingBox() const
 float PointCloud::getBoundingRadius() const
 {
   return bounding_radius_;
+}
+
+void PointCloud::getWorldTransforms( Ogre::Matrix4* xform ) const
+{
+  *xform = _getParentNodeFullTransform();
 }
 
 void PointCloud::clear()
@@ -132,15 +139,21 @@ void PointCloud::setBillboardDimensions( float width, float height )
 
 Ogre::BillboardSet* PointCloud::createBillboardSet()
 {
-  Ogre::BillboardSet* bbs = new Ogre::BillboardSet( "", 0, true );
+  static uint32_t count = 0;
+  std::stringstream name;
+  name << "ogre_tools::PointCloud BillboardSet" << count++;
+
+  Ogre::BillboardSet* bbs = new Ogre::BillboardSet( name.str(), 0, true );
   bbs->setPointRenderingEnabled( use_points_ );
   bbs->setDefaultDimensions( billboard_width_, billboard_height_ );
-  bbs->setBillboardsInWorldSpace(true);
+  bbs->setBillboardsInWorldSpace(false);
   bbs->setBillboardOrigin( Ogre::BBO_CENTER );
   bbs->setBillboardRotationType( Ogre::BBR_VERTEX );
   bbs->setMaterialName( "BaseWhiteNoLighting" );
   bbs->setCullIndividually( false );
   bbs->setPoolSize( points_per_bbs_ );
+
+  scene_node_->attachObject( bbs );
 
   return bbs;
 }
@@ -240,12 +253,12 @@ void PointCloud::_updateRenderQueue( Ogre::RenderQueue* queue )
   bbs->endBillboards();
 
   // Update the queue
-  V_BillboardSet::iterator bbs_it = used.begin();
+  /*V_BillboardSet::iterator bbs_it = used.begin();
   V_BillboardSet::iterator bbs_end = used.end();
   for ( ; bbs_it != bbs_end; ++bbs_it )
   {
     (*bbs_it)->_updateRenderQueue( queue );
-  }
+  }*/
 }
 
 } // namespace ogre_tools
