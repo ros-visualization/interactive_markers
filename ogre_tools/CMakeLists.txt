@@ -13,6 +13,10 @@ find_package(wxWidgets REQUIRED)
 include(${wxWidgets_USE_FILE})
 include_directories( ${wxWidgets_INCLUDE_DIRS} )
 
+pkg_check_modules(OGRE OGRE)
+include_directories( ${OGRE_INCLUDE_DIRS} )
+link_directories( ${OGRE_LIBRARY_DIRS} )
+
 # We need GTK2 and OpenGL for the wx render window
 pkg_check_modules(GTK2 gtk+-2.0)
 
@@ -56,7 +60,7 @@ rospack_add_library(${PROJECT_NAME} src/ogre_tools/point_cloud.cpp
 			      src/ogre_tools/initialization.cpp
 			      src/ogre_tools/orthographic.cpp
 			      ${SWIG_OUTPUT_CPP_FILE})
-target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} ${GTK2_LIBRARIES} ${OPENGL_gl_LIBRARY})
+target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} ${GTK2_LIBRARIES} ${OPENGL_gl_LIBRARY} ${OGRE_LIBRARIES})
 # swig python needs a shared library named _<modulename>.[so|dll|...]
 # this renames the output file to conform to that by prepending an underscore and removing the "lib" prefix
 set_target_properties(${PROJECT_NAME}
@@ -67,6 +71,7 @@ rospack_add_executable(grid_test src/test/grid_test.cpp)
 target_link_libraries(grid_test ${PROJECT_NAME} ${wxWidgets_LIBRARIES})
 
 rospack_add_executable(stl_to_mesh src/stl_to_mesh/stl_to_mesh.cpp)
+target_link_libraries(stl_to_mesh ${OGRE_LIBRARIES})
 
 rospack_add_gtest(utest test/utest.cpp)
 target_link_libraries(utest ${PROJECT_NAME})

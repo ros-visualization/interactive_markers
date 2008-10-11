@@ -7,8 +7,8 @@
     <author>Josh Faust</author>
     <license>BSD</license>
     <url>http://pr.willowgarage.com/wiki/ROS</url>
-    <depend package="ogre"/>
     <depend package="wxswig"/>
+    <depend package="ogre"/>
     <export> 
         <cpp cflags="-I${prefix}/src/" lflags="-Wl,-rpath,${prefix}/lib ${prefix}/lib/_ogre_tools.so"/>
         <python path="${prefix}/lib/"/>

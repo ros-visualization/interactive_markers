@@ -8,48 +8,62 @@ namespace ogre_tools
 {
 void initializeOgre()
 {
-  Ogre::LogManager* log_manager = new Ogre::LogManager();
-  log_manager->createLog( "Ogre.log", false, false, false );
-
-  Ogre::Root* root = new Ogre::Root();
-  root->loadPlugin( "RenderSystem_GL" );
-  root->loadPlugin( "Plugin_OctreeSceneManager" );
-  root->loadPlugin( "Plugin_ParticleFX" );
-
-  // Taken from gazebo
-  Ogre::RenderSystemList *rsList = root->getAvailableRenderers();
-
-  Ogre::RenderSystem* render_system = NULL;
-  Ogre::RenderSystemList::iterator renderIt = rsList->begin();
-  Ogre::RenderSystemList::iterator renderEnd = rsList->end();
-  for ( ; renderIt != renderEnd; ++renderIt )
-  {
-    render_system = *renderIt;
-
-    if ( render_system->getName() == "OpenGL Rendering Subsystem" )
-    {
-      break;
-    }
-  }
-
-  if ( render_system == NULL )
-  {
-    throw std::runtime_error( "Could not find the opengl rendering subsystem!\n" );
-  }
-
-  render_system->setConfigOption("Full Screen","No");
-  render_system->setConfigOption("FSAA","2");
-  render_system->setConfigOption("RTT Preferred Mode", "PBuffer");
-
-  root->setRenderSystem( render_system );
-
   try
   {
-      root->initialise( false );
+    Ogre::LogManager* log_manager = new Ogre::LogManager();
+    log_manager->createLog( "Ogre.log", false, false, false );
+
+    std::string plugin_cfg = "/etc/OGRE/plugins.cfg";
+    bool has_plugin_cfg = false;
+    if ( access( plugin_cfg.c_str(), R_OK ) == 0 )
+    {
+      has_plugin_cfg = true;
+    }
+    else
+    {
+      plugin_cfg = "";
+    }
+
+    Ogre::Root* root = new Ogre::Root( plugin_cfg );
+    if ( !has_plugin_cfg )
+    {
+      root->loadPlugin( "RenderSystem_GL" );
+      root->loadPlugin( "Plugin_OctreeSceneManager" );
+      root->loadPlugin( "Plugin_ParticleFX" );
+    }
+
+    // Taken from gazebo
+    Ogre::RenderSystemList *rsList = root->getAvailableRenderers();
+
+    Ogre::RenderSystem* render_system = NULL;
+    Ogre::RenderSystemList::iterator renderIt = rsList->begin();
+    Ogre::RenderSystemList::iterator renderEnd = rsList->end();
+    for ( ; renderIt != renderEnd; ++renderIt )
+    {
+      render_system = *renderIt;
+
+      if ( render_system->getName() == "OpenGL Rendering Subsystem" )
+      {
+        break;
+      }
+    }
+
+    if ( render_system == NULL )
+    {
+      throw std::runtime_error( "Could not find the opengl rendering subsystem!\n" );
+    }
+
+    render_system->setConfigOption("Full Screen","No");
+    render_system->setConfigOption("FSAA","2");
+    render_system->setConfigOption("RTT Preferred Mode", "PBuffer");
+
+    root->setRenderSystem( render_system );
+
+    root->initialise( false );
   }
   catch ( Ogre::Exception& e )
   {
-      printf( "Failed to initialize Ogre::Root: %s\n", e.what() );
+      printf( "Failed to initialize Ogre: %s\n", e.what() );
       throw;
   }
 }

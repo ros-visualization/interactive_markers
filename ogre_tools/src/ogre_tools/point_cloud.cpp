@@ -251,14 +251,6 @@ void PointCloud::_updateRenderQueue( Ogre::RenderQueue* queue )
   }
 
   bbs->endBillboards();
-
-  // Update the queue
-  /*V_BillboardSet::iterator bbs_it = used.begin();
-  V_BillboardSet::iterator bbs_end = used.end();
-  for ( ; bbs_it != bbs_end; ++bbs_it )
-  {
-    (*bbs_it)->_updateRenderQueue( queue );
-  }*/
 }
 
 } // namespace ogre_tools
