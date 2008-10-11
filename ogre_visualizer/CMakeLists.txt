@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.6)
 include(rosbuild)
+include(FindPkgConfig)
 
 set(ROS_BUILD_TYPE RelWithDebInfo)
 
@@ -11,6 +12,10 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 find_package(wxWidgets REQUIRED)
 include(${wxWidgets_USE_FILE})
 include_directories( ${wxWidgets_INCLUDE_DIRS} )
+
+pkg_check_modules(OGRE OGRE)
+include_directories( ${OGRE_INCLUDE_DIRS} )
+link_directories( ${OGRE_LIBRARY_DIRS} )
 
 include_directories( src/ogre_visualizer )
 
@@ -76,7 +81,7 @@ rospack_add_library(${PROJECT_NAME} src/ogre_visualizer/visualization_panel.cpp
  				   												 src/ogre_visualizer/properties/property.cpp
  				   												 src/ogre_visualizer/properties/property_manager.cpp
  				   												 ${SWIG_OUTPUT_CPP_FILE})
-target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} boost_signals)
+target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} boost_signals ${OGRE_LIBRARIES})
 # swig python needs a shared library named _<modulename>.[so|dll|...]
 # this renames the output file to conform to that by prepending an underscore and removing the "lib" prefix
 set_target_properties(${PROJECT_NAME}
