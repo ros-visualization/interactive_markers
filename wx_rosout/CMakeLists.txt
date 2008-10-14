@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 2.6)
 include(rosbuild)
+
+set(ROS_BUILD_TYPE Debug)
+
 rospack(wx_rosout)
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
@@ -31,6 +34,7 @@ add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE}
 # shared library
 rospack_add_library(${PROJECT_NAME} src/wx_rosout/rosout_generated.cpp 
 				  src/wx_rosout/rosout_panel.cpp
+				  src/wx_rosout/rosout_list_control.cpp
 				  src/wx_rosout/rosout_setup_dialog.cpp
 				  ${SWIG_OUTPUT_CPP_FILE})
 target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES})

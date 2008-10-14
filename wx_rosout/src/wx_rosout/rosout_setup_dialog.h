@@ -40,11 +40,15 @@ namespace ros
 class node;
 }
 
+namespace wx_rosout
+{
+
 class RosoutSetupDialog : public RosoutSetupDialogBase
 {
 public:
-  RosoutSetupDialog( wxWindow* parent, ros::node* node, const std::string& topic );
+  RosoutSetupDialog( wxWindow* parent, ros::node* node, const std::string& topic, uint32_t buffer_size );
 	std::string getTopic();
+	uint32_t getBufferSize();
 
 protected:
   void onCancel( wxCommandEvent& event );
@@ -54,5 +58,7 @@ protected:
   ///ROS node
   ros::node* ros_node_;
 };
+
+} // namespace wx_rosout
 
 #endif // WX_ROSOUT_ROSOUT_SETUP_DIALOG

@@ -33,6 +33,8 @@
 
 #include "ros/node.h"
 
+using namespace wx_rosout;
+
 ///Puts the RoserrPanel into a window
 class MyFrame: public wxFrame
 {

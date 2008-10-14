@@ -48,6 +48,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include <rosthread/mutex.h>
 
 #include <boost/function.hpp>
@@ -64,11 +65,8 @@ class wxTimerEvent;
 class wxAuiNotebook;
 class wxRichTextCtrl;
 
-class LogPage;
-class NodePage;
-
-typedef std::vector<LogPage*> V_LogPage;
-typedef std::vector<NodePage*> V_NodePage;
+namespace wx_rosout
+{
 
 /**
  * \class RosoutPanel
@@ -103,38 +101,20 @@ public:
   void clear();
 
   /**
-   * \brief Mostly for internal use.  Creates a page in our choicebook for a node.
-   * @param name The name of the page.  If a page of this name already exists, it will return the pre-existing one.
-   * @return If no page of the same name existed, a new page.  Otherwise, the pre-existing page.
+   * \brief Set the number of messages to display before we start throwing away old ones
+   * @param size The number of messages
    */
-	NodePage* createNodePage( const std::string& name );
-	/**
-	 * \brief Mostly for internal use.  Creates the default log pages (All, Fatal, Error, Warning, Debug, Info)
-	 * @param node_page The node page to create the log pages under
-	 */
-	void createDefaultLogPages( NodePage* node_page );
-	/**
-	 * \brief Mostly for internal use.  Creates a log page.
-	 * @param node_page The node page to create the log page under
-	 * @param filter A flags-word for which types of messages will appear in this log page.  Flags should be ored together from the flags available in rostools::Log
-	 * @param name Name of this log page
-	 * @return The new log page
-	 */
-	LogPage* createLogPage( NodePage* node_page, uint32_t filter, const std::string& name );
+  void setBufferSize( uint32_t size );
 
 protected:
-  /**
-   * \brief (wx callback) Called when the "Enable" checkbox is toggled
-   */
-  virtual void onEnable( wxCommandEvent& event );
   /**
    * \brief (wx callback) Called when the "Setup" button is pressed
    */
   virtual void onSetup( wxCommandEvent& event );
   /**
-   * \brief (wx callback) Called when the "Pause" button is toggled
+   * \brief (wx callback) Called when the "Pause" button is pressed
    */
-  virtual void onPauseToggled( wxCommandEvent& event );
+  virtual void onPause( wxCommandEvent& event );
   /**
    * \brief (wx callback) Called when the "Clear" button is pressed
    */
@@ -143,6 +123,8 @@ protected:
    * \brief (wx callback) Called every 100ms so we can process new messages
    */
   void onProcessTimer( wxTimerEvent& evt );
+
+  virtual void onFilterText( wxCommandEvent& event );
 
   /**
    * \brief subscribe to our topic
@@ -153,16 +135,6 @@ protected:
    */
   void unsubscribe();
 
-  /**
-   * \brief Calls a callback for every log page
-   * @param f The callback
-   */
-  void forEachLogPage( boost::function<void (NodePage* node_page, LogPage* log_page)> f );
-
-  /**
-   * \brief Creates the default node and log pages
-   */
-  void createDefaultPages();
   /**
    * \brief (ros callback) Called when there is a new message waiting
    */
@@ -176,6 +148,50 @@ protected:
    * @param message The message to process
    */
   void processMessage( const rostools::Log& message );
+  /**
+   * \brief Add a message to the table
+   * @param message The message
+   * @param id The unique id of the message
+   */
+  void addMessageToTable( const rostools::Log& message, uint32_t id );
+
+  /**
+   * \brief Filter a string based on our current filter
+   * @param str The string to match against
+   * @return True if the string matches, false otherwise
+   */
+  bool filter( const std::string& str ) const;
+  typedef std::vector<std::string> V_string;
+  /**
+   * \brief Filter a vector of strings based on our current filter
+   * @param strs The strings to match against
+   * @return True of any string matches, false otherwise
+   */
+  bool filter( const V_string& strs ) const;
+  /**
+   * \brief Filter a message based on our current filter
+   * @param id The id of the message to filter
+   * @return True of anything in the message matches, false otherwise
+   */
+  bool filter( uint32_t id ) const;
+  /**
+   * \brief Re-filter all messages
+   * @param old_filter The previous filter -- used for optimization in the case where the filter is growing in length
+   */
+  void refilter( const std::string& old_filter );
+
+  /**
+   * \brief Get a message by index in our ordered message list.  Used by the list control.
+   * @param index Index of the message to return
+   * @return The message
+   */
+  const rostools::Log& getMessageByIndex( uint32_t index ) const;
+
+  /**
+   * \brief Remove The oldest message
+   */
+  void popMessage();
+
 
   bool enabled_;                                            ///< Are we enabled?
   std::string topic_;                                       ///< The topic we're listening on (or will listen on once we're enabled)
@@ -187,11 +203,19 @@ protected:
   V_Log message_queue_;                                     ///< Queue of messages we've received since the last time processMessages() was called
   ros::thread::mutex queue_mutex_;                          ///< Mutex for locking the message queue
 
-  V_NodePage node_pages_;                                   ///< List of node pages in the order they were added
-  typedef std::map<std::string, NodePage*> M_NameToNodePage;
-  M_NameToNodePage node_pages_by_name_;                     ///< Map of name to node page
-
   wxTimer* process_timer_;                                  ///< Timer used to periodically process messages
+
+  uint32_t message_id_counter_;                             ///< Counter for generating unique ids for messages
+  typedef std::map<uint32_t, rostools::Log> M_IdToMessage;
+  M_IdToMessage messages_;                                  ///< Map of id->message
+  std::string filter_;                                      ///< String to filter what's displayed in the list by
+
+  typedef std::vector<uint32_t> V_u32;
+  V_u32 ordered_messages_;                                  ///< Already-filtered messages that are being displayed in the list
+
+  uint32_t max_messages_;                                   ///< Max number of messages to keep around.  When we hit this limit, we start throwing away the oldest messages
 };
+
+} // namespace wx_rosout
 
 #endif // WX_ROSOUT_ROSOUT_PANEL
