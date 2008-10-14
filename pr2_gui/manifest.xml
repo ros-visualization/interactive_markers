@@ -12,6 +12,9 @@
     <depend package="ogre_visualizer"/>
     <depend package="ogre_tools"/>
     <depend package="runtime_monitor"/>
+    <depend package="rospy"/>
+    <depend package="rostools"/>
+    <depend package="std_srvs"/>
     
     <sysdepend os="ubuntu" version="7.04-feisty" package="libwxgtk2.8-dev"/>
     <sysdepend os="ubuntu" version="8.04-hardy" package="libwxgtk2.8-dev"/>

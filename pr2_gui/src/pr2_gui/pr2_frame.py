@@ -35,11 +35,13 @@ rostools.update_path('pr2_gui')
 
 import wx
 import wx.aui
+import wx.py.shell
 import wx_camera_panel
 import wx_rosout
 import ogre_tools
 import visualizer_panel
 import runtime_monitor
+import reset
 from runtime_monitor.monitor_panel import *
 
 import rospy
@@ -85,9 +87,16 @@ class PR2Frame(wx.Frame):
         self._monitor_panel = MonitorPanel(self)
         self._monitor_panel.set_new_errors_callback(self.on_monitor_errors_received)
         
+        self._interpreter = wx.py.shell.Shell(self)
+        
+        self._reset_panel = reset.ResetPanel(self)
+        
         self._aui_manager.AddPane(self._visualizer_panel, wx.aui.AuiPaneInfo().CenterPane().Center().Name('3dvis').Caption('3D Visualization'), '3D Visualization')
-        self._aui_manager.AddPane(self._rosout_panel, wx.aui.AuiPaneInfo().BottomDockable().Bottom().Name('rosout').Caption('Rosout'), 'Rosout')
-        self._aui_manager.AddPane(self._monitor_panel, wx.aui.AuiPaneInfo().BottomDockable().Bottom().BestSize(wx.Size(500,600)).Name('runtime_monitor').Caption('Runtime Monitor'), 'Runtime Monitor')
+        self._aui_manager.AddPane(self._monitor_panel, wx.aui.AuiPaneInfo().BottomDockable().Bottom().Hide().BestSize(wx.Size(700,600)).Name('runtime_monitor').Caption('Runtime Monitor'), 'Runtime Monitor')
+        self._aui_manager.AddPane(self._interpreter, wx.aui.AuiPaneInfo().BottomDockable().Bottom().Name('interpreter').Caption('Python Interpreter'), 'Python Interpreter')
+        
+        self._aui_manager.AddPane(self._rosout_panel, wx.aui.AuiPaneInfo().BottomDockable().Bottom().Layer(1).BestSize(wx.Size(700, 200)).Name('rosout').Caption('Rosout'), 'Rosout')
+        self._aui_manager.AddPane(self._reset_panel, wx.aui.AuiPaneInfo().BottomDockable().Bottom().Layer(1).BestSize(wx.Size(140,100)).Fixed().Name('reset').Caption('Reset'), 'Reset')
         
         self.add_camera_pane("forearm_right", False)
         self.add_camera_pane("forearm_left", False)
