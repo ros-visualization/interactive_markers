@@ -264,7 +264,10 @@ void MarkerVisualizer::setCommonValues( const std_msgs::VisualizationMarker& mes
   //printf( "pre transform (%s to %s) yaw: %f, pitch: %f, roll: %f\n", frame_id.c_str(), target_frame_.c_str(), pose.yaw, pose.pitch, pose.roll );
   try
   {
-    pose = tf_client_->transformPose( target_frame_, pose );
+    if ( frame_id != target_frame_ )
+    {
+      pose = tf_client_->transformPose( target_frame_, pose );
+    }
   }
   catch(libTF::Exception& e)
   {
