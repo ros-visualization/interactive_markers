@@ -1,8 +1,0 @@
-<!-- This is a test script to launch the irrlicht demo code /-->
-<launch>
-  <group name="wg">
-    <node pkg="irrlicht_viewer" type="viewer" args="" respawn="false" />
-    <node pkg="irrlicht_viewer" type="clouder" args="" respawn="false" />
-  </group>
-</launch>
-
