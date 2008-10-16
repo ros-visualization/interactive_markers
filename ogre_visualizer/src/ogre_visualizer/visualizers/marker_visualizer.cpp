@@ -279,7 +279,8 @@ void MarkerVisualizer::setCommonValues( const std_msgs::VisualizationMarker& mes
 
   Ogre::Matrix3 orientation;
   //printf( "post transform yaw: %f, pitch: %f, roll: %f\n", pose.yaw, pose.pitch, pose.roll );
-  orientation.FromEulerAnglesYXZ( Ogre::Radian( pose.yaw ), Ogre::Radian( pose.pitch ), Ogre::Radian( pose.roll ) );
+  //  orientation.FromEulerAnglesYXZ( Ogre::Radian( -pose.yaw ), Ogre::Radian( pose.pitch ), Ogre::Radian( pose.roll ) );
+  orientation.FromEulerAnglesZXY( Ogre::Radian( pose.roll ), Ogre::Radian( pose.pitch ), Ogre::Radian( -pose.yaw ) );
   //Ogre::Matrix3 orientation( ogreMatrixFromRobotEulers( pose.yaw, pose.pitch, pose.roll ) );
   Ogre::Vector3 scale( message.xScale, message.yScale, message.zScale );
   scaleRobotToOgre( scale );
