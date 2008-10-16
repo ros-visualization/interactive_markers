@@ -52,9 +52,9 @@ PropertyManager::~PropertyManager()
   properties_.clear();
 }
 
-CategoryProperty* PropertyManager::createCategory(const std::string& name, CategoryProperty* parent)
+CategoryProperty* PropertyManager::createCategory(const std::string& name, CategoryProperty* parent, void* user_data)
 {
-  CategoryProperty* category = createProperty<CategoryProperty>(name, "", CategoryProperty::Getter(), CategoryProperty::Setter(), parent, NULL);
+  CategoryProperty* category = createProperty<CategoryProperty>(name, "", CategoryProperty::Getter(), CategoryProperty::Setter(), parent, user_data);
   category->setSave( false );
 
   return category;
@@ -62,6 +62,11 @@ CategoryProperty* PropertyManager::createCategory(const std::string& name, Categ
 
 void PropertyManager::deleteProperty( PropertyBase* property )
 {
+  if ( !property )
+  {
+    return;
+  }
+
   deleteProperty( property->getName(), property->getPrefix() );
 }
 

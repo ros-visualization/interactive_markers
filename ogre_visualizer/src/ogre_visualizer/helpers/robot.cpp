@@ -29,6 +29,8 @@
 
 #include "robot.h"
 #include "common.h"
+#include "properties/property.h"
+#include "properties/property_manager.h"
 
 #include "ogre_tools/object.h"
 #include "ogre_tools/super_ellipsoid.h"
@@ -38,6 +40,8 @@
 
 #include <Ogre.h>
 
+#include <rosconsole/rosconsole.h>
+
 namespace ogre_vis
 {
 
@@ -45,6 +49,8 @@ Robot::Robot( Ogre::SceneManager* scene_manager )
 : ogre_tools::Object( scene_manager )
 , visual_visible_( true )
 , collision_visible_( false )
+, property_manager_( NULL )
+, parent_property_( NULL )
 , user_data_( NULL )
 {
   root_visual_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
@@ -138,6 +144,11 @@ void Robot::clear()
     }
 
     delete info.collision_object_;
+  }
+
+  if ( property_manager_ )
+  {
+    property_manager_->deleteByUserData( this );
   }
 
   links_.clear();
@@ -284,6 +295,52 @@ void Robot::createVisualForLink( ogre_vis::Robot::LinkInfo& info, robot_desc::UR
   }
 }
 
+void Robot::setPropertyManager( PropertyManager* property_manager, CategoryProperty* parent )
+{
+  ROS_ASSERT( property_manager );
+  ROS_ASSERT( parent );
+
+  property_manager_ = property_manager;
+  parent_property_ = parent;
+
+  links_category_ = property_manager_->createCategory( "Links", parent_property_ );
+
+  if ( !links_.empty() )
+  {
+    M_NameToLinkInfo::iterator link_it = links_.begin();
+    M_NameToLinkInfo::iterator link_end = links_.end();
+    for ( ; link_it != link_end; ++link_it )
+    {
+      LinkInfo& info = link_it->second;
+
+      createPropertiesForLink( info );
+    }
+  }
+}
+
+void Robot::createPropertiesForLink( LinkInfo& info )
+{
+  ROS_ASSERT( property_manager_ );
+
+  property_manager_->deleteProperty( info.position_property_ );
+  property_manager_->deleteProperty( info.orientation_property_ );
+
+  CategoryProperty* cat = property_manager_->createCategory( info.name_, links_category_, this );
+
+  std::stringstream ss;
+  static int count = 0;
+  ss << "Link " << info.name_ << count++;
+  info.position_property_ = property_manager_->createProperty<Vector3Property>( "Position", ss.str(), boost::bind( &Robot::getPositionForLinkInRobotFrame, this, info.name_ ),
+                                                                                Vector3Property::Setter(), cat, this );
+  info.position_property_->setSave( false );
+
+  info.orientation_property_ = property_manager_->createProperty<QuaternionProperty>( "Orientation", ss.str(), boost::bind( &Robot::getOrientationForLinkInRobotFrame, this, info.name_ ),
+                                                                                      QuaternionProperty::Setter(), cat, this );
+  info.orientation_property_->setSave( false );
+
+  property_manager_->getPropertyGrid()->Collapse( links_category_->getPGProperty() );
+}
+
 void Robot::load( robot_desc::URDF* urdf, bool visual, bool collision )
 {
   clear();
@@ -311,6 +368,11 @@ void Robot::load( robot_desc::URDF* urdf, bool visual, bool collision )
       createCollisionForLink( info, link );
     }
 
+    if ( property_manager_ )
+    {
+      createPropertiesForLink( info );
+    }
+
     links_.insert( std::make_pair( info.name_, info ) );
   }
 
@@ -318,9 +380,42 @@ void Robot::load( robot_desc::URDF* urdf, bool visual, bool collision )
   setCollisionVisible(isCollisionVisible());
 }
 
-void setTransformsOnLink( const Robot::LinkInfo& info, const Ogre::Vector3& visual_position, const Ogre::Quaternion& visual_orientation,
+Ogre::Vector3 Robot::getPositionForLinkInRobotFrame( const std::string& name )
+{
+  M_NameToLinkInfo::iterator it = links_.find( name );
+  if ( it == links_.end() )
+  {
+    ROS_WARN( "Link %s does not exist\n", name.c_str() );
+    return Ogre::Vector3::ZERO;
+  }
+
+  Ogre::Vector3 pos( it->second.position_ );
+  ogreToRobot( pos );
+
+  return pos;
+}
+
+Ogre::Quaternion Robot::getOrientationForLinkInRobotFrame( const std::string& name )
+{
+  M_NameToLinkInfo::iterator it = links_.find( name );
+  if ( it == links_.end() )
+  {
+    ROS_WARN( "Link %s does not exist\n", name.c_str() );
+    return Ogre::Quaternion::IDENTITY;
+  }
+
+  Ogre::Quaternion orient( it->second.orientation_ );
+  ogreToRobot( orient );
+
+  return orient;
+}
+
+void setTransformsOnLink( Robot::LinkInfo& info, const Ogre::Vector3& visual_position, const Ogre::Quaternion& visual_orientation,
                           const Ogre::Vector3& collision_position, const Ogre::Quaternion& collision_orientation, bool applyOffsetTransforms )
 {
+  info.position_ = visual_position;
+  info.orientation_ = visual_orientation;
+
   if ( info.visual_node_ )
   {
     info.visual_node_->setPosition( visual_position );
@@ -346,6 +441,16 @@ void setTransformsOnLink( const Robot::LinkInfo& info, const Ogre::Vector3& visu
     info.collision_node_->setPosition( collision_position );
     info.collision_node_->setOrientation( collision_orientation );
   }
+
+  if ( info.position_property_ )
+  {
+    info.position_property_->changed();
+  }
+
+  if ( info.orientation_property_ )
+  {
+    info.orientation_property_->changed();
+  }
 }
 
 void Robot::update( rosTFClient* tf_client, const std::string& target_frame )
@@ -355,7 +460,7 @@ void Robot::update( rosTFClient* tf_client, const std::string& target_frame )
   for ( ; link_it != link_end; ++link_it )
   {
     const std::string& name = link_it->first;
-    const LinkInfo& info = link_it->second;
+    LinkInfo& info = link_it->second;
 
     libTF::TFPose pose = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0, name };
 
@@ -387,7 +492,7 @@ void Robot::update( planning_models::KinematicModel* kinematic_model, const std:
   for ( ; link_it != link_end; ++link_it )
   {
     const std::string& name = link_it->first;
-    const LinkInfo& info = link_it->second;
+    LinkInfo& info = link_it->second;
 
     planning_models::KinematicModel::Link* link = kinematic_model->getLink( name );
 

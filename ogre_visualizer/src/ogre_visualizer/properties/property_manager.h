@@ -81,7 +81,7 @@ public:
     (void)inserted;
 
     property->writeToGrid();
-    property->getPGProperty()->SetClientData( property );
+    property->setPGClientData();
 
     property->addChangedListener( boost::bind( &PropertyManager::propertySet, this, _1 ) );
 
@@ -96,7 +96,7 @@ public:
    * @param parent Parent category (may be NULL)
    * @return The new category property
    */
-  CategoryProperty* createCategory(const std::string& name, CategoryProperty* parent);
+  CategoryProperty* createCategory(const std::string& name, CategoryProperty* parent, void* user_data = NULL);
 
   /**
    * \brief Delete a property
@@ -142,6 +142,12 @@ public:
    * @param config The config to load from
    */
   void load( wxConfigBase* config );
+
+  /**
+   * \brief Get the property grid used by this manager
+   * @return A pointer to the property grid
+   */
+  wxPropertyGrid* getPropertyGrid() { return grid_; }
 
 protected:
   wxPropertyGrid* grid_;        //< The property grid associated with our properties

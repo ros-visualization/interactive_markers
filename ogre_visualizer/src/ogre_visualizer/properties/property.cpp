@@ -46,6 +46,11 @@ void BoolProperty::writeToGrid()
   {
     property_ = grid_->AppendIn( parent_, new wxBoolProperty( name_, prefix_ + name_, get() ) );
     property_->SetAttribute( wxPG_BOOL_USE_CHECKBOX, true );
+
+    if ( !hasSetter() )
+    {
+      grid_->DisableProperty( property_ );
+    }
   }
   else
   {
@@ -87,6 +92,11 @@ void IntProperty::writeToGrid()
   if ( !property_ )
   {
     property_ = grid_->AppendIn( parent_, new wxIntProperty( name_, prefix_ + name_, get() ) );
+
+    if ( !hasSetter() )
+    {
+      grid_->DisableProperty( property_ );
+    }
   }
   else
   {
@@ -129,6 +139,11 @@ void FloatProperty::writeToGrid()
   if ( !property_ )
   {
     property_ = grid_->AppendIn( parent_, new wxFloatProperty( name_, prefix_ + name_, get() ) );
+
+    if ( !hasSetter() )
+    {
+      grid_->DisableProperty( property_ );
+    }
   }
   else
   {
@@ -160,6 +175,11 @@ void StringProperty::writeToGrid()
   if ( !property_ )
   {
     property_ = grid_->AppendIn( parent_, new wxStringProperty( name_, prefix_ + name_, wxString::FromAscii( get().c_str() ) ) );
+
+    if ( !hasSetter() )
+    {
+      grid_->DisableProperty( property_ );
+    }
   }
   else
   {
@@ -191,6 +211,11 @@ void ROSTopicStringProperty::writeToGrid()
   if ( !property_ )
   {
     property_ = grid_->AppendIn( parent_, new ROSTopicProperty( ros::node::instance(), name_, prefix_ + name_, wxString::FromAscii( get().c_str() ) ) );
+
+    if ( !hasSetter() )
+    {
+      grid_->DisableProperty( property_ );
+    }
   }
   else
   {
@@ -204,6 +229,11 @@ void ColorProperty::writeToGrid()
   {
     Color c = get();
     property_ = grid_->AppendIn( parent_, new wxColourProperty( name_, prefix_ + name_, wxColour( c.r_ * 255, c.g_ * 255, c.b_ * 255 ) ) );
+
+    if ( !hasSetter() )
+    {
+      grid_->DisableProperty( property_ );
+    }
   }
   else
   {
@@ -255,6 +285,11 @@ void EnumProperty::writeToGrid()
   if ( !property_ )
   {
     property_ = grid_->AppendIn( parent_, new wxEnumProperty( name_, prefix_ + name_ ) );
+
+    if ( !hasSetter() )
+    {
+      grid_->DisableProperty( property_ );
+    }
   }
   else
   {
@@ -294,6 +329,142 @@ void CategoryProperty::writeToGrid()
       property_ = grid_->Append( new wxPropertyCategory( name_ ) );
     }
   }
+}
+
+void Vector3Property::writeToGrid()
+{
+  if ( !x_ )
+  {
+    Ogre::Vector3 v = get();
+
+    wxString composed_name = name_ + wxT("Composed");
+    wxPGProperty* composed_parent = grid_->AppendIn( parent_, new wxStringProperty( name_, prefix_ + composed_name, wxT("<composed>")) );
+    composed_parent->SetClientData( this );
+
+    x_ = grid_->AppendIn( composed_parent, new wxFloatProperty( wxT("X"), prefix_ + name_ + wxT("X"), v.x ) );
+    y_ = grid_->AppendIn( composed_parent, new wxFloatProperty( wxT("Y"), prefix_ + name_ + wxT("Y"), v.y ) );
+    z_ = grid_->AppendIn( composed_parent, new wxFloatProperty( wxT("Z"), prefix_ + name_ + wxT("Z"), v.z ) );
+
+    if ( !hasSetter() )
+    {
+      grid_->DisableProperty( composed_parent );
+      grid_->DisableProperty( x_ );
+      grid_->DisableProperty( y_ );
+      grid_->DisableProperty( z_ );
+    }
+
+    grid_->Collapse( composed_parent );
+  }
+  else
+  {
+    Ogre::Vector3 v = get();
+    grid_->SetPropertyValue(x_, v.x);
+    grid_->SetPropertyValue(y_, v.y);
+    grid_->SetPropertyValue(z_, v.z);
+  }
+}
+
+void Vector3Property::readFromGrid()
+{
+  set( Ogre::Vector3( x_->GetValue().GetDouble(), y_->GetValue().GetDouble(), z_->GetValue().GetDouble() ) );
+}
+
+void Vector3Property::saveToConfig( wxConfigBase* config )
+{
+  Ogre::Vector3 v = get();
+
+  config->Write( prefix_ + name_ + wxT("X"), v.x );
+  config->Write( prefix_ + name_ + wxT("Y"), v.y );
+  config->Write( prefix_ + name_ + wxT("Z"), v.z );
+}
+
+void Vector3Property::loadFromConfig( wxConfigBase* config )
+{
+  Ogre::Vector3 v = get();
+  double x, y, z;
+  config->Read( prefix_ + name_ + wxT("X"), &x, v.x );
+  config->Read( prefix_ + name_ + wxT("Y"), &y, v.y );
+  config->Read( prefix_ + name_ + wxT("Z"), &z, v.z );
+
+  set( Ogre::Vector3( x, y, z ) );
+}
+
+void Vector3Property::setPGClientData()
+{
+  x_->SetClientData( this );
+  y_->SetClientData( this );
+  z_->SetClientData( this );
+}
+
+void QuaternionProperty::writeToGrid()
+{
+  if ( !x_ )
+  {
+    Ogre::Quaternion q = get();
+
+    wxString composed_name = name_ + wxT("Composed");
+    wxPGProperty* composed_parent = grid_->AppendIn( parent_, new wxStringProperty( name_, prefix_ + composed_name, wxT("<composed>")) );
+    composed_parent->SetClientData( this );
+
+    x_ = grid_->AppendIn( composed_parent, new wxFloatProperty( wxT("X"), prefix_ + name_ + wxT("X"), q.x ) );
+    y_ = grid_->AppendIn( composed_parent, new wxFloatProperty( wxT("Y"), prefix_ + name_ + wxT("Y"), q.y ) );
+    z_ = grid_->AppendIn( composed_parent, new wxFloatProperty( wxT("Z"), prefix_ + name_ + wxT("Z"), q.z ) );
+    w_ = grid_->AppendIn( composed_parent, new wxFloatProperty( wxT("W"), prefix_ + name_ + wxT("W"), q.z ) );
+
+    if ( !hasSetter() )
+    {
+      grid_->DisableProperty( composed_parent );
+      grid_->DisableProperty( x_ );
+      grid_->DisableProperty( y_ );
+      grid_->DisableProperty( z_ );
+      grid_->DisableProperty( w_ );
+    }
+
+    grid_->Collapse( composed_parent );
+  }
+  else
+  {
+    Ogre::Quaternion q = get();
+    grid_->SetPropertyValue(x_, q.x);
+    grid_->SetPropertyValue(y_, q.y);
+    grid_->SetPropertyValue(z_, q.z);
+    grid_->SetPropertyValue(w_, q.w);
+  }
+}
+
+void QuaternionProperty::readFromGrid()
+{
+  set( Ogre::Quaternion( x_->GetValue().GetDouble(), y_->GetValue().GetDouble(), z_->GetValue().GetDouble(), w_->GetValue().GetDouble() ) );
+}
+
+void QuaternionProperty::saveToConfig( wxConfigBase* config )
+{
+  Ogre::Quaternion q = get();
+
+  config->Write( prefix_ + name_ + wxT("X"), q.x );
+  config->Write( prefix_ + name_ + wxT("Y"), q.y );
+  config->Write( prefix_ + name_ + wxT("Z"), q.z );
+  config->Write( prefix_ + name_ + wxT("W"), q.w );
+}
+
+void QuaternionProperty::loadFromConfig( wxConfigBase* config )
+{
+  Ogre::Quaternion q = get();
+  double x, y, z, w;
+  config->Read( prefix_ + name_ + wxT("X"), &x, q.x );
+  config->Read( prefix_ + name_ + wxT("Y"), &y, q.y );
+  config->Read( prefix_ + name_ + wxT("Z"), &z, q.z );
+  config->Read( prefix_ + name_ + wxT("W"), &w, q.w );
+
+  set( Ogre::Quaternion( x, y, z, w ) );
+}
+
+void QuaternionProperty::setPGClientData()
+{
+  x_->SetClientData( this );
+  y_->SetClientData( this );
+  z_->SetClientData( this );
+  w_->SetClientData( this );
 }
 
 }

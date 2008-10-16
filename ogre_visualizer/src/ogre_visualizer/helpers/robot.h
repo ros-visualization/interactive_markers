@@ -71,6 +71,11 @@ class rosTFClient;
 namespace ogre_vis
 {
 
+class PropertyManager;
+class CategoryProperty;
+class Vector3Property;
+class QuaternionProperty;
+
 /**
  * \class Robot
  *
@@ -82,6 +87,8 @@ class Robot : public ogre_tools::Object
 public:
   Robot( Ogre::SceneManager* scene_manager );
   ~Robot();
+
+  void setPropertyManager( PropertyManager* property_manager, CategoryProperty* parent );
 
   /**
    * \brief Loads meshes/primitives from a robot description.  Calls clear() before loading.
@@ -160,6 +167,8 @@ public:
     , collision_object_( NULL )
     , visual_node_( NULL )
     , collision_node_( NULL )
+    , position_property_( NULL )
+    , orientation_property_( NULL )
     {}
 
     std::string name_;                          ///< Name of this link
@@ -175,12 +184,22 @@ public:
 
     Ogre::Vector3 collision_offset_position_;   ///< Collision origin offset position
     Ogre::Quaternion collision_offset_orientation_; ///< Collision origin offset orientation
+
+    Ogre::Vector3 position_;
+    Ogre::Quaternion orientation_;
+
+    Vector3Property* position_property_;
+    QuaternionProperty* orientation_property_;
   };
 
 protected:
 
   void createVisualForLink( LinkInfo& info, robot_desc::URDF::Link* link );
   void createCollisionForLink( LinkInfo& info, robot_desc::URDF::Link* link );
+  void createPropertiesForLink( LinkInfo& info );
+
+  Ogre::Vector3 getPositionForLinkInRobotFrame( const std::string& name );
+  Ogre::Quaternion getOrientationForLinkInRobotFrame( const std::string& name );
 
 
   typedef std::map< std::string, LinkInfo > M_NameToLinkInfo;
@@ -191,6 +210,10 @@ protected:
 
   bool visual_visible_;                         ///< Should we show the visual representation?
   bool collision_visible_;                      ///< Should we show the collision representation?
+
+  PropertyManager* property_manager_;
+  CategoryProperty* parent_property_;
+  CategoryProperty* links_category_;
 
   Ogre::Any user_data_;
 };

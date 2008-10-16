@@ -37,6 +37,9 @@
 #include <wx/propgrid/propgrid.h>
 #include <wx/string.h>
 
+#include <OgreVector3.h>
+#include <OgreQuaternion.h>
+
 #include "helpers/color.h"
 
 class wxConfigBase;
@@ -173,9 +176,21 @@ public:
   virtual std::string getPrefix() { return (const char*)prefix_.fn_str(); }
 
   /**
-   * \brief Get the wxPGProperty associated with this property
+   * \brief Set the correct user data on this property's wxPGProperty(ies)
    */
-  virtual wxPGProperty* getPGProperty() { return property_; }
+  virtual void setPGClientData()
+  {
+    property_->SetClientData( this );
+  }
+
+  /**
+   * \brief Get the wxPGProperty associated with this property.
+   * @return The wxPGProperty
+   */
+  virtual wxPGProperty* getPGProperty()
+  {
+    return property_;
+  }
 
   /**
    * \brief Get the user data associated with this property
@@ -320,6 +335,54 @@ public:
   virtual void readFromGrid() {}
   virtual void saveToConfig( wxConfigBase* config ) {}
   virtual void loadFromConfig( wxConfigBase* config ) {}
+};
+
+class Vector3Property : public Property<Ogre::Vector3>
+{
+public:
+  Vector3Property( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, wxPGProperty* parent, const Getter& getter, const Setter& setter )
+  : Property<Ogre::Vector3>( name, prefix, grid, parent, getter, setter )
+  , x_( NULL )
+  , y_( NULL )
+  , z_( NULL )
+  {
+  }
+
+  virtual void writeToGrid();
+  virtual void readFromGrid();
+  virtual void saveToConfig( wxConfigBase* config );
+  virtual void loadFromConfig( wxConfigBase* config );
+  virtual void setPGClientData();
+
+protected:
+  wxPGProperty* x_;
+  wxPGProperty* y_;
+  wxPGProperty* z_;
+};
+
+class QuaternionProperty : public Property<Ogre::Quaternion>
+{
+public:
+  QuaternionProperty( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, wxPGProperty* parent, const Getter& getter, const Setter& setter )
+  : Property<Ogre::Quaternion>( name, prefix, grid, parent, getter, setter )
+  , x_( NULL )
+  , y_( NULL )
+  , z_( NULL )
+  , w_( NULL )
+  {
+  }
+
+  virtual void writeToGrid();
+  virtual void readFromGrid();
+  virtual void saveToConfig( wxConfigBase* config );
+  virtual void loadFromConfig( wxConfigBase* config );
+  virtual void setPGClientData();
+
+protected:
+  wxPGProperty* x_;
+  wxPGProperty* y_;
+  wxPGProperty* z_;
+  wxPGProperty* w_;
 };
 
 

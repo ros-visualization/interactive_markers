@@ -185,6 +185,8 @@ void RobotModelVisualizer::createProperties()
 
   robot_description_property_ = property_manager_->createProperty<StringProperty>( "Robot Description", property_prefix_, boost::bind( &RobotModelVisualizer::getRobotDescription, this ),
                                                                                    boost::bind( &RobotModelVisualizer::setRobotDescription, this, _1 ), parent_category_, this );
+
+  robot_->setPropertyManager( property_manager_, parent_category_ );
 }
 
 } // namespace ogre_vis

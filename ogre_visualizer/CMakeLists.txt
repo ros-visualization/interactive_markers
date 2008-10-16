@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 2.6)
 include(rosbuild)
 include(FindPkgConfig)
 
-set(ROS_BUILD_TYPE RelWithDebInfo)
+#set(ROS_BUILD_TYPE RelWithDebInfo)
+set(ROS_BUILD_TYPE Debug)
 
 rospack(ogre_visualizer)
 
@@ -61,26 +62,26 @@ add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE}
                             src/ogre_visualizer/visualizers/robot_model_visualizer.h
                             src/ogre_visualizer/helpers/color.h)
 
-rospack_add_library(${PROJECT_NAME} src/ogre_visualizer/visualization_panel.cpp
-                                   src/ogre_visualizer/visualization_manager.cpp
-				   												 src/ogre_visualizer/visualizer_base.cpp
-                                   src/ogre_visualizer/common.cpp
-                                   src/ogre_visualizer/factory.cpp
-                                   src/ogre_visualizer/ros_topic_property.cpp
-                                   src/ogre_visualizer/new_display_dialog.cpp
-                                   src/ogre_visualizer/visualizers/marker_visualizer.cpp
-                                   src/ogre_visualizer/visualizers/axes_visualizer.cpp
-				   												 src/ogre_visualizer/visualizers/grid_visualizer.cpp
-				   												 src/ogre_visualizer/visualizers/point_cloud_visualizer.cpp
-				   												 src/ogre_visualizer/visualizers/laser_scan_visualizer.cpp
-				   												 src/ogre_visualizer/visualizers/robot_model_visualizer.cpp
-				   												 src/ogre_visualizer/visualizers/planning_visualizer.cpp
-				   												 src/ogre_visualizer/visualizers/octree_visualizer.cpp
- 				   												 src/ogre_visualizer/generated/visualization_panel_generated.cpp
- 				   												 src/ogre_visualizer/helpers/robot.cpp
- 				   												 src/ogre_visualizer/properties/property.cpp
- 				   												 src/ogre_visualizer/properties/property_manager.cpp
- 				   												 ${SWIG_OUTPUT_CPP_FILE})
+rospack_add_library(${PROJECT_NAME}  src/ogre_visualizer/properties/property.cpp
+                                     src/ogre_visualizer/properties/property_manager.cpp
+                                     src/ogre_visualizer/visualization_panel.cpp
+                                     src/ogre_visualizer/visualization_manager.cpp
+  				   												 src/ogre_visualizer/visualizer_base.cpp
+                                     src/ogre_visualizer/common.cpp
+                                     src/ogre_visualizer/factory.cpp
+                                     src/ogre_visualizer/ros_topic_property.cpp
+                                     src/ogre_visualizer/new_display_dialog.cpp
+                                     src/ogre_visualizer/visualizers/marker_visualizer.cpp
+                                     src/ogre_visualizer/visualizers/axes_visualizer.cpp
+  				   												 src/ogre_visualizer/visualizers/grid_visualizer.cpp
+  				   												 src/ogre_visualizer/visualizers/point_cloud_visualizer.cpp
+  				   												 src/ogre_visualizer/visualizers/laser_scan_visualizer.cpp
+  				   												 src/ogre_visualizer/visualizers/robot_model_visualizer.cpp
+  				   												 src/ogre_visualizer/visualizers/planning_visualizer.cpp
+  				   												 src/ogre_visualizer/visualizers/octree_visualizer.cpp
+   				   												 src/ogre_visualizer/generated/visualization_panel_generated.cpp
+   				   												 src/ogre_visualizer/helpers/robot.cpp
+ 				   												   ${SWIG_OUTPUT_CPP_FILE})
 target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} boost_signals ${OGRE_LIBRARIES})
 # swig python needs a shared library named _<modulename>.[so|dll|...]
 # this renames the output file to conform to that by prepending an underscore and removing the "lib" prefix

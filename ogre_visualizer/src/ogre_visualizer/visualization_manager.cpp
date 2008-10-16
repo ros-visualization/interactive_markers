@@ -493,7 +493,12 @@ bool VisualizationManager::isDeletionAllowed( VisualizerBase* visualizer )
 {
   VisualizerInfo* info = getVisualizerInfo( visualizer );
 
-  return info->allow_deletion_;
+  if ( info )
+  {
+    return info->allow_deletion_;
+  }
+
+  return false;
 }
 
 void VisualizationManager::getRegisteredTypes( std::vector<std::string>& types )
