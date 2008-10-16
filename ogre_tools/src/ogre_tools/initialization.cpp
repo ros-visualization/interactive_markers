@@ -15,14 +15,11 @@ void initializeOgre()
 
     std::string plugin_cfg = "/etc/OGRE/plugins.cfg";
     bool has_plugin_cfg = false;
-    if ( access( plugin_cfg.c_str(), R_OK ) == 0 )
-    {
-      has_plugin_cfg = true;
-    }
-    else
-    {
-      plugin_cfg = "";
-    }
+#ifdef HAS_INSTALLED_OGRE
+    has_plugin_cfg = true;
+#else
+    plugin_cfg = "";
+#endif
 
     Ogre::Root* root = new Ogre::Root( plugin_cfg );
     if ( !has_plugin_cfg )
