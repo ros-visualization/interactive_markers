@@ -79,6 +79,7 @@ rospack_add_library(${PROJECT_NAME}  src/ogre_visualizer/properties/property.cpp
   				   												 src/ogre_visualizer/visualizers/robot_model_visualizer.cpp
   				   												 src/ogre_visualizer/visualizers/planning_visualizer.cpp
   				   												 src/ogre_visualizer/visualizers/octree_visualizer.cpp
+  				   												 src/ogre_visualizer/visualizers/robot_base2d_pose_visualizer.cpp
    				   												 src/ogre_visualizer/generated/visualization_panel_generated.cpp
    				   												 src/ogre_visualizer/helpers/robot.cpp
  				   												   ${SWIG_OUTPUT_CPP_FILE})

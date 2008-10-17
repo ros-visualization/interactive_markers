@@ -38,6 +38,7 @@
 #include "visualizers/marker_visualizer.h"
 #include "visualizers/octree_visualizer.h"
 #include "visualizers/planning_visualizer.h"
+#include "visualizers/robot_base2d_pose_visualizer.h"
 
 namespace ogre_vis
 {
@@ -52,6 +53,7 @@ void registerFactories(VisualizationManager* manager)
   manager->registerFactory( MarkerVisualizer::getTypeStatic(), new VisualizerFactoryImpl<MarkerVisualizer>() );
   manager->registerFactory( OctreeVisualizer::getTypeStatic(), new VisualizerFactoryImpl<OctreeVisualizer>() );
   manager->registerFactory( PlanningVisualizer::getTypeStatic(), new VisualizerFactoryImpl<PlanningVisualizer>() );
+  manager->registerFactory( RobotBase2DPoseVisualizer::getTypeStatic(), new VisualizerFactoryImpl<RobotBase2DPoseVisualizer>() );
 }
 
 } //namespace ogre_vis

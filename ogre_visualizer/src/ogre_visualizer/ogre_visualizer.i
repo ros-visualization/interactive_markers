@@ -26,6 +26,7 @@
 %include "visualizers/planning_visualizer.i"
 %include "visualizers/point_cloud_visualizer.i"
 %include "visualizers/robot_model_visualizer.i"
+%include "visualizers/robot_base2d_pose_visualizer.i"
 
 %include "helpers/color.i"
 
