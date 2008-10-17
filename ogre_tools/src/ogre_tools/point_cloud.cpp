@@ -240,6 +240,8 @@ void PointCloud::_updateRenderQueue( Ogre::RenderQueue* queue )
       bbs = billboard_sets_[ current_bbs ];
       bbs->beginBillboards( std::min<uint32_t>( point_count_ - i, points_per_bbs_ ) );
 
+      bbs->setVisible( true );
+
       used.push_back( bbs );
     }
 
@@ -256,6 +258,11 @@ void PointCloud::_updateRenderQueue( Ogre::RenderQueue* queue )
   }
 
   bbs->endBillboards();
+
+  for ( uint32_t i = current_bbs + 1; i < billboard_sets_.size(); ++i )
+  {
+    billboard_sets_[i]->setVisible( false );
+  }
 }
 
 } // namespace ogre_tools
