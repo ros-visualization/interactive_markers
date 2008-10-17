@@ -61,13 +61,16 @@ namespace ros
 class node;
 }
 
+namespace tf
+{
+class TransformListener;
+}
+
 class wxTimerEvent;
 class wxTimer;
 class wxPropertyGrid;
 class wxPropertyGridEvent;
 class wxConfigBase;
-
-class rosTFClient;
 
 namespace ogre_vis
 {
@@ -179,7 +182,7 @@ public:
   VisualizerBase* getSelectedVisualizer() { return selected_visualizer_; }
 
   ros::node* getROSNode() { return ros_node_; }
-  rosTFClient* getTFClient() { return tf_client_; }
+  tf::TransformListener* getTFClient() { return tf_; }
   Ogre::SceneManager* getSceneManager() { return scene_manager_; }
 
   void getRegisteredTypes( std::vector<std::string>& types );
@@ -214,7 +217,7 @@ protected:
   wxStopWatch update_stopwatch_;                          ///< Update stopwatch.  Stores how long it's been since the last update
 
   ros::node* ros_node_;                                   ///< Our ros::node
-  rosTFClient* tf_client_;                                ///< Our rosTF client
+  tf::TransformListener* tf_;                             ///< Our rosTF client
 
   struct VisualizerInfo
   {

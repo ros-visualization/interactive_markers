@@ -42,7 +42,7 @@
 
 #include <ros/common.h>
 #include <ros/node.h>
-#include <rosTF/rosTF.h>
+#include <tf/transform_listener.h>
 
 #include <Ogre.h>
 #include <wx/timer.h>
@@ -72,7 +72,7 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
   }
   ROS_ASSERT( ros_node_ );
 
-  tf_client_ = new rosTFClient( *ros_node_ );
+  tf_ = new tf::TransformListener( *ros_node_, true, 10000000000ULL, 1000000000ULL );
 
   scene_manager_ = ogre_root_->createSceneManager( Ogre::ST_GENERIC );
   ray_scene_query_ = scene_manager_->createRayQuery( Ogre::Ray() );
@@ -133,7 +133,7 @@ VisualizationManager::~VisualizationManager()
   scene_manager_->destroyQuery( ray_scene_query_ );
   ogre_root_->destroySceneManager( scene_manager_ );
 
-  delete tf_client_;
+  delete tf_;
 }
 
 VisualizationManager::VisualizerInfo* VisualizationManager::getVisualizerInfo( const VisualizerBase* visualizer )

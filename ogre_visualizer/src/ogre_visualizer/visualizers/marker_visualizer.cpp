@@ -35,7 +35,7 @@
 #include <ogre_tools/super_ellipsoid.h>
 
 #include <ros/node.h>
-#include <rosTF/rosTF.h>
+#include <tf/transform_listener.h>
 
 #include <urdf/URDF.h>
 #include <planning_models/kinematic.h>
@@ -259,29 +259,27 @@ void MarkerVisualizer::setCommonValues( const std_msgs::VisualizationMarker& mes
     frame_id = target_frame_;
   }
 
-  libTF::TFPose pose = { message.x, message.y, message.z,
-                         message.yaw, message.pitch, message.roll, 0, frame_id };
-  //printf( "pre transform (%s to %s) yaw: %f, pitch: %f, roll: %f\n", frame_id.c_str(), target_frame_.c_str(), pose.yaw, pose.pitch, pose.roll );
+  tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( message.yaw, message.pitch, message.roll ), btVector3( message.x, message.y, message.z ) ), ros::Time(0), frame_id );
   try
   {
     if ( frame_id != target_frame_ )
     {
-      pose = tf_client_->transformPose( target_frame_, pose );
+      tf_->transformPose( target_frame_, pose, pose );
     }
   }
-  catch(libTF::Exception& e)
+  catch(tf::TransformException& e)
   {
     ROS_ERROR( "Error transforming marker '%d' from frame '%s' to frame '%s'\n", message.id, frame_id.c_str(), target_frame_.c_str() );
   }
 
-  Ogre::Vector3 position( pose.x, pose.y, pose.z );
+  Ogre::Vector3 position( pose.data_.getOrigin().x(), pose.data_.getOrigin().y(), pose.data_.getOrigin().z() );
   robotToOgre( position );
 
+  btScalar yaw, pitch, roll;
+  pose.data_.getBasis().getEulerZYX( yaw, pitch, roll );
+
   Ogre::Matrix3 orientation;
-  //printf( "post transform yaw: %f, pitch: %f, roll: %f\n", pose.yaw, pose.pitch, pose.roll );
-  //  orientation.FromEulerAnglesYXZ( Ogre::Radian( -pose.yaw ), Ogre::Radian( pose.pitch ), Ogre::Radian( pose.roll ) );
-  orientation.FromEulerAnglesZXY( Ogre::Radian( pose.roll ), Ogre::Radian( pose.pitch ), Ogre::Radian( -pose.yaw ) );
-  //Ogre::Matrix3 orientation( ogreMatrixFromRobotEulers( pose.yaw, pose.pitch, pose.roll ) );
+  orientation.FromEulerAnglesZXY( Ogre::Radian( roll ), Ogre::Radian( pitch ), Ogre::Radian( -yaw) );
   Ogre::Vector3 scale( message.xScale, message.yScale, message.zScale );
   scaleRobotToOgre( scale );
 

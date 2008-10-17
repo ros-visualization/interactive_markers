@@ -62,8 +62,6 @@ namespace planning_models
 class KinematicModel;
 }
 
-class rosTFClient;
-
 namespace ogre_vis
 {
 

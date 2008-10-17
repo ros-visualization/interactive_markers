@@ -67,7 +67,10 @@ namespace planning_models
 class KinematicModel;
 }
 
-class rosTFClient;
+namespace tf
+{
+class TransformListener;
+}
 
 namespace ogre_vis
 {
@@ -106,12 +109,12 @@ public:
   void clear();
 
   /**
-   * \brief Updates positions/orientations from a rosTF client
+   * \brief Updates positions/orientations from a tf listener
    *
    * @param tf_client The rosTF client to load from
    * @param target_frame The frame to transform into
    */
-  void update( rosTFClient* tf_client, const std::string& target_frame );
+  void update( tf::TransformListener* tf, const std::string& target_frame );
 
   /**
    * \brief Updates positions/orientations from a kinematic planning model

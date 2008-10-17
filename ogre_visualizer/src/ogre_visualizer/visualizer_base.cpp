@@ -42,7 +42,7 @@ VisualizerBase::VisualizerBase( const std::string& name, VisualizationManager* m
 , enabled_( false )
 , target_frame_( "base" )
 , ros_node_( manager->getROSNode() )
-, tf_client_( manager->getTFClient() )
+, tf_( manager->getTFClient() )
 , property_prefix_( name_ + "." )
 , property_manager_( NULL )
 , parent_category_( NULL )

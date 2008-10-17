@@ -37,7 +37,7 @@
 #include <ros/time.h>
 #include "ogre_tools/point_cloud.h"
 
-#include <rosTF/rosTF.h>
+#include <tf/transform_listener.h>
 
 #include <Ogre.h>
 #include <wx/wx.h>
@@ -182,21 +182,24 @@ void PointCloudVisualizer::transformCloud()
     message_.header.frame_id = target_frame_;
   }
 
-  libTF::TFPose pose = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0, message_.header.frame_id };
+  tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time(0), message_.header.frame_id );
 
   try
   {
-    pose = tf_client_->transformPose( target_frame_, pose );
+    tf_->transformPose( target_frame_, pose, pose );
   }
-  catch(libTF::Exception& e)
+  catch(tf::TransformException& e)
   {
     ROS_ERROR( "Error transforming point cloud '%s' from frame '%s' to frame '%s'\n", name_.c_str(), message_.header.frame_id.c_str(), target_frame_.c_str() );
   }
 
-  Ogre::Vector3 position( pose.x, pose.y, pose.z );
+  Ogre::Vector3 position( pose.data_.getOrigin().x(), pose.data_.getOrigin().y(), pose.data_.getOrigin().z() );
   robotToOgre( position );
 
-  Ogre::Matrix3 orientation( ogreMatrixFromRobotEulers( pose.yaw, pose.pitch, pose.roll ) );
+  btScalar yaw, pitch, roll;
+  pose.data_.getBasis().getEulerZYX( yaw, pitch, roll );
+
+  Ogre::Matrix3 orientation( ogreMatrixFromRobotEulers( yaw, pitch, roll ) );
   scene_node_->setPosition( position );
   scene_node_->setOrientation( orientation );
 

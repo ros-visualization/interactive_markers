@@ -46,9 +46,13 @@ namespace ros
 class node;
 }
 
+namespace tf
+{
+class TransformListener;
+}
+
 class wxPanel;
 class wxWindow;
-class rosTFClient;
 class wxPropertyGrid;
 class wxPropertyGridEvent;
 class wxPGProperty;
@@ -174,7 +178,7 @@ protected:
   boost::function<void ()> render_unlock_;            ///< Render unlock callback
 
   ros::node* ros_node_;                               ///< ros node
-  rosTFClient* tf_client_;                            ///< rosTF client
+  tf::TransformListener* tf_;                  ///< rosTF client
 
   std::string property_prefix_;                       ///< Prefix to prepend to our properties
 

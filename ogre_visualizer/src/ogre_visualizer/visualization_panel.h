@@ -94,8 +94,6 @@ class wxPropertyGrid;
 class wxPropertyGridEvent;
 class wxConfigBase;
 
-class rosTFClient;
-
 namespace ogre_vis
 {
 

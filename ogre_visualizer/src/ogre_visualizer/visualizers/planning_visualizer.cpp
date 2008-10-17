@@ -36,7 +36,7 @@
 #include <ogre_tools/axes.h>
 
 #include <urdf/URDF.h>
-#include <rosTF/rosTF.h>
+#include <tf/transform_listener.h>
 #include <planning_models/kinematic.h>
 
 #include <Ogre.h>
@@ -257,22 +257,24 @@ void PlanningVisualizer::update( float dt )
 
 void PlanningVisualizer::calculateRobotPosition()
 {
-  libTF::TFPose pose = { 0, 0, 0, 0, 0, 0, 0, displaying_kinematic_path_message_.frame_id };
+  tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time(0), displaying_kinematic_path_message_.frame_id );
 
   try
   {
-    pose = tf_client_->transformPose( target_frame_, pose );
+    tf_->transformPose( target_frame_, pose, pose );
   }
-  catch(libTF::Exception& e)
+  catch(tf::TransformException& e)
   {
-    ROS_ERROR( "Error transforming from frame '%s' to frame '%s'\n", pose.frame.c_str(), target_frame_.c_str() );
+    ROS_ERROR( "Error transforming from frame '%s' to frame '%s'\n", pose.frame_id_.c_str(), target_frame_.c_str() );
   }
 
-  Ogre::Vector3 position( pose.x, pose.y, pose.z );
+  Ogre::Vector3 position( pose.data_.getOrigin().x(), pose.data_.getOrigin().y(), pose.data_.getOrigin().z() );
   robotToOgre( position );
 
+  btScalar yaw, pitch, roll;
+  pose.data_.getBasis().getEulerZYX( yaw, pitch, roll );
   Ogre::Matrix3 orientation;
-  orientation.FromEulerAnglesYXZ( Ogre::Radian( pose.yaw ), Ogre::Radian( pose.pitch ), Ogre::Radian( pose.roll ) );
+  orientation.FromEulerAnglesYXZ( Ogre::Radian( yaw ), Ogre::Radian( pitch ), Ogre::Radian( roll ) );
 
   robot_->setPosition( position );
   robot_->setOrientation( orientation );

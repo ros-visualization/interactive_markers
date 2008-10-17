@@ -37,7 +37,7 @@
 #include <Ogre.h>
 #include <wx/wx.h>
 #include <ros/node.h>
-#include <rosTF/rosTF.h>
+#include <tf/transform_listener.h>
 
 #include <boost/bind.hpp>
 
@@ -210,26 +210,28 @@ void RobotBase2DPoseVisualizer::transformArrow( const std_msgs::RobotBase2DOdom&
     frame_id = target_frame_;
   }
 
-  libTF::TFPose pose = { message.pos.x, message.pos.y, 0.0f, message.pos.th, 0.0f, 0.0f, 0, message.header.frame_id };
+  tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( message.pos.th, 0.0f, 0.0f ), btVector3( message.pos.x, message.pos.y, 0.0f ) ),
+                              ros::Time(0), message_.header.frame_id );
 
   try
   {
     if ( frame_id != target_frame_ )
     {
-      pose.yaw = -pose.yaw;
-      pose = tf_client_->transformPose( target_frame_, pose );
+      tf_->transformPose( target_frame_, pose, pose );
     }
   }
-  catch(libTF::Exception& e)
+  catch(tf::TransformException& e)
   {
-    ROS_ERROR( "Error 2d base pose '%s' from frame '%s' to frame '%s'\n", name_.c_str(), message.header.frame_id.c_str(), target_frame_.c_str() );
+    ROS_ERROR( "Error transforming 2d base pose '%s' from frame '%s' to frame '%s': %s\n", name_.c_str(), message.header.frame_id.c_str(), target_frame_.c_str(), e.what() );
   }
 
+  btScalar yaw, pitch, roll;
+  pose.data_.getBasis().getEulerZYX( yaw, pitch, roll );
   Ogre::Matrix3 orient;
-  orient.FromEulerAnglesZXY( Ogre::Radian( pose.roll ), Ogre::Radian( pose.pitch ), Ogre::Radian( pose.yaw ) );
+  orient.FromEulerAnglesZXY( Ogre::Radian( roll ), Ogre::Radian( pitch ), Ogre::Radian( yaw ) );
   arrow->setOrientation( orient );
 
-  Ogre::Vector3 pos( pose.x, pose.y, pose.z );
+  Ogre::Vector3 pos( pose.data_.getOrigin().x(), pose.data_.getOrigin().y(), pose.data_.getOrigin().z() );
   robotToOgre( pos );
   arrow->setPosition( pos );
 }

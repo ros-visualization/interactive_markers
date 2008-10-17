@@ -36,7 +36,8 @@
 #include "ros/node.h"
 #include "ogre_tools/point_cloud.h"
 
-#include <rosTF/rosTF.h>
+#include <tf/transform_listener.h>
+#include <std_msgs/PointCloud.h>
 
 #include <Ogre.h>
 #include <wx/wx.h>
@@ -277,9 +278,10 @@ void LaserScanVisualizer::transformCloud( std_msgs::PointCloudFloat32& message )
 
   try
   {
-    tf_client_->transformPointCloud(target_frame_, message, message);
+    std_msgs::PointCloud* casted_message = reinterpret_cast<std_msgs::PointCloud*>(&message);
+    tf_->transformPointCloud(target_frame_, *casted_message, *casted_message);
   }
-  catch(libTF::Exception& e)
+  catch(tf::TransformException& e)
   {
     ROS_ERROR( "Error transforming laser scan '%s', frame '%s' to frame '%s'\n", name_.c_str(), message.header.frame_id.c_str(), target_frame_.c_str() );
   }

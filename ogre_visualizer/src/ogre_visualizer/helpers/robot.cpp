@@ -35,7 +35,7 @@
 #include "ogre_tools/object.h"
 #include "ogre_tools/super_ellipsoid.h"
 
-#include <rosTF/rosTF.h>
+#include <tf/transform_listener.h>
 #include <planning_models/kinematic.h>
 
 #include <Ogre.h>
@@ -512,7 +512,7 @@ void setTransformsOnLink( Robot::LinkInfo* info, const Ogre::Vector3& visual_pos
   }
 }
 
-void Robot::update( rosTFClient* tf_client, const std::string& target_frame )
+void Robot::update( tf::TransformListener* tf, const std::string& target_frame )
 {
   M_NameToLinkInfo::iterator link_it = links_.begin();
   M_NameToLinkInfo::iterator link_end = links_.end();
@@ -521,23 +521,26 @@ void Robot::update( rosTFClient* tf_client, const std::string& target_frame )
     const std::string& name = link_it->first;
     LinkInfo* info = link_it->second;
 
-    libTF::TFPose pose = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0, name };
+    tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time(0), name );
 
     try
     {
-      pose = tf_client->transformPose( target_frame, pose );
+      tf->transformPose( target_frame, pose, pose );
     }
-    catch(libTF::Exception& e)
+    catch(tf::TransformException& e)
     {
       printf( "Error transforming from frame '%s' to frame '%s'\n", name.c_str(), target_frame.c_str() );
     }
 
-    //printf( "Link %s:\npose: %6f %6f %6f,\t%6f %6f %6f\n", name.c_str(), pose.x, pose.y, pose.z, pose.yaw, pose.pitch, pose.roll );
+    //printf( "Link %s:\npose: %6f %6f %6f,\t%6f %6f %6f\n", name.c_str(), pose.data_.getOrigin().x(), pose.data_.getOrigin().y(), pose.data_.getOrigin().z(), pose.data_.getOrigin().y()aw, pose.pitch, pose.roll );
 
-    Ogre::Vector3 position( pose.x, pose.y, pose.z );
+    Ogre::Vector3 position( pose.data_.getOrigin().x(), pose.data_.getOrigin().y(), pose.data_.getOrigin().z() );
     robotToOgre( position );
 
-    Ogre::Matrix3 orientation( ogreMatrixFromRobotEulers( pose.yaw, pose.pitch, pose.roll ) );
+    btScalar yaw, pitch, roll;
+    pose.data_.getBasis().getEulerZYX( yaw, pitch, roll );
+
+    Ogre::Matrix3 orientation( ogreMatrixFromRobotEulers( yaw, pitch, roll ) );
 
     // Collision/visual transforms are the same in this case
     setTransformsOnLink( info, position, orientation, position, orientation, true );

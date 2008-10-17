@@ -46,8 +46,6 @@ namespace ros
   class node;
 }
 
-class rosTFClient;
-
 namespace ogre_vis
 {
 
