@@ -99,6 +99,11 @@ void PointCloud::clear()
   bounding_radius_ = 30000.0f;
 }
 
+void PointCloud::setCloudVisible( bool visible )
+{
+  scene_node_->setVisible( visible );
+}
+
 void PointCloud::setUsePoints( bool usePoints )
 {
   use_points_ = usePoints;

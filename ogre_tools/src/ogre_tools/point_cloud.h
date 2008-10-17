@@ -109,6 +109,8 @@ public:
    */
   void setBillboardDimensions( float width, float height );
 
+  void setCloudVisible( bool visible );
+
   // overrides from MovableObject
   virtual const Ogre::String& getMovableType() const { return sm_Type; }
   virtual const Ogre::AxisAlignedBox& getBoundingBox() const;

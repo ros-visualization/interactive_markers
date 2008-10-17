@@ -49,6 +49,7 @@ class SceneNode;
 class Vector3;
 class Quaternion;
 class Any;
+class RibbonTrail;
 }
 
 namespace ogre_tools
@@ -75,6 +76,7 @@ class PropertyManager;
 class CategoryProperty;
 class Vector3Property;
 class QuaternionProperty;
+class BoolProperty;
 
 /**
  * \class Robot
@@ -85,7 +87,7 @@ class QuaternionProperty;
 class Robot : public ogre_tools::Object
 {
 public:
-  Robot( Ogre::SceneManager* scene_manager );
+  Robot( Ogre::SceneManager* scene_manager, const std::string& name = "" );
   ~Robot();
 
   void setPropertyManager( PropertyManager* property_manager, CategoryProperty* parent );
@@ -146,6 +148,12 @@ public:
    */
   bool isCollisionVisible();
 
+  struct LinkInfo;
+  bool isShowingTrail( const LinkInfo* info );
+  void setShowTrail( LinkInfo* info, bool show );
+
+  LinkInfo* getLinkInfo( const std::string& name );
+
   // Overrides from ogre_tools::Object
   virtual void setPosition( const Ogre::Vector3& position );
   virtual void setOrientation( const Ogre::Quaternion& orientation );
@@ -169,6 +177,8 @@ public:
     , collision_node_( NULL )
     , position_property_( NULL )
     , orientation_property_( NULL )
+    , trail_( NULL )
+    , trail_property_( NULL )
     {}
 
     std::string name_;                          ///< Name of this link
@@ -190,23 +200,27 @@ public:
 
     Vector3Property* position_property_;
     QuaternionProperty* orientation_property_;
+
+    Ogre::RibbonTrail* trail_;
+    BoolProperty* trail_property_;
   };
 
 protected:
 
-  void createVisualForLink( LinkInfo& info, robot_desc::URDF::Link* link );
-  void createCollisionForLink( LinkInfo& info, robot_desc::URDF::Link* link );
-  void createPropertiesForLink( LinkInfo& info );
+  void createVisualForLink( LinkInfo* info, robot_desc::URDF::Link* link );
+  void createCollisionForLink( LinkInfo* info, robot_desc::URDF::Link* link );
+  void createPropertiesForLink( LinkInfo* info );
 
-  Ogre::Vector3 getPositionForLinkInRobotFrame( const std::string& name );
-  Ogre::Quaternion getOrientationForLinkInRobotFrame( const std::string& name );
+  Ogre::Vector3 getPositionForLinkInRobotFrame( const LinkInfo* info );
+  Ogre::Quaternion getOrientationForLinkInRobotFrame( const LinkInfo* info );
 
 
-  typedef std::map< std::string, LinkInfo > M_NameToLinkInfo;
+  typedef std::map< std::string, LinkInfo* > M_NameToLinkInfo;
   M_NameToLinkInfo links_;                      ///< Map of name to link info, stores all loaded links.
 
   Ogre::SceneNode* root_visual_node_;           ///< Node all our visual nodes are children of
   Ogre::SceneNode* root_collision_node_;        ///< Node all our collision nodes are children of
+  Ogre::SceneNode* root_other_node_;
 
   bool visual_visible_;                         ///< Should we show the visual representation?
   bool collision_visible_;                      ///< Should we show the collision representation?
@@ -216,6 +230,8 @@ protected:
   CategoryProperty* links_category_;
 
   Ogre::Any user_data_;
+
+  std::string name_;
 };
 
 } // namespace ogre_vis

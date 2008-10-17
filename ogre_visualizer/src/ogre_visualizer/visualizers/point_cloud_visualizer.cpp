@@ -142,7 +142,7 @@ void PointCloudVisualizer::setBillboardSize( float size )
 
 void PointCloudVisualizer::onEnable()
 {
-  cloud_->setVisible( true );
+  cloud_->setCloudVisible( true );
   subscribe();
 }
 
@@ -151,7 +151,7 @@ void PointCloudVisualizer::onDisable()
   unsubscribe();
 
   cloud_->clear();
-  cloud_->setVisible( false );
+  cloud_->setCloudVisible( false );
 }
 
 void PointCloudVisualizer::subscribe()

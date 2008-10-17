@@ -45,16 +45,18 @@
 namespace ogre_vis
 {
 
-Robot::Robot( Ogre::SceneManager* scene_manager )
+Robot::Robot( Ogre::SceneManager* scene_manager, const std::string& name )
 : ogre_tools::Object( scene_manager )
 , visual_visible_( true )
 , collision_visible_( false )
 , property_manager_( NULL )
 , parent_property_( NULL )
 , user_data_( NULL )
+, name_( name )
 {
   root_visual_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
   root_collision_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
+  root_other_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
 
   setVisualVisible( visual_visible_ );
   setCollisionVisible( collision_visible_ );
@@ -111,21 +113,21 @@ void Robot::setUserData( const Ogre::Any& user_data )
   M_NameToLinkInfo::iterator end = links_.end();
   for ( ; it != end; ++it )
   {
-    LinkInfo& info = it->second;
+    LinkInfo* info = it->second;
 
-    if ( info.visual_mesh_ )
+    if ( info->visual_mesh_ )
     {
-      info.visual_mesh_->setUserAny( user_data_ );
+      info->visual_mesh_->setUserAny( user_data_ );
     }
 
-    if ( info.collision_mesh_ )
+    if ( info->collision_mesh_ )
     {
-      info.collision_mesh_->setUserAny( user_data_ );
+      info->collision_mesh_->setUserAny( user_data_ );
     }
 
-    if ( info.collision_object_ )
+    if ( info->collision_object_ )
     {
-      info.collision_object_->setUserData( user_data_ );
+      info->collision_object_->setUserData( user_data_ );
     }
   }
 }
@@ -136,14 +138,20 @@ void Robot::clear()
   M_NameToLinkInfo::iterator end = links_.end();
   for ( ; it != end; ++it )
   {
-    LinkInfo& info = it->second;
+    LinkInfo* info = it->second;
 
-    if ( info.visual_mesh_ )
+    if ( info->visual_mesh_ )
     {
-      scene_manager_->destroyEntity( info.visual_mesh_ );
+      scene_manager_->destroyEntity( info->visual_mesh_ );
     }
 
-    delete info.collision_object_;
+    if ( info->trail_ )
+    {
+      scene_manager_->destroyRibbonTrail( info->trail_ );
+    }
+
+    delete info->collision_object_;
+    delete info;
   }
 
   if ( property_manager_ )
@@ -156,7 +164,7 @@ void Robot::clear()
   root_collision_node_->removeAndDestroyAllChildren();
 }
 
-void Robot::createCollisionForLink( LinkInfo& info, robot_desc::URDF::Link* link )
+void Robot::createCollisionForLink( LinkInfo* info, robot_desc::URDF::Link* link )
 {
   if ( !link->isSet[ "collision" ] )
   {
@@ -166,7 +174,7 @@ void Robot::createCollisionForLink( LinkInfo& info, robot_desc::URDF::Link* link
   robot_desc::URDF::Link::Collision* collision = link->collision;
   robot_desc::URDF::Link::Geometry* geometry = collision->geometry;
 
-  info.collision_node_ = root_collision_node_->createChildSceneNode();
+  info->collision_node_ = root_collision_node_->createChildSceneNode();
 
   switch ( geometry->type )
   {
@@ -174,13 +182,13 @@ void Robot::createCollisionForLink( LinkInfo& info, robot_desc::URDF::Link* link
     {
       robot_desc::URDF::Link::Geometry::Box* box = static_cast<robot_desc::URDF::Link::Geometry::Box*>( geometry->shape );
 
-      ogre_tools::SuperEllipsoid* obj = new ogre_tools::SuperEllipsoid( scene_manager_, info.collision_node_ );
+      ogre_tools::SuperEllipsoid* obj = new ogre_tools::SuperEllipsoid( scene_manager_, info->collision_node_ );
 
       Ogre::Vector3 scale( box->size[0], box->size[1], box->size[2] );
       robotToOgre( scale );
 
       obj->create( ogre_tools::SuperEllipsoid::Cube, 10, scale );
-      info.collision_object_ = obj;
+      info->collision_object_ = obj;
     }
     break;
 
@@ -188,13 +196,13 @@ void Robot::createCollisionForLink( LinkInfo& info, robot_desc::URDF::Link* link
     {
       robot_desc::URDF::Link::Geometry::Sphere* sphere = static_cast<robot_desc::URDF::Link::Geometry::Sphere*>( geometry->shape );
 
-      ogre_tools::SuperEllipsoid* obj = new ogre_tools::SuperEllipsoid( scene_manager_, info.collision_node_ );
+      ogre_tools::SuperEllipsoid* obj = new ogre_tools::SuperEllipsoid( scene_manager_, info->collision_node_ );
 
       Ogre::Vector3 scale( sphere->radius, sphere->radius, sphere->radius );
       // No need to convert robot->ogre because a sphere is uniform
 
       obj->create( ogre_tools::SuperEllipsoid::Sphere, 10, scale );
-      info.collision_object_ = obj;
+      info->collision_object_ = obj;
     }
     break;
 
@@ -202,12 +210,12 @@ void Robot::createCollisionForLink( LinkInfo& info, robot_desc::URDF::Link* link
     {
       robot_desc::URDF::Link::Geometry::Cylinder* cylinder = static_cast<robot_desc::URDF::Link::Geometry::Cylinder*>( geometry->shape );
 
-      ogre_tools::SuperEllipsoid* obj = new ogre_tools::SuperEllipsoid( scene_manager_, info.collision_node_ );
+      ogre_tools::SuperEllipsoid* obj = new ogre_tools::SuperEllipsoid( scene_manager_, info->collision_node_ );
       Ogre::Vector3 scale( cylinder->radius*2, cylinder->length, cylinder->radius*2 );
 
       obj->create( ogre_tools::SuperEllipsoid::Cylinder, 10, scale );
 
-      info.collision_object_ = obj;
+      info->collision_object_ = obj;
     }
     break;
 
@@ -215,25 +223,25 @@ void Robot::createCollisionForLink( LinkInfo& info, robot_desc::URDF::Link* link
     printf( "Unsupported collision shape type: %d\n", geometry->type );
   }
 
-  if ( info.collision_object_ )
+  if ( info->collision_object_ )
   {
     Ogre::Vector3 position( collision->xyz[0], collision->xyz[1], collision->xyz[2] );
     Ogre::Matrix3 orientation;
     orientation.FromEulerAnglesYXZ( Ogre::Radian( collision->rpy[2] ), Ogre::Radian( collision->rpy[1] ), Ogre::Radian( collision->rpy[0] ) );
 
-    info.collision_offset_position_ = position;
-    info.collision_offset_orientation_ = orientation;
+    info->collision_offset_position_ = position;
+    info->collision_offset_orientation_ = orientation;
 
-    info.collision_object_->setColor( 0.0f, 0.6f, 1.0f, 1.0f );
+    info->collision_object_->setColor( 0.0f, 0.6f, 1.0f, 1.0f );
 
     if ( !user_data_.isEmpty() )
     {
-      info.collision_object_->setUserData( user_data_ );
+      info->collision_object_->setUserData( user_data_ );
     }
   }
 }
 
-void Robot::createVisualForLink( ogre_vis::Robot::LinkInfo& info, robot_desc::URDF::Link* link )
+void Robot::createVisualForLink( ogre_vis::Robot::LinkInfo* info, robot_desc::URDF::Link* link )
 {
   robot_desc::URDF::Link::Geometry::Mesh* mesh = static_cast<robot_desc::URDF::Link::Geometry::Mesh*>(link->visual->geometry->shape);
   if ( mesh->filename.empty() )
@@ -249,28 +257,28 @@ void Robot::createVisualForLink( ogre_vis::Robot::LinkInfo& info, robot_desc::UR
 
   try
   {
-    info.visual_mesh_ = scene_manager_->createEntity( ss.str(), model_name );
+    info->visual_mesh_ = scene_manager_->createEntity( ss.str(), model_name );
   }
   catch( Ogre::Exception& e )
   {
     printf( "Could not load model '%s' for link '%s': %s\n", model_name.c_str(), link->name.c_str(), e.what() );
   }
 
-  if ( info.visual_mesh_ )
+  if ( info->visual_mesh_ )
   {
     if ( !user_data_.isEmpty() )
     {
-      info.visual_mesh_->setUserAny( user_data_ );
+      info->visual_mesh_->setUserAny( user_data_ );
     }
 
-    info.visual_node_ = root_visual_node_->createChildSceneNode();
-    info.visual_node_->attachObject( info.visual_mesh_ );
+    info->visual_node_ = root_visual_node_->createChildSceneNode();
+    info->visual_node_->attachObject( info->visual_mesh_ );
 
     // assign the material from the link
-    uint16_t num_sub_entities = info.visual_mesh_->getNumSubEntities();
+    uint16_t num_sub_entities = info->visual_mesh_->getNumSubEntities();
     for ( uint16_t i = 0; i < num_sub_entities; ++i )
     {
-      Ogre::SubEntity* subEntity = info.visual_mesh_->getSubEntity( i );
+      Ogre::SubEntity* subEntity = info->visual_mesh_->getSubEntity( i );
 
       typedef std::vector<std::string> V_string;
       V_string gazebo_names;
@@ -286,8 +294,8 @@ void Robot::createVisualForLink( ogre_vis::Robot::LinkInfo& info, robot_desc::UR
         M_string::iterator it = m.find( "material" );
         if ( it != m.end() )
         {
-          info.material_name_ = it->second;
-          subEntity->setMaterialName( info.material_name_ );
+          info->material_name_ = it->second;
+          subEntity->setMaterialName( info->material_name_ );
           break;
         }
       }
@@ -311,32 +319,34 @@ void Robot::setPropertyManager( PropertyManager* property_manager, CategoryPrope
     M_NameToLinkInfo::iterator link_end = links_.end();
     for ( ; link_it != link_end; ++link_it )
     {
-      LinkInfo& info = link_it->second;
+      LinkInfo* info = link_it->second;
 
       createPropertiesForLink( info );
     }
   }
 }
 
-void Robot::createPropertiesForLink( LinkInfo& info )
+void Robot::createPropertiesForLink( LinkInfo* info )
 {
   ROS_ASSERT( property_manager_ );
 
-  property_manager_->deleteProperty( info.position_property_ );
-  property_manager_->deleteProperty( info.orientation_property_ );
+  property_manager_->deleteProperty( info->position_property_ );
+  property_manager_->deleteProperty( info->orientation_property_ );
 
-  CategoryProperty* cat = property_manager_->createCategory( info.name_, links_category_, this );
+  CategoryProperty* cat = property_manager_->createCategory( info->name_, links_category_, this );
 
   std::stringstream ss;
-  static int count = 0;
-  ss << "Link " << info.name_ << count++;
-  info.position_property_ = property_manager_->createProperty<Vector3Property>( "Position", ss.str(), boost::bind( &Robot::getPositionForLinkInRobotFrame, this, info.name_ ),
+  ss << name_ << " Link " << info->name_;
+  info->position_property_ = property_manager_->createProperty<Vector3Property>( "Position", ss.str(), boost::bind( &Robot::getPositionForLinkInRobotFrame, this, info ),
                                                                                 Vector3Property::Setter(), cat, this );
-  info.position_property_->setSave( false );
+  info->position_property_->setSave( false );
 
-  info.orientation_property_ = property_manager_->createProperty<QuaternionProperty>( "Orientation", ss.str(), boost::bind( &Robot::getOrientationForLinkInRobotFrame, this, info.name_ ),
+  info->orientation_property_ = property_manager_->createProperty<QuaternionProperty>( "Orientation", ss.str(), boost::bind( &Robot::getOrientationForLinkInRobotFrame, this, info ),
                                                                                       QuaternionProperty::Setter(), cat, this );
-  info.orientation_property_->setSave( false );
+  info->orientation_property_->setSave( false );
+
+  info->trail_property_ = property_manager_->createProperty<BoolProperty>( "Show Trail", ss.str(), boost::bind( &Robot::isShowingTrail, this, info ),
+                                                                          boost::bind( &Robot::setShowTrail, this, info, _1 ), cat, this );
 
   property_manager_->getPropertyGrid()->Collapse( links_category_->getPGProperty() );
 }
@@ -355,8 +365,11 @@ void Robot::load( robot_desc::URDF* urdf, bool visual, bool collision )
   {
     robot_desc::URDF::Link* link = *link_it;
 
-    LinkInfo info;
-    info.name_ = link->name;
+    LinkInfo* info = new LinkInfo;
+    info->name_ = link->name;
+
+    bool inserted = links_.insert( std::make_pair( info->name_, info ) ).second;
+    ROS_ASSERT( inserted );
 
     if ( visual )
     {
@@ -372,84 +385,130 @@ void Robot::load( robot_desc::URDF* urdf, bool visual, bool collision )
     {
       createPropertiesForLink( info );
     }
-
-    links_.insert( std::make_pair( info.name_, info ) );
   }
 
   setVisualVisible(isVisualVisible());
   setCollisionVisible(isCollisionVisible());
 }
 
-Ogre::Vector3 Robot::getPositionForLinkInRobotFrame( const std::string& name )
+Ogre::Vector3 Robot::getPositionForLinkInRobotFrame( const LinkInfo* info )
 {
-  M_NameToLinkInfo::iterator it = links_.find( name );
-  if ( it == links_.end() )
-  {
-    ROS_WARN( "Link %s does not exist\n", name.c_str() );
-    return Ogre::Vector3::ZERO;
-  }
+  ROS_ASSERT( info );
 
-  Ogre::Vector3 pos( it->second.position_ );
+  Ogre::Vector3 pos( info->position_ );
   ogreToRobot( pos );
 
   return pos;
 }
 
-Ogre::Quaternion Robot::getOrientationForLinkInRobotFrame( const std::string& name )
+Ogre::Quaternion Robot::getOrientationForLinkInRobotFrame( const LinkInfo* info )
 {
-  M_NameToLinkInfo::iterator it = links_.find( name );
-  if ( it == links_.end() )
-  {
-    ROS_WARN( "Link %s does not exist\n", name.c_str() );
-    return Ogre::Quaternion::IDENTITY;
-  }
+  ROS_ASSERT( info );
 
-  Ogre::Quaternion orient( it->second.orientation_ );
+  Ogre::Quaternion orient( info->orientation_ );
   ogreToRobot( orient );
 
   return orient;
 }
 
-void setTransformsOnLink( Robot::LinkInfo& info, const Ogre::Vector3& visual_position, const Ogre::Quaternion& visual_orientation,
-                          const Ogre::Vector3& collision_position, const Ogre::Quaternion& collision_orientation, bool applyOffsetTransforms )
+Robot::LinkInfo* Robot::getLinkInfo( const std::string& name )
 {
-  info.position_ = visual_position;
-  info.orientation_ = visual_orientation;
-
-  if ( info.visual_node_ )
+  M_NameToLinkInfo::iterator it = links_.find( name );
+  if ( it == links_.end() )
   {
-    info.visual_node_->setPosition( visual_position );
-    info.visual_node_->setOrientation( visual_orientation );
+    ROS_WARN( "Link %s does not exist", name.c_str() );
+    return NULL;
   }
 
-  if ( info.collision_node_ )
+  return it->second;
+}
+
+void Robot::setShowTrail( LinkInfo* info, bool show )
+{
+  ROS_ASSERT( info );
+
+  if ( show )
+  {
+    if ( !info->trail_ )
+    {
+      if ( info->visual_node_ )
+      {
+        static int count = 0;
+        std::stringstream ss;
+        ss << "Trail for link " << info->name_ << count++;
+        info->trail_ = scene_manager_->createRibbonTrail( ss.str() );
+        info->trail_->setMaxChainElements( 100 );
+        info->trail_->setInitialWidth( 0, 0.01f );
+        info->trail_->setInitialColour( 0, 0.0f, 0.5f, 0.5f );
+        info->trail_->addNode( info->visual_node_ );
+        info->trail_->setTrailLength( 2.0f );
+        root_other_node_->attachObject( info->trail_ );
+      }
+      else
+      {
+        ROS_WARN( "No visual node for link %s, cannot create a trail", info->name_.c_str() );
+      }
+    }
+  }
+  else
+  {
+    if ( info->trail_ )
+    {
+      scene_manager_->destroyRibbonTrail( info->trail_ );
+      info->trail_ = NULL;
+    }
+  }
+
+  info->trail_property_->changed();
+}
+
+bool Robot::isShowingTrail( const LinkInfo* info )
+{
+  ROS_ASSERT( info );
+
+  return info->trail_ != NULL;
+}
+
+void setTransformsOnLink( Robot::LinkInfo* info, const Ogre::Vector3& visual_position, const Ogre::Quaternion& visual_orientation,
+                          const Ogre::Vector3& collision_position, const Ogre::Quaternion& collision_orientation, bool applyOffsetTransforms )
+{
+  info->position_ = visual_position;
+  info->orientation_ = visual_orientation;
+
+  if ( info->visual_node_ )
+  {
+    info->visual_node_->setPosition( visual_position );
+    info->visual_node_->setOrientation( visual_orientation );
+  }
+
+  if ( info->collision_node_ )
   {
     Ogre::Quaternion initial_orientation;
     ogreToRobot( initial_orientation );
 
     if ( applyOffsetTransforms )
     {
-      info.collision_object_->setPosition( info.collision_offset_position_ );
-      info.collision_object_->setOrientation( initial_orientation * info.collision_offset_orientation_ );
+      info->collision_object_->setPosition( info->collision_offset_position_ );
+      info->collision_object_->setOrientation( initial_orientation * info->collision_offset_orientation_ );
     }
     else
     {
-      info.collision_object_->setPosition( Ogre::Vector3::ZERO );
-      info.collision_object_->setOrientation( initial_orientation );
+      info->collision_object_->setPosition( Ogre::Vector3::ZERO );
+      info->collision_object_->setOrientation( initial_orientation );
     }
 
-    info.collision_node_->setPosition( collision_position );
-    info.collision_node_->setOrientation( collision_orientation );
+    info->collision_node_->setPosition( collision_position );
+    info->collision_node_->setOrientation( collision_orientation );
   }
 
-  if ( info.position_property_ )
+  if ( info->position_property_ )
   {
-    info.position_property_->changed();
+    info->position_property_->changed();
   }
 
-  if ( info.orientation_property_ )
+  if ( info->orientation_property_ )
   {
-    info.orientation_property_->changed();
+    info->orientation_property_->changed();
   }
 }
 
@@ -460,7 +519,7 @@ void Robot::update( rosTFClient* tf_client, const std::string& target_frame )
   for ( ; link_it != link_end; ++link_it )
   {
     const std::string& name = link_it->first;
-    LinkInfo& info = link_it->second;
+    LinkInfo* info = link_it->second;
 
     libTF::TFPose pose = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0, name };
 
@@ -492,7 +551,7 @@ void Robot::update( planning_models::KinematicModel* kinematic_model, const std:
   for ( ; link_it != link_end; ++link_it )
   {
     const std::string& name = link_it->first;
-    LinkInfo& info = link_it->second;
+    LinkInfo* info = link_it->second;
 
     planning_models::KinematicModel::Link* link = kinematic_model->getLink( name );
 
@@ -555,8 +614,8 @@ void Robot::setColor( float r, float g, float b, float a )
   M_NameToLinkInfo::iterator link_end = links_.end();
   for ( ; link_it != link_end; ++link_it )
   {
-    const LinkInfo& info = link_it->second;
-    info.collision_object_->setColor( r, g, b, a );
+    const LinkInfo* info = link_it->second;
+    info->collision_object_->setColor( r, g, b, a );
   }
 }
 

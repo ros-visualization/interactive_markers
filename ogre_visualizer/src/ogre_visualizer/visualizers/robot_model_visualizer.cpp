@@ -58,7 +58,7 @@ RobotModelVisualizer::RobotModelVisualizer( const std::string& name, Visualizati
 , update_rate_property_( NULL )
 , robot_description_property_( NULL )
 {
-  robot_ = new Robot( scene_manager_ );
+  robot_ = new Robot( scene_manager_, "Robot: " + name_ );
 
   setVisualVisible( true );
   setCollisionVisible( false );

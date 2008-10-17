@@ -72,7 +72,7 @@ void PropertyManager::deleteProperty( PropertyBase* property )
 
 void PropertyManager::deleteProperty( const std::string& name, const std::string& prefix )
 {
-  M_Property::iterator it = properties_.find( std::make_pair( name, prefix ) );
+  M_Property::iterator it = properties_.find( std::make_pair( prefix, name ) );
   ROS_ASSERT( it != properties_.end() );
 
   delete it->second;
@@ -82,6 +82,8 @@ void PropertyManager::deleteProperty( const std::string& name, const std::string
 
 void PropertyManager::deleteByUserData( void* user_data )
 {
+  std::set<PropertyBase*> to_delete;
+
   M_Property::iterator it = properties_.begin();
   M_Property::iterator end = properties_.end();
   for ( ; it != end; ++it )
@@ -90,8 +92,15 @@ void PropertyManager::deleteByUserData( void* user_data )
 
     if ( property->getUserData() == user_data )
     {
-      deleteProperty( property );
+      to_delete.insert( property );
     }
+  }
+
+  std::set<PropertyBase*>::iterator prop_it = to_delete.begin();
+  std::set<PropertyBase*>::iterator prop_end = to_delete.end();
+  for ( ; prop_it != prop_end; ++prop_it )
+  {
+    deleteProperty( *prop_it );
   }
 }
 

@@ -173,7 +173,7 @@ void LaserScanVisualizer::setDecayTime( float time )
 
 void LaserScanVisualizer::onEnable()
 {
-  cloud_->setVisible( true );
+  cloud_->setCloudVisible( true );
   subscribe();
 }
 
@@ -181,7 +181,7 @@ void LaserScanVisualizer::onDisable()
 {
   unsubscribe();
 
-  cloud_->setVisible( false );
+  cloud_->setCloudVisible( false );
   cloud_->clear();
   points_.clear();
   point_times_.clear();

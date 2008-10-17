@@ -103,12 +103,10 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
 
 VisualizationManager::~VisualizationManager()
 {
-  vis_panel_->getPropertyGrid()->Freeze();
-  delete property_manager_;
-  vis_panel_->getPropertyGrid()->Thaw();
-
   Disconnect( wxEVT_TIMER, update_timer_->GetId(), wxTimerEventHandler( VisualizationManager::onUpdate ), NULL, this );
   delete update_timer_;
+
+  vis_panel_->getPropertyGrid()->Freeze();
 
   V_VisualizerInfo::iterator vis_it = visualizers_.begin();
   V_VisualizerInfo::iterator vis_end = visualizers_.end();
@@ -126,6 +124,10 @@ VisualizationManager::~VisualizationManager()
     delete factory_it->second;
   }
   factories_.clear();
+
+
+  delete property_manager_;
+  vis_panel_->getPropertyGrid()->Thaw();
 
   scene_manager_->destroyParticleSystem( selection_bounds_particle_system_ );
   scene_manager_->destroyQuery( ray_scene_query_ );

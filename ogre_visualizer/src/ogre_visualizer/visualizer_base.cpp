@@ -51,6 +51,10 @@ VisualizerBase::VisualizerBase( const std::string& name, VisualizationManager* m
 
 VisualizerBase::~VisualizerBase()
 {
+  if ( property_manager_ )
+  {
+    property_manager_->deleteByUserData( this );
+  }
 }
 
 void VisualizerBase::enable( bool force )

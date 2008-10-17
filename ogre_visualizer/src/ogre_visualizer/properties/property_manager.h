@@ -76,7 +76,7 @@ public:
   T* createProperty(const std::string& name, const std::string& prefix, const G& getter, const S& setter, CategoryProperty* parent, void* user_data = NULL)
   {
     T* property = new T( name, prefix, grid_, parent ? parent->getPGProperty() : 0, getter, setter );
-    bool inserted = properties_.insert( std::make_pair( std::make_pair(name, prefix), property ) ).second;
+    bool inserted = properties_.insert( std::make_pair( std::make_pair(prefix, name), property ) ).second;
     ROS_ASSERT(inserted);
     (void)inserted;
 
