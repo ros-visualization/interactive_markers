@@ -81,7 +81,7 @@ target_link_libraries(grid_test ${PROJECT_NAME} ${wxWidgets_LIBRARIES})
 rospack_add_executable(stl_to_mesh src/stl_to_mesh/stl_to_mesh.cpp)
 target_link_libraries(stl_to_mesh ${OGRE_LIBRARIES})
 
-rospack_add_gtest(utest test/utest.cpp)
+rospack_add_gtest_future(utest test/utest.cpp)
 target_link_libraries(utest ${PROJECT_NAME})
 set_target_properties(utest PROPERTIES
                       RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
