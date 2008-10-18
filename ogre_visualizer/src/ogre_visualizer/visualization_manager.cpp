@@ -103,6 +103,8 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
 
 VisualizationManager::~VisualizationManager()
 {
+  delete tf_;
+
   Disconnect( wxEVT_TIMER, update_timer_->GetId(), wxTimerEventHandler( VisualizationManager::onUpdate ), NULL, this );
   delete update_timer_;
 
@@ -132,8 +134,6 @@ VisualizationManager::~VisualizationManager()
   scene_manager_->destroyParticleSystem( selection_bounds_particle_system_ );
   scene_manager_->destroyQuery( ray_scene_query_ );
   ogre_root_->destroySceneManager( scene_manager_ );
-
-  delete tf_;
 }
 
 VisualizationManager::VisualizerInfo* VisualizationManager::getVisualizerInfo( const VisualizerBase* visualizer )
