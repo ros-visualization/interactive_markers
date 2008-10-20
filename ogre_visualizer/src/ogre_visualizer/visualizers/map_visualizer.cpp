@@ -69,6 +69,7 @@ MapVisualizer::MapVisualizer( const std::string& name, VisualizationManager* man
   material_->setReceiveShadows(false);
   material_->getTechnique(0)->setLightingEnabled(false);
   material_->setDepthBias( -16.0f, 0.0f );
+  material_->setCullingMode( Ogre::CULL_NONE );
 }
 
 MapVisualizer::~MapVisualizer()
