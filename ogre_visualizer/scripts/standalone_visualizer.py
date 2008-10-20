@@ -49,6 +49,13 @@ class VisualizerFrame(wx.Frame):
         robot_vis = manager.createRobotModelVisualizer( "Robot Model", False )
         robot_vis.setRobotDescription( "robotdesc/pr2" )
         
+        manager.createRobotBase2DPoseVisualizer( "2D Pose: Odom", True )
+        localized_pose = manager.createRobotBase2DPoseVisualizer("2D Pose: Localized", True)
+        localized_pose.setTopic("localizedpose")
+        localized_pose.setColor(ogre_visualizer.Color(0.0, 0.1, 0.8))
+        
+        manager.createMapVisualizer("Map", True)
+        
         planning = manager.createPlanningVisualizer( "Planning", False )
         planning.initialize( "robotdesc/pr2", "display_kinematic_path" )
         
