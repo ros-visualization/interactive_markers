@@ -83,6 +83,7 @@ void MapVisualizer::onEnable()
 void MapVisualizer::onDisable()
 {
   scene_node_->setVisible( false );
+  clear();
 }
 
 void MapVisualizer::setService( const std::string& service )
@@ -277,13 +278,16 @@ void MapVisualizer::transformMap()
 
 void MapVisualizer::update( float dt )
 {
+  static float timer = 0.0f;
+
   if ( loaded_ )
   {
     transformMap();
+
+    timer = 0.0f;
   }
   else
   {
-    static float timer = 0.0f;
     timer -= dt;
 
     if ( timer < 0.0f )

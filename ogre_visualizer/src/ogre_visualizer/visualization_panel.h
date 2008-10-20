@@ -72,6 +72,7 @@ class wxOgreRenderWindow;
 class FPSCamera;
 class OrbitCamera;
 class CameraBase;
+class OrthoCamera;
 }
 
 namespace Ogre
@@ -176,6 +177,7 @@ protected:
   ogre_tools::CameraBase* current_camera_;                ///< The current camera
   ogre_tools::FPSCamera* fps_camera_;                     ///< FPS camera
   ogre_tools::OrbitCamera* orbit_camera_;                 ///< Orbit camera
+  ogre_tools::OrthoCamera* top_down_ortho_;               ///< Top-down orthographic camera
 
   // Mouse handling
   bool left_mouse_down_;                                  ///< Is the left mouse button down?

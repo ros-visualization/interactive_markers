@@ -37,6 +37,7 @@
 #include "ogre_tools/wx_ogre_render_window.h"
 #include "ogre_tools/fps_camera.h"
 #include "ogre_tools/orbit_camera.h"
+#include "ogre_tools/ortho_camera.h"
 
 #include <Ogre.h>
 #include <wx/propgrid/propgrid.h>
@@ -53,6 +54,7 @@ enum ID
 {
   FPS = wxID_HIGHEST + 1,
   Orbit,
+  TopDownOrtho,
 };
 }
 typedef IDs::ID ID;
@@ -77,6 +79,7 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent )
 
   views_->AddRadioTool( IDs::Orbit, wxT("Orbit"), wxNullBitmap, wxNullBitmap, wxT("Orbit Camera Controls") );
   views_->AddRadioTool( IDs::FPS, wxT("FPS"), wxNullBitmap, wxNullBitmap, wxT("FPS Camera Controls") );
+  views_->AddRadioTool( IDs::TopDownOrtho, wxT("Top-down Ortho"), wxNullBitmap, wxNullBitmap, wxT("Top-down Orthographic Camera") );
 
   views_->Connect( wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( VisualizationPanel::onViewClicked ), NULL, this );
 
@@ -120,6 +123,11 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent )
   orbit_camera_->getOgreCamera()->setNearClipDistance( 0.1f );
   orbit_camera_->setPosition( 0, 0, 15 );
 
+  top_down_ortho_ = new ogre_tools::OrthoCamera( render_panel_, manager_->getSceneManager() );
+  top_down_ortho_->setPosition( 0, 30, 0 );
+  top_down_ortho_->pitch( -Ogre::Math::HALF_PI );
+
+
   current_camera_ = orbit_camera_;
 
   render_panel_->getViewport()->setCamera( current_camera_->getOgreCamera() );
@@ -129,6 +137,7 @@ VisualizationPanel::~VisualizationPanel()
 {
   delete fps_camera_;
   delete orbit_camera_;
+  delete top_down_ortho_;
 
   delete manager_;
 
@@ -169,22 +178,42 @@ void VisualizationPanel::onViewClicked( wxCommandEvent& event )
 {
   ogre_tools::CameraBase* prev_camera = current_camera_;
 
+  bool set_from_old = false;
+
   switch ( event.GetId() )
   {
   case IDs::FPS:
     {
       current_camera_ = fps_camera_;
+
+      if ( current_camera_ == orbit_camera_ )
+      {
+        set_from_old = true;
+      }
     }
     break;
 
   case IDs::Orbit:
     {
       current_camera_ = orbit_camera_;
+      if ( current_camera_ == fps_camera_ )
+      {
+        set_from_old = true;
+      }
+    }
+    break;
+
+  case IDs::TopDownOrtho:
+    {
+      current_camera_ = top_down_ortho_;
     }
     break;
   }
 
-  current_camera_->setFrom( prev_camera );
+  if ( set_from_old )
+  {
+    current_camera_->setFrom( prev_camera );
+  }
 
   render_panel_->setCamera( current_camera_->getOgreCamera() );
 }
