@@ -3,6 +3,7 @@ include(rosbuild)
 include(FindPkgConfig)
 
 set(ROS_BUILD_TYPE RelWithDebInfo)
+#set(ROS_BUILD_TYPE Debug)
 
 rospack(ogre_tools)
 
@@ -11,6 +12,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 find_package(wxWidgets REQUIRED)
 include(${wxWidgets_USE_FILE})
+message(${wxWidgets_INCLUDE_DIRS})
 include_directories( ${wxWidgets_INCLUDE_DIRS} )
 
 # The versioned check apparently doesn't work.  So we'll check the version
@@ -64,6 +66,7 @@ rospack_add_library(${PROJECT_NAME} src/ogre_tools/point_cloud.cpp
 			      src/ogre_tools/camera_base.cpp
 			      src/ogre_tools/fps_camera.cpp
 			      src/ogre_tools/orbit_camera.cpp
+			      src/ogre_tools/ortho_camera.cpp
 			      src/ogre_tools/wx_ogre_render_window.cpp
 			      src/ogre_tools/initialization.cpp
 			      src/ogre_tools/orthographic.cpp
