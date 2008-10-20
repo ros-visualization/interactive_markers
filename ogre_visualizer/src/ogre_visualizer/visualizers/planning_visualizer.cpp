@@ -268,11 +268,11 @@ void PlanningVisualizer::calculateRobotPosition()
     ROS_ERROR( "Error transforming from frame '%s' to frame '%s'\n", pose.frame_id_.c_str(), target_frame_.c_str() );
   }
 
-  Ogre::Vector3 position( pose.data_.getOrigin().x(), pose.data_.getOrigin().y(), pose.data_.getOrigin().z() );
+  Ogre::Vector3 position( pose.getOrigin().x(), pose.getOrigin().y(), pose.getOrigin().z() );
   robotToOgre( position );
 
   btScalar yaw, pitch, roll;
-  pose.data_.getBasis().getEulerZYX( yaw, pitch, roll );
+  pose.getBasis().getEulerZYX( yaw, pitch, roll );
   Ogre::Matrix3 orientation;
   orientation.FromEulerAnglesYXZ( Ogre::Radian( yaw ), Ogre::Radian( pitch ), Ogre::Radian( roll ) );
 

@@ -226,12 +226,12 @@ void RobotBase2DPoseVisualizer::transformArrow( const std_msgs::RobotBase2DOdom&
   }
 
   btScalar yaw, pitch, roll;
-  pose.data_.getBasis().getEulerZYX( yaw, pitch, roll );
+  pose.getBasis().getEulerZYX( yaw, pitch, roll );
   Ogre::Matrix3 orient;
   orient.FromEulerAnglesZXY( Ogre::Radian( roll ), Ogre::Radian( pitch ), Ogre::Radian( yaw ) );
   arrow->setOrientation( orient );
 
-  Ogre::Vector3 pos( pose.data_.getOrigin().x(), pose.data_.getOrigin().y(), pose.data_.getOrigin().z() );
+  Ogre::Vector3 pos( pose.getOrigin().x(), pose.getOrigin().y(), pose.getOrigin().z() );
   robotToOgre( pos );
   arrow->setPosition( pos );
 }

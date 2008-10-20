@@ -534,11 +534,11 @@ void Robot::update( tf::TransformListener* tf, const std::string& target_frame )
 
     //printf( "Link %s:\npose: %6f %6f %6f,\t%6f %6f %6f\n", name.c_str(), pose.data_.getOrigin().x(), pose.data_.getOrigin().y(), pose.data_.getOrigin().z(), pose.data_.getOrigin().y()aw, pose.pitch, pose.roll );
 
-    Ogre::Vector3 position( pose.data_.getOrigin().x(), pose.data_.getOrigin().y(), pose.data_.getOrigin().z() );
+    Ogre::Vector3 position( pose.getOrigin().x(), pose.getOrigin().y(), pose.getOrigin().z() );
     robotToOgre( position );
 
     btScalar yaw, pitch, roll;
-    pose.data_.getBasis().getEulerZYX( yaw, pitch, roll );
+    pose.getBasis().getEulerZYX( yaw, pitch, roll );
 
     Ogre::Matrix3 orientation( ogreMatrixFromRobotEulers( yaw, pitch, roll ) );
 
