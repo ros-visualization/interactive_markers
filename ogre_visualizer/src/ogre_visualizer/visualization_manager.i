@@ -10,6 +10,7 @@
 #include "visualizers/point_cloud_visualizer.h"
 #include "visualizers/robot_model_visualizer.h"
 #include "visualizers/robot_base2d_pose_visualizer.h"
+#include "visualizers/map_visualizer.h"
 %}
 
 %include std_string.i
@@ -23,6 +24,7 @@
 %include "visualizers/point_cloud_visualizer.i"
 %include "visualizers/robot_model_visualizer.i"
 %include "visualizers/robot_base2d_pose_visualizer.i"
+%include "visualizers/map_visualizer.i"
 
 %pythonAppend VisualizationManager "self._setOORInfo(self)"
 
@@ -39,6 +41,7 @@
   %template(createPointCloudVisualizer) createVisualizer<ogre_vis::PointCloudVisualizer>;
   %template(createRobotModelVisualizer) createVisualizer<ogre_vis::RobotModelVisualizer>;
   %template(createRobotBase2DPoseVisualizer) createVisualizer<ogre_vis::RobotBase2DPoseVisualizer>;
+  %template(createMapVisualizer) createVisualizer<ogre_vis::MapVisualizer>;
 };
 
 %init %{
