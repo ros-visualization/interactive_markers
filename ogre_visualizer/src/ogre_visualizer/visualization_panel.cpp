@@ -64,12 +64,13 @@ END_DECLARE_EVENT_TYPES()
 DEFINE_EVENT_TYPE(EVT_RENDER)
 
 VisualizationPanel::VisualizationPanel( wxWindow* parent )
-    : VisualizationPanelGenerated( parent )
-    , left_mouse_down_( false )
-    , middle_mouse_down_( false )
-    , right_mouse_down_( false )
-    , mouse_x_( 0 )
-    , mouse_y_( 0 )
+: VisualizationPanelGenerated( parent )
+, left_mouse_down_( false )
+, middle_mouse_down_( false )
+, right_mouse_down_( false )
+, mouse_x_( 0 )
+, mouse_y_( 0 )
+, selected_visualizer_( NULL )
 {
   render_panel_ = new ogre_tools::wxOgreRenderWindow( Ogre::Root::getSingletonPtr(), VisualizationPanelGenerated::render_panel_ );
   render_sizer_->Add( render_panel_, 1, wxALL|wxEXPAND, 0 );
@@ -235,9 +236,14 @@ void VisualizationPanel::onPropertySelected( wxPropertyGridEvent& event )
     {
       VisualizerBase* visualizer = reinterpret_cast<VisualizerBase*>(user_data);
 
-      if ( manager_->isDeletionAllowed( visualizer ) )
+      if ( manager_->isValidVisualizer( visualizer ) )
       {
-        delete_display_->Enable( true );
+        selected_visualizer_ = visualizer;
+
+        if ( manager_->isDeletionAllowed( visualizer ) )
+        {
+          delete_display_->Enable( true );
+        }
       }
     }
   }
@@ -361,12 +367,13 @@ void VisualizationPanel::onNewDisplay( wxCommandEvent& event )
 
 void VisualizationPanel::onDeleteDisplay( wxCommandEvent& event )
 {
-  if ( !manager_->getSelectedVisualizer() )
+  if ( !selected_visualizer_ )
   {
     return;
   }
 
-  manager_->removeVisualizer( manager_->getSelectedVisualizer() );
+  manager_->removeVisualizer( selected_visualizer_ );
+  selected_visualizer_ = NULL;
 }
 
 void VisualizationPanel::onVisualizerStateChanged( VisualizerBase* visualizer )

@@ -331,6 +331,25 @@ void CategoryProperty::writeToGrid()
   }
 }
 
+
+Vector3Property::~Vector3Property()
+{
+  if ( x_ && grid_->GetProperty( prefix_ + name_ + wxT("X") ) == x_ )
+  {
+    grid_->DeleteProperty( x_ );
+  }
+
+  if ( y_ && grid_->GetProperty( prefix_ + name_ + wxT("Y") ) == y_ )
+  {
+    grid_->DeleteProperty( y_ );
+  }
+
+  if ( z_ && grid_->GetProperty( prefix_ + name_ + wxT("Z") ) == z_ )
+  {
+    grid_->DeleteProperty( z_ );
+  }
+}
+
 void Vector3Property::writeToGrid()
 {
   if ( !x_ )
@@ -394,6 +413,29 @@ void Vector3Property::setPGClientData()
   x_->SetClientData( this );
   y_->SetClientData( this );
   z_->SetClientData( this );
+}
+
+QuaternionProperty::~QuaternionProperty()
+{
+  if ( x_ && grid_->GetProperty( prefix_ + name_ + wxT("X") ) == x_ )
+  {
+    grid_->DeleteProperty( x_ );
+  }
+
+  if ( y_ && grid_->GetProperty( prefix_ + name_ + wxT("Y") ) == y_ )
+  {
+    grid_->DeleteProperty( y_ );
+  }
+
+  if ( z_ && grid_->GetProperty( prefix_ + name_ + wxT("Z") ) == z_ )
+  {
+    grid_->DeleteProperty( z_ );
+  }
+
+  if ( w_ && grid_->GetProperty( prefix_ + name_ + wxT("W") ) == w_ )
+  {
+    grid_->DeleteProperty( w_ );
+  }
 }
 
 void QuaternionProperty::writeToGrid()

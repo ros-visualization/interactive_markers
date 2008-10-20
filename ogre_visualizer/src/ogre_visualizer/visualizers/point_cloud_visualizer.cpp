@@ -182,7 +182,7 @@ void PointCloudVisualizer::transformCloud()
     message_.header.frame_id = target_frame_;
   }
 
-  tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time(0), message_.header.frame_id );
+  tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), message_.header.stamp, message_.header.frame_id );
 
   try
   {

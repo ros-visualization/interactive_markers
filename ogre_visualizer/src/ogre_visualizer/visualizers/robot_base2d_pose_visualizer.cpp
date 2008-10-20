@@ -46,7 +46,8 @@ namespace ogre_vis
 
 RobotBase2DPoseVisualizer::RobotBase2DPoseVisualizer( const std::string& name, VisualizationManager* manager )
 : VisualizerBase( name, manager )
-, color_( 1.0f, 1.0f, 1.0f )
+, topic_( "odom" )
+, color_( 1.0f, 0.1f, 0.0f )
 , position_tolerance_( 0.01 )
 , angle_tolerance_( 0.1 )
 , color_property_( NULL )
@@ -191,7 +192,7 @@ void RobotBase2DPoseVisualizer::processMessage( const std_msgs::RobotBase2DOdom&
     }
   }
 
-  ogre_tools::Arrow* arrow = new ogre_tools::Arrow( scene_manager_, scene_node_, 0.8f, 0.05f, 0.2f, 0.1f );
+  ogre_tools::Arrow* arrow = new ogre_tools::Arrow( scene_manager_, scene_node_, 0.8f, 0.05f, 0.2f, 0.2f );
 
   transformArrow( message, arrow );
 
@@ -211,7 +212,7 @@ void RobotBase2DPoseVisualizer::transformArrow( const std_msgs::RobotBase2DOdom&
   }
 
   tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( message.pos.th, 0.0f, 0.0f ), btVector3( message.pos.x, message.pos.y, 0.0f ) ),
-                              ros::Time(0), message_.header.frame_id );
+                              message.header.stamp, message_.header.frame_id );
 
   try
   {

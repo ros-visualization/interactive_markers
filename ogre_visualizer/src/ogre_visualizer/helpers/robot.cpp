@@ -311,7 +311,7 @@ void Robot::setPropertyManager( PropertyManager* property_manager, CategoryPrope
   property_manager_ = property_manager;
   parent_property_ = parent;
 
-  links_category_ = property_manager_->createCategory( "Links", parent_property_ );
+  links_category_ = property_manager_->createCategory( "Links", parent_property_, this );
 
   if ( !links_.empty() )
   {

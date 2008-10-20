@@ -179,7 +179,7 @@ public:
   PropertyManager* getPropertyManager() { return property_manager_; }
 
   bool isDeletionAllowed( VisualizerBase* visualizer );
-  VisualizerBase* getSelectedVisualizer() { return selected_visualizer_; }
+  bool isValidVisualizer( VisualizerBase* visualizer );
 
   ros::node* getROSNode() { return ros_node_; }
   tf::TransformListener* getTFClient() { return tf_; }
@@ -230,7 +230,6 @@ protected:
   };
   typedef std::vector< VisualizerInfo > V_VisualizerInfo;
   V_VisualizerInfo visualizers_;                          ///< Our list of visualizers
-  VisualizerBase* selected_visualizer_;                   ///< The currently selected visualizer
   typedef std::map<std::string, VisualizerFactory*> M_Factory;
   M_Factory factories_;                                   ///< Factories by visualizer type name
 

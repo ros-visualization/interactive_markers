@@ -107,6 +107,10 @@ public:
   , getter_( getter )
   , setter_( setter )
   {
+    if ( setter_ == 0 )
+    {
+      save_ = false;
+    }
   }
 
   /**
@@ -114,7 +118,11 @@ public:
    */
   virtual ~Property()
   {
-    grid_->DeleteProperty( property_ );
+    // Our property may have already been deleted if we're being deleted en-masse (parent may have been deleted first)
+    if ( property_ && grid_->GetProperty( prefix_ + name_ ) == property_ )
+    {
+      grid_->DeleteProperty( property_ );
+    }
   }
 
   typedef boost::signal< void (PropertyBase*) > ChangedSignal;
@@ -348,6 +356,8 @@ public:
   {
   }
 
+  virtual ~Vector3Property();
+
   virtual void writeToGrid();
   virtual void readFromGrid();
   virtual void saveToConfig( wxConfigBase* config );
@@ -371,6 +381,8 @@ public:
   , w_( NULL )
   {
   }
+
+  virtual ~QuaternionProperty();
 
   virtual void writeToGrid();
   virtual void readFromGrid();

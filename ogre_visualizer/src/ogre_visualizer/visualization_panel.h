@@ -189,6 +189,8 @@ protected:
   ros::thread::mutex render_mutex_;                       ///< Render mutex
 
   VisualizationManager* manager_;
+
+  VisualizerBase* selected_visualizer_;
 };
 
 } // namespace ogre_vis

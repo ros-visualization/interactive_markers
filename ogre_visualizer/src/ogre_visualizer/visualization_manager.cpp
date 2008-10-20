@@ -103,8 +103,6 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
 
 VisualizationManager::~VisualizationManager()
 {
-  delete tf_;
-
   Disconnect( wxEVT_TIMER, update_timer_->GetId(), wxTimerEventHandler( VisualizationManager::onUpdate ), NULL, this );
   delete update_timer_;
 
@@ -127,6 +125,7 @@ VisualizationManager::~VisualizationManager()
   }
   factories_.clear();
 
+  delete tf_;
 
   delete property_manager_;
   vis_panel_->getPropertyGrid()->Thaw();
@@ -455,9 +454,6 @@ void VisualizationManager::removeVisualizer( VisualizerBase* visualizer )
 
   visualizers_.erase( it );
 
-  property_manager_->deleteByUserData( visualizer );
-  selected_visualizer_ = NULL;
-
   delete visualizer;
 
   vis_panel_->queueRender();
@@ -501,6 +497,12 @@ bool VisualizationManager::isDeletionAllowed( VisualizerBase* visualizer )
   }
 
   return false;
+}
+
+bool VisualizationManager::isValidVisualizer( VisualizerBase* visualizer )
+{
+  VisualizerInfo* info = getVisualizerInfo( visualizer );
+  return info != NULL;
 }
 
 void VisualizationManager::getRegisteredTypes( std::vector<std::string>& types )

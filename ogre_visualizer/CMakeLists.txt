@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 2.6)
 include(rosbuild)
 include(FindPkgConfig)
 
-#set(ROS_BUILD_TYPE RelWithDebInfo)
-set(ROS_BUILD_TYPE Debug)
+set(ROS_BUILD_TYPE RelWithDebInfo)
+#set(ROS_BUILD_TYPE Debug)
 
 rospack(ogre_visualizer)
 
@@ -71,6 +71,7 @@ rospack_add_library(${PROJECT_NAME}  src/ogre_visualizer/properties/property.cpp
                                      src/ogre_visualizer/factory.cpp
                                      src/ogre_visualizer/ros_topic_property.cpp
                                      src/ogre_visualizer/new_display_dialog.cpp
+                                     src/ogre_visualizer/helpers/robot.cpp
                                      src/ogre_visualizer/visualizers/marker_visualizer.cpp
                                      src/ogre_visualizer/visualizers/axes_visualizer.cpp
   				   												 src/ogre_visualizer/visualizers/grid_visualizer.cpp
@@ -80,8 +81,8 @@ rospack_add_library(${PROJECT_NAME}  src/ogre_visualizer/properties/property.cpp
   				   												 src/ogre_visualizer/visualizers/planning_visualizer.cpp
   				   												 src/ogre_visualizer/visualizers/octree_visualizer.cpp
   				   												 src/ogre_visualizer/visualizers/robot_base2d_pose_visualizer.cpp
+  				   												 src/ogre_visualizer/visualizers/map_visualizer.cpp
    				   												 src/ogre_visualizer/generated/visualization_panel_generated.cpp
-   				   												 src/ogre_visualizer/helpers/robot.cpp
  				   												   ${SWIG_OUTPUT_CPP_FILE})
 target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} boost_signals ${OGRE_LIBRARIES})
 # swig python needs a shared library named _<modulename>.[so|dll|...]
