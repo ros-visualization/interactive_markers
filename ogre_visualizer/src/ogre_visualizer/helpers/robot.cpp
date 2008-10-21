@@ -51,6 +51,7 @@ Robot::Robot( Ogre::SceneManager* scene_manager, const std::string& name )
 , collision_visible_( false )
 , property_manager_( NULL )
 , parent_property_( NULL )
+, links_category_( NULL )
 , user_data_( NULL )
 , name_( name )
 {
@@ -159,6 +160,7 @@ void Robot::clear()
     property_manager_->deleteByUserData( this );
   }
 
+  links_category_ = NULL;
   links_.clear();
   root_visual_node_->removeAndDestroyAllChildren();
   root_collision_node_->removeAndDestroyAllChildren();
@@ -311,8 +313,6 @@ void Robot::setPropertyManager( PropertyManager* property_manager, CategoryPrope
   property_manager_ = property_manager;
   parent_property_ = parent;
 
-  links_category_ = property_manager_->createCategory( "Links", parent_property_, this );
-
   if ( !links_.empty() )
   {
     M_NameToLinkInfo::iterator link_it = links_.begin();
@@ -354,6 +354,9 @@ void Robot::createPropertiesForLink( LinkInfo* info )
 void Robot::load( robot_desc::URDF* urdf, bool visual, bool collision )
 {
   clear();
+
+  ROS_ASSERT(!links_category_);
+  links_category_ = property_manager_->createCategory( "Links", parent_property_, this );
 
   typedef std::vector<robot_desc::URDF::Link*> V_Link;
   V_Link links;
