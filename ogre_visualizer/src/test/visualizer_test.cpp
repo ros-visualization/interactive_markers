@@ -87,34 +87,35 @@ public:
 
     RobotModelVisualizer* model = manager->createVisualizer<RobotModelVisualizer>( "Robot Model", true );
     model->setRobotDescription( "robotdesc/pr2" );
+
     PlanningVisualizer* planning = manager->createVisualizer<PlanningVisualizer>( "Planning", false );
     planning->initialize( "robotdesc/pr2", "display_kinematic_path" );
 
-    PointCloudVisualizer* pointCloud = manager->createVisualizer<PointCloudVisualizer>( "Stereo Full Cloud", true );
+    PointCloudVisualizer* pointCloud = manager->createVisualizer<PointCloudVisualizer>( "Stereo Full Cloud", false );
     pointCloud->setTopic( "videre/cloud" );
     pointCloud->setColor( Color( 1.0, 1.0, 1.0 ) );
 
-    pointCloud = manager->createVisualizer<PointCloudVisualizer>( "Head Full Cloud", true );
+    pointCloud = manager->createVisualizer<PointCloudVisualizer>( "Head Full Cloud", false );
     pointCloud->setTopic( "full_cloud" );
     pointCloud->setColor( Color( 1.0, 1.0, 0.0 ) );
 
-    pointCloud = manager->createVisualizer<PointCloudVisualizer>( "World 3D Map", true );
+    pointCloud = manager->createVisualizer<PointCloudVisualizer>( "World 3D Map", false );
     pointCloud->setTopic( "world_3d_map" );
     pointCloud->setColor( Color( 1.0f, 0.0f, 0.0f ) );
     pointCloud->setBillboardSize( 0.01 );
 
-    LaserScanVisualizer* laserScan = manager->createVisualizer<LaserScanVisualizer>( "Head Scan", true );
+    LaserScanVisualizer* laserScan = manager->createVisualizer<LaserScanVisualizer>( "Head Scan", false );
     laserScan->setScanTopic( "tilt_scan" );
     laserScan->setColor( Color( 1.0, 0.0, 0.0 ) );
     laserScan->setDecayTime( 30.0f );
 
-    laserScan = manager->createVisualizer<LaserScanVisualizer>( "Floor Scan", true );
+    laserScan = manager->createVisualizer<LaserScanVisualizer>( "Floor Scan", false );
     laserScan->setScanTopic( "base_scan" );
     laserScan->setColor( Color( 0.0f, 1.0f, 0.0f ) );
     laserScan->setDecayTime( 0.0f );
 
     manager->createVisualizer<OctreeVisualizer>( "Octree", false )->setOctreeTopic( "full_octree" );
-    manager->createVisualizer<MarkerVisualizer>( "Visualization Markers", true );
+    manager->createVisualizer<MarkerVisualizer>( "Visualization Markers", false );
   }
 
   ~MyFrame()
@@ -145,7 +146,7 @@ public:
     localArgv =  new char*[ argc ];
     for ( int i = 0; i < argc; ++i )
     {
-      localArgv[ i ] = strdup( wxString( argv[ i ] ).fn_str() );
+      localArgv[ i ] = strdup( wxString( argv[ i ] ).mb_str() );
     }
 
     ros::init(argc, localArgv);

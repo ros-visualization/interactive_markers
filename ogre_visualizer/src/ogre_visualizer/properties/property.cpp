@@ -44,7 +44,7 @@ void BoolProperty::writeToGrid()
 {
   if ( !property_ )
   {
-    property_ = grid_->AppendIn( parent_, new wxBoolProperty( name_, prefix_ + name_, get() ) );
+    property_ = grid_->AppendIn( parent_->getPGProperty(), new wxBoolProperty( name_, prefix_ + name_, get() ) );
     property_->SetAttribute( wxPG_BOOL_USE_CHECKBOX, true );
 
     if ( !hasSetter() )
@@ -91,7 +91,7 @@ void IntProperty::writeToGrid()
 {
   if ( !property_ )
   {
-    property_ = grid_->AppendIn( parent_, new wxIntProperty( name_, prefix_ + name_, get() ) );
+    property_ = grid_->AppendIn( parent_->getPGProperty(), new wxIntProperty( name_, prefix_ + name_, get() ) );
 
     if ( !hasSetter() )
     {
@@ -138,7 +138,7 @@ void FloatProperty::writeToGrid()
 {
   if ( !property_ )
   {
-    property_ = grid_->AppendIn( parent_, new wxFloatProperty( name_, prefix_ + name_, get() ) );
+    property_ = grid_->AppendIn( parent_->getPGProperty(), new wxFloatProperty( name_, prefix_ + name_, get() ) );
 
     if ( !hasSetter() )
     {
@@ -174,7 +174,7 @@ void StringProperty::writeToGrid()
 {
   if ( !property_ )
   {
-    property_ = grid_->AppendIn( parent_, new wxStringProperty( name_, prefix_ + name_, wxString::FromAscii( get().c_str() ) ) );
+    property_ = grid_->AppendIn( parent_->getPGProperty(), new wxStringProperty( name_, prefix_ + name_, wxString::FromAscii( get().c_str() ) ) );
 
     if ( !hasSetter() )
     {
@@ -190,7 +190,7 @@ void StringProperty::writeToGrid()
 void StringProperty::readFromGrid()
 {
   wxVariant var = property_->GetValue();
-  set( (const char*)var.GetString().fn_str() );
+  set( (const char*)var.GetString().mb_str() );
 }
 
 void StringProperty::saveToConfig( wxConfigBase* config )
@@ -203,14 +203,14 @@ void StringProperty::loadFromConfig( wxConfigBase* config )
   wxString val;
   config->Read( prefix_ + name_, &val, wxString::FromAscii( get().c_str() ) );
 
-  set( (const char*)val.fn_str() );
+  set( (const char*)val.mb_str() );
 }
 
 void ROSTopicStringProperty::writeToGrid()
 {
   if ( !property_ )
   {
-    property_ = grid_->AppendIn( parent_, new ROSTopicProperty( ros::node::instance(), name_, prefix_ + name_, wxString::FromAscii( get().c_str() ) ) );
+    property_ = grid_->AppendIn( parent_->getPGProperty(), new ROSTopicProperty( ros::node::instance(), name_, prefix_ + name_, wxString::FromAscii( get().c_str() ) ) );
 
     if ( !hasSetter() )
     {
@@ -228,7 +228,7 @@ void ColorProperty::writeToGrid()
   if ( !property_ )
   {
     Color c = get();
-    property_ = grid_->AppendIn( parent_, new wxColourProperty( name_, prefix_ + name_, wxColour( c.r_ * 255, c.g_ * 255, c.b_ * 255 ) ) );
+    property_ = grid_->AppendIn( parent_->getPGProperty(), new wxColourProperty( name_, prefix_ + name_, wxColour( c.r_ * 255, c.g_ * 255, c.b_ * 255 ) ) );
 
     if ( !hasSetter() )
     {
@@ -284,7 +284,7 @@ void EnumProperty::writeToGrid()
 {
   if ( !property_ )
   {
-    property_ = grid_->AppendIn( parent_, new wxEnumProperty( name_, prefix_ + name_ ) );
+    property_ = grid_->AppendIn( parent_->getPGProperty(), new wxEnumProperty( name_, prefix_ + name_ ) );
 
     if ( !hasSetter() )
     {
@@ -322,7 +322,7 @@ void CategoryProperty::writeToGrid()
   {
     if ( parent_ )
     {
-      property_ = grid_->AppendIn( parent_, new wxPropertyCategory( name_ ) );
+      property_ = grid_->AppendIn( parent_->getPGProperty(), new wxPropertyCategory( name_ ) );
     }
     else
     {
@@ -334,20 +334,9 @@ void CategoryProperty::writeToGrid()
 
 Vector3Property::~Vector3Property()
 {
-  if ( x_ && grid_->GetProperty( prefix_ + name_ + wxT("X") ) == x_ )
-  {
-    grid_->DeleteProperty( x_ );
-  }
-
-  if ( y_ && grid_->GetProperty( prefix_ + name_ + wxT("Y") ) == y_ )
-  {
-    grid_->DeleteProperty( y_ );
-  }
-
-  if ( z_ && grid_->GetProperty( prefix_ + name_ + wxT("Z") ) == z_ )
-  {
-    grid_->DeleteProperty( z_ );
-  }
+  grid_->DeleteProperty( x_ );
+  grid_->DeleteProperty( y_ );
+  grid_->DeleteProperty( z_ );
 }
 
 void Vector3Property::writeToGrid()
@@ -357,7 +346,7 @@ void Vector3Property::writeToGrid()
     Ogre::Vector3 v = get();
 
     wxString composed_name = name_ + wxT("Composed");
-    wxPGProperty* composed_parent = grid_->AppendIn( parent_, new wxStringProperty( name_, prefix_ + composed_name, wxT("<composed>")) );
+    wxPGProperty* composed_parent = grid_->AppendIn( parent_->getPGProperty(), new wxStringProperty( name_, prefix_ + composed_name, wxT("<composed>")) );
     composed_parent->SetClientData( this );
 
     x_ = grid_->AppendIn( composed_parent, new wxFloatProperty( wxT("X"), prefix_ + name_ + wxT("X"), v.x ) );
@@ -417,25 +406,10 @@ void Vector3Property::setPGClientData()
 
 QuaternionProperty::~QuaternionProperty()
 {
-  if ( x_ && grid_->GetProperty( prefix_ + name_ + wxT("X") ) == x_ )
-  {
-    grid_->DeleteProperty( x_ );
-  }
-
-  if ( y_ && grid_->GetProperty( prefix_ + name_ + wxT("Y") ) == y_ )
-  {
-    grid_->DeleteProperty( y_ );
-  }
-
-  if ( z_ && grid_->GetProperty( prefix_ + name_ + wxT("Z") ) == z_ )
-  {
-    grid_->DeleteProperty( z_ );
-  }
-
-  if ( w_ && grid_->GetProperty( prefix_ + name_ + wxT("W") ) == w_ )
-  {
-    grid_->DeleteProperty( w_ );
-  }
+  grid_->DeleteProperty( x_ );
+  grid_->DeleteProperty( y_ );
+  grid_->DeleteProperty( z_ );
+  grid_->DeleteProperty( w_ );
 }
 
 void QuaternionProperty::writeToGrid()
@@ -445,7 +419,7 @@ void QuaternionProperty::writeToGrid()
     Ogre::Quaternion q = get();
 
     wxString composed_name = name_ + wxT("Composed");
-    wxPGProperty* composed_parent = grid_->AppendIn( parent_, new wxStringProperty( name_, prefix_ + composed_name, wxT("<composed>")) );
+    wxPGProperty* composed_parent = grid_->AppendIn( parent_->getPGProperty(), new wxStringProperty( name_, prefix_ + composed_name, wxT("<composed>")) );
     composed_parent->SetClientData( this );
 
     x_ = grid_->AppendIn( composed_parent, new wxFloatProperty( wxT("X"), prefix_ + name_ + wxT("X"), q.x ) );

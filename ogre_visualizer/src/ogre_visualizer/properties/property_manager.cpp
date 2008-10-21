@@ -29,6 +29,8 @@
 
 #include "property_manager.h"
 
+#include <rosconsole/rosconsole.h>
+
 #include <wx/wx.h>
 #include <wx/confbase.h>
 
@@ -38,15 +40,21 @@ namespace ogre_vis
 PropertyManager::PropertyManager( wxPropertyGrid* grid )
 : grid_( grid )
 {
-
+  log4cxx::LoggerPtr logger = log4cxx::Logger::getLogger( ROSCONSOLE_DEFAULT_NAME ".properties" );
+  if ( logger->getLevel() == 0  )
+  {
+    logger->setLevel( log4cxx::Level::getInfo() );
+  }
 }
 
 PropertyManager::~PropertyManager()
 {
+  PROPERTY_DEBUG("PropertyManager Destructor");
   M_Property::iterator it = properties_.begin();
   M_Property::iterator end = properties_.end();
   for ( ; it != end; ++it )
   {
+    PROPERTY_DEBUG("Deleting property: %s%s", it->first.first.c_str(), it->first.second.c_str());
     delete it->second;
   }
   properties_.clear();
@@ -67,21 +75,48 @@ void PropertyManager::deleteProperty( PropertyBase* property )
     return;
   }
 
+  PROPERTY_DEBUG("PropertyManager::deleteProperty( PropertyBase* property ): 0x%08x, %s%s", property, property->getPrefix().c_str(), property->getName().c_str());
+
   deleteProperty( property->getName(), property->getPrefix() );
 }
 
 void PropertyManager::deleteProperty( const std::string& name, const std::string& prefix )
 {
-  M_Property::iterator it = properties_.find( std::make_pair( prefix, name ) );
-  ROS_ASSERT( it != properties_.end() );
+  PROPERTY_DEBUG("PropertyManager::deleteProperty( const std::string& name, const std::string& prefix ): %s%s", prefix.c_str(), name.c_str());
 
-  delete it->second;
+  M_Property::iterator found_it = properties_.find( std::make_pair( prefix, name ) );
+  ROS_ASSERT( found_it != properties_.end() );
 
-  properties_.erase( it );
+  std::set<PropertyBase*> to_delete;
+  // search for any children of this property, and delete them as well
+  M_Property::iterator prop_it = properties_.begin();
+  M_Property::iterator prop_end = properties_.end();
+  for ( ; prop_it != prop_end; ++prop_it )
+  {
+    PropertyBase* property = prop_it->second;
+
+    if ( property->getParent() == found_it->second )
+    {
+      to_delete.insert( property );
+    }
+  }
+
+  std::set<PropertyBase*>::iterator del_it = to_delete.begin();
+  std::set<PropertyBase*>::iterator del_end = to_delete.end();
+  for ( ; del_it != del_end; ++del_it )
+  {
+    deleteProperty( *del_it );
+  }
+
+  delete found_it->second;
+
+  properties_.erase( found_it );
 }
 
 void PropertyManager::deleteByUserData( void* user_data )
 {
+  PROPERTY_DEBUG("PropertyManager::deleteByUserData: user_data=0x%08x", user_data);
+
   std::set<PropertyBase*> to_delete;
 
   M_Property::iterator it = properties_.begin();
@@ -92,7 +127,10 @@ void PropertyManager::deleteByUserData( void* user_data )
 
     if ( property->getUserData() == user_data )
     {
-      to_delete.insert( property );
+      if ( !property->getParent() || property->getParent()->getUserData() != user_data )
+      {
+        to_delete.insert( property );
+      }
     }
   }
 

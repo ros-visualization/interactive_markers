@@ -74,12 +74,12 @@ void NewDisplayDialog::onNameEnter( wxCommandEvent& event )
 
 std::string NewDisplayDialog::getTypeName()
 {
-  return (const char*)types_->GetStringSelection().fn_str();
+  return (const char*)types_->GetStringSelection().mb_str();
 }
 
 std::string NewDisplayDialog::getVisualizerName()
 {
-  return (const char*)name_->GetValue().fn_str();
+  return (const char*)name_->GetValue().mb_str();
 }
 
 } // ogre_vis

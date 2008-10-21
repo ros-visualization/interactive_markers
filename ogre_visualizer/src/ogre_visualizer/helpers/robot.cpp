@@ -355,8 +355,11 @@ void Robot::load( robot_desc::URDF* urdf, bool visual, bool collision )
 {
   clear();
 
-  ROS_ASSERT(!links_category_);
-  links_category_ = property_manager_->createCategory( "Links", parent_property_, this );
+  if ( property_manager_ )
+  {
+    ROS_ASSERT(!links_category_);
+    links_category_ = property_manager_->createCategory( "Links", parent_property_, this );
+  }
 
   typedef std::vector<robot_desc::URDF::Link*> V_Link;
   V_Link links;

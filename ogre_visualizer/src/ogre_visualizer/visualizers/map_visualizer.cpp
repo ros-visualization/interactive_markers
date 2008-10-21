@@ -172,6 +172,8 @@ void MapVisualizer::load()
                                                                    pixel_stream, width_, height_, Ogre::PF_BYTE_RGB, Ogre::TEX_TYPE_2D,
                                                                    0);
 
+  delete [] pixels;
+
   Ogre::Pass* pass = material_->getTechnique(0)->getPass(0);
   Ogre::TextureUnitState* tex_unit = NULL;
   if (pass->getNumTextureUnitStates() > 0)

@@ -210,16 +210,25 @@ void PointCloudVisualizer::transformCloud()
   float min_intensity = 999999.0f;
   float max_intensity = -999999.0f;
 
-  uint32_t pointCount = message_.get_pts_size();
+  uint32_t point_count = message_.get_pts_size();
   if ( has_channel_0 && !channel_is_rgb )
   {
-    for(uint32_t i = 0; i < pointCount; i++)
+    uint32_t val_count = message_.chan[0].vals.size();
+    bool channel_size_correct = val_count == point_count;
+    ROS_ERROR_COND(!channel_size_correct, "Point cloud '%s' on topic '%s' has channel 0 with fewer values than points (%d values, %d points)", name_.c_str(), topic_.c_str(), val_count, point_count);
+
+    has_channel_0 = channel_size_correct;
+
+    if ( channel_size_correct )
     {
-      float& intensity = message_.chan[0].vals[i];
-      // arbitrarily cap to 4096 for now
-      intensity = std::min( intensity, 4096.0f );
-      min_intensity = std::min( min_intensity, intensity );
-      max_intensity = std::max( max_intensity, intensity );
+      for(uint32_t i = 0; i < point_count; i++)
+      {
+        float& intensity = message_.chan[0].vals[i];
+        // arbitrarily cap to 4096 for now
+        intensity = std::min( intensity, 4096.0f );
+        min_intensity = std::min( min_intensity, intensity );
+        max_intensity = std::max( max_intensity, intensity );
+      }
     }
   }
 
@@ -228,8 +237,8 @@ void PointCloudVisualizer::transformCloud()
   ros::Time start_vec = ros::Time::now();
   typedef std::vector< ogre_tools::PointCloud::Point > V_Point;
   V_Point points;
-  points.resize( pointCount );
-  for(uint32_t i = 0; i < pointCount; i++)
+  points.resize( point_count );
+  for(uint32_t i = 0; i < point_count; i++)
   {
     float channel = has_channel_0 ? message_.chan[0].vals[i] : 1.0f;
 

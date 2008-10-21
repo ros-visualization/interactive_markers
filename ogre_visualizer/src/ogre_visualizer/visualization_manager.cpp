@@ -200,7 +200,6 @@ void VisualizationManager::addVisualizer( VisualizerBase* visualizer, bool allow
   category->setUserData( visualizer );
 
   setVisualizerEnabled( visualizer, enabled );
-
   visualizer->setPropertyManager( property_manager_, category );
 
   vis_panel_->getPropertyGrid()->Thaw();
@@ -363,7 +362,7 @@ void VisualizationManager::loadConfig( wxConfigBase* config )
       break;
     }
 
-    createVisualizer( (const char*)vis_type.fn_str(), (const char*)vis_name.fn_str(), false, true );
+    createVisualizer( (const char*)vis_type.mb_str(), (const char*)vis_name.mb_str(), false, true );
 
     ++i;
   }

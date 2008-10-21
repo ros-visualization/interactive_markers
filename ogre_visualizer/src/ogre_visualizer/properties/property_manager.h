@@ -75,10 +75,11 @@ public:
   template<typename T, typename G, typename S>
   T* createProperty(const std::string& name, const std::string& prefix, const G& getter, const S& setter, CategoryProperty* parent, void* user_data = NULL)
   {
-    T* property = new T( name, prefix, grid_, parent ? parent->getPGProperty() : 0, getter, setter );
-    bool inserted = properties_.insert( std::make_pair( std::make_pair(prefix, name), property ) ).second;
-    ROS_ASSERT(inserted);
-    (void)inserted;
+    T* property = new T( name, prefix, grid_, parent, getter, setter );
+    std::pair<M_Property::iterator, bool> pib = properties_.insert( std::make_pair( std::make_pair(prefix, name), property ) );
+    ROS_ASSERT(pib.second);
+
+    PROPERTY_DEBUG("PropertyManager::createProperty: Inserted property 0x%08x, %s%s", property, pib.first->first.first.c_str(), pib.first->first.second.c_str());
 
     property->writeToGrid();
     property->setPGClientData();

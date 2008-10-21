@@ -33,6 +33,8 @@
 #include <boost/function.hpp>
 #include <boost/signal.hpp>
 
+#include <rosconsole/rosconsole.h>
+
 #include <wx/wx.h>
 #include <wx/propgrid/propgrid.h>
 #include <wx/string.h>
@@ -44,8 +46,12 @@
 
 class wxConfigBase;
 
+#define PROPERTY_DEBUG(...) ROS_DEBUG_NAMED("properties", __VA_ARGS__)
+
 namespace ogre_vis
 {
+
+class CategoryProperty;
 
 /**
  * \brief Abstract base class for properties
@@ -66,6 +72,8 @@ public:
   virtual void* getUserData() = 0;
 
   virtual wxPGProperty* getPGProperty() = 0;
+
+  virtual CategoryProperty* getParent() = 0;
 };
 
 /**
@@ -96,7 +104,7 @@ public:
    * @param setter Setter function/method.  See boost::function and boost::bind for more information
    * @return
    */
-  Property( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, wxPGProperty* parent, const Getter& getter, const Setter& setter )
+  Property( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, CategoryProperty* parent, const Getter& getter, const Setter& setter )
   : name_( wxString::FromAscii( name.c_str() ) )
   , prefix_( wxString::FromAscii( prefix.c_str() ) )
   , grid_( grid )
@@ -118,11 +126,9 @@ public:
    */
   virtual ~Property()
   {
-    // Our property may have already been deleted if we're being deleted en-masse (parent may have been deleted first)
-    if ( property_ && grid_->GetProperty( prefix_ + name_ ) == property_ )
-    {
-      grid_->DeleteProperty( property_ );
-    }
+    PROPERTY_DEBUG("Property Destructor: 0x%08x, %s%s", this, (const char*)prefix_.mb_str(), (const char*)name_.mb_str());
+    PROPERTY_DEBUG("Deleting wxPGProperty: 0x%08x", property_);
+    grid_->DeleteProperty( property_ );
   }
 
   typedef boost::signal< void (PropertyBase*) > ChangedSignal;
@@ -176,12 +182,12 @@ public:
    * \brief Get the name of this property
    * @return The name of this property
    */
-  virtual std::string getName() { return (const char*)name_.fn_str(); }
+  virtual std::string getName() { return (const char*)name_.mb_str(); }
   /**
    * \brief Get the prefix of this property
    * @return The prefix of this property
    */
-  virtual std::string getPrefix() { return (const char*)prefix_.fn_str(); }
+  virtual std::string getPrefix() { return (const char*)prefix_.mb_str(); }
 
   /**
    * \brief Set the correct user data on this property's wxPGProperty(ies)
@@ -210,11 +216,13 @@ public:
    */
   void setUserData(void* user_data) { user_data_ = user_data; }
 
+  virtual CategoryProperty* getParent() { return parent_; }
+
 protected:
   wxString name_;
   wxString prefix_;
   wxPropertyGrid* grid_;
-  wxPGProperty* parent_;
+  CategoryProperty* parent_;
   wxPGProperty* property_;
 
   bool save_;
@@ -231,7 +239,7 @@ private:
 class BoolProperty : public Property<bool>
 {
 public:
-  BoolProperty( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, wxPGProperty* parent, const Getter& getter, const Setter& setter )
+  BoolProperty( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, CategoryProperty* parent, const Getter& getter, const Setter& setter )
   : Property<bool>( name, prefix, grid, parent, getter, setter )
   {
   }
@@ -245,7 +253,7 @@ public:
 class IntProperty : public Property<int>
 {
 public:
-  IntProperty( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, wxPGProperty* parent, const Getter& getter, const Setter& setter )
+  IntProperty( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, CategoryProperty* parent, const Getter& getter, const Setter& setter )
   : Property<int>( name, prefix, grid, parent, getter, setter )
   {
   }
@@ -262,7 +270,7 @@ public:
 class FloatProperty : public Property<float>
 {
 public:
-  FloatProperty( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, wxPGProperty* parent, const Getter& getter, const Setter& setter )
+  FloatProperty( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, CategoryProperty* parent, const Getter& getter, const Setter& setter )
   : Property<float>( name, prefix, grid, parent, getter, setter )
   {
   }
@@ -279,7 +287,7 @@ public:
 class StringProperty : public Property<std::string>
 {
 public:
-  StringProperty( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, wxPGProperty* parent, const Getter& getter, const Setter& setter )
+  StringProperty( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, CategoryProperty* parent, const Getter& getter, const Setter& setter )
   : Property<std::string>( name, prefix, grid, parent, getter, setter )
   {
   }
@@ -293,7 +301,7 @@ public:
 class ROSTopicStringProperty : public StringProperty
 {
 public:
-  ROSTopicStringProperty( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, wxPGProperty* parent, const Getter& getter, const Setter& setter )
+  ROSTopicStringProperty( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, CategoryProperty* parent, const Getter& getter, const Setter& setter )
   : StringProperty( name, prefix, grid, parent, getter, setter )
   {
   }
@@ -304,7 +312,7 @@ public:
 class ColorProperty : public Property<Color>
 {
 public:
-  ColorProperty( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, wxPGProperty* parent, const Getter& getter, const Setter& setter )
+  ColorProperty( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, CategoryProperty* parent, const Getter& getter, const Setter& setter )
   : Property<Color>( name, prefix, grid, parent, getter, setter )
   {
   }
@@ -318,7 +326,7 @@ public:
 class EnumProperty : public Property<int>
 {
 public:
-  EnumProperty( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, wxPGProperty* parent, const Getter& getter, const Setter& setter )
+  EnumProperty( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, CategoryProperty* parent, const Getter& getter, const Setter& setter )
   : Property<int>( name, prefix, grid, parent, getter, setter )
   {
   }
@@ -334,7 +342,7 @@ public:
 class CategoryProperty : public Property<int>
 {
 public:
-  CategoryProperty( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, wxPGProperty* parent, const Getter& getter, const Setter& setter )
+  CategoryProperty( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, CategoryProperty* parent, const Getter& getter, const Setter& setter )
   : Property<int>( name, prefix, grid, parent, getter, setter )
   {
   }
@@ -348,7 +356,7 @@ public:
 class Vector3Property : public Property<Ogre::Vector3>
 {
 public:
-  Vector3Property( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, wxPGProperty* parent, const Getter& getter, const Setter& setter )
+  Vector3Property( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, CategoryProperty* parent, const Getter& getter, const Setter& setter )
   : Property<Ogre::Vector3>( name, prefix, grid, parent, getter, setter )
   , x_( NULL )
   , y_( NULL )
@@ -373,7 +381,7 @@ protected:
 class QuaternionProperty : public Property<Ogre::Quaternion>
 {
 public:
-  QuaternionProperty( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, wxPGProperty* parent, const Getter& getter, const Setter& setter )
+  QuaternionProperty( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, CategoryProperty* parent, const Getter& getter, const Setter& setter )
   : Property<Ogre::Quaternion>( name, prefix, grid, parent, getter, setter )
   , x_( NULL )
   , y_( NULL )
