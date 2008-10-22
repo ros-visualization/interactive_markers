@@ -118,6 +118,7 @@ class PR2Frame(wx.Frame):
         panel = wx_camera_panel.CameraPanel(self)
         panel.setName(name)
         panel.setPTZEnabled(ptz_enabled)
+        panel.setMinimal(True)
         
         caption = 'Camera ' + name
         self._aui_manager.AddPane(panel, wx.aui.AuiPaneInfo().Right().Layer(1).Name(caption).Caption(caption), caption)
