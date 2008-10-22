@@ -41,7 +41,8 @@
 #include "helpers/color.h"
 #include <scan_utils/OctreeMsg.h>
 
-#include <Ogre.h>
+#include <OgreVector3.h>
+#include <OgreMaterial.h>
 
 namespace ogre_vis
 {

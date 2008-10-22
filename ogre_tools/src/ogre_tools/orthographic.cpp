@@ -1,6 +1,6 @@
 #include "orthographic.h"
 
-#include <Ogre.h>
+#include <OgreMatrix4.h>
 
 namespace ogre_tools
 {

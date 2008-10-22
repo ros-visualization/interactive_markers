@@ -52,6 +52,11 @@
 
 #include "common.h"
 
+#include <OgreSceneNode.h>
+#include <OgreSceneManager.h>
+#include <OgreManualObject.h>
+#include <OgreMaterialManager.h>
+
 namespace ogre_vis
 {
 

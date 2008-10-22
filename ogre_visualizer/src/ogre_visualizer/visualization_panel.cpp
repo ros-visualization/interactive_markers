@@ -39,11 +39,13 @@
 #include "ogre_tools/orbit_camera.h"
 #include "ogre_tools/ortho_camera.h"
 
-#include <Ogre.h>
 #include <wx/propgrid/propgrid.h>
 #include <wx/confbase.h>
 
 #include <boost/bind.hpp>
+
+#include <OgreRoot.h>
+#include <OgreViewport.h>
 
 namespace ogre_vis
 {

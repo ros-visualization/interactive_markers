@@ -41,7 +41,9 @@
 #include "../ogre_tools/super_ellipsoid.h"
 #include "../ogre_tools/initialization.h"
 
-#include "Ogre.h"
+#include <OgreRoot.h>
+#include <OgreSceneManager.h>
+#include <OgreViewport.h>
 
 class MyFrame : public wxFrame
 {

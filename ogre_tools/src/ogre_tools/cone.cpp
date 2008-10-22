@@ -1,6 +1,11 @@
 #include "cone.h"
 
-#include <Ogre.h>
+#include <OgreSceneManager.h>
+#include <OgreSceneNode.h>
+#include <OgreVector3.h>
+#include <OgreQuaternion.h>
+#include <OgreManualObject.h>
+#include <OgreMaterialManager.h>
 
 namespace ogre_tools
 {

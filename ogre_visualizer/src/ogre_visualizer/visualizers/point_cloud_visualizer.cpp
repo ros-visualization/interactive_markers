@@ -39,11 +39,13 @@
 
 #include <tf/transform_listener.h>
 
-#include <Ogre.h>
 #include <wx/wx.h>
 #include <wx/propgrid/propgrid.h>
 #include <wx/propgrid/advprops.h>
 #include <wx/confbase.h>
+
+#include <OgreSceneNode.h>
+#include <OgreSceneManager.h>
 
 namespace ogre_vis
 {

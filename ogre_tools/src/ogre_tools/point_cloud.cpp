@@ -29,7 +29,14 @@
 
 #include "point_cloud.h"
 
-#include <Ogre.h>
+#include <OgreSceneManager.h>
+#include <OgreSceneNode.h>
+#include <OgreVector3.h>
+#include <OgreQuaternion.h>
+#include <OgreManualObject.h>
+#include <OgreMaterialManager.h>
+#include <OgreBillboardSet.h>
+#include <OgreBillboard.h>
 
 #include <sstream>
 

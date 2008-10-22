@@ -1,5 +1,13 @@
-#include <Ogre.h>
+#include <OgreRoot.h>
+#include <OgreLogManager.h>
+#include <OgreMaterialManager.h>
+#include <OgreSkeletonManager.h>
+#include <OgreMeshSerializer.h>
+#include <OgreMeshManager.h>
+#include <OgreResourceGroupManager.h>
+#include <OgreMath.h>
 #include <OgreDefaultHardwareBufferManager.h>
+#include <OgreManualObject.h>
 
 /**
  * @file

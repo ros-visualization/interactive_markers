@@ -39,7 +39,11 @@
 #include <tf/transform_listener.h>
 #include <planning_models/kinematic.h>
 
-#include <Ogre.h>
+#include <OgreSceneNode.h>
+#include <OgreSceneManager.h>
+#include <OgreRibbonTrail.h>
+#include <OgreEntity.h>
+#include <OgreSubEntity.h>
 
 #include <rosconsole/rosconsole.h>
 

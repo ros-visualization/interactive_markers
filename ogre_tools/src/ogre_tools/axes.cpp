@@ -30,7 +30,10 @@
 #include "axes.h"
 #include "super_ellipsoid.h"
 
-#include <Ogre.h>
+#include <OgreSceneManager.h>
+#include <OgreSceneNode.h>
+#include <OgreVector3.h>
+#include <OgreQuaternion.h>
 
 #include <sstream>
 

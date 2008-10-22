@@ -1,8 +1,11 @@
 #include "initialization.h"
 
-#include <Ogre.h>
+#include <OgreRoot.h>
+#include <OgreRenderSystem.h>
+#include <OgreLogManager.h>
 
 #include <exception>
+#include <stdexcept>
 
 namespace ogre_tools
 {

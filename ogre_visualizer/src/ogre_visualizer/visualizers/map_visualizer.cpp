@@ -37,7 +37,6 @@
 
 #include <ogre_tools/grid.h>
 
-#include <Ogre.h>
 #include <wx/wx.h>
 #include <wx/propgrid/propgrid.h>
 #include <wx/propgrid/advprops.h>
@@ -46,6 +45,12 @@
 #include <ros/service.h>
 
 #include <boost/bind.hpp>
+
+#include <OgreSceneNode.h>
+#include <OgreSceneManager.h>
+#include <OgreManualObject.h>
+#include <OgreMaterialManager.h>
+#include <OgreTextureManager.h>
 
 namespace ogre_vis
 {
@@ -122,10 +127,11 @@ void MapVisualizer::load()
   ROS_DEBUG("Requesting the map...");
   if( !ros::service::call(service_, req, resp) )
   {
-    printf("request failed");
+    ROS_DEBUG("request failed");
 
     return;
   }
+
   ROS_DEBUG("Received a %d X %d map @ %.3f m/pix\n",
              resp.map.width,
              resp.map.height,

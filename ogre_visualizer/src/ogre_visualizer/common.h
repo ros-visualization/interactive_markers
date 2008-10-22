@@ -27,12 +27,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-// DO NOT INCLUDE THIS FROM WITHIN ANOTHER HEADER, AS IT WILL PULL IN ALL OF OGRE
-
 #ifndef OGRE_VISUALIZER_COMMON_H
 #define OGRE_VISUALIZER_COMMON_H
 
-#include <Ogre.h>
+#include <OgreVector3.h>
+#include <OgreQuaternion.h>
+#include <OgreMatrix3.h>
 
 /**
  * \file

@@ -34,12 +34,14 @@
 
 #include "ogre_tools/arrow.h"
 
-#include <Ogre.h>
 #include <wx/wx.h>
 #include <ros/node.h>
 #include <tf/transform_listener.h>
 
 #include <boost/bind.hpp>
+
+#include <OgreSceneNode.h>
+#include <OgreSceneManager.h>
 
 namespace ogre_vis
 {

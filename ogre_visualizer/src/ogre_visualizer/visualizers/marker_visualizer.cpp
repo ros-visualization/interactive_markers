@@ -40,7 +40,8 @@
 #include <urdf/URDF.h>
 #include <planning_models/kinematic.h>
 
-#include <Ogre.h>
+#include <OgreSceneNode.h>
+#include <OgreSceneManager.h>
 
 
 namespace ogre_vis

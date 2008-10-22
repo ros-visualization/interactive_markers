@@ -29,8 +29,12 @@
 
 #include "grid.h"
 
-#include <Ogre.h>
-
+#include <OgreSceneManager.h>
+#include <OgreSceneNode.h>
+#include <OgreVector3.h>
+#include <OgreQuaternion.h>
+#include <OgreManualObject.h>
+#include <OgreMaterialManager.h>
 
 #include <sstream>
 

@@ -31,7 +31,12 @@
 
 #include <cmath>
 
-#include <Ogre.h>
+#include <OgreSceneManager.h>
+#include <OgreSceneNode.h>
+#include <OgreVector3.h>
+#include <OgreQuaternion.h>
+#include <OgreManualObject.h>
+#include <OgreMaterialManager.h>
 
 #define SIGN(r) Ogre::Math::Sign(r)
 
@@ -125,6 +130,7 @@ void SuperEllipsoid::create(int samples, float n1, float n2, const Ogre::Vector3
 void SuperEllipsoid::create(Shape shape, int samples, const Ogre::Vector3& scale)
 {
   float n1, n2;
+  n1 = n2 = 0.0f;
 
   switch(shape)
   {

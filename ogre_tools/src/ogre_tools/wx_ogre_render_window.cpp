@@ -1,7 +1,11 @@
 #include "wx_ogre_render_window.h"
 #include "orthographic.h"
 
-#include "Ogre.h"
+#include <OgreRoot.h>
+#include <OgreViewport.h>
+#include <OgreCamera.h>
+#include <OgreRenderWindow.h>
+#include <OgreStringConverter.h>
 
 #ifdef __WXGTK__
 #include <gdk/gdk.h>

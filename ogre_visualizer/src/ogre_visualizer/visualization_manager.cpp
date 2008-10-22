@@ -44,12 +44,18 @@
 #include <ros/node.h>
 #include <tf/transform_listener.h>
 
-#include <Ogre.h>
 #include <wx/timer.h>
 #include <wx/propgrid/propgrid.h>
 #include <wx/confbase.h>
 
 #include <boost/bind.hpp>
+
+#include <OgreRoot.h>
+#include <OgreSceneManager.h>
+#include <OgreSceneNode.h>
+#include <OgreParticleSystem.h>
+#include <OgreParticle.h>
+#include <OgreLight.h>
 
 namespace ogre_vis
 {

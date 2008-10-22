@@ -49,7 +49,9 @@
 #include "visualizers/octree_visualizer.h"
 #include "visualizers/planning_visualizer.h"
 
-#include "Ogre.h"
+#include <OgreRoot.h>
+#include <OgreSceneManager.h>
+#include <OgreViewport.h>
 
 using namespace ogre_vis;
 

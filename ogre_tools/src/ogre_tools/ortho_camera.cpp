@@ -33,7 +33,11 @@
 
 #include "rosconsole/rosassert.h"
 
-#include <Ogre.h>
+#include <OgreCamera.h>
+#include <OgreSceneManager.h>
+#include <OgreSceneNode.h>
+#include <OgreVector3.h>
+#include <OgreQuaternion.h>
 
 namespace ogre_tools
 {
