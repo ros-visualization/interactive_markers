@@ -80,6 +80,12 @@ public:
   /// to match what the camera is expecting.
   void setZoomLimits( float min, float max );
 
+  /**
+   * \brief Set this panel to be "minimal", ie hide the Setup/Enabled buttons
+   * @param minimal If true, sets the panel to be minimal
+   */
+  void setMinimal( bool minimal );
+
 private:
   /// Set the subscription topic for the image display
   void setImageSubscription( const std::string& topic );
@@ -259,6 +265,8 @@ private:
   float zoom_max_;
 
   wxTimer zoom_scroll_timer_;
+
+  bool minimal_;
 };
 
 #endif

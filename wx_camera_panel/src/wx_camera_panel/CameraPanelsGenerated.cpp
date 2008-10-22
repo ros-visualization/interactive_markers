@@ -27,17 +27,12 @@ CameraPanelBase::CameraPanelBase( wxWindow* parent, wxWindowID id, const wxPoint
 	setup_ = new wxButton( this, wxID_ANY, wxT("Setup"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer39->Add( setup_, 0, wxALL|wxALIGN_RIGHT, 5 );
 	
-	bSizer24->Add( bSizer39, 1, wxEXPAND, 5 );
+	bSizer24->Add( bSizer39, 1, wxEXPAND, 0 );
 	
-	bSizer3->Add( bSizer24, 0, wxEXPAND, 5 );
-	
-	wxStaticBoxSizer* sbSizer5;
-	sbSizer5 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxEmptyString ), wxVERTICAL );
+	bSizer3->Add( bSizer24, 0, wxEXPAND, 0 );
 	
 	image_panel_ = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	sbSizer5->Add( image_panel_, 1, wxEXPAND | wxALL, 5 );
-	
-	bSizer3->Add( sbSizer5, 1, wxEXPAND, 5 );
+	bSizer3->Add( image_panel_, 1, wxEXPAND | wxALL, 0 );
 	
 	this->SetSizer( bSizer3 );
 	this->Layout();

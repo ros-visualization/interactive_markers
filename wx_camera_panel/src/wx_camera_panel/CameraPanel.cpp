@@ -98,6 +98,7 @@ CameraPanel::CameraPanel(wxWindow* parent)
 , zoom_min_( 1.0f )
 , zoom_max_( 9999.0f )
 , zoom_scroll_timer_( this )
+, minimal_( false )
 {
   wxInitAllImageHandlers();
 
@@ -257,6 +258,23 @@ void CameraPanel::setZoomLimits( float min, float max )
 {
   zoom_min_ = min;
   zoom_max_ = max;
+}
+
+void CameraPanel::setMinimal( bool minimal )
+{
+  if ( minimal )
+  {
+    setup_->Hide();
+    enable_->Hide();
+  }
+  else
+  {
+    setup_->Show();
+    enable_->Show();
+  }
+
+  Layout();
+  Fit();
 }
 
 void CameraPanel::startAll()
