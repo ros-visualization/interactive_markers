@@ -33,8 +33,6 @@
 #include "properties/property.h"
 #include "properties/property_manager.h"
 
-#include "ogre_tools/axes.h"
-
 #include "urdf/URDF.h"
 #include "rosTF/rosTF.h"
 
@@ -50,24 +48,32 @@ namespace ogre_vis
 
 RobotModelVisualizer::RobotModelVisualizer( const std::string& name, VisualizationManager* manager )
 : VisualizerBase( name, manager )
+, mechanism_topic_( "mechanism_state" )
 , has_new_transforms_( false )
+, has_new_mechanism_state_( false )
 , time_since_last_transform_( 0.0f )
 , update_rate_( 0.1f )
 , visual_enabled_property_( NULL )
 , collision_enabled_property_( NULL )
 , update_rate_property_( NULL )
 , robot_description_property_( NULL )
+, mechanism_topic_property_( NULL )
 {
   robot_ = new Robot( scene_manager_, "Robot: " + name_ );
 
   setVisualVisible( true );
   setCollisionVisible( false );
   robot_->setUserData( Ogre::Any( (void*)this ) );
+
+  urdf_ = new robot_desc::URDF();
 }
 
 RobotModelVisualizer::~RobotModelVisualizer()
 {
+  unsubscribe();
+
   delete robot_;
+  delete urdf_;
 }
 
 void RobotModelVisualizer::setRobotDescription( const std::string& description_param )
@@ -83,6 +89,41 @@ void RobotModelVisualizer::setRobotDescription( const std::string& description_p
   {
     load();
     causeRender();
+  }
+}
+
+void RobotModelVisualizer::setMechanismTopic( const std::string& topic )
+{
+  unsubscribe();
+
+  mechanism_topic_ = topic;
+
+  subscribe();
+
+  if ( mechanism_topic_property_ )
+  {
+    mechanism_topic_property_->changed();
+  }
+}
+
+void RobotModelVisualizer::subscribe()
+{
+  if ( !isEnabled() )
+  {
+    return;
+  }
+
+  if ( !mechanism_topic_.empty() )
+  {
+    ros_node_->subscribe( mechanism_topic_, mechanism_message_, &RobotModelVisualizer::incomingMechanismState, this, 1 );
+  }
+}
+
+void RobotModelVisualizer::unsubscribe()
+{
+  if ( !mechanism_topic_.empty() )
+  {
+    ros_node_->unsubscribe( mechanism_topic_, &RobotModelVisualizer::incomingMechanismState, this );
   }
 }
 
@@ -136,10 +177,18 @@ void RobotModelVisualizer::load()
 {
   std::string content;
   ros_node_->get_param(description_param_, content);
-  robot_desc::URDF file;
-  file.loadString(content.c_str());
 
-  robot_->load( &file );
+  if ( content == robot_description_ )
+  {
+    return;
+  }
+
+  robot_description_ = content;
+
+  urdf_->clear();
+  urdf_->loadString( robot_description_.c_str() );
+
+  robot_->load( urdf_ );
   robot_->update( tf_, target_frame_ );
 }
 
@@ -147,10 +196,14 @@ void RobotModelVisualizer::onEnable()
 {
   load();
   robot_->setVisible( true );
+
+  subscribe();
 }
 
 void RobotModelVisualizer::onDisable()
 {
+  unsubscribe();
+
   robot_->setVisible( false );
 }
 
@@ -158,7 +211,9 @@ void RobotModelVisualizer::update( float dt )
 {
   time_since_last_transform_ += dt;
 
-  if ( has_new_transforms_ || (update_rate_ > 0.0001f && time_since_last_transform_ >= update_rate_) )
+  bool update = update_rate_ > 0.0001f && time_since_last_transform_ >= update_rate_;
+
+  if ( has_new_transforms_ || update )
   {
     robot_->update( tf_, target_frame_ );
     causeRender();
@@ -166,6 +221,19 @@ void RobotModelVisualizer::update( float dt )
     has_new_transforms_ = false;
     time_since_last_transform_ = 0.0f;
   }
+
+  mechanism_message_.lock();
+  if ( has_new_mechanism_state_ && update )
+  {
+    robot_->update( mechanism_message_ );
+    has_new_mechanism_state_ = false;
+  }
+  mechanism_message_.unlock();
+}
+
+void RobotModelVisualizer::incomingMechanismState()
+{
+  has_new_mechanism_state_ = true;
 }
 
 void RobotModelVisualizer::targetFrameChanged()
@@ -186,6 +254,8 @@ void RobotModelVisualizer::createProperties()
   robot_description_property_ = property_manager_->createProperty<StringProperty>( "Robot Description", property_prefix_, boost::bind( &RobotModelVisualizer::getRobotDescription, this ),
                                                                                    boost::bind( &RobotModelVisualizer::setRobotDescription, this, _1 ), parent_category_, this );
 
+  mechanism_topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Mechanism Topic", property_prefix_, boost::bind( &RobotModelVisualizer::getMechanismTopic, this ),
+                                                                                         boost::bind( &RobotModelVisualizer::setMechanismTopic, this, _1 ), parent_category_, this );
   robot_->setPropertyManager( property_manager_, parent_category_ );
 }
 

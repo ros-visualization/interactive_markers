@@ -34,6 +34,7 @@
 
 #include "ogre_tools/object.h"
 #include "ogre_tools/super_ellipsoid.h"
+#include "ogre_tools/axes.h"
 
 #include <tf/transform_listener.h>
 #include <planning_models/kinematic.h>
@@ -44,6 +45,25 @@
 
 namespace ogre_vis
 {
+
+LinkInfo::LinkInfo()
+: visual_mesh_( NULL )
+, collision_mesh_( NULL )
+, collision_object_( NULL )
+, visual_node_( NULL )
+, collision_node_( NULL )
+, position_property_( NULL )
+, orientation_property_( NULL )
+, trail_( NULL )
+, trail_property_( NULL )
+, axes_( NULL )
+, axes_property_( NULL )
+{
+}
+
+LinkInfo::~LinkInfo()
+{
+}
 
 Robot::Robot( Ogre::SceneManager* scene_manager, const std::string& name )
 : ogre_tools::Object( scene_manager )
@@ -135,11 +155,11 @@ void Robot::setUserData( const Ogre::Any& user_data )
 
 void Robot::clear()
 {
-  M_NameToLinkInfo::iterator it = links_.begin();
-  M_NameToLinkInfo::iterator end = links_.end();
-  for ( ; it != end; ++it )
+  M_NameToLinkInfo::iterator link_it = links_.begin();
+  M_NameToLinkInfo::iterator link_end = links_.end();
+  for ( ; link_it != link_end; ++link_it )
   {
-    LinkInfo* info = it->second;
+    LinkInfo* info = link_it->second;
 
     if ( info->visual_mesh_ )
     {
@@ -151,6 +171,7 @@ void Robot::clear()
       scene_manager_->destroyRibbonTrail( info->trail_ );
     }
 
+    delete info->axes_;
     delete info->collision_object_;
     delete info;
   }
@@ -243,7 +264,7 @@ void Robot::createCollisionForLink( LinkInfo* info, robot_desc::URDF::Link* link
   }
 }
 
-void Robot::createVisualForLink( ogre_vis::Robot::LinkInfo* info, robot_desc::URDF::Link* link )
+void Robot::createVisualForLink( LinkInfo* info, robot_desc::URDF::Link* link )
 {
   robot_desc::URDF::Link::Geometry::Mesh* mesh = static_cast<robot_desc::URDF::Link::Geometry::Mesh*>(link->visual->geometry->shape);
   if ( mesh->filename.empty() )
@@ -330,25 +351,34 @@ void Robot::createPropertiesForLink( LinkInfo* info )
 {
   ROS_ASSERT( property_manager_ );
 
-  property_manager_->deleteProperty( info->position_property_ );
-  property_manager_->deleteProperty( info->orientation_property_ );
-
   CategoryProperty* cat = property_manager_->createCategory( info->name_, links_category_, this );
 
   std::stringstream ss;
   ss << name_ << " Link " << info->name_;
-  info->position_property_ = property_manager_->createProperty<Vector3Property>( "Position", ss.str(), boost::bind( &Robot::getPositionForLinkInRobotFrame, this, info ),
-                                                                                Vector3Property::Setter(), cat, this );
-  info->position_property_->setSave( false );
-
-  info->orientation_property_ = property_manager_->createProperty<QuaternionProperty>( "Orientation", ss.str(), boost::bind( &Robot::getOrientationForLinkInRobotFrame, this, info ),
-                                                                                      QuaternionProperty::Setter(), cat, this );
-  info->orientation_property_->setSave( false );
-
   info->trail_property_ = property_manager_->createProperty<BoolProperty>( "Show Trail", ss.str(), boost::bind( &Robot::isShowingTrail, this, info ),
                                                                           boost::bind( &Robot::setShowTrail, this, info, _1 ), cat, this );
 
+  info->axes_property_ = property_manager_->createProperty<BoolProperty>( "Show Axes", ss.str(), boost::bind( &Robot::isShowingAxes, this, info ),
+                                                                          boost::bind( &Robot::setShowAxes, this, info, _1 ), cat, this );
+
+  info->position_property_ = property_manager_->createProperty<Vector3Property>( "Position", ss.str(), boost::bind( &Robot::getPositionForLinkInRobotFrame, this, info ),
+                                                                                Vector3Property::Setter(), cat, this );
+  info->orientation_property_ = property_manager_->createProperty<QuaternionProperty>( "Orientation", ss.str(), boost::bind( &Robot::getOrientationForLinkInRobotFrame, this, info ),
+                                                                                      QuaternionProperty::Setter(), cat, this );
+
+  info->joint_position_property_ = property_manager_->createProperty<DoubleProperty>( "Joint Position", ss.str(), boost::bind( &LinkInfo::getJointPosition, info ),
+                                                                                      DoubleProperty::Setter(), cat, this );
+  info->joint_velocity_property_ = property_manager_->createProperty<DoubleProperty>( "Joint Velocity", ss.str(), boost::bind( &LinkInfo::getJointVelocity, info ),
+                                                                                      DoubleProperty::Setter(), cat, this );
+  info->joint_applied_effort_property_ = property_manager_->createProperty<DoubleProperty>( "Joint Applied Effort", ss.str(), boost::bind( &LinkInfo::getJointAppliedEffort, info ),
+                                                                                            DoubleProperty::Setter(), cat, this );
+  info->joint_commanded_effort_property_ = property_manager_->createProperty<DoubleProperty>( "Joint Commanded Effort", ss.str(), boost::bind( &LinkInfo::getJointCommandedEffort, info ),
+                                                                                              DoubleProperty::Setter(), cat, this );
+
+
   property_manager_->getPropertyGrid()->Collapse( links_category_->getPGProperty() );
+
+
 }
 
 void Robot::load( robot_desc::URDF* urdf, bool visual, bool collision )
@@ -371,26 +401,34 @@ void Robot::load( robot_desc::URDF* urdf, bool visual, bool collision )
   {
     robot_desc::URDF::Link* link = *link_it;
 
-    LinkInfo* info = new LinkInfo;
-    info->name_ = link->name;
+    LinkInfo* link_info = new LinkInfo;
+    link_info->name_ = link->name;
+    link_info->joint_name_ = link->joint->name;
 
-    bool inserted = links_.insert( std::make_pair( info->name_, info ) ).second;
+    bool inserted = links_.insert( std::make_pair( link_info->name_, link_info ) ).second;
     ROS_ASSERT( inserted );
+
+    joint_to_link_[ link_info->joint_name_ ] = link_info->name_;
 
     if ( visual )
     {
-      createVisualForLink( info, link );
+      createVisualForLink( link_info, link );
     }
 
     if ( collision )
     {
-      createCollisionForLink( info, link );
+      createCollisionForLink( link_info, link );
     }
 
     if ( property_manager_ )
     {
-      createPropertiesForLink( info );
+      createPropertiesForLink( link_info );
     }
+
+    link_info->joint_axis_.x = link->joint->axis[0];
+    link_info->joint_axis_.y = link->joint->axis[1];
+    link_info->joint_axis_.z = link->joint->axis[2];
+    robotToOgre( link_info->joint_axis_ );
   }
 
   setVisualVisible(isVisualVisible());
@@ -417,7 +455,7 @@ Ogre::Quaternion Robot::getOrientationForLinkInRobotFrame( const LinkInfo* info 
   return orient;
 }
 
-Robot::LinkInfo* Robot::getLinkInfo( const std::string& name )
+LinkInfo* Robot::getLinkInfo( const std::string& name )
 {
   M_NameToLinkInfo::iterator it = links_.find( name );
   if ( it == links_.end() )
@@ -475,7 +513,40 @@ bool Robot::isShowingTrail( const LinkInfo* info )
   return info->trail_ != NULL;
 }
 
-void setTransformsOnLink( Robot::LinkInfo* info, const Ogre::Vector3& visual_position, const Ogre::Quaternion& visual_orientation,
+void Robot::setShowAxes( LinkInfo* info, bool show )
+{
+  ROS_ASSERT( info );
+
+  if ( show )
+  {
+    if ( !info->axes_ )
+    {
+      static int count = 0;
+      std::stringstream ss;
+      ss << "Axes for link " << info->name_ << count++;
+      info->axes_ = new ogre_tools::Axes( scene_manager_, root_other_node_, 0.1, 0.01 );
+    }
+  }
+  else
+  {
+    if ( info->axes_ )
+    {
+      delete info->axes_;
+      info->axes_ = NULL;
+    }
+  }
+
+  info->trail_property_->changed();
+}
+
+bool Robot::isShowingAxes( const LinkInfo* info )
+{
+  ROS_ASSERT( info );
+
+  return info->axes_ != NULL;
+}
+
+void Robot::setTransformsOnLink( LinkInfo* info, const Ogre::Vector3& visual_position, const Ogre::Quaternion& visual_orientation,
                           const Ogre::Vector3& collision_position, const Ogre::Quaternion& collision_orientation, bool applyOffsetTransforms )
 {
   info->position_ = visual_position;
@@ -507,14 +578,16 @@ void setTransformsOnLink( Robot::LinkInfo* info, const Ogre::Vector3& visual_pos
     info->collision_node_->setOrientation( collision_orientation );
   }
 
-  if ( info->position_property_ )
+  if ( property_manager_ )
   {
     info->position_property_->changed();
+    info->orientation_property_->changed();
   }
 
-  if ( info->orientation_property_ )
+  if ( info->axes_ )
   {
-    info->orientation_property_->changed();
+    info->axes_->setPosition( info->position_ );
+    info->axes_->setOrientation( info->orientation_ );
   }
 }
 
@@ -535,7 +608,7 @@ void Robot::update( tf::TransformListener* tf, const std::string& target_frame )
     }
     catch(tf::TransformException& e)
     {
-      printf( "Error transforming from frame '%s' to frame '%s'\n", name.c_str(), target_frame.c_str() );
+      ROS_ERROR( "Error transforming from frame '%s' to frame '%s'\n", name.c_str(), target_frame.c_str() );
     }
 
     //printf( "Link %s:\npose: %6f %6f %6f,\t%6f %6f %6f\n", name.c_str(), pose.data_.getOrigin().x(), pose.data_.getOrigin().y(), pose.data_.getOrigin().z(), pose.data_.getOrigin().y()aw, pose.pitch, pose.roll );
@@ -584,6 +657,31 @@ void Robot::update( planning_models::KinematicModel* kinematic_model, const std:
     robotToOgre( collision_orientation );
 
     setTransformsOnLink( info, visual_position, visual_orientation, collision_position, collision_orientation, false );
+  }
+}
+
+void Robot::update( const robot_msgs::MechanismState& state )
+{
+  std::vector<robot_msgs::JointState>::const_iterator it = state.joint_states.begin();
+  std::vector<robot_msgs::JointState>::const_iterator end = state.joint_states.end();
+  for ( ; it != end; ++it )
+  {
+    const robot_msgs::JointState& joint_state = *it;
+    M_string::iterator str_it = joint_to_link_.find( joint_state.name );
+    if ( str_it != joint_to_link_.end() )
+    {
+      LinkInfo* info = getLinkInfo( str_it->second );
+
+      info->joint_state_ = joint_state;
+
+      if ( property_manager_ )
+      {
+        info->joint_applied_effort_property_->changed();
+        info->joint_commanded_effort_property_->changed();
+        info->joint_position_property_->changed();
+        info->joint_velocity_property_->changed();
+      }
+    }
   }
 }
 

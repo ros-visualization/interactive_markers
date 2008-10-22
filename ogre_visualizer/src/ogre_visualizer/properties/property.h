@@ -284,6 +284,23 @@ public:
   virtual void loadFromConfig( wxConfigBase* config );
 };
 
+class DoubleProperty : public Property<double>
+{
+public:
+  DoubleProperty( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, CategoryProperty* parent, const Getter& getter, const Setter& setter )
+  : Property<double>( name, prefix, grid, parent, getter, setter )
+  {
+  }
+
+  void setMin( double min );
+  void setMax( double max );
+
+  virtual void writeToGrid();
+  virtual void readFromGrid();
+  virtual void saveToConfig( wxConfigBase* config );
+  virtual void loadFromConfig( wxConfigBase* config );
+};
+
 class StringProperty : public Property<std::string>
 {
 public:

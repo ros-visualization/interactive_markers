@@ -170,6 +170,53 @@ void FloatProperty::loadFromConfig( wxConfigBase* config )
   set( val );
 }
 
+void DoubleProperty::setMin( double min )
+{
+  property_->SetAttribute( wxT("Min"), min );
+}
+
+void DoubleProperty::setMax( double max )
+{
+  property_->SetAttribute( wxT("Max"), max );
+}
+
+
+void DoubleProperty::writeToGrid()
+{
+  if ( !property_ )
+  {
+    property_ = grid_->AppendIn( parent_->getPGProperty(), new wxFloatProperty( name_, prefix_ + name_, get() ) );
+
+    if ( !hasSetter() )
+    {
+      grid_->DisableProperty( property_ );
+    }
+  }
+  else
+  {
+    grid_->SetPropertyValue(property_, (double)get());
+  }
+}
+
+void DoubleProperty::readFromGrid()
+{
+  wxVariant var = property_->GetValue();
+  set( var.GetDouble() );
+}
+
+void DoubleProperty::saveToConfig( wxConfigBase* config )
+{
+  config->Write( prefix_ + name_, (float)get() );
+}
+
+void DoubleProperty::loadFromConfig( wxConfigBase* config )
+{
+  double val;
+  config->Read( prefix_ + name_, &val, get() );
+
+  set( val );
+}
+
 void StringProperty::writeToGrid()
 {
   if ( !property_ )

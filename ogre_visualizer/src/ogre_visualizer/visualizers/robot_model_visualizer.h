@@ -31,7 +31,10 @@
 #define OGRE_VISUALIZER_ROBOT_MODEL_VISUALIZER_H
 
 #include "visualizer_base.h"
-#include "std_msgs/Empty.h"
+
+#include <robot_msgs/MechanismState.h>
+
+#include <OgreVector3.h>
 
 #include <map>
 
@@ -41,12 +44,23 @@ class Entity;
 class SceneNode;
 }
 
+namespace robot_desc
+{
+class URDF;
+}
+
+namespace ogre_tools
+{
+class Axes;
+}
+
 namespace ogre_vis
 {
 
 class BoolProperty;
 class FloatProperty;
 class StringProperty;
+class ROSTopicStringProperty;
 
 class Robot;
 
@@ -91,6 +105,9 @@ public:
   bool isVisualVisible();
   bool isCollisionVisible();
 
+  void setMechanismTopic( const std::string& topic );
+  const std::string& getMechanismTopic() { return mechanism_topic_; }
+
   // Overrides from VisualizerBase
   virtual void targetFrameChanged();
   virtual void createProperties();
@@ -110,12 +127,18 @@ protected:
   virtual void onEnable();
   virtual void onDisable();
 
-  std::string transform_topic_;               ///< ROS topic we're listening to for new transforms
+  void unsubscribe();
+  void subscribe();
+
+  void incomingMechanismState();
+
   std::string description_param_;             ///< ROS parameter that contains the robot xml description
+  std::string mechanism_topic_;               ///< ROS topic we're listening on for mechanism state messages
 
   Robot* robot_;                              ///< Handles actually drawing the robot
 
   bool has_new_transforms_;                   ///< Callback sets this to tell our update function it needs to update the transforms
+  bool has_new_mechanism_state_;
 
   float time_since_last_transform_;
   float update_rate_;
@@ -124,6 +147,12 @@ protected:
   BoolProperty* collision_enabled_property_;
   FloatProperty* update_rate_property_;
   StringProperty* robot_description_property_;
+  ROSTopicStringProperty* mechanism_topic_property_;
+
+  robot_desc::URDF* urdf_;
+  std::string robot_description_;
+
+  robot_msgs::MechanismState mechanism_message_;
 };
 
 } // namespace ogre_vis

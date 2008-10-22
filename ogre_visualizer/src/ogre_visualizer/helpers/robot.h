@@ -41,6 +41,9 @@
 #include <OgreQuaternion.h>
 #include <OgreAny.h>
 
+#include <robot_msgs/JointState.h>
+#include <robot_msgs/MechanismState.h>
+
 namespace Ogre
 {
 class SceneManager;
@@ -55,6 +58,7 @@ class RibbonTrail;
 namespace ogre_tools
 {
 class Object;
+class Axes;
 }
 
 namespace robot_desc
@@ -80,6 +84,63 @@ class CategoryProperty;
 class Vector3Property;
 class QuaternionProperty;
 class BoolProperty;
+class DoubleProperty;
+
+class Robot;
+
+/**
+ * \struct LinkInfo
+ * \brief Contains any data we need from a link in the robot.
+ */
+struct LinkInfo
+{
+  LinkInfo();
+  ~LinkInfo();
+
+  std::string name_;                          ///< Name of this link
+  std::string material_name_;                 ///< Name of the ogre material used by the meshes in this link
+
+  Ogre::Entity* visual_mesh_;                 ///< The entity representing the visual mesh of this link (if it exists)
+
+  Ogre::Entity* collision_mesh_;              ///< The entity representing the collision mesh of this link (if it exists)
+  ogre_tools::Object* collision_object_;      ///< The object representing the collision primitive of this link (if it exists)
+
+  Ogre::SceneNode* visual_node_;              ///< The scene node the visual mesh is attached to
+  Ogre::SceneNode* collision_node_;           ///< The scene node the collision mesh/primitive is attached to
+
+  Ogre::Vector3 collision_offset_position_;   ///< Collision origin offset position
+  Ogre::Quaternion collision_offset_orientation_; ///< Collision origin offset orientation
+
+  Ogre::Vector3 position_;
+  Ogre::Quaternion orientation_;
+
+  Vector3Property* position_property_;
+  QuaternionProperty* orientation_property_;
+
+  Ogre::RibbonTrail* trail_;
+  BoolProperty* trail_property_;
+
+  ogre_tools::Axes* axes_;
+  BoolProperty* axes_property_;
+
+  // joint stuff
+  std::string joint_name_;
+  Ogre::Vector3 joint_axis_;
+
+  double getJointPosition() { return joint_state_.position; }
+  double getJointVelocity() { return joint_state_.velocity; }
+  double getJointAppliedEffort() { return joint_state_.applied_effort; }
+  double getJointCommandedEffort() { return joint_state_.commanded_effort; }
+
+  robot_msgs::JointState joint_state_;
+
+  BoolProperty* joint_display_velocity_;
+  BoolProperty* joint_display_forces_;
+  DoubleProperty* joint_position_property_;
+  DoubleProperty* joint_velocity_property_;
+  DoubleProperty* joint_applied_effort_property_;
+  DoubleProperty* joint_commanded_effort_property_;
+};
 
 /**
  * \class Robot
@@ -124,6 +185,8 @@ public:
    */
   void update( planning_models::KinematicModel* kinematic_model, const std::string& target_frame );
 
+  void update( const robot_msgs::MechanismState& state );
+
   /**
    * \brief Set the robot as a whole to be visible or not
    * @param visible Should we be visible?
@@ -151,11 +214,15 @@ public:
    */
   bool isCollisionVisible();
 
-  struct LinkInfo;
   bool isShowingTrail( const LinkInfo* info );
   void setShowTrail( LinkInfo* info, bool show );
 
+  bool isShowingAxes( const LinkInfo* info );
+  void setShowAxes( LinkInfo* info, bool show );
+
   LinkInfo* getLinkInfo( const std::string& name );
+
+  const std::string& getName() { return name_; }
 
   // Overrides from ogre_tools::Object
   virtual void setPosition( const Ogre::Vector3& position );
@@ -166,60 +233,22 @@ public:
   virtual const Ogre::Vector3& getPosition();
   virtual const Ogre::Quaternion& getOrientation();
 
-  /**
-   * \struct LinkInfo
-   * \brief Contains any data we need from a link in the robot.
-   */
-  struct LinkInfo
-  {
-    LinkInfo()
-    : visual_mesh_( NULL )
-    , collision_mesh_( NULL )
-    , collision_object_( NULL )
-    , visual_node_( NULL )
-    , collision_node_( NULL )
-    , position_property_( NULL )
-    , orientation_property_( NULL )
-    , trail_( NULL )
-    , trail_property_( NULL )
-    {}
-
-    std::string name_;                          ///< Name of this link
-    std::string material_name_;                 ///< Name of the ogre material used by the meshes in this link
-
-    Ogre::Entity* visual_mesh_;                 ///< The entity representing the visual mesh of this link (if it exists)
-
-    Ogre::Entity* collision_mesh_;              ///< The entity representing the collision mesh of this link (if it exists)
-    ogre_tools::Object* collision_object_;      ///< The object representing the collision primitive of this link (if it exists)
-
-    Ogre::SceneNode* visual_node_;              ///< The scene node the visual mesh is attached to
-    Ogre::SceneNode* collision_node_;           ///< The scene node the collision mesh/primitive is attached to
-
-    Ogre::Vector3 collision_offset_position_;   ///< Collision origin offset position
-    Ogre::Quaternion collision_offset_orientation_; ///< Collision origin offset orientation
-
-    Ogre::Vector3 position_;
-    Ogre::Quaternion orientation_;
-
-    Vector3Property* position_property_;
-    QuaternionProperty* orientation_property_;
-
-    Ogre::RibbonTrail* trail_;
-    BoolProperty* trail_property_;
-  };
-
 protected:
 
   void createVisualForLink( LinkInfo* info, robot_desc::URDF::Link* link );
   void createCollisionForLink( LinkInfo* info, robot_desc::URDF::Link* link );
   void createPropertiesForLink( LinkInfo* info );
+  void setTransformsOnLink( LinkInfo* info, const Ogre::Vector3& visual_position, const Ogre::Quaternion& visual_orientation,
+                            const Ogre::Vector3& collision_position, const Ogre::Quaternion& collision_orientation, bool applyOffsetTransforms );
 
   Ogre::Vector3 getPositionForLinkInRobotFrame( const LinkInfo* info );
   Ogre::Quaternion getOrientationForLinkInRobotFrame( const LinkInfo* info );
 
-
   typedef std::map< std::string, LinkInfo* > M_NameToLinkInfo;
   M_NameToLinkInfo links_;                      ///< Map of name to link info, stores all loaded links.
+
+  typedef std::map< std::string, std::string > M_string;
+  M_string joint_to_link_;
 
   Ogre::SceneNode* root_visual_node_;           ///< Node all our visual nodes are children of
   Ogre::SceneNode* root_collision_node_;        ///< Node all our collision nodes are children of
@@ -231,6 +260,7 @@ protected:
   PropertyManager* property_manager_;
   CategoryProperty* parent_property_;
   CategoryProperty* links_category_;
+  CategoryProperty* joints_category_;
 
   Ogre::Any user_data_;
 
