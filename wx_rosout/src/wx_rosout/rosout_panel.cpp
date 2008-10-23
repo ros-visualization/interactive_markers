@@ -19,7 +19,7 @@ namespace wx_rosout
 RosoutPanel::RosoutPanel( wxWindow* parent )
 : RosoutPanelBase( parent )
 , enabled_( false )
-, topic_( "/rosout" )
+, topic_( "/rosout_agg" )
 , message_id_counter_( 0 )
 , max_messages_( 20000 )
 {
