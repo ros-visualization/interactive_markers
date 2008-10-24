@@ -89,7 +89,7 @@ class RosFrame(wx.Frame):
         self.selectedSlot = None
         self.slots = None
         
-        self.messageHandler = wxpy_ros.getHandler()
+        self.messageHandler = wxpy_ros.getMessageHandler()
         
         self.Bind(wx.EVT_BUTTON, self.OnRefreshTopicList, self.refresh_but)
         self.Bind(wx.EVT_BUTTON, self.OnSubscribe, self.add_but)

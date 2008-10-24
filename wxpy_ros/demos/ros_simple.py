@@ -70,14 +70,14 @@ plots1=[]
  #+ 2     ==> shoulder_pitch_right_joint
  #+ 3     ==> shoulder_pan_right_joint
 plots2=[]
-#plots2.append(('/mechanism_state/joint_states[0]/position', 'r'))
-#plots2.append(('/mechanism_state/joint_states[1]/position', 'g'))
-#plots2.append(('/mechanism_state/joint_states[2]/position', 'b'))
-#plots2.append(('/mechanism_state/joint_states[3]/position', 'm'))
-plots2.append(('/mechanism_state/joint_states[7]/position', 'm'))
+plots2.append(('/mechanism_state/joint_states[0]/position', 'r'))
+plots2.append(('/mechanism_state/joint_states[1]/position', 'g'))
+plots2.append(('/mechanism_state/joint_states[2]/position', 'b'))
+plots2.append(('/mechanism_state/joint_states[3]/position', 'm'))
+#plots2.append(('/mechanism_state/joint_states[7]/position', 'm'))
 
-plots1.append(('/mechanism_state/joint_states[7]/commanded_effort', 'r'))
-plots1.append(('/mechanism_state/joint_states[7]/applied_effort', 'b'))
+#plots1.append(('/mechanism_state/joint_states[7]/commanded_effort', 'r'))
+#plots1.append(('/mechanism_state/joint_states[7]/applied_effort', 'b'))
 #plots1.append(('/mechanism_state/joint_states[1]/velocity', 'g'))
 #plots1.append(('/mechanism_state/joint_states[2]/velocity', 'b'))
 #plots1.append(('/mechanism_state/joint_states[3]/velocity', 'm'))
@@ -99,7 +99,7 @@ all_plots = {'plots 1' : (plots2,20),'plots 2' : (plots1,20)}
 #
 
 # Create a message handler, that will take care of the communication with ROS
-messageHandler = wxpy_ros.RosMessageHandler()
+messageHandler = wxpy_ros.getMessageHandler()
 
 
 class NamesChannel(wxpy_ros.wxplot.Channel):

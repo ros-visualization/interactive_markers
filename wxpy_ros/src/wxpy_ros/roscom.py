@@ -46,7 +46,7 @@ _time_class_name = 'rostools.msg._Time.Time'
 import wxplot
 import wxros
 
-__all__ = ['RosChannel', 'RosSubscriber', 'RosMessageHandler', 'getTopicsList', 'getHandler']
+__all__ = ['RosChannel', 'RosSubscriber', 'RosMessageHandler', 'getTopicsList', 'getMessageHandler']
 
 _ros_timestamp = None
 
@@ -362,6 +362,6 @@ _handler = RosMessageHandler()
 
 ## @brief Returns a handler
 #This should be the only way to get a handler. This way, only one handler is created per process. This minimiizes the workload on ROS.   
-def getHandler():
+def getMessageHandler():
     global _handler
     return _handler
