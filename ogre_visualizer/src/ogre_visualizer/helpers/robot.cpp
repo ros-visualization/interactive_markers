@@ -615,7 +615,7 @@ void Robot::update( tf::TransformListener* tf, const std::string& target_frame )
     }
     catch(tf::TransformException& e)
     {
-      ROS_ERROR( "Error transforming from frame '%s' to frame '%s': %s\n", name.c_str(), target_frame.c_str() );
+      ROS_ERROR( "Error transforming from frame '%s' to frame '%s'\n", name.c_str(), target_frame.c_str() );
     }
 
     //printf( "Link %s:\npose: %6f %6f %6f,\t%6f %6f %6f\n", name.c_str(), pose.data_.getOrigin().x(), pose.data_.getOrigin().y(), pose.data_.getOrigin().z(), pose.data_.getOrigin().y()aw, pose.pitch, pose.roll );
