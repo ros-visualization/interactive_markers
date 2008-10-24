@@ -5,7 +5,7 @@ using namespace std;
 
 
 void SceneLabelerStereo::loadMsgsFromFile(string file) {    
-  node_->advertise<std_msgs::PointCloudFloat32>(ptcld_topic_, 100);
+  node_->advertise<std_msgs::PointCloud>(ptcld_topic_, 100);
   node_->advertise<std_msgs::VisualizationMarker>("visualizationMarker", 100);
   node_->advertise<std_msgs::ImageArray>("labeled_images", 100);
   node_->advertise<std_msgs::ImageArray>("videre/images", 100);
@@ -15,7 +15,7 @@ void SceneLabelerStereo::loadMsgsFromFile(string file) {
   lp.open(file, ros::Time(0));
   lp.addHandler<std_msgs::ImageArray>(string("videre/images"), &copyMsg<std_msgs::ImageArray>, (void*)(&images_msg_), true);
   lp.addHandler<std_msgs::ImageArray>(string("labeled_images"), &copyMsg<std_msgs::ImageArray>, (void*)(&labeled_images_msg_), true);
-  lp.addHandler<std_msgs::PointCloudFloat32>(ptcld_topic_, &copyMsg<std_msgs::PointCloudFloat32>, (void*)(&cloud_), true);
+  lp.addHandler<std_msgs::PointCloud>(ptcld_topic_, &copyMsg<std_msgs::PointCloud>, (void*)(&cloud_), true);
   lp.addHandler<std_msgs::String>(string("videre/cal_params"), &copyMsg<std_msgs::String>, (void*)(&cal_params_msg_), true);
   while(lp.nextMsg()); //Load all the messages.
   lp.close();
@@ -37,7 +37,7 @@ void SceneLabelerStereo::loadMsgsFromFile(string file) {
 }
 
 
-void SceneLabelerStereo::loadMsgsFromMem(std_msgs::ImageArray images_msg, std_msgs::PointCloudFloat32 cloud, std_msgs::String cal_params_msg) {
+void SceneLabelerStereo::loadMsgsFromMem(std_msgs::ImageArray images_msg, std_msgs::PointCloud cloud, std_msgs::String cal_params_msg) {
   xidx_.clear();
   cal_params_msg_ = cal_params_msg;
   cloud_ = cloud;
@@ -84,7 +84,7 @@ void SceneLabelerStereo::publishAll() {
   // -- Show the objects and their labels.
   cout << "  Showing objects..." << endl;
   for(unsigned int i=0; i<ss_objs_.size(); i++) {
-    std_msgs::PointCloudFloat32 debug = ss_objs_[i].second->getPointCloud();
+    std_msgs::PointCloud debug = ss_objs_[i].second->getPointCloud();
     debug.header.frame_id = "FRAMEID_SMALLV";
     node_->publish(ptcld_topic_, debug);
     cout << "  Published object " << i << " with class label " << ss_objs_[i].first << ". Press Enter to continue . . .";
@@ -103,7 +103,7 @@ void SceneLabelerStereo::getRandomPointFromPointcloud(float *x, float *y, float 
 
   int randId = 0;
   randId = rand() % ss->size();
-  std_msgs::Point3DFloat32 pt = ss->getPoint(randId);
+  std_msgs::Point32 pt = ss->getPoint(randId);
   *x = pt.x;
   *y = pt.y;
   *z = pt.z;
@@ -152,7 +152,7 @@ bool SceneLabelerStereo::getRandomPointFromImage(float *x, float *y, float *z, i
     return false;
   }
 
-  std_msgs::Point3DFloat32 pt = cloud_.pts[ptId];
+  std_msgs::Point32 pt = cloud_.pts[ptId];
   *x = pt.x;
   *y = pt.y;
   *z = pt.z;
@@ -250,7 +250,7 @@ void SceneLabelerStereo::labelCloud() {
   /*     cout << endl << "Max z: " << projected_.Row(3).Maximum() << "   Min z: " << projected_.Row(3).Minimum() << endl; */
 
   // -- Add the channel with the labeling.
-  std_msgs::PointCloudFloat32 tmp;
+  std_msgs::PointCloud tmp;
   unsigned int n = cloud_.get_pts_size();
   tmp.set_pts_size(n);
   tmp.set_chan_size(2);
@@ -279,7 +279,7 @@ void SceneLabelerStereo::labelCloud() {
   cout << "label: chan size is " << cloud_.get_chan_size() << " and npts is " << cloud_.get_pts_size() << endl;
 }
 
-std_msgs::PointCloudFloat32 SceneLabelerStereo::colorPointCloud(std_msgs::PointCloudFloat32 ptcld) {
+std_msgs::PointCloud SceneLabelerStereo::colorPointCloud(std_msgs::PointCloud ptcld) {
   if(ptcld.get_chan_size() == 1) {
     cout << "chan size is " << ptcld.get_chan_size() << endl;
     cout << "Not coloring..." << endl;
@@ -314,7 +314,7 @@ void SceneLabelerStereo::getImageIdx(float x, float y, float z, float *row, floa
 void SceneLabelerStereo::extractObjectsFromCloud() {
   map<int, int> nPts_for_label; //map<label, npts>
   map<int, int>::iterator it;
-  std_msgs::PointCloudFloat32 debug;
+  std_msgs::PointCloud debug;
 
   ss_cloud_.setFromRosCloud(cloud_);
 

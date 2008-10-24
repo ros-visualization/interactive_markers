@@ -36,7 +36,7 @@
 #include "helpers/color.h"
 
 #include "std_msgs/LaserScan.h"
-#include "std_msgs/PointCloudFloat32.h"
+#include "std_msgs/PointCloud.h"
 #include "std_msgs/Empty.h"
 
 #include <deque>
@@ -58,7 +58,7 @@ class EnumProperty;
 
 /**
  * \class LaserScanVisualizer
- * \brief Visualizes a laser scan, received either as a std_msgs::LaserScan or std_msgs::PointCloudFloat32
+ * \brief Visualizes a laser scan, received either as a std_msgs::LaserScan or std_msgs::PointCloud
  *
  * \todo find out some way to share most of this code with PointCloudVisualizer
  */
@@ -81,7 +81,7 @@ public:
   ~LaserScanVisualizer();
 
   /**
-   * \brief Set the PointCloudFloat32 topic we should listen on
+   * \brief Set the PointCloud topic we should listen on
    * @param topic The topic
    */
   void setCloudTopic( const std::string& topic );
@@ -145,14 +145,14 @@ protected:
   /**
    * \brief Transforms a point cloud into the correct frame, adds it to our point list
    */
-  void transformCloud( std_msgs::PointCloudFloat32& message );
+  void transformCloud( std_msgs::PointCloud& message );
   /**
    * \brief Culls points that have been around for longer than the decay time
    */
   void cullPoints();
 
   /**
-   * \brief Callback for incoming PointCloudFloat32 messages
+   * \brief Callback for incoming PointCloud messages
    */
   void incomingCloudCallback();
   /**
@@ -164,11 +164,11 @@ protected:
 
   ogre_tools::PointCloud* cloud_;                 ///< Handles actually rendering the point cloud
 
-  std::string cloud_topic_;                       ///< The PointCloudFloat32 topic we're listening on
+  std::string cloud_topic_;                       ///< The PointCloud topic we're listening on
   std::string scan_topic_;                        ///< The LaserScan topic we're listening on
-  std_msgs::PointCloudFloat32 cloud_message_;     ///< The cloud message
+  std_msgs::PointCloud cloud_message_;     ///< The cloud message
   std_msgs::LaserScan scan_message_;              ///< The laser scan message
-  typedef std::deque<std_msgs::PointCloudFloat32> D_CloudMessage;
+  typedef std::deque<std_msgs::PointCloud> D_CloudMessage;
   D_CloudMessage cloud_messages_;                 ///< The cloud messages we have received.  Required for target frame changes
 
   laser_scan::LaserProjection laser_projection_;  ///< Used to transform laser scan messages into cloud messages

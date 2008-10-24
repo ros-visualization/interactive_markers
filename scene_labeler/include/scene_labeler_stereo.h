@@ -17,7 +17,7 @@ $ scene_labeler_stereo BAGFILE [BAGFILE ...]
 
 Publishes to (name / type):
 - @b videre/images / ImageArray
-- @b spacetime_stereo  / PointCloudFloat32
+- @b spacetime_stereo  / PointCloud
 - @b visualizationMarker / VisualizationMarker
 - @b labeled_images / ImageArray
 
@@ -37,7 +37,7 @@ http://pr.willowgarage.com/wiki/DataCollection
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include <std_msgs/PointCloudFloat32.h>
+#include <std_msgs/PointCloud.h>
 #include <std_msgs/ImageArray.h>
 #include <std_msgs/Image.h>
 #include <std_msgs/String.h>
@@ -74,7 +74,7 @@ public:
   std_msgs::ImageArray images_msg_;
   std_msgs::ImageArray labeled_images_msg_;
   std_msgs::Image intensity_image_msg_;
-  std_msgs::PointCloudFloat32 cloud_;
+  std_msgs::PointCloud cloud_;
   std_msgs::String cal_params_msg_;
   //! Image with label mask.
   IplImage *mask_;
@@ -120,7 +120,7 @@ public:
   //! Load a bag file saved with data_collection.xml.
   void loadMsgsFromFile(string file);
   //! Put the relevant messages into the SceneLabelerStereo directly, rather than loading from a file.  This is used, for example, when you want to get a image - pointcloud crossindexing but don't have a label mask.
-  void loadMsgsFromMem(std_msgs::ImageArray images_msg, std_msgs::PointCloudFloat32 cloud, std_msgs::String cal_params_msg);
+  void loadMsgsFromMem(std_msgs::ImageArray images_msg, std_msgs::PointCloud cloud, std_msgs::String cal_params_msg);
   //! Label and extract the objects from the scene.
   void processMsgs();
   //! Publishes all the data of the scene, but with the point cloud colored with the labeling from the label mask.
@@ -145,9 +145,9 @@ public:
   NEWMAT::Matrix trns_;
   bool objects_extracted_;
   bool loaded_msgs_;
-  std_msgs::PointCloudFloat32 cloud_colored_;
+  std_msgs::PointCloud cloud_colored_;
 
-  std_msgs::PointCloudFloat32 colorPointCloud(std_msgs::PointCloudFloat32 ptcld);
+  std_msgs::PointCloud colorPointCloud(std_msgs::PointCloud ptcld);
 };
 
 #endif

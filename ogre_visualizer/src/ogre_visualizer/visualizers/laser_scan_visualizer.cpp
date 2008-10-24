@@ -261,7 +261,7 @@ void LaserScanVisualizer::cullPoints()
   }
 }
 
-void LaserScanVisualizer::transformCloud( std_msgs::PointCloudFloat32& message )
+void LaserScanVisualizer::transformCloud( std_msgs::PointCloud& message )
 {
   if ( point_decay_time_ == 0.0f )
   {

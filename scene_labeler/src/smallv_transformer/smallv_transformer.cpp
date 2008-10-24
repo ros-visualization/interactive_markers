@@ -1,4 +1,4 @@
-#include <std_msgs/PointCloudFloat32.h>
+#include <std_msgs/PointCloud.h>
 #include <ros/node.h>
 #include <rosTF/rosTF.h>
 
@@ -25,8 +25,8 @@ public:
     }
     cout << "Done." << endl; 
 
-    advertise<std_msgs::PointCloudFloat32>("full_cloud_smallv", 1000);
-    advertise<std_msgs::PointCloudFloat32>("videre/cloud_smallv", 1000);
+    advertise<std_msgs::PointCloud>("full_cloud_smallv", 1000);
+    advertise<std_msgs::PointCloud>("videre/cloud_smallv", 1000);
     
     subscribe("videre/cloud", videre_cloud_, &SmallvTransformer::videreCallback, 1);
     subscribe("full_cloud", full_cloud_, &SmallvTransformer::fullCallback, 1);
@@ -35,10 +35,10 @@ public:
 
 private:
   rosTFClient rtf_;
-  std_msgs::PointCloudFloat32 full_cloud_;
-  std_msgs::PointCloudFloat32 videre_cloud_;
-  std_msgs::PointCloudFloat32 full_cloud_smallv_;
-  std_msgs::PointCloudFloat32 videre_cloud_smallv_;
+  std_msgs::PointCloud full_cloud_;
+  std_msgs::PointCloud videre_cloud_;
+  std_msgs::PointCloud full_cloud_smallv_;
+  std_msgs::PointCloud videre_cloud_smallv_;
 
   void fullCallback() {
     try {

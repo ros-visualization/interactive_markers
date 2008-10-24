@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
     sl = new scene_labeler();
     vector<int> labels(1);
     labels[0] = -1;  //Load only those points that still need to be labeled.
-    std_msgs::PointCloudFloat32 cloud = sl->loadLabeledFile(segmentedString, &labels);
+    std_msgs::PointCloud cloud = sl->loadLabeledFile(segmentedString, &labels);
 
     //Publish the data to make sure it looks right.
     sl->publish("full_cloud", cloud);
@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
     //Present each segment in turn and ask the user for a label.
     int lbl;
     for(unsigned int i=0; i<ccs->size(); i++) {
-      std_msgs::PointCloudFloat32 msg = (*ccs)[i]->getPointCloud();
+      std_msgs::PointCloud msg = (*ccs)[i]->getPointCloud();
       sl->publish("full_cloud", msg);
       cout << "\n\n****  What is this?" << endl;
       system("cat labels.txt");
@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
   // ------------------------------------------
   else if(argc==3 && !strcmp(argv[1], "--display")) {
     sl = new scene_labeler();
-    std_msgs::PointCloudFloat32 cloud = sl->loadLabeledFile(string(argv[2]), NULL);
+    std_msgs::PointCloud cloud = sl->loadLabeledFile(string(argv[2]), NULL);
     
     //Get the unique labels.
     int label;
@@ -157,10 +157,10 @@ int main(int argc, char **argv) {
     foreground.setPoints(sl->cloud1.get_pts_size(), sl->cloud1.pts);
     foreground.crop(0,0,0,1.2,1.2,1.2);
 
-    std_msgs::PointCloudFloat32 finalcloudmsg = foreground.getPointCloud();
+    std_msgs::PointCloud finalcloudmsg = foreground.getPointCloud();
 
     std_msgs::VisualizationMarker mark;
-    std_msgs::Point3DFloat32 pt;
+    std_msgs::Point32 pt;
     float support = .1;
     float pixelsPerMeter = 250;
 
@@ -295,7 +295,7 @@ int main(int argc, char **argv) {
 //     }
 
 //     //Publish the final scan.
-//     std_msgs::PointCloudFloat32 finalcloudmsg = final.getPointCloud();
+//     std_msgs::PointCloud finalcloudmsg = final.getPointCloud();
 //     publish("full_cloud", finalcloudmsg); 
 
 //     //Save the scan to a file.
@@ -305,8 +305,8 @@ int main(int argc, char **argv) {
 //       cerr << "Could not open temporary file." << endl;
 //     }
 
-//     std_msgs::Point3DFloat32 pt;
-//     vector<std_msgs::Point3DFloat32> *nearby;
+//     std_msgs::Point32 pt;
+//     vector<std_msgs::Point32> *nearby;
 //     int outputlabel;
 //     cout << "Writing " << foreground2.size() << " points to " << segmentedString << endl;
 //     for(int i=0; i<foreground2.size(); i++) {
@@ -326,7 +326,7 @@ int main(int argc, char **argv) {
 //   }
 
 //   //Load the points in filename that are labeled with one of labels.  If labels==NULL, then accept all.
-//   std_msgs::PointCloudFloat32 loadLabeledFile(string filename, vector<int> *labels=NULL) {
+//   std_msgs::PointCloud loadLabeledFile(string filename, vector<int> *labels=NULL) {
 //     FILE *fp = fopen(filename.c_str(), "r");
 //     if(!fp) {
 //       cerr << "Could not open segmented file." << endl;
@@ -356,7 +356,7 @@ int main(int argc, char **argv) {
 //     cout << "Found " << nLines << " points that are interesting." << endl;
 
 //     //Set up pointcloud message.
-//     std_msgs::PointCloudFloat32 cloud;    
+//     std_msgs::PointCloud cloud;    
 //     cloud.set_pts_size(nLines);
 //     cloud.set_chan_size(2);
 //     //cloud.set_chan_size(1); //???????????????
@@ -389,7 +389,7 @@ int main(int argc, char **argv) {
   
 //   scene_labeler() : ros::node("scene_labeler") 
 //   {
-//     advertise<std_msgs::PointCloudFloat32>("full_cloud");
+//     advertise<std_msgs::PointCloud>("full_cloud");
 //     advertise<std_msgs::Empty>("shutter");
 //     advertise<std_msgs::VisualizationMarker>("visualizationMarker");
 //   }
@@ -397,15 +397,15 @@ int main(int argc, char **argv) {
 //   // -- For subtracting two point clouds.
 //   scene_labeler(string file1, string file2) : ros::node("scene_labeler")
 //   {
-//     advertise<std_msgs::PointCloudFloat32>("full_cloud");
+//     advertise<std_msgs::PointCloud>("full_cloud");
 //     advertise<std_msgs::Empty>("shutter");
 //     advertise<std_msgs::VisualizationMarker>("visualizationMarker");
 
 //     lp1.open(file1, ros::Time(0));
-//     lp1.addHandler<std_msgs::PointCloudFloat32>(string("full_cloud"), &copyData, (void*)(&cloud1), true);
+//     lp1.addHandler<std_msgs::PointCloud>(string("full_cloud"), &copyData, (void*)(&cloud1), true);
 //     lp1.nextMsg(); //cloud1 now contains the pointcloud.
 
 //     lp2.open(file2, ros::Time(0));
-//     lp2.addHandler<std_msgs::PointCloudFloat32>(string("full_cloud"), &copyData, (void*)(&cloud2), true);
+//     lp2.addHandler<std_msgs::PointCloud>(string("full_cloud"), &copyData, (void*)(&cloud2), true);
 //     lp2.nextMsg(); //cloud2 now contains the pointcloud.
 //   }

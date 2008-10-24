@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include <std_msgs/PointCloudFloat32.h>
+#include <std_msgs/PointCloud.h>
 #include <std_msgs/ImageArray.h>
 #include <std_msgs/Image.h>
 #include <std_msgs/String.h>
@@ -47,12 +47,12 @@ public:
   std_msgs::ImageArray videre_images_msg_;
   std_msgs::ImageArray labeled_images_msg_;
   std_msgs::Image intensity_image_msg_;
-  std_msgs::PointCloudFloat32 full_cloud_msg_;
-  std_msgs::PointCloudFloat32 videre_cloud_msg_;
+  std_msgs::PointCloud full_cloud_msg_;
+  std_msgs::PointCloud videre_cloud_msg_;
   std_msgs::String cal_params_msg_;
 
-  std_msgs::PointCloudFloat32 full_cloud_colored_;
-  std_msgs::PointCloudFloat32 videre_cloud_colored_;
+  std_msgs::PointCloud full_cloud_colored_;
+  std_msgs::PointCloud videre_cloud_colored_;
 
   IplImage *mask_;
 
@@ -61,8 +61,8 @@ public:
     mask_(0),
     rtf(*this)
   {
-    advertise<std_msgs::PointCloudFloat32>("full_cloud");
-    advertise<std_msgs::PointCloudFloat32>("videre/cloud");
+    advertise<std_msgs::PointCloud>("full_cloud");
+    advertise<std_msgs::PointCloud>("videre/cloud");
     advertise<std_msgs::VisualizationMarker>("visualizationMarker");
     advertise<std_msgs::Image>("intensity_image");
     advertise<std_msgs::ImageArray>("labeled_images");
@@ -92,8 +92,8 @@ public:
     lp.addHandler<std_msgs::ImageArray>(string("videre/images"), &copyMsg<std_msgs::ImageArray>, (void*)(&videre_images_msg_), true);
     lp.addHandler<std_msgs::ImageArray>(string("labeled_images"), &copyMsg<std_msgs::ImageArray>, (void*)(&labeled_images_msg_), true);
     lp.addHandler<std_msgs::Image>(string("intensity_image"), &copyMsg<std_msgs::Image>, (void*)(&intensity_image_msg_), true);
-    lp.addHandler<std_msgs::PointCloudFloat32>(string("full_cloud_smallv"), &copyMsg<std_msgs::PointCloudFloat32>, (void*)(&full_cloud_msg_), true);
-    lp.addHandler<std_msgs::PointCloudFloat32>(string("videre/cloud_smallv"), &copyMsg<std_msgs::PointCloudFloat32>, (void*)(&videre_cloud_msg_), true);
+    lp.addHandler<std_msgs::PointCloud>(string("full_cloud_smallv"), &copyMsg<std_msgs::PointCloud>, (void*)(&full_cloud_msg_), true);
+    lp.addHandler<std_msgs::PointCloud>(string("videre/cloud_smallv"), &copyMsg<std_msgs::PointCloud>, (void*)(&videre_cloud_msg_), true);
     lp.addHandler<std_msgs::String>(string("videre/cal_params"), &copyMsg<std_msgs::String>, (void*)(&cal_params_msg_), true);
     while(lp.nextMsg()); //Load all the messages.
     cout << "Done." << endl;
@@ -168,7 +168,7 @@ public:
   CvBridge<std_msgs::Image> *bridge;
   LogPlayer lp;
   
-  void labelCloud(std_msgs::PointCloudFloat32 *ptcld) {
+  void labelCloud(std_msgs::PointCloud *ptcld) {
  
     //Define transformation from FRAMEID_STEREO_BLOCK to FRAMEID_SMALLV
 /*     cout << rtf.nameClient.lookup("FRAMEID_STEREO_BLOCK") << endl; */
@@ -233,7 +233,7 @@ public:
 /*     cout << endl << "Max z: " << projected.Row(3).Maximum() << "   Min z: " << projected.Row(3).Minimum() << endl; */
 
     // -- Add the channel with the labeling.
-    std_msgs::PointCloudFloat32 tmp;
+    std_msgs::PointCloud tmp;
     tmp.set_pts_size(n);
     tmp.set_chan_size(2);
     //cout << "copying " << ptcld->chan[0].name.data << endl;
@@ -261,7 +261,7 @@ public:
     cout << "label: chan size is " << ptcld->get_chan_size() << " and npts is " << ptcld->get_pts_size() << endl;
   }
 
-  std_msgs::PointCloudFloat32 colorPointCloud(std_msgs::PointCloudFloat32 ptcld) {
+  std_msgs::PointCloud colorPointCloud(std_msgs::PointCloud ptcld) {
     if(ptcld.get_chan_size() == 1) {
       cout << "chan size is " << ptcld.get_chan_size() << endl;
       cout << "Not coloring..." << endl;

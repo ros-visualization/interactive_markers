@@ -34,7 +34,7 @@
 #include "helpers/color.h"
 #include "ogre_tools/point_cloud.h"
 
-#include "std_msgs/PointCloudFloat32.h"
+#include "std_msgs/PointCloud.h"
 
 namespace ros
 {
@@ -53,7 +53,7 @@ class EnumProperty;
 
 /**
  * \class PointCloudVisualizer
- * \brief Displays a point cloud of type std_msgs::PointCloudFloat32
+ * \brief Displays a point cloud of type std_msgs::PointCloud
  *
  * By default it will assume channel 0 of the cloud is an intensity value, and will color them by intensity.
  * If you set the channel's name to "rgb", it will interpret the channel as an integer rgb value, with r, g and b
@@ -78,7 +78,7 @@ public:
   ~PointCloudVisualizer();
 
   /**
-   * Set the incoming PointCloudFloat32 topic
+   * Set the incoming PointCloud topic
    * @param topic The topic we should listen to
    */
   void setTopic( const std::string& topic );
@@ -139,8 +139,8 @@ protected:
   ogre_tools::PointCloud* cloud_;             ///< Handles actually drawing the point cloud
   Ogre::SceneNode* scene_node_;
 
-  std::string topic_;                         ///< The PointCloudFloat32 topic set by setTopic()
-  std_msgs::PointCloudFloat32 message_;       ///< Our point cloud message
+  std::string topic_;                         ///< The PointCloud topic set by setTopic()
+  std_msgs::PointCloud message_;       ///< Our point cloud message
 
   Color color_;
 
