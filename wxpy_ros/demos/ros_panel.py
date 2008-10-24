@@ -39,7 +39,7 @@ A small utility to plot data from ROS topics."""
 ##A small utility class for embedding dynamic plots in WXpython.
 ##"""
 
-
+import pdb
 import  wx
 import  wx.xrc  as  xrc
 
@@ -89,7 +89,7 @@ class RosFrame(wx.Frame):
         self.selectedSlot = None
         self.slots = None
         
-        self.messageHandler = wxpy_ros.RosMessageHandler()
+        self.messageHandler = wxpy_ros.getHandler()
         
         self.Bind(wx.EVT_BUTTON, self.OnRefreshTopicList, self.refresh_but)
         self.Bind(wx.EVT_BUTTON, self.OnSubscribe, self.add_but)

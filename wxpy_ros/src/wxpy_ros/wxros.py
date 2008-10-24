@@ -60,7 +60,11 @@ class ROSListener(Thread):
     self.name = name
     
   def run(self):
-    rospy.ready(self.name, anonymous=True)
-    rospy.spin()
+   #pass
+   print('xx')
+   rospy.init_node(self.name,anonymous=True)
+   print('xx')
+   #rospy.ready(self.name, anonymous=True)
+   rospy.spin()
 
     
