@@ -39,11 +39,6 @@
 #include <tf/transform_listener.h>
 #include <std_msgs/PointCloud.h>
 
-#include <wx/wx.h>
-#include <wx/propgrid/propgrid.h>
-#include <wx/propgrid/advprops.h>
-#include <wx/confbase.h>
-
 #include <OgreSceneNode.h>
 #include <OgreSceneManager.h>
 
@@ -371,7 +366,8 @@ void LaserScanVisualizer::incomingScanCallback()
     scan_message_.header.frame_id = target_frame_;
   }
 
-  laser_projection_.projectLaser( scan_message_, cloud_message_ );
+  std_msgs::PointCloud* casted_message = reinterpret_cast<std_msgs::PointCloud*>(&cloud_message_);
+  tf_->transformLaserScanToPointCloud( scan_message_.header.frame_id, *casted_message, scan_message_ );
   transformCloud( cloud_message_ );
 
   cloud_message_.unlock();

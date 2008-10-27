@@ -369,7 +369,7 @@ void CategoryProperty::writeToGrid()
   {
     if ( parent_ )
     {
-      property_ = grid_->AppendIn( parent_->getPGProperty(), new wxPropertyCategory( name_ ) );
+      property_ = grid_->AppendIn( parent_->getPGProperty(), new wxPropertyCategory( name_, prefix_ + name_ ) );
     }
     else
     {

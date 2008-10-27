@@ -14,7 +14,6 @@
     <depend package="std_msgs"/>
     <depend package="rosthread"/>
     <depend package="tf"/>
-    <depend package="laser_scan_utils"/>
     <depend package="wg_robot_description_parser"/>
     <depend package="scan_utils" />
     <depend package="wxpropgrid"/>

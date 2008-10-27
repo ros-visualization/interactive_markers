@@ -34,7 +34,6 @@
 
 #include "ogre_tools/arrow.h"
 
-#include <wx/wx.h>
 #include <ros/node.h>
 #include <tf/transform_listener.h>
 

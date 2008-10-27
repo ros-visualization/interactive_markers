@@ -100,7 +100,7 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
 
   property_manager_ = new PropertyManager( vis_panel_->getPropertyGrid() );
 
-  CategoryProperty* category = property_manager_->createCategory( "Global Options", NULL );
+  CategoryProperty* category = property_manager_->createCategory( "Global Options", "", NULL );
   coordinate_frame_property_ = property_manager_->createProperty<StringProperty>( "Coordinate Frame", "", boost::bind( &VisualizationManager::getCoordinateFrame, this ),
       boost::bind( &VisualizationManager::setCoordinateFrame, this, _1 ), category );
 
@@ -202,7 +202,7 @@ void VisualizationManager::addVisualizer( VisualizerBase* visualizer, bool allow
   vis_panel_->getPropertyGrid()->Freeze();
 
   std::string category_name = visualizer->getName();
-  CategoryProperty* category = property_manager_->createCategory( category_name, NULL );
+  CategoryProperty* category = property_manager_->createCategory( category_name, "", NULL );
   category->setUserData( visualizer );
 
   setVisualizerEnabled( visualizer, enabled );

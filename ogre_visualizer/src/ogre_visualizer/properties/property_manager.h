@@ -97,7 +97,7 @@ public:
    * @param parent Parent category (may be NULL)
    * @return The new category property
    */
-  CategoryProperty* createCategory(const std::string& name, CategoryProperty* parent, void* user_data = NULL);
+  CategoryProperty* createCategory(const std::string& name, const std::string& prefix, CategoryProperty* parent, void* user_data = NULL);
 
   /**
    * \brief Delete a property

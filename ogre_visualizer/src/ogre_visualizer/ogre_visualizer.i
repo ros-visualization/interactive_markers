@@ -18,16 +18,6 @@
 %include "visualization_panel.i"
 %include "visualization_manager.i"
 
-%include "visualizers/axes_visualizer.i"
-%include "visualizers/grid_visualizer.i"
-%include "visualizers/laser_scan_visualizer.i"
-%include "visualizers/marker_visualizer.i"
-%include "visualizers/octree_visualizer.i"
-%include "visualizers/planning_visualizer.i"
-%include "visualizers/point_cloud_visualizer.i"
-%include "visualizers/robot_model_visualizer.i"
-%include "visualizers/robot_base2d_pose_visualizer.i"
-
 %include "helpers/color.i"
 
 %init %{

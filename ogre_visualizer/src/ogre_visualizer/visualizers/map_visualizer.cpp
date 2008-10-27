@@ -37,11 +37,6 @@
 
 #include <ogre_tools/grid.h>
 
-#include <wx/wx.h>
-#include <wx/propgrid/propgrid.h>
-#include <wx/propgrid/advprops.h>
-#include <wx/confbase.h>
-
 #include <ros/service.h>
 
 #include <boost/bind.hpp>

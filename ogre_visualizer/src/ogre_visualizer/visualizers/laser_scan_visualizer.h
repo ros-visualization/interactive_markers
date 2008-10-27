@@ -31,7 +31,6 @@
 #define OGRE_VISUALIZER_LASER_SCAN_VISUALIZER_H
 
 #include "visualizer_base.h"
-#include "laser_scan_utils/laser_scan.h"
 #include "ogre_tools/point_cloud.h"
 #include "helpers/color.h"
 
@@ -170,8 +169,6 @@ protected:
   std_msgs::LaserScan scan_message_;              ///< The laser scan message
   typedef std::deque<std_msgs::PointCloud> D_CloudMessage;
   D_CloudMessage cloud_messages_;                 ///< The cloud messages we have received.  Required for target frame changes
-
-  laser_scan::LaserProjection laser_projection_;  ///< Used to transform laser scan messages into cloud messages
 
   Color color_;
 

@@ -60,9 +60,9 @@ PropertyManager::~PropertyManager()
   properties_.clear();
 }
 
-CategoryProperty* PropertyManager::createCategory(const std::string& name, CategoryProperty* parent, void* user_data)
+CategoryProperty* PropertyManager::createCategory(const std::string& name, const std::string& prefix, CategoryProperty* parent, void* user_data)
 {
-  CategoryProperty* category = createProperty<CategoryProperty>(name, "", CategoryProperty::Getter(), CategoryProperty::Setter(), parent, user_data);
+  CategoryProperty* category = createProperty<CategoryProperty>(name, prefix, CategoryProperty::Getter(), CategoryProperty::Setter(), parent, user_data);
   category->setSave( false );
 
   return category;

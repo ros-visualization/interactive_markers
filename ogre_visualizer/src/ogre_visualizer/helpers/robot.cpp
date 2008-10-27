@@ -355,10 +355,12 @@ void Robot::createPropertiesForLink( LinkInfo* info )
 {
   ROS_ASSERT( property_manager_ );
 
-  CategoryProperty* cat = property_manager_->createCategory( info->name_, links_category_, this );
-
   std::stringstream ss;
   ss << name_ << " Link " << info->name_;
+
+  CategoryProperty* cat = property_manager_->createCategory( info->name_, ss.str(), links_category_, this );
+
+
   info->trail_property_ = property_manager_->createProperty<BoolProperty>( "Show Trail", ss.str(), boost::bind( &Robot::isShowingTrail, this, info ),
                                                                           boost::bind( &Robot::setShowTrail, this, info, _1 ), cat, this );
 
@@ -392,7 +394,7 @@ void Robot::load( robot_desc::URDF* urdf, bool visual, bool collision )
   if ( property_manager_ )
   {
     ROS_ASSERT(!links_category_);
-    links_category_ = property_manager_->createCategory( "Links", parent_property_, this );
+    links_category_ = property_manager_->createCategory( "Links", name_, parent_property_, this );
   }
 
   typedef std::vector<robot_desc::URDF::Link*> V_Link;

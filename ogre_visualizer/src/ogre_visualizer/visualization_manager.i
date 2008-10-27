@@ -11,6 +11,7 @@
 #include "visualizers/robot_model_visualizer.h"
 #include "visualizers/robot_base2d_pose_visualizer.h"
 #include "visualizers/map_visualizer.h"
+#include "visualizers/tf_visualizer.h"
 %}
 
 %include std_string.i
@@ -25,6 +26,7 @@
 %include "visualizers/robot_model_visualizer.i"
 %include "visualizers/robot_base2d_pose_visualizer.i"
 %include "visualizers/map_visualizer.i"
+%include "visualizers/tf_visualizer.i"
 
 %pythonAppend VisualizationManager "self._setOORInfo(self)"
 
@@ -42,6 +44,7 @@
   %template(createRobotModelVisualizer) createVisualizer<ogre_vis::RobotModelVisualizer>;
   %template(createRobotBase2DPoseVisualizer) createVisualizer<ogre_vis::RobotBase2DPoseVisualizer>;
   %template(createMapVisualizer) createVisualizer<ogre_vis::MapVisualizer>;
+  %template(createTFVisualizer) createVisualizer<ogre_vis::TFVisualizer>;
 };
 
 %init %{

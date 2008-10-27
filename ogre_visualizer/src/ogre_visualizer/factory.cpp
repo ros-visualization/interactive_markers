@@ -40,6 +40,7 @@
 #include "visualizers/planning_visualizer.h"
 #include "visualizers/robot_base2d_pose_visualizer.h"
 #include "visualizers/map_visualizer.h"
+#include "visualizers/tf_visualizer.h"
 
 namespace ogre_vis
 {
@@ -56,6 +57,7 @@ void registerFactories(VisualizationManager* manager)
   manager->registerFactory( PlanningVisualizer::getTypeStatic(), new VisualizerFactoryImpl<PlanningVisualizer>() );
   manager->registerFactory( RobotBase2DPoseVisualizer::getTypeStatic(), new VisualizerFactoryImpl<RobotBase2DPoseVisualizer>() );
   manager->registerFactory( MapVisualizer::getTypeStatic(), new VisualizerFactoryImpl<MapVisualizer>() );
+  manager->registerFactory( TFVisualizer::getTypeStatic(), new VisualizerFactoryImpl<TFVisualizer>() );
 }
 
 } //namespace ogre_vis

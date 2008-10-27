@@ -34,11 +34,6 @@
 
 #include "ogre_tools/axes.h"
 
-#include <wx/wx.h>
-#include <wx/propgrid/propgrid.h>
-#include <wx/propgrid/advprops.h>
-#include <wx/confbase.h>
-
 #include <boost/bind.hpp>
 
 #include <OgreSceneNode.h>
