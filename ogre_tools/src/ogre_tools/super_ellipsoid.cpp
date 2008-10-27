@@ -51,6 +51,7 @@ SuperEllipsoid::SuperEllipsoid( Ogre::SceneManager* scene_manager, Ogre::SceneNo
   ss << "ogre_tools::SuperEllipsoid" << count++;
 
   manual_object_ = scene_manager_->createManualObject( ss.str() );
+  manual_object_->setDynamic( true );
 
   if ( !parent_node )
   {
