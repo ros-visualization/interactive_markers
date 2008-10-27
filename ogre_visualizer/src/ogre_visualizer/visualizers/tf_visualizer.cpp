@@ -54,6 +54,7 @@ FrameInfo::FrameInfo()
 , category_( NULL )
 , position_property_( NULL )
 , orientation_property_( NULL )
+, tree_property_( NULL )
 {
 
 }
@@ -72,6 +73,7 @@ TFVisualizer::TFVisualizer( const std::string& name, VisualizationManager* manag
 , show_axes_property_( NULL )
 , update_rate_property_( NULL )
 , frames_category_( NULL )
+, tree_category_( NULL )
 {
   root_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
 
@@ -312,59 +314,90 @@ void TFVisualizer::updateFrame(FrameInfo* frame)
   frame->position_property_->changed();
   frame->orientation_property_->changed();
 
+  std::string old_parent = frame->parent_;
   frame->parent_.clear();
-  if ( show_arrows_ && tf_->getParent( frame->name_, ros::Time(0), frame->parent_ ) )
+  bool has_parent = tf_->getParent( frame->name_, ros::Time(0), frame->parent_ );
+  if ( has_parent )
   {
-    tf::Stamped<tf::Pose> parent_pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time(0), frame->parent_ );
-
-    try
+    if ( !frame->tree_property_ || old_parent != frame->parent_ )
     {
-      tf_->transformPose( target_frame_, parent_pose, parent_pose );
-    }
-    catch(tf::TransformException& e)
-    {
-      ROS_ERROR( "Error transforming frame '%s' to frame '%s'\n", frame->parent_.c_str(), target_frame_.c_str() );
-    }
+      M_FrameInfo::iterator parent_it = frames_.find( frame->parent_ );
 
-    Ogre::Vector3 parent_position = Ogre::Vector3( parent_pose.getOrigin().x(), parent_pose.getOrigin().y(), parent_pose.getOrigin().z() );
-    robotToOgre( parent_position );
+      if ( parent_it != frames_.end() )
+      {
+        FrameInfo* parent = parent_it->second;
 
-    Ogre::Vector3 direction = parent_position - frame->position_;
-    float distance = direction.length();
-    direction.normalise();
-
-    Ogre::Quaternion orient = Ogre::Vector3::NEGATIVE_UNIT_Z.getRotationTo( direction );
-
-    Ogre::Vector3 old_pos = frame->parent_arrow_->getPosition();
-
-    // The set() operation on the arrow is rather expensive (has to clear/regenerate geometry), so
-    // avoid doing it if possible
-    bool distance_changed = abs(distance - frame->distance_to_parent_) > 0.0001f;
-    if ( distance_changed )
-    {
-      frame->distance_to_parent_ = distance;
-      float head_length = ( distance < 0.1 ) ? (0.1*distance) : 0.1;
-      float shaft_length = distance - head_length;
-      frame->parent_arrow_->set( shaft_length, 0.01, head_length, 0.08 );
-      frame->parent_arrow_->setShaftColor( 0.8f, 0.8f, 0.3f, 1.0f );
-      frame->parent_arrow_->setHeadColor( 1.0f, 0.1f, 0.6f, 1.0f );
-      frame->parent_arrow_->setUserData( Ogre::Any( (void*)this ) );
+        if ( parent->tree_property_ )
+        {
+          property_manager_->deleteProperty( frame->tree_property_ );
+          frame->tree_property_ = property_manager_->createCategory( frame->name_, property_prefix_ + frame->name_ + "Tree", parent->tree_property_, this );
+        }
+      }
     }
 
-    if ( distance > 0.001f )
+    if ( show_arrows_ )
     {
-      frame->parent_arrow_->getSceneNode()->setVisible( show_arrows_ );
+      tf::Stamped<tf::Pose> parent_pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time(0), frame->parent_ );
+
+      try
+      {
+        tf_->transformPose( target_frame_, parent_pose, parent_pose );
+      }
+      catch(tf::TransformException& e)
+      {
+        ROS_ERROR( "Error transforming frame '%s' to frame '%s'\n", frame->parent_.c_str(), target_frame_.c_str() );
+      }
+
+      Ogre::Vector3 parent_position = Ogre::Vector3( parent_pose.getOrigin().x(), parent_pose.getOrigin().y(), parent_pose.getOrigin().z() );
+      robotToOgre( parent_position );
+
+      Ogre::Vector3 direction = parent_position - frame->position_;
+      float distance = direction.length();
+      direction.normalise();
+
+      Ogre::Quaternion orient = Ogre::Vector3::NEGATIVE_UNIT_Z.getRotationTo( direction );
+
+      Ogre::Vector3 old_pos = frame->parent_arrow_->getPosition();
+
+      // The set() operation on the arrow is rather expensive (has to clear/regenerate geometry), so
+      // avoid doing it if possible
+      bool distance_changed = abs(distance - frame->distance_to_parent_) > 0.0001f;
+      if ( distance_changed )
+      {
+        frame->distance_to_parent_ = distance;
+        float head_length = ( distance < 0.1 ) ? (0.1*distance) : 0.1;
+        float shaft_length = distance - head_length;
+        frame->parent_arrow_->set( shaft_length, 0.01, head_length, 0.08 );
+        frame->parent_arrow_->setShaftColor( 0.8f, 0.8f, 0.3f, 1.0f );
+        frame->parent_arrow_->setHeadColor( 1.0f, 0.1f, 0.6f, 1.0f );
+        frame->parent_arrow_->setUserData( Ogre::Any( (void*)this ) );
+      }
+
+      if ( distance > 0.001f )
+      {
+        frame->parent_arrow_->getSceneNode()->setVisible( show_arrows_ );
+      }
+      else
+      {
+        frame->parent_arrow_->getSceneNode()->setVisible( false );
+      }
+
+      frame->parent_arrow_->setPosition( frame->position_ );
+      frame->parent_arrow_->setOrientation( orient );
     }
     else
     {
       frame->parent_arrow_->getSceneNode()->setVisible( false );
     }
-
-    frame->parent_arrow_->setPosition( frame->position_ );
-    frame->parent_arrow_->setOrientation( orient );
   }
   else
   {
+    if ( !frame->tree_property_ || old_parent != frame->parent_ )
+    {
+      property_manager_->deleteProperty( frame->tree_property_ );
+      frame->tree_property_ = property_manager_->createCategory( frame->name_, property_prefix_ + frame->name_ + "Tree", tree_category_, this );
+    }
+
     frame->parent_arrow_->getSceneNode()->setVisible( false );
   }
 
@@ -399,6 +432,7 @@ void TFVisualizer::createProperties()
   update_rate_property_->setMin( 0.05 );
 
   frames_category_ = property_manager_->createCategory( "Frames", property_prefix_, parent_category_, this );
+  tree_category_ = property_manager_->createCategory( "Tree", property_prefix_, parent_category_, this );
 }
 
 void TFVisualizer::targetFrameChanged()

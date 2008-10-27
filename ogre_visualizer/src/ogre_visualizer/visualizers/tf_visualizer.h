@@ -86,6 +86,8 @@ struct FrameInfo
   Vector3Property* position_property_;
   QuaternionProperty* orientation_property_;
   StringProperty* parent_property_;
+
+  CategoryProperty* tree_property_;
 };
 
 /**
@@ -154,6 +156,7 @@ protected:
   FloatProperty* update_rate_property_;
 
   CategoryProperty* frames_category_;
+  CategoryProperty* tree_category_;
 };
 
 } // namespace ogre_vis
