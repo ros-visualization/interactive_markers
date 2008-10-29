@@ -218,9 +218,10 @@ void OrbitCamera::setFocalPoint( const Ogre::Vector3& focal_point )
 void OrbitCamera::move( float x, float y, float z )
 {
   Ogre::Quaternion orientation = camera_->getOrientation();
+
   if ( relative_node_ )
   {
-    orientation = relative_node_->getOrientation() * orientation;
+    orientation = relative_node_->getOrientation().Inverse() * orientation;
   }
 
   focal_point_ += orientation * Ogre::Vector3( x, y, z );
