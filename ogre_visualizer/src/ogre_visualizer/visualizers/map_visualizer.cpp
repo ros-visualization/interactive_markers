@@ -291,6 +291,8 @@ void MapVisualizer::load()
     height_property_->changed();
   }
 
+  transformMap();
+
   loaded_ = true;
 
   causeRender();
