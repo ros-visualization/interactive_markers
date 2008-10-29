@@ -79,7 +79,7 @@ public:
     std::pair<M_Property::iterator, bool> pib = properties_.insert( std::make_pair( std::make_pair(prefix, name), property ) );
     ROS_ASSERT(pib.second);
 
-    PROPERTY_DEBUG("PropertyManager::createProperty: Inserted property 0x%08x, %s%s", property, pib.first->first.first.c_str(), pib.first->first.second.c_str());
+    PROPERTY_DEBUG("PropertyManager::createProperty: Inserted property 0x%08x, %s%s", (int)property, pib.first->first.first.c_str(), pib.first->first.second.c_str());
 
     property->writeToGrid();
     property->setPGClientData();

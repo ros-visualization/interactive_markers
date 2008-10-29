@@ -558,7 +558,7 @@ void VisualizationManager::updateRelativeNode()
   }
   catch(tf::TransformException& e)
   {
-    ROS_ERROR( "Error transforming from frame '%s' to frame '%s': %s\n", target_frame_.c_str(), fixed_frame_.c_str() );
+    ROS_ERROR( "Error transforming from frame '%s' to frame '%s'\n", target_frame_.c_str(), fixed_frame_.c_str() );
   }
 
   Ogre::Vector3 position = Ogre::Vector3( pose.getOrigin().x(), pose.getOrigin().y(), pose.getOrigin().z() );

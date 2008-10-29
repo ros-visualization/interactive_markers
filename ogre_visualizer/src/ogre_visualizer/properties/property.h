@@ -126,8 +126,8 @@ public:
    */
   virtual ~Property()
   {
-    PROPERTY_DEBUG("Property Destructor: 0x%08x, %s%s", this, (const char*)prefix_.mb_str(), (const char*)name_.mb_str());
-    PROPERTY_DEBUG("Deleting wxPGProperty: 0x%08x", property_);
+    PROPERTY_DEBUG("Property Destructor: 0x%08x, %s%s", (int)this, (const char*)prefix_.mb_str(), (const char*)name_.mb_str());
+    PROPERTY_DEBUG("Deleting wxPGProperty: 0x%08x", (int)property_);
     grid_->DeleteProperty( property_ );
   }
 

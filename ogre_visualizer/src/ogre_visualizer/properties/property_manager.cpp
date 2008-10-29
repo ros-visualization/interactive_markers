@@ -75,7 +75,7 @@ void PropertyManager::deleteProperty( PropertyBase* property )
     return;
   }
 
-  PROPERTY_DEBUG("PropertyManager::deleteProperty( PropertyBase* property ): 0x%08x, %s%s", property, property->getPrefix().c_str(), property->getName().c_str());
+  PROPERTY_DEBUG("PropertyManager::deleteProperty( PropertyBase* property ): 0x%08x, %s%s", (int)property, property->getPrefix().c_str(), property->getName().c_str());
 
   deleteProperty( property->getName(), property->getPrefix() );
 }
@@ -115,7 +115,7 @@ void PropertyManager::deleteProperty( const std::string& name, const std::string
 
 void PropertyManager::deleteByUserData( void* user_data )
 {
-  PROPERTY_DEBUG("PropertyManager::deleteByUserData: user_data=0x%08x", user_data);
+  PROPERTY_DEBUG("PropertyManager::deleteByUserData: user_data=0x%08x", (int)user_data);
 
   std::set<PropertyBase*> to_delete;
 
