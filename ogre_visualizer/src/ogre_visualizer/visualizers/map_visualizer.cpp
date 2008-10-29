@@ -58,7 +58,12 @@ MapVisualizer::MapVisualizer( const std::string& name, VisualizationManager* man
 , resolution_( 0.0f )
 , width_( 0.0f )
 , height_( 0.0f )
+, load_timer_( 2.0f )
 , service_property_( NULL )
+, resolution_property_( NULL )
+, width_property_( NULL )
+, height_property_( NULL )
+, alpha_property_( NULL )
 {
   scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
 
@@ -70,6 +75,8 @@ MapVisualizer::MapVisualizer( const std::string& name, VisualizationManager* man
   material_->getTechnique(0)->setLightingEnabled(false);
   material_->setDepthBias( -16.0f, 0.0f );
   material_->setCullingMode( Ogre::CULL_NONE );
+
+  setAlpha( 0.7f );
 }
 
 MapVisualizer::~MapVisualizer()
@@ -85,6 +92,38 @@ void MapVisualizer::onDisable()
 {
   scene_node_->setVisible( false );
   clear();
+}
+
+void MapVisualizer::setAlpha( float alpha )
+{
+  alpha_ = alpha;
+
+  Ogre::Pass* pass = material_->getTechnique(0)->getPass(0);
+  Ogre::TextureUnitState* tex_unit = NULL;
+  if (pass->getNumTextureUnitStates() > 0)
+  {
+    tex_unit = pass->getTextureUnitState(0);
+  }
+  else
+  {
+    tex_unit = pass->createTextureUnitState();
+  }
+
+  tex_unit->setAlphaOperation( Ogre::LBX_SOURCE1, Ogre::LBS_MANUAL, Ogre::LBS_CURRENT, alpha_ );
+
+  if ( alpha_ < 0.9998 )
+  {
+    material_->setSceneBlending( Ogre::SBT_TRANSPARENT_ALPHA );
+  }
+  else
+  {
+    material_->setSceneBlending( Ogre::SBT_REPLACE );
+  }
+
+  if ( alpha_property_ )
+  {
+    alpha_property_->changed();
+  }
 }
 
 void MapVisualizer::setService( const std::string& service )
@@ -112,6 +151,7 @@ void MapVisualizer::clear()
   texture_.setNull();
   Ogre::TextureManager::getSingleton().unload( tex_name );
 
+  load_timer_ = 2.0f;
   loaded_ = false;
 }
 
@@ -161,6 +201,7 @@ void MapVisualizer::load()
       pixels[pidx+0] = val;
       pixels[pidx+1] = val;
       pixels[pidx+2] = val;
+      //pixels[pidx+3] = 1.0f;
     }
   }
 
@@ -281,16 +322,14 @@ void MapVisualizer::transformMap()
 
 void MapVisualizer::update( float dt )
 {
-  static float timer = 0.0f;
-
   if ( !loaded_ )
   {
-    timer -= dt;
+    load_timer_ += dt;
 
-    if ( timer < 0.0f )
+    if ( load_timer_ > 2.0f )
     {
       load();
-      timer = 2.0f;
+      load_timer_ = 0.0f;
     }
   }
 }
@@ -299,6 +338,9 @@ void MapVisualizer::createProperties()
 {
   service_property_ = property_manager_->createProperty<StringProperty>( "Service", property_prefix_, boost::bind( &MapVisualizer::getService, this ),
                                                                          boost::bind( &MapVisualizer::setService, this, _1 ), parent_category_, this );
+
+  alpha_property_ = property_manager_->createProperty<FloatProperty>( "Alpha", property_prefix_, boost::bind( &MapVisualizer::getAlpha, this ),
+                                                                      boost::bind( &MapVisualizer::setAlpha, this, _1 ), parent_category_, this );
 
   resolution_property_ = property_manager_->createProperty<FloatProperty>( "Resolution", property_prefix_, boost::bind( &MapVisualizer::getResolution, this ),
                                                                             FloatProperty::Setter(), parent_category_, this );

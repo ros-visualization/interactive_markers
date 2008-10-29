@@ -65,6 +65,9 @@ public:
   float getWidth() { return width_; }
   float getHeight() { return height_; }
 
+  float getAlpha() { return alpha_; }
+  void setAlpha( float alpha );
+
   // Overrides from VisualizerBase
   virtual void targetFrameChanged() {}
   virtual void fixedFrameChanged();
@@ -95,10 +98,15 @@ protected:
   float width_;
   float height_;
 
+  float load_timer_;
+
+  float alpha_;
+
   StringProperty* service_property_;
   FloatProperty* resolution_property_;
   FloatProperty* width_property_;
   FloatProperty* height_property_;
+  FloatProperty* alpha_property_;
 };
 
 } // namespace ogre_vis
