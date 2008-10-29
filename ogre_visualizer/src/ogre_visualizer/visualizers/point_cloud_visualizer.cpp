@@ -49,7 +49,7 @@ PointCloudVisualizer::PointCloudVisualizer( const std::string& name, Visualizati
 : VisualizerBase( name, manager )
 , color_( 1.0f, 1.0f, 1.0f )
 , style_( Billboards )
-, billboard_size_( 0.003 )
+, billboard_size_( 0.01 )
 , topic_property_( NULL )
 , billboard_size_property_( NULL )
 , color_property_( NULL )

@@ -52,7 +52,7 @@ LaserScanVisualizer::LaserScanVisualizer( const std::string& name, Visualization
 , intensity_max_( -999999.0f )
 , point_decay_time_( 20.0f )
 , style_( Billboards )
-, billboard_size_( 0.003 )
+, billboard_size_( 0.01 )
 , scan_topic_property_( NULL )
 , cloud_topic_property_( NULL )
 , billboard_size_property_( NULL )
