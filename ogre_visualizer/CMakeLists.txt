@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 2.6)
 include(rosbuild)
 include(FindPkgConfig)
 
-set(ROS_BUILD_TYPE RelWithDebInfo)
-#set(ROS_BUILD_TYPE Debug)
+#set(ROS_BUILD_TYPE RelWithDebInfo)
+set(ROS_BUILD_TYPE Debug)
 
 rospack(ogre_visualizer)
 
@@ -102,4 +102,5 @@ rospack_add_executable(visualizer_test src/test/visualizer_test.cpp)
 target_link_libraries(visualizer_test ${PROJECT_NAME} ${wxWidgets_LIBRARIES})
 
 rospack_add_executable(marker_test src/test/marker_test.cpp)
+rospack_add_executable(rgb_cloud_test src/test/rgb_cloud_test.cpp)
  

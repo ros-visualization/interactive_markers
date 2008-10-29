@@ -172,6 +172,37 @@ void PointCloudVisualizer::unsubscribe()
   }
 }
 
+void transformIntensity( float val, ogre_tools::PointCloud::Point& point, float min_intensity, float max_intensity, float diff_intensity )
+{
+  float normalized_intensity = diff_intensity > 0.0f ? ( val - min_intensity ) / diff_intensity : 1.0f;
+  point.r_ *= normalized_intensity;
+  point.g_ *= normalized_intensity;
+  point.b_ *= normalized_intensity;
+}
+
+void transformRGB( float val, ogre_tools::PointCloud::Point& point, float, float, float )
+{
+  int rgb = *reinterpret_cast<int*>(&val);
+  point.r_ = ((rgb >> 16) & 0xff) / 255.0f;
+  point.g_ = ((rgb >> 8) & 0xff) / 255.0f;
+  point.b_ = (rgb & 0xff) / 255.0f;
+}
+
+void transformR( float val, ogre_tools::PointCloud::Point& point, float, float, float )
+{
+  point.r_ = val;
+}
+
+void transformG( float val, ogre_tools::PointCloud::Point& point, float, float, float )
+{
+  point.g_ = val;
+}
+
+void transformB( float val, ogre_tools::PointCloud::Point& point, float, float, float )
+{
+  point.b_ = val;
+}
+
 void PointCloudVisualizer::transformCloud()
 {
   if ( message_.header.frame_id.empty() )
@@ -198,27 +229,32 @@ void PointCloudVisualizer::transformCloud()
 
   Ogre::Matrix3 orientation( ogreMatrixFromRobotEulers( yaw, pitch, roll ) );
 
-  bool has_channel_0 = message_.get_chan_size() > 0;
-  bool channel_is_rgb = has_channel_0 ? message_.chan[0].name == "rgb" : false;
-
   // First find the min/max intensity values
   float min_intensity = 999999.0f;
   float max_intensity = -999999.0f;
 
+  typedef std::vector<std_msgs::ChannelFloat32> V_Chan;
+  typedef std::vector<bool> V_bool;
+
+  V_bool valid_channels(message_.chan.size());
   uint32_t point_count = message_.get_pts_size();
-  if ( has_channel_0 && !channel_is_rgb )
+  V_Chan::iterator chan_it = message_.chan.begin();
+  V_Chan::iterator chan_end = message_.chan.end();
+  uint32_t index = 0;
+  for ( ; chan_it != chan_end; ++chan_it, ++index )
   {
-    uint32_t val_count = message_.chan[0].vals.size();
+    std_msgs::ChannelFloat32& chan = *chan_it;
+    uint32_t val_count = chan.vals.size();
     bool channel_size_correct = val_count == point_count;
     ROS_ERROR_COND(!channel_size_correct, "Point cloud '%s' on topic '%s' has channel 0 with fewer values than points (%d values, %d points)", name_.c_str(), topic_.c_str(), val_count, point_count);
 
-    has_channel_0 = channel_size_correct;
+    valid_channels[index] = channel_size_correct;
 
-    if ( channel_size_correct )
+    if ( channel_size_correct && ( chan.name.empty() || chan.name == "intensity" || chan.name == "intensities" ) )
     {
       for(uint32_t i = 0; i < point_count; i++)
       {
-        float& intensity = message_.chan[0].vals[i];
+        float& intensity = chan.vals[i];
         // arbitrarily cap to 4096 for now
         intensity = std::min( intensity, 4096.0f );
         min_intensity = std::min( min_intensity, intensity );
@@ -229,37 +265,76 @@ void PointCloudVisualizer::transformCloud()
 
   float diff_intensity = max_intensity - min_intensity;
 
-  ros::Time start_vec = ros::Time::now();
   typedef std::vector< ogre_tools::PointCloud::Point > V_Point;
   V_Point points;
   points.resize( point_count );
   for(uint32_t i = 0; i < point_count; i++)
   {
-    float channel = has_channel_0 ? message_.chan[0].vals[i] : 1.0f;
-
     Ogre::Vector3 color( color_.r_, color_.g_, color_.b_ );
-
-    if ( channel_is_rgb )
-    {
-      int rgb = *(int*)&channel;
-      float r = ((rgb >> 16) & 0xff) / 255.0f;
-      float g = ((rgb >> 8) & 0xff) / 255.0f;
-      float b = (rgb & 0xff) / 255.0f;
-      color = Ogre::Vector3( r, g, b );
-    }
-    else
-    {
-      float normalized_intensity = diff_intensity > 0.0f ? ( channel - min_intensity ) / diff_intensity : 1.0f;
-      color *= normalized_intensity;
-    }
-
     ogre_tools::PointCloud::Point& current_point = points[ i ];
+
     current_point.x_ = message_.pts[i].x;
     current_point.y_ = message_.pts[i].y;
     current_point.z_ = message_.pts[i].z;
     current_point.r_ = color.x;
     current_point.g_ = color.y;
     current_point.b_ = color.z;
+  }
+
+  chan_it = message_.chan.begin();
+  index = 0;
+  for ( ; chan_it != chan_end; ++chan_it, ++index )
+  {
+    if ( !valid_channels[index] )
+    {
+      continue;
+    }
+
+    std_msgs::ChannelFloat32& chan = *chan_it;
+    enum ChannelType
+    {
+      CT_INTENSITY,
+      CT_RGB,
+      CT_R,
+      CT_G,
+      CT_B,
+
+      CT_COUNT
+    };
+
+    ChannelType type = CT_INTENSITY;
+    if ( chan.name == "rgb" )
+    {
+      type = CT_RGB;
+    }
+    else if ( chan.name == "r" )
+    {
+      type = CT_R;
+    }
+    else if ( chan.name == "g" )
+    {
+      type = CT_G;
+    }
+    else if ( chan.name == "b" )
+    {
+      type = CT_B;
+    }
+
+    typedef void (*TransformFunc)(float, ogre_tools::PointCloud::Point&, float, float, float);
+    TransformFunc funcs[CT_COUNT] =
+    {
+      transformIntensity,
+      transformRGB,
+      transformR,
+      transformG,
+      transformB
+    };
+
+    for(uint32_t i = 0; i < point_count; i++)
+    {
+      ogre_tools::PointCloud::Point& current_point = points[ i ];
+      funcs[type]( chan.vals[i], current_point, min_intensity, max_intensity, diff_intensity );
+    }
   }
 
   {
