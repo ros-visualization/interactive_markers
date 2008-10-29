@@ -66,7 +66,7 @@ public:
    * @param g Green color component, in the range [0, 1]
    * @param b Blue color component, in the range [0, 1]
    */
-  Grid( Ogre::SceneManager* manager, uint32_t cell_count, float cell_length, float r, float g, float b );
+  Grid( Ogre::SceneManager* manager, Ogre::SceneNode* parent_node, uint32_t cell_count, float cell_length, float r, float g, float b );
   ~Grid();
 
   /**

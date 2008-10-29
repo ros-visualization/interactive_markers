@@ -92,11 +92,13 @@ public:
   virtual void mouseRightDrag( int diff_x, int diff_y );
   virtual void scrollWheel( int diff );
 
-private:
   /**
    * \brief Calculates the camera's position and orientation from the yaw, pitch, distance and focal point
    */
-  void update();
+  virtual void update();
+
+private:
+
   /**
    * \brief Calculates pitch and yaw values given a new position and the current focal point
    * @param position Position to calculate the pitch/yaw for

@@ -211,7 +211,7 @@ void RobotModelVisualizer::update( float dt )
 
   if ( has_new_transforms_ || update )
   {
-    robot_->update( tf_, target_frame_ );
+    robot_->update( tf_, fixed_frame_ );
     causeRender();
 
     has_new_transforms_ = false;

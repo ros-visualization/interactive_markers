@@ -28,6 +28,7 @@
  */
 
 #include "axes_visualizer.h"
+#include "visualization_manager.h"
 #include "properties/property.h"
 #include "properties/property_manager.h"
 #include "common.h"
@@ -47,7 +48,7 @@ AxesVisualizer::AxesVisualizer( const std::string& name, VisualizationManager* m
 , length_( 1.0 )
 , radius_( 0.1 )
 {
-  axes_ = new ogre_tools::Axes( scene_manager_, NULL, length_, radius_ );
+  axes_ = new ogre_tools::Axes( scene_manager_, manager->getTargetRelativeNode(), length_, radius_ );
 
   axes_->getSceneNode()->setVisible( isEnabled() );
 

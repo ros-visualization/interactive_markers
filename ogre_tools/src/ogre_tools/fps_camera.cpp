@@ -53,6 +53,14 @@ FPSCamera::~FPSCamera()
 {
 }
 
+void FPSCamera::relativeNodeChanged()
+{
+  if ( relative_node_ )
+  {
+    relative_node_->attachObject( camera_ );
+  }
+}
+
 void FPSCamera::update()
 {
   Ogre::Matrix3 pitch, yaw;

@@ -259,14 +259,11 @@ void MapVisualizer::transformMap()
 
   try
   {
-    if ( target_frame_ != "map" )
-    {
-      tf_->transformPose( target_frame_, pose, pose );
-    }
+    tf_->transformPose( fixed_frame_, pose, pose );
   }
   catch(tf::TransformException& e)
   {
-    ROS_ERROR( "Error transforming map '%s' to frame '%s'\n", name_.c_str(), target_frame_.c_str() );
+    ROS_ERROR( "Error transforming map '%s' to frame '%s'\n", name_.c_str(), fixed_frame_.c_str() );
   }
 
   Ogre::Vector3 position( pose.getOrigin().x(), pose.getOrigin().y(), pose.getOrigin().z() );
@@ -284,13 +281,7 @@ void MapVisualizer::update( float dt )
 {
   static float timer = 0.0f;
 
-  if ( loaded_ )
-  {
-    transformMap();
-
-    timer = 0.0f;
-  }
-  else
+  if ( !loaded_ )
   {
     timer -= dt;
 
@@ -313,6 +304,11 @@ void MapVisualizer::createProperties()
                                                                        FloatProperty::Setter(), parent_category_, this );
   height_property_ = property_manager_->createProperty<FloatProperty>( "Height", property_prefix_, boost::bind( &MapVisualizer::getHeight, this ),
                                                                         FloatProperty::Setter(), parent_category_, this );
+}
+
+void MapVisualizer::fixedFrameChanged()
+{
+  transformMap();
 }
 
 } // namespace ogre_vis

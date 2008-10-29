@@ -28,6 +28,8 @@
  */
 
 #include "grid_visualizer.h"
+#include "common.h"
+#include "visualization_manager.h"
 #include "properties/property.h"
 #include "properties/property_manager.h"
 
@@ -50,7 +52,11 @@ GridVisualizer::GridVisualizer( const std::string& name, VisualizationManager* m
 , cellsize_property_( NULL )
 , color_property_( NULL )
 {
-  grid_ = new ogre_tools::Grid( scene_manager_, cell_count_, cell_size_, color_.r_, color_.g_, color_.b_ );
+  grid_ = new ogre_tools::Grid( scene_manager_, manager->getTargetRelativeNode(), cell_count_, cell_size_, color_.r_, color_.g_, color_.b_ );
+
+  /*Ogre::Quaternion orient( Ogre::Quaternion::IDENTITY );
+  ogreToRobot( orient );
+  grid_->getSceneNode()->setOrientation( orient );*/
 }
 
 GridVisualizer::~GridVisualizer()

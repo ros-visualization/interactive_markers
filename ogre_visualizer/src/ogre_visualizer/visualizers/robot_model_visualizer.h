@@ -110,6 +110,7 @@ public:
 
   // Overrides from VisualizerBase
   virtual void targetFrameChanged();
+  virtual void fixedFrameChanged() {}
   virtual void createProperties();
   virtual bool isObjectPickable( const Ogre::MovableObject* object ) const { return true; }
 

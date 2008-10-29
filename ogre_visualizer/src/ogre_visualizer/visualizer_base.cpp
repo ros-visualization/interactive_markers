@@ -131,6 +131,16 @@ void VisualizerBase::setTargetFrame( const std::string& frame )
   }
 }
 
+void VisualizerBase::setFixedFrame( const std::string& frame )
+{
+  fixed_frame_ = frame;
+
+  if ( isEnabled() )
+  {
+    fixedFrameChanged();
+  }
+}
+
 void VisualizerBase::setPropertyManager( PropertyManager* manager, CategoryProperty* parent )
 {
   property_manager_ = manager;

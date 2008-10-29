@@ -41,7 +41,7 @@
 namespace ogre_tools
 {
 
-Grid::Grid( Ogre::SceneManager* scene_manager, uint32_t gridSize, float cell_length, float r, float g, float b )
+Grid::Grid( Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node, uint32_t gridSize, float cell_length, float r, float g, float b )
     : scene_manager_( scene_manager )
 {
   static uint32_t gridCount = 0;
@@ -50,7 +50,12 @@ Grid::Grid( Ogre::SceneManager* scene_manager, uint32_t gridSize, float cell_len
 
   manual_object_ = scene_manager_->createManualObject( ss.str() );
 
-  scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
+  if ( !parent_node )
+  {
+    parent_node = scene_manager_->getRootSceneNode();
+  }
+
+  scene_node_ = parent_node->createChildSceneNode();
   scene_node_->attachObject( manual_object_ );
 
   set( gridSize, cell_length, r, g, b );

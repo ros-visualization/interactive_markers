@@ -122,7 +122,8 @@ public:
   virtual void update( float dt );
 
   // Overrides from VisualizerBase
-  virtual void targetFrameChanged();
+  virtual void targetFrameChanged() {}
+  virtual void fixedFrameChanged();
   virtual void createProperties();
 
   static const char* getTypeStatic() { return "Laser Scan"; }
@@ -131,6 +132,8 @@ public:
 protected:
   virtual void onEnable();
   virtual void onDisable();
+
+  void clear();
 
   /**
    * \brief Subscribes to the cloud and scan topics if they have been set

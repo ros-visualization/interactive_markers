@@ -169,6 +169,17 @@ void LaserScanVisualizer::setDecayTime( float time )
   causeRender();
 }
 
+void LaserScanVisualizer::clear()
+{
+  RenderAutoLock renderLock( this );
+
+  cloud_->setCloudVisible( false );
+  cloud_->clear();
+  points_.clear();
+  point_times_.clear();
+  cloud_messages_.clear();
+}
+
 void LaserScanVisualizer::onEnable()
 {
   cloud_->setCloudVisible( true );
@@ -179,11 +190,7 @@ void LaserScanVisualizer::onDisable()
 {
   unsubscribe();
 
-  cloud_->setCloudVisible( false );
-  cloud_->clear();
-  points_.clear();
-  point_times_.clear();
-  cloud_messages_.clear();
+  clear();
 }
 
 void LaserScanVisualizer::subscribe()
@@ -270,17 +277,17 @@ void LaserScanVisualizer::transformCloud( std_msgs::PointCloud& message )
 
   if ( message.header.frame_id.empty() )
   {
-    message.header.frame_id = target_frame_;
+    message.header.frame_id = fixed_frame_;
   }
 
   try
   {
     std_msgs::PointCloud* casted_message = reinterpret_cast<std_msgs::PointCloud*>(&message);
-    tf_->transformPointCloud(target_frame_, *casted_message, *casted_message);
+    tf_->transformPointCloud(fixed_frame_, *casted_message, *casted_message);
   }
   catch(tf::TransformException& e)
   {
-    ROS_ERROR( "Error transforming laser scan '%s', frame '%s' to frame '%s'\n", name_.c_str(), message.header.frame_id.c_str(), target_frame_.c_str() );
+    ROS_ERROR( "Error transforming laser scan '%s', frame '%s' to frame '%s'\n", name_.c_str(), message.header.frame_id.c_str(), fixed_frame_.c_str() );
   }
 
   uint32_t point_count_ = message.get_pts_size();
@@ -363,7 +370,7 @@ void LaserScanVisualizer::incomingScanCallback()
 
   if ( scan_message_.header.frame_id.empty() )
   {
-    scan_message_.header.frame_id = target_frame_;
+    scan_message_.header.frame_id = fixed_frame_;
   }
 
   std_msgs::PointCloud* casted_message = reinterpret_cast<std_msgs::PointCloud*>(&cloud_message_);
@@ -373,6 +380,7 @@ void LaserScanVisualizer::incomingScanCallback()
   cloud_message_.unlock();
 }
 
+#if 0
 void LaserScanVisualizer::targetFrameChanged()
 {
   cloud_message_.lock();
@@ -391,6 +399,12 @@ void LaserScanVisualizer::targetFrameChanged()
   }
 
   cloud_message_.unlock();
+}
+#endif
+
+void LaserScanVisualizer::fixedFrameChanged()
+{
+  clear();
 }
 
 void LaserScanVisualizer::createProperties()

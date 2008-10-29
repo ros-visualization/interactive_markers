@@ -200,7 +200,7 @@ void MarkerVisualizer::processAdd( const std_msgs::VisualizationMarker& message 
       {
         Robot* robot = new Robot( scene_manager_ );
         robot->load( urdf_, false, true );
-        robot->update( kinematic_model_, target_frame_ );
+        robot->update( kinematic_model_, fixed_frame_ );
 
         object = robot;
       }
@@ -257,20 +257,18 @@ void MarkerVisualizer::setCommonValues( const std_msgs::VisualizationMarker& mes
   std::string frame_id = message.header.frame_id;
   if ( frame_id.empty() )
   {
-    frame_id = target_frame_;
+    frame_id = fixed_frame_;
   }
 
-  tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( message.yaw, message.pitch, message.roll ), btVector3( message.x, message.y, message.z ) ), ros::Time(0), frame_id );
+  tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( message.yaw, message.pitch, message.roll ), btVector3( message.x, message.y, message.z ) ),
+                              ros::Time(message.header.stamp), frame_id );
   try
   {
-    if ( frame_id != target_frame_ )
-    {
-      tf_->transformPose( target_frame_, pose, pose );
-    }
+    tf_->transformPose( fixed_frame_, pose, pose );
   }
   catch(tf::TransformException& e)
   {
-    ROS_ERROR( "Error transforming marker '%d' from frame '%s' to frame '%s'\n", message.id, frame_id.c_str(), target_frame_.c_str() );
+    ROS_ERROR( "Error transforming marker '%d' from frame '%s' to frame '%s'\n", message.id, frame_id.c_str(), fixed_frame_.c_str() );
   }
 
   Ogre::Vector3 position( pose.getOrigin().x(), pose.getOrigin().y(), pose.getOrigin().z() );
@@ -295,24 +293,26 @@ void MarkerVisualizer::update( float dt )
 {
   current_message_.lock();
 
-  if ( !message_queue_.empty() )
+  V_MarkerMessage local_queue;
+  local_queue.swap( message_queue_ );
+
+  current_message_.unlock();
+
+  if ( !local_queue.empty() )
   {
-    V_MarkerMessage::iterator message_it = message_queue_.begin();
-    V_MarkerMessage::iterator message_end = message_queue_.end();
+    V_MarkerMessage::iterator message_it = local_queue.begin();
+    V_MarkerMessage::iterator message_end = local_queue.end();
     for ( ; message_it != message_end; ++message_it )
     {
       std_msgs::VisualizationMarker& marker = *message_it;
 
       processMessage( marker );
     }
-
-    message_queue_.clear();
   }
-
-  current_message_.unlock();
 }
 
-void MarkerVisualizer::targetFrameChanged()
+#if 0
+void MarkerVisualizer::targetFrameChanged();
 {
   M_IDToMarker::iterator marker_it = markers_.begin();
   M_IDToMarker::iterator marker_end = markers_.end();
@@ -324,6 +324,12 @@ void MarkerVisualizer::targetFrameChanged()
 
     processMessage( info.message_ );
   }
+}
+#endif
+
+void MarkerVisualizer::fixedFrameChanged()
+{
+  clearMarkers();
 }
 
 } // namespace ogre_vis

@@ -120,14 +120,17 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent )
   fps_camera_ = new ogre_tools::FPSCamera( manager_->getSceneManager() );
   fps_camera_->getOgreCamera()->setNearClipDistance( 0.1f );
   fps_camera_->setPosition( 0, 0, 15 );
+  fps_camera_->setRelativeNode( manager_->getTargetRelativeNode() );
 
   orbit_camera_ = new ogre_tools::OrbitCamera( manager_->getSceneManager() );
   orbit_camera_->getOgreCamera()->setNearClipDistance( 0.1f );
   orbit_camera_->setPosition( 0, 0, 15 );
+  orbit_camera_->setRelativeNode( manager_->getTargetRelativeNode() );
 
   top_down_ortho_ = new ogre_tools::OrthoCamera( render_panel_, manager_->getSceneManager() );
   top_down_ortho_->setPosition( 0, 30, 0 );
   top_down_ortho_->pitch( -Ogre::Math::HALF_PI );
+  top_down_ortho_->setRelativeNode( manager_->getTargetRelativeNode() );
 
 
   current_camera_ = orbit_camera_;

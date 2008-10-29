@@ -65,6 +65,12 @@ public:
    * @return The Ogre camera associated with this camera object
    */
   Ogre::Camera* getOgreCamera() { return camera_; }
+
+  void setRelativeNode( Ogre::SceneNode* node );
+  virtual void relativeNodeChanged() {}
+
+  virtual void update() = 0;
+
   /**
    * \brief Set the position of the camera
    */
@@ -188,6 +194,8 @@ public:
 protected:
   Ogre::Camera* camera_;                  ///< Ogre camera associated with this camera object
   Ogre::SceneManager* scene_manager_;     ///< Scene manager this camera is part of
+
+  Ogre::SceneNode* relative_node_;
 };
 
 } // namespace ogre_tools

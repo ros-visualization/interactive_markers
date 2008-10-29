@@ -176,18 +176,18 @@ void PointCloudVisualizer::transformCloud()
 {
   if ( message_.header.frame_id.empty() )
   {
-    message_.header.frame_id = target_frame_;
+    message_.header.frame_id = fixed_frame_;
   }
 
   tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), message_.header.stamp, message_.header.frame_id );
 
   try
   {
-    tf_->transformPose( target_frame_, pose, pose );
+    tf_->transformPose( fixed_frame_, pose, pose );
   }
   catch(tf::TransformException& e)
   {
-    ROS_ERROR( "Error transforming point cloud '%s' from frame '%s' to frame '%s'\n", name_.c_str(), message_.header.frame_id.c_str(), target_frame_.c_str() );
+    ROS_ERROR( "Error transforming point cloud '%s' from frame '%s' to frame '%s'\n", name_.c_str(), message_.header.frame_id.c_str(), fixed_frame_.c_str() );
   }
 
   Ogre::Vector3 position( pose.getOrigin().x(), pose.getOrigin().y(), pose.getOrigin().z() );
@@ -285,6 +285,7 @@ void PointCloudVisualizer::incomingCloudCallback()
   transformCloud();
 }
 
+#if 0
 void PointCloudVisualizer::targetFrameChanged()
 {
   message_.lock();
@@ -292,6 +293,14 @@ void PointCloudVisualizer::targetFrameChanged()
   transformCloud();
 
   message_.unlock();
+}
+#endif
+
+void PointCloudVisualizer::fixedFrameChanged()
+{
+  RenderAutoLock renderLock( this );
+
+  cloud_->clear();
 }
 
 void PointCloudVisualizer::createProperties()

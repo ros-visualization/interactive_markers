@@ -43,6 +43,7 @@ namespace ogre_tools
 
 CameraBase::CameraBase( Ogre::SceneManager* scene_manager )
 : scene_manager_( scene_manager )
+, relative_node_( NULL )
 {
   std::stringstream ss;
   static uint32_t count = 0;
@@ -53,6 +54,15 @@ CameraBase::CameraBase( Ogre::SceneManager* scene_manager )
 CameraBase::~CameraBase()
 {
   scene_manager_->destroyCamera( camera_ );
+}
+
+void CameraBase::setRelativeNode( Ogre::SceneNode* node )
+{
+  relative_node_ = node;
+
+  relativeNodeChanged();
+
+  update();
 }
 
 void CameraBase::setPosition( const Ogre::Vector3& position )

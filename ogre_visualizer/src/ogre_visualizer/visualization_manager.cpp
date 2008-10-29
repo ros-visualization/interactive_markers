@@ -83,6 +83,9 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
   scene_manager_ = ogre_root_->createSceneManager( Ogre::ST_GENERIC );
   ray_scene_query_ = scene_manager_->createRayQuery( Ogre::Ray() );
 
+  target_relative_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
+  updateRelativeNode();
+
   selection_bounds_particle_system_ = scene_manager_->createParticleSystem( "VisualizationManagerSelectionBoundsParticleSystem" );
   selection_bounds_particle_system_->setMaterialName( "BaseWhiteNoLighting" );
   Ogre::SceneNode* node = scene_manager_->getRootSceneNode()->createChildSceneNode();
@@ -101,10 +104,13 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
   property_manager_ = new PropertyManager( vis_panel_->getPropertyGrid() );
 
   CategoryProperty* category = property_manager_->createCategory( "Global Options", "", NULL );
-  coordinate_frame_property_ = property_manager_->createProperty<StringProperty>( "Coordinate Frame", "", boost::bind( &VisualizationManager::getCoordinateFrame, this ),
-      boost::bind( &VisualizationManager::setCoordinateFrame, this, _1 ), category );
+  target_frame_property_ = property_manager_->createProperty<StringProperty>( "Target Frame", "", boost::bind( &VisualizationManager::getTargetFrame, this ),
+                                                                              boost::bind( &VisualizationManager::setTargetFrame, this, _1 ), category );
+  fixed_frame_property_ = property_manager_->createProperty<StringProperty>( "Fixed Frame", "", boost::bind( &VisualizationManager::getFixedFrame, this ),
+                                                                                boost::bind( &VisualizationManager::setFixedFrame, this, _1 ), category );
 
-  setCoordinateFrame( "base" );
+  setTargetFrame( "base" );
+  setFixedFrame( "map" );
 }
 
 VisualizationManager::~VisualizationManager()
@@ -184,6 +190,10 @@ void VisualizationManager::onUpdate( wxTimerEvent& event )
     vis_panel_->queueRender();
     render_update_time = 0.0f;
   }
+
+  updateRelativeNode();
+
+  vis_panel_->getCurrentCamera()->update();
 }
 
 void VisualizationManager::addVisualizer( VisualizerBase* visualizer, bool allow_deletion, bool enabled )
@@ -198,6 +208,7 @@ void VisualizationManager::addVisualizer( VisualizerBase* visualizer, bool allow
   visualizer->setUnlockRenderCallback( boost::bind( &VisualizationPanel::unlockRender, vis_panel_ ) );
 
   visualizer->setTargetFrame( target_frame_ );
+  visualizer->setFixedFrame( fixed_frame_ );
 
   vis_panel_->getPropertyGrid()->Freeze();
 
@@ -476,7 +487,7 @@ void VisualizationManager::removeVisualizer( const std::string& name )
   removeVisualizer( visualizer );
 }
 
-void VisualizationManager::setCoordinateFrame( const std::string& frame )
+void VisualizationManager::setTargetFrame( const std::string& frame )
 {
   target_frame_ = frame;
 
@@ -489,7 +500,23 @@ void VisualizationManager::setCoordinateFrame( const std::string& frame )
     visualizer->setTargetFrame(frame);
   }
 
-  coordinate_frame_property_->changed();
+  target_frame_property_->changed();
+}
+
+void VisualizationManager::setFixedFrame( const std::string& frame )
+{
+  fixed_frame_ = frame;
+
+  V_VisualizerInfo::iterator it = visualizers_.begin();
+  V_VisualizerInfo::iterator end = visualizers_.end();
+  for ( ; it != end; ++it )
+  {
+    VisualizerBase* visualizer = it->visualizer_;
+
+    visualizer->setFixedFrame(frame);
+  }
+
+  fixed_frame_property_->changed();
 }
 
 bool VisualizationManager::isDeletionAllowed( VisualizerBase* visualizer )
@@ -518,6 +545,34 @@ void VisualizationManager::getRegisteredTypes( std::vector<std::string>& types )
   {
     types.push_back( it->first );
   }
+}
+
+void VisualizationManager::updateRelativeNode()
+{
+  tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0.0f, 0.0f, 0.0f ), btVector3( 0.0f, 0.0f, 0.0f ) ),
+                              ros::Time(0), target_frame_ );
+
+  try
+  {
+    tf_->transformPose( fixed_frame_, pose, pose );
+  }
+  catch(tf::TransformException& e)
+  {
+    ROS_ERROR( "Error transforming from frame '%s' to frame '%s': %s\n", target_frame_.c_str(), fixed_frame_.c_str() );
+  }
+
+  Ogre::Vector3 position = Ogre::Vector3( pose.getOrigin().x(), pose.getOrigin().y(), pose.getOrigin().z() );
+  robotToOgre( position );
+
+  btQuaternion quat;
+  pose.getBasis().getRotation( quat );
+  Ogre::Quaternion orientation( Ogre::Quaternion::IDENTITY );
+  ogreToRobot( orientation );
+  orientation = Ogre::Quaternion( quat.w(), quat.x(), quat.y(), quat.z() ) * orientation;
+  robotToOgre( orientation );
+
+  target_relative_node_->setPosition( position );
+  target_relative_node_->setOrientation( orientation );
 }
 
 } // namespace ogre_vis

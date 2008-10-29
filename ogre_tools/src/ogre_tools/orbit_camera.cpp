@@ -51,7 +51,7 @@ static const float PITCH_START = Ogre::Math::HALF_PI;
 
 OrbitCamera::OrbitCamera( Ogre::SceneManager* scene_manager )
 : CameraBase( scene_manager )
-, focal_point_( 0.0f, 0.0f, 0.0f )
+, focal_point_( Ogre::Vector3::ZERO )
 , yaw_( YAW_START )
 , pitch_( PITCH_START )
 , distance_( 10.0f )
@@ -87,12 +87,27 @@ void OrbitCamera::normalizeYaw()
 
 void OrbitCamera::update()
 {
-  float x = distance_ * cos( yaw_ ) * sin( pitch_ ) + focal_point_.x;
-  float y = distance_ * cos( pitch_ ) + focal_point_.y;
-  float z = distance_ * sin( yaw_ ) * sin( pitch_ ) + focal_point_.z;
+  Ogre::Vector3 global_focal_point = focal_point_;
 
-  camera_->setPosition( x, y, z );
-  camera_->lookAt( focal_point_ );
+  if ( relative_node_ )
+  {
+    global_focal_point = relative_node_->getOrientation() * focal_point_ + relative_node_->getPosition();
+  }
+
+  float x = distance_ * cos( yaw_ ) * sin( pitch_ ) + global_focal_point.x;
+  float y = distance_ * cos( pitch_ ) + global_focal_point.y;
+  float z = distance_ * sin( yaw_ ) * sin( pitch_ ) + global_focal_point.z;
+
+  Ogre::Vector3 pos( x, y, z );
+
+  if ( relative_node_ )
+  {
+    Ogre::Vector3 vec = pos - global_focal_point;
+    pos = relative_node_->getOrientation() * vec + global_focal_point;
+  }
+
+  camera_->setPosition( pos );
+  camera_->lookAt( global_focal_point );
 }
 
 void OrbitCamera::yaw( float angle )
@@ -202,7 +217,13 @@ void OrbitCamera::setFocalPoint( const Ogre::Vector3& focal_point )
 
 void OrbitCamera::move( float x, float y, float z )
 {
-  focal_point_ += camera_->getOrientation() * Ogre::Vector3( x, y, z );
+  Ogre::Quaternion orientation = camera_->getOrientation();
+  if ( relative_node_ )
+  {
+    orientation = relative_node_->getOrientation() * orientation;
+  }
+
+  focal_point_ += orientation * Ogre::Vector3( x, y, z );
 
   update();
 }
@@ -219,8 +240,20 @@ void OrbitCamera::setPosition( float x, float y, float z )
 
 void OrbitCamera::lookAt( const Ogre::Vector3& point )
 {
-  distance_ = point.distance( camera_->getPosition() );
-  focal_point_ = point;
+  Ogre::Vector3 focal_point = point;
+  Ogre::Vector3 camera_position = camera_->getPosition();
+
+  if ( relative_node_ )
+  {
+    Ogre::Vector3 rel_pos = relative_node_->getPosition();
+    Ogre::Quaternion rel_orient = relative_node_->getOrientation();
+
+    focal_point = rel_orient.Inverse() * ( focal_point - rel_pos );
+    camera_position = rel_orient.Inverse() * ( camera_position - rel_pos );
+  }
+
+  distance_ = focal_point.distance( camera_position );
+  focal_point_ = focal_point;
 
   update();
 }

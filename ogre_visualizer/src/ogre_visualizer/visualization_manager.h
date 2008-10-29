@@ -51,6 +51,7 @@ namespace Ogre
 {
 class Root;
 class SceneManager;
+class SceneNode;
 class Camera;
 class RaySceneQuery;
 class ParticleSystem;
@@ -160,8 +161,15 @@ public:
    * \brief Set the coordinate frame we should be displaying in
    * @param frame The string name -- must match the frame name broadcast to libTF
    */
-  void setCoordinateFrame( const std::string& frame );
-  const std::string& getCoordinateFrame() { return target_frame_; }
+  void setTargetFrame( const std::string& frame );
+  const std::string& getTargetFrame() { return target_frame_; }
+
+  /**
+   * \brief Set the coordinate frame we should be transforming all fixed data to
+   * @param frame The string name -- must match the frame name broadcast to libTF
+   */
+  void setFixedFrame( const std::string& frame );
+  const std::string& getFixedFrame() { return fixed_frame_; }
 
   /**
    * \brief Performs a linear search to find a visualizer based on its name
@@ -191,6 +199,8 @@ public:
 
   VisualizerSignal& getVisualizerStateSignal() { return visualizer_state_; }
 
+  Ogre::SceneNode* getTargetRelativeNode() { return target_relative_node_; }
+
 protected:
   /**
    * \brief Add a visualizer to be managed by this panel
@@ -207,6 +217,8 @@ protected:
 
   /// Called from the update timer
   void onUpdate( wxTimerEvent& event );
+
+  void updateRelativeNode();
 
   Ogre::Root* ogre_root_;                                 ///< Ogre Root
   Ogre::SceneManager* scene_manager_;                     ///< Ogre scene manager associated with this panel
@@ -234,13 +246,17 @@ protected:
   M_Factory factories_;                                   ///< Factories by visualizer type name
 
   std::string target_frame_;                              ///< Target coordinate frame we're displaying everything in
+  std::string fixed_frame_;                               ///< Frame to transform fixed data to
 
   PropertyManager* property_manager_;
-  StringProperty* coordinate_frame_property_;
+  StringProperty* target_frame_property_;
+  StringProperty* fixed_frame_property_;
 
   VisualizationPanel* vis_panel_;
 
   VisualizerSignal visualizer_state_;
+
+  Ogre::SceneNode* target_relative_node_;
 };
 
 }

@@ -127,13 +127,24 @@ public:
    */
   virtual void createProperties() {}
 
-  /// Set the target frame of this visualizer. This is a frame id which should match something being broadcast through libTF.
+  /// Set the target frame of this visualizer. This is a frame id which should match something being broadcast through TF.
   void setTargetFrame( const std::string& frame );
 
   /**
    * \brief Called from within setTargetFrame, notifying child classes that the target frame has changed
    */
   virtual void targetFrameChanged() = 0;
+
+  /**
+   * \brief Set the fixed frame of this visualizer.  This is a frame id which should generally be the top-level frame being broadcast through TF
+   * @param frame The fixed frame
+   */
+  void setFixedFrame( const std::string& frame );
+
+  /**
+   * \brief Called from within setFixedFrame, notifying child classes that the fixed frame has changed
+   */
+  virtual void fixedFrameChanged() = 0;
 
   /**
    * \brief Returns whether an object owned by this visualizer is pickable/mouse selectable
@@ -171,14 +182,15 @@ protected:
   std::string name_;                                  ///< The name of this visualizer
   bool enabled_;                                      ///< Are we enabled?
 
-  std::string target_frame_;                          ///< The frame we should transform everything into
+  std::string target_frame_;                          ///< The frame we should transform all periodically-updated data into
+  std::string fixed_frame_;                           ///< The frame we should transform all fixed data into
 
   boost::function<void ()> render_callback_;          ///< Render callback
   boost::function<void ()> render_lock_;              ///< Render lock callback
   boost::function<void ()> render_unlock_;            ///< Render unlock callback
 
   ros::node* ros_node_;                               ///< ros node
-  tf::TransformListener* tf_;                  ///< rosTF client
+  tf::TransformListener* tf_;                         ///< tf client
 
   std::string property_prefix_;                       ///< Prefix to prepend to our properties
 

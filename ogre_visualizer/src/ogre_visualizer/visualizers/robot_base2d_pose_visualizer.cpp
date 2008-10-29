@@ -209,7 +209,7 @@ void RobotBase2DPoseVisualizer::transformArrow( const std_msgs::RobotBase2DOdom&
   std::string frame_id = message.header.frame_id;
   if ( frame_id.empty() )
   {
-    frame_id = target_frame_;
+    frame_id = fixed_frame_;
   }
 
   tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( message.pos.th, 0.0f, 0.0f ), btVector3( message.pos.x, message.pos.y, 0.0f ) ),
@@ -217,14 +217,11 @@ void RobotBase2DPoseVisualizer::transformArrow( const std_msgs::RobotBase2DOdom&
 
   try
   {
-    if ( frame_id != target_frame_ )
-    {
-      tf_->transformPose( target_frame_, pose, pose );
-    }
+    tf_->transformPose( fixed_frame_, pose, pose );
   }
   catch(tf::TransformException& e)
   {
-    ROS_ERROR( "Error transforming 2d base pose '%s' from frame '%s' to frame '%s': %s\n", name_.c_str(), message.header.frame_id.c_str(), target_frame_.c_str(), e.what() );
+    ROS_ERROR( "Error transforming 2d base pose '%s' from frame '%s' to frame '%s'\n", name_.c_str(), message.header.frame_id.c_str(), fixed_frame_.c_str() );
   }
 
   btScalar yaw, pitch, roll;
@@ -238,6 +235,7 @@ void RobotBase2DPoseVisualizer::transformArrow( const std_msgs::RobotBase2DOdom&
   arrow->setPosition( pos );
 }
 
+#if 0
 void RobotBase2DPoseVisualizer::targetFrameChanged()
 {
   ROS_ASSERT( messages_.size() == arrows_.size() );
@@ -248,6 +246,12 @@ void RobotBase2DPoseVisualizer::targetFrameChanged()
   {
     transformArrow( *msg_it, *arrow_it );
   }
+}
+#endif
+
+void RobotBase2DPoseVisualizer::fixedFrameChanged()
+{
+  clear();
 }
 
 void RobotBase2DPoseVisualizer::update( float dt )

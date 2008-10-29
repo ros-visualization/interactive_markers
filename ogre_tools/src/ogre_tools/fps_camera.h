@@ -58,6 +58,7 @@ public:
   virtual void setOrientation( float x, float y, float z, float w );
   virtual void setPosition( float x, float y, float z );
   virtual void setFrom( CameraBase* camera );
+  virtual void relativeNodeChanged();
 
   virtual Ogre::Vector3 getPosition();
   virtual Ogre::Quaternion getOrientation();

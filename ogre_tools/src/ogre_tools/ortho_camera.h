@@ -45,7 +45,7 @@ public:
   OrthoCamera( wxOgreRenderWindow* render_window, Ogre::SceneManager* scene_manager );
   virtual ~OrthoCamera();
 
-  void update();
+  virtual void update();
 
   virtual void setFrom( CameraBase* camera );
   virtual void yaw( float angle );

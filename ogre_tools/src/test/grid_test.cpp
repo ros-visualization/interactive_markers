@@ -74,7 +74,7 @@ public:
 
         m_WXRenderWindow->getViewport()->setCamera( camera_->getOgreCamera() );
 
-        ogre_tools::Grid* grid = new ogre_tools::Grid( scene_manager_, 10, 1.0f, 1.0f, 0.0f, 0.0f );
+        ogre_tools::Grid* grid = new ogre_tools::Grid( scene_manager_, NULL, 10, 1.0f, 1.0f, 0.0f, 0.0f );
         //grid->getSceneNode()->pitch( Ogre::Degree( 90 ) );
 
         //ogre_tools::Axes* axes = new ogre_tools::Axes( scene_manager_ );

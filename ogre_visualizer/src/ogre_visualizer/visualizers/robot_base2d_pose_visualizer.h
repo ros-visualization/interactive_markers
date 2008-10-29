@@ -77,7 +77,8 @@ public:
   float getAngleTolerance() { return angle_tolerance_; }
 
   // Overrides from VisualizerBase
-  virtual void targetFrameChanged();
+  virtual void targetFrameChanged() {}
+  virtual void fixedFrameChanged();
   virtual void createProperties();
   virtual void update( float dt );
   virtual bool isObjectPickable( const Ogre::MovableObject* object ) const { return true; }
