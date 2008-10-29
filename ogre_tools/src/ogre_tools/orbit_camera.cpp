@@ -104,6 +104,8 @@ void OrbitCamera::update()
   {
     Ogre::Vector3 vec = pos - global_focal_point;
     pos = relative_node_->getOrientation() * vec + global_focal_point;
+
+    camera_->setFixedYawAxis(true, relative_node_->getOrientation() * Ogre::Vector3::UNIT_Y);
   }
 
   camera_->setPosition( pos );
