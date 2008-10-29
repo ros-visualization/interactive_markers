@@ -332,4 +332,9 @@ void MarkerVisualizer::fixedFrameChanged()
   clearMarkers();
 }
 
+void MarkerVisualizer::reset()
+{
+  clearMarkers();
+}
+
 } // namespace ogre_vis

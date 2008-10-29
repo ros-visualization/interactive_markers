@@ -321,4 +321,11 @@ void PointCloudVisualizer::createProperties()
                                                                               boost::bind( &PointCloudVisualizer::setTopic, this, _1 ), parent_category_, this );
 }
 
+void PointCloudVisualizer::reset()
+{
+  RenderAutoLock renderLock( this );
+
+  cloud_->clear();
+}
+
 } // namespace ogre_vis

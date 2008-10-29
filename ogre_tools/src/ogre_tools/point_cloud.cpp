@@ -104,6 +104,13 @@ void PointCloud::clear()
   point_count_ = 0;
   bounding_box_.setExtents( -10000.0f, -10000.0f, -10000.0f, 10000.0f, 10000.0f, 10000.0f );
   bounding_radius_ = 30000.0f;
+
+  V_BillboardSet::iterator bbs_it = billboard_sets_.begin();
+  V_BillboardSet::iterator bbs_end = billboard_sets_.end();
+  for ( ; bbs_it != bbs_end; ++bbs_it )
+  {
+    (*bbs_it)->setVisible( false );
+  }
 }
 
 void PointCloud::setCloudVisible( bool visible )

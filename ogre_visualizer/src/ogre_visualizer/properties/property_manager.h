@@ -115,6 +115,11 @@ public:
    * @param user_data The user data to compare against
    */
   void deleteByUserData( void* user_data );
+  /**
+   * \brief Delete all the children of a property
+   * @param property The property whose children to delete
+   */
+  void deleteChildren( PropertyBase* property );
 
   /**
    * \brief Called when a property in the property grid is changing.

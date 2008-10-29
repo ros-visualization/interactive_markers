@@ -251,6 +251,8 @@ void MapVisualizer::load()
   }
 
   loaded_ = true;
+
+  causeRender();
 }
 
 void MapVisualizer::transformMap()
@@ -309,6 +311,11 @@ void MapVisualizer::createProperties()
 void MapVisualizer::fixedFrameChanged()
 {
   transformMap();
+}
+
+void MapVisualizer::reset()
+{
+  clear();
 }
 
 } // namespace ogre_vis

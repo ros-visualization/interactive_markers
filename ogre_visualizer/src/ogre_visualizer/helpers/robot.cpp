@@ -599,6 +599,10 @@ void Robot::setTransformsOnLink( LinkInfo* info, const Ogre::Vector3& visual_pos
 
 void Robot::update( tf::TransformListener* tf, const std::string& target_frame )
 {
+  typedef std::vector<std::string> V_string;
+  V_string frames;
+  tf->getFrameStrings( frames );
+
   M_NameToLinkInfo::iterator link_it = links_.begin();
   M_NameToLinkInfo::iterator link_end = links_.end();
   for ( ; link_it != link_end; ++link_it )
@@ -606,14 +610,17 @@ void Robot::update( tf::TransformListener* tf, const std::string& target_frame )
     const std::string& name = link_it->first;
     LinkInfo* info = link_it->second;
 
+    if ( std::find( frames.begin(), frames.end(), name ) == frames.end() )
+    {
+      ROS_ERROR( "Frame '%s' does not exist in the TF frame list", name.c_str() );
+      continue;
+    }
+
     tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time(0), name );
 
     try
     {
-      if ( name != target_frame )
-      {
-        tf->transformPose( target_frame, pose, pose );
-      }
+      tf->transformPose( target_frame, pose, pose );
     }
     catch(tf::TransformException& e)
     {

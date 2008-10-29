@@ -39,6 +39,8 @@
 #include <vector>
 #include <map>
 
+#include <rostools/Time.h>
+
 namespace ogre_tools
 {
 class wxOgreRenderWindow;
@@ -201,6 +203,8 @@ public:
 
   Ogre::SceneNode* getTargetRelativeNode() { return target_relative_node_; }
 
+  void resetVisualizers();
+
 protected:
   /**
    * \brief Add a visualizer to be managed by this panel
@@ -219,6 +223,8 @@ protected:
   void onUpdate( wxTimerEvent& event );
 
   void updateRelativeNode();
+
+  void incomingROSTime();
 
   Ogre::Root* ogre_root_;                                 ///< Ogre Root
   Ogre::SceneManager* scene_manager_;                     ///< Ogre scene manager associated with this panel
@@ -257,6 +263,9 @@ protected:
   VisualizerSignal visualizer_state_;
 
   Ogre::SceneNode* target_relative_node_;
+
+  rostools::Time time_message_;
+  bool needs_reset_;
 };
 
 }

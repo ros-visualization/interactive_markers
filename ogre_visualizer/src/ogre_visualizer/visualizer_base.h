@@ -158,6 +158,11 @@ public:
    */
   virtual const char* getType() = 0;
 
+  /**
+   * \brief Called to tell the visualizer to clear its state
+   */
+  virtual void reset() {}
+
 protected:
   /// Derived classes override this to do the actual work of enabling themselves
   virtual void onEnable() = 0;

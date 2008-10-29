@@ -173,11 +173,13 @@ void LaserScanVisualizer::clear()
 {
   RenderAutoLock renderLock( this );
 
-  cloud_->setCloudVisible( false );
   cloud_->clear();
   points_.clear();
   point_times_.clear();
   cloud_messages_.clear();
+
+  intensity_min_ = 9999999.0f;
+  intensity_max_ = -9999999.0f;
 }
 
 void LaserScanVisualizer::onEnable()
@@ -191,6 +193,8 @@ void LaserScanVisualizer::onDisable()
   unsubscribe();
 
   clear();
+
+  cloud_->setCloudVisible( false );
 }
 
 void LaserScanVisualizer::subscribe()
@@ -301,8 +305,6 @@ void LaserScanVisualizer::transformCloud( std_msgs::PointCloud& message )
   }
 
   float diff_intensity = intensity_max_ - intensity_min_;
-
-
 
   points_.push_back( V_Point() );
   V_Point& points = points_.back();
@@ -428,6 +430,11 @@ void LaserScanVisualizer::createProperties()
                                                                             boost::bind( &LaserScanVisualizer::setScanTopic, this, _1 ), parent_category_, this );
   cloud_topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Cloud Topic", property_prefix_, boost::bind( &LaserScanVisualizer::getCloudTopic, this ),
                                                                               boost::bind( &LaserScanVisualizer::setCloudTopic, this, _1 ), parent_category_, this );
+}
+
+void LaserScanVisualizer::reset()
+{
+  clear();
 }
 
 } // namespace ogre_vis

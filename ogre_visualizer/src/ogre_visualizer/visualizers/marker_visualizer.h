@@ -106,6 +106,7 @@ public:
 
   virtual void targetFrameChanged() {}
   virtual void fixedFrameChanged();
+  virtual void reset();
 
   static const char* getTypeStatic() { return "Markers"; }
   virtual const char* getType() { return getTypeStatic(); }

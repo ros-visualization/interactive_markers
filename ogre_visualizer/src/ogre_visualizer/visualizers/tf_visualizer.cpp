@@ -109,6 +109,8 @@ void TFVisualizer::clear()
 
   frames_.clear();
 
+  property_manager_->deleteChildren( tree_category_ );
+
   update_timer_ = 0.0f;
 }
 
@@ -289,11 +291,11 @@ void TFVisualizer::updateFrame(FrameInfo* frame)
 
   try
   {
-    tf_->transformPose( target_frame_, pose, pose );
+    tf_->transformPose( fixed_frame_, pose, pose );
   }
   catch(tf::TransformException& e)
   {
-    ROS_ERROR( "Error transforming frame '%s' to frame '%s'\n", frame->name_.c_str(), target_frame_.c_str() );
+    ROS_ERROR( "Error transforming frame '%s' to frame '%s'\n", frame->name_.c_str(), fixed_frame_.c_str() );
   }
 
   frame->position_ = Ogre::Vector3( pose.getOrigin().x(), pose.getOrigin().y(), pose.getOrigin().z() );
@@ -341,11 +343,11 @@ void TFVisualizer::updateFrame(FrameInfo* frame)
 
       try
       {
-        tf_->transformPose( target_frame_, parent_pose, parent_pose );
+        tf_->transformPose( fixed_frame_, parent_pose, parent_pose );
       }
       catch(tf::TransformException& e)
       {
-        ROS_ERROR( "Error transforming frame '%s' to frame '%s'\n", frame->parent_.c_str(), target_frame_.c_str() );
+        ROS_ERROR( "Error transforming frame '%s' to frame '%s'\n", frame->parent_.c_str(), fixed_frame_.c_str() );
       }
 
       Ogre::Vector3 parent_position = Ogre::Vector3( parent_pose.getOrigin().x(), parent_pose.getOrigin().y(), parent_pose.getOrigin().z() );
@@ -438,6 +440,11 @@ void TFVisualizer::createProperties()
 void TFVisualizer::targetFrameChanged()
 {
   update_timer_ = update_rate_;
+}
+
+void TFVisualizer::reset()
+{
+  clear();
 }
 
 } // namespace ogre_vis

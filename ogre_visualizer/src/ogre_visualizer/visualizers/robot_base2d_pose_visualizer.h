@@ -82,6 +82,7 @@ public:
   virtual void createProperties();
   virtual void update( float dt );
   virtual bool isObjectPickable( const Ogre::MovableObject* object ) const { return true; }
+  virtual void reset();
 
   static const char* getTypeStatic() { return "RobotBase2DPose"; }
   virtual const char* getType() { return getTypeStatic(); }

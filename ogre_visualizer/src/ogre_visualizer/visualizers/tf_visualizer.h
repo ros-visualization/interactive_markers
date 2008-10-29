@@ -118,6 +118,7 @@ public:
   virtual void fixedFrameChanged() {}
   virtual void createProperties();
   virtual bool isObjectPickable( const Ogre::MovableObject* object ) const { return true; }
+  virtual void reset();
 
   static const char* getTypeStatic() { return "TF"; }
   virtual const char* getType() { return getTypeStatic(); }

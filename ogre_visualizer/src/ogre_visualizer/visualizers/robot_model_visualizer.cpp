@@ -255,5 +255,10 @@ void RobotModelVisualizer::createProperties()
   robot_->setPropertyManager( property_manager_, parent_category_ );
 }
 
+void RobotModelVisualizer::reset()
+{
+  has_new_transforms_ = true;
+}
+
 } // namespace ogre_vis
 

@@ -70,6 +70,7 @@ public:
   virtual void fixedFrameChanged();
   virtual void createProperties();
   virtual void update( float dt );
+  virtual void reset();
 
   static const char* getTypeStatic() { return "Map"; }
   virtual const char* getType() { return getTypeStatic(); }

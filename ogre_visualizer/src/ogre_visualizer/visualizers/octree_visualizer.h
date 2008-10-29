@@ -79,6 +79,7 @@ public:
   virtual void createProperties();
 
   virtual void update( float dt );
+  virtual void reset();
 
   static const char* getTypeStatic() { return "Octree"; }
   virtual const char* getType() { return getTypeStatic(); }

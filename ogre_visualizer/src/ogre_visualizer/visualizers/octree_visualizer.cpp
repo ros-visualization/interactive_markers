@@ -252,4 +252,9 @@ void OctreeVisualizer::createProperties()
                                                                               boost::bind( &OctreeVisualizer::setOctreeTopic, this, _1 ), parent_category_, this );
 }
 
+void OctreeVisualizer::reset()
+{
+  manual_object_->clear();
+}
+
 }

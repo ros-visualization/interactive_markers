@@ -49,7 +49,7 @@ RobotBase2DPoseVisualizer::RobotBase2DPoseVisualizer( const std::string& name, V
 : VisualizerBase( name, manager )
 , topic_( "odom" )
 , color_( 1.0f, 0.1f, 0.0f )
-, position_tolerance_( 0.01 )
+, position_tolerance_( 0.1 )
 , angle_tolerance_( 0.1 )
 , color_property_( NULL )
 , topic_property_( NULL )
@@ -283,6 +283,11 @@ void RobotBase2DPoseVisualizer::incomingMessage()
   message_queue_.push_back( message_ );
 
   queue_mutex_.unlock();
+}
+
+void RobotBase2DPoseVisualizer::reset()
+{
+  clear();
 }
 
 } // namespace ogre_vis

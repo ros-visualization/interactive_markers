@@ -63,6 +63,7 @@ namespace ogre_vis
 VisualizationManager::VisualizationManager( VisualizationPanel* panel )
 : ogre_root_( Ogre::Root::getSingletonPtr() )
 , vis_panel_( panel )
+, needs_reset_( false )
 {
   initializeCommon();
   registerFactories( this );
@@ -111,10 +112,14 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
 
   setTargetFrame( "base" );
   setFixedFrame( "map" );
+
+  ros_node_->subscribe( "/time", time_message_, &VisualizationManager::incomingROSTime, this, 1 );
 }
 
 VisualizationManager::~VisualizationManager()
 {
+  ros_node_->unsubscribe( "/time", &VisualizationManager::incomingROSTime, this );
+
   Disconnect( wxEVT_TIMER, update_timer_->GetId(), wxTimerEventHandler( VisualizationManager::onUpdate ), NULL, this );
   delete update_timer_;
 
@@ -194,6 +199,13 @@ void VisualizationManager::onUpdate( wxTimerEvent& event )
   updateRelativeNode();
 
   vis_panel_->getCurrentCamera()->update();
+
+  if ( needs_reset_ )
+  {
+    needs_reset_ = false;
+    resetVisualizers();
+    tf_->clear();
+  }
 }
 
 void VisualizationManager::addVisualizer( VisualizerBase* visualizer, bool allow_deletion, bool enabled )
@@ -221,6 +233,18 @@ void VisualizationManager::addVisualizer( VisualizerBase* visualizer, bool allow
 
   vis_panel_->getPropertyGrid()->Thaw();
   vis_panel_->getPropertyGrid()->Refresh();
+}
+
+void VisualizationManager::resetVisualizers()
+{
+  V_VisualizerInfo::iterator vis_it = visualizers_.begin();
+  V_VisualizerInfo::iterator vis_end = visualizers_.end();
+  for ( ; vis_it != vis_end; ++vis_it )
+  {
+    VisualizerBase* visualizer = vis_it->visualizer_;
+
+    visualizer->reset();
+  }
 }
 
 inline void createParticle( Ogre::ParticleSystem* particle_sys, const Ogre::Vector3& position, float size )
@@ -573,6 +597,18 @@ void VisualizationManager::updateRelativeNode()
 
   target_relative_node_->setPosition( position );
   target_relative_node_->setOrientation( orientation );
+}
+
+void VisualizationManager::incomingROSTime()
+{
+  static ros::Time last_time = ros::Time(0);
+
+  if ( time_message_.rostime < last_time )
+  {
+    needs_reset_ = true;
+  }
+
+  last_time = time_message_.rostime;
 }
 
 } // namespace ogre_vis

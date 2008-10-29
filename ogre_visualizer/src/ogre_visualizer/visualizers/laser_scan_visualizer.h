@@ -125,6 +125,7 @@ public:
   virtual void targetFrameChanged() {}
   virtual void fixedFrameChanged();
   virtual void createProperties();
+  virtual void reset();
 
   static const char* getTypeStatic() { return "Laser Scan"; }
   virtual const char* getType() { return getTypeStatic(); }
