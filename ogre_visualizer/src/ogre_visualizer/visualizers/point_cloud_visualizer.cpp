@@ -197,8 +197,6 @@ void PointCloudVisualizer::transformCloud()
   pose.getBasis().getEulerZYX( yaw, pitch, roll );
 
   Ogre::Matrix3 orientation( ogreMatrixFromRobotEulers( yaw, pitch, roll ) );
-  scene_node_->setPosition( position );
-  scene_node_->setOrientation( orientation );
 
   bool has_channel_0 = message_.get_chan_size() > 0;
   bool channel_is_rgb = has_channel_0 ? message_.chan[0].name == "rgb" : false;
@@ -264,9 +262,11 @@ void PointCloudVisualizer::transformCloud()
     current_point.b_ = color.z;
   }
 
-  ros::Time start_add = ros::Time::now();
   {
     RenderAutoLock renderLock( this );
+
+    scene_node_->setPosition( position );
+    scene_node_->setOrientation( orientation );
 
     cloud_->clear();
 
