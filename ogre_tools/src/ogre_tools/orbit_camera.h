@@ -43,6 +43,8 @@ namespace Ogre
 namespace ogre_tools
 {
 
+class SuperEllipsoid;
+
 /**
  * \brief An orbital camera, controlled by yaw, pitch, distance, and focal point
  *
@@ -97,6 +99,13 @@ public:
    */
   virtual void update();
 
+  virtual void mouseLeftDown( int x, int y );
+  virtual void mouseMiddleDown( int x, int y );
+  virtual void mouseRightDown( int x, int y );
+  virtual void mouseLeftUp( int x, int y );
+  virtual void mouseMiddleUp( int x, int y );
+  virtual void mouseRightUp( int x, int y );
+
 private:
 
   /**
@@ -117,6 +126,8 @@ private:
   float yaw_;                         ///< The camera's yaw (rotation around the y-axis), in radians
   float pitch_;                       ///< The camera's pitch (rotation around the x-axis), in radians
   float distance_;                    ///< The camera's distance from the focal point
+
+  SuperEllipsoid* focal_point_object_;
 };
 
 } // namespace ogre_tools

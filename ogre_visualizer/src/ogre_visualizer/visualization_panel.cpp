@@ -302,6 +302,8 @@ void VisualizationPanel::onRenderWindowMouseEvents( wxMouseEvent& event )
       left_mouse_down_ = true;
       middle_mouse_down_ = false;
       right_mouse_down_ = false;
+
+      current_camera_->mouseLeftDown( mouse_x_, mouse_y_ );
     }
   }
   else if ( event.MiddleDown() )
@@ -309,24 +311,34 @@ void VisualizationPanel::onRenderWindowMouseEvents( wxMouseEvent& event )
     left_mouse_down_ = false;
     middle_mouse_down_ = true;
     right_mouse_down_ = false;
+
+    current_camera_->mouseMiddleDown( mouse_x_, mouse_y_ );
   }
   else if ( event.RightDown() )
   {
     left_mouse_down_ = false;
     middle_mouse_down_ = false;
     right_mouse_down_ = true;
+
+    current_camera_->mouseRightDown( mouse_x_, mouse_y_ );
   }
   else if ( event.LeftUp() )
   {
     left_mouse_down_ = false;
+
+    current_camera_->mouseLeftUp( mouse_x_, mouse_y_ );
   }
   else if ( event.MiddleUp() )
   {
     middle_mouse_down_ = false;
+
+    current_camera_->mouseMiddleUp( mouse_x_, mouse_y_ );
   }
   else if ( event.RightUp() )
   {
     right_mouse_down_ = false;
+
+    current_camera_->mouseRightUp( mouse_x_, mouse_y_ );
   }
   else if ( event.Dragging() )
   {

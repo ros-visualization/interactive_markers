@@ -66,7 +66,14 @@ public:
    */
   Ogre::Camera* getOgreCamera() { return camera_; }
 
+  /**
+   * \brief Set a scene node that all camera transformations should be relative to
+   * @param node The node
+   */
   void setRelativeNode( Ogre::SceneNode* node );
+  /**
+   * \brief Called when the relative node changes
+   */
   virtual void relativeNodeChanged() {}
 
   virtual void update() = 0;
@@ -161,6 +168,13 @@ public:
    * @param z Distance to move along the Z-axis
    */
   virtual void move( float x, float y, float z ) = 0;
+
+  virtual void mouseLeftDown( int x, int y ) {}
+  virtual void mouseMiddleDown( int x, int y ) {}
+  virtual void mouseRightDown( int x, int y ) {}
+  virtual void mouseLeftUp( int x, int y ) {}
+  virtual void mouseMiddleUp( int x, int y ) {}
+  virtual void mouseRightUp( int x, int y ) {}
 
   /**
    * \brief Handle a left mouse button drag

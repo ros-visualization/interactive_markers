@@ -28,6 +28,7 @@
  */
 
 #include "orbit_camera.h"
+#include "super_ellipsoid.h"
 
 #include <OgreCamera.h>
 #include <OgreSceneManager.h>
@@ -56,11 +57,17 @@ OrbitCamera::OrbitCamera( Ogre::SceneManager* scene_manager )
 , pitch_( PITCH_START )
 , distance_( 10.0f )
 {
+  focal_point_object_ = new SuperEllipsoid( scene_manager );
+  focal_point_object_->create( SuperEllipsoid::Sphere, 10, Ogre::Vector3( 0.1f, 0.02f, 0.1f ) );
+  focal_point_object_->setColor( 1.0f, 1.0f, 0.0f, 0.8f );
+  focal_point_object_->getRootNode()->setVisible( false );
+
   update();
 }
 
 OrbitCamera::~OrbitCamera()
 {
+  delete focal_point_object_;
 }
 
 void OrbitCamera::normalizePitch()
@@ -110,6 +117,8 @@ void OrbitCamera::update()
 
   camera_->setPosition( pos );
   camera_->lookAt( global_focal_point );
+
+  focal_point_object_->setPosition( global_focal_point );
 }
 
 void OrbitCamera::yaw( float angle )
@@ -287,6 +296,36 @@ void OrbitCamera::mouseRightDrag( int diff_x, int diff_y )
 void OrbitCamera::scrollWheel( int diff )
 {
   zoom( diff * 0.01 );
+}
+
+void OrbitCamera::mouseLeftDown( int x, int y )
+{
+  focal_point_object_->getRootNode()->setVisible( true );
+}
+
+void OrbitCamera::mouseMiddleDown( int x, int y )
+{
+  focal_point_object_->getRootNode()->setVisible( true );
+}
+
+void OrbitCamera::mouseRightDown( int x, int y )
+{
+  focal_point_object_->getRootNode()->setVisible( true );
+}
+
+void OrbitCamera::mouseLeftUp( int x, int y )
+{
+  focal_point_object_->getRootNode()->setVisible( false );
+}
+
+void OrbitCamera::mouseMiddleUp( int x, int y )
+{
+  focal_point_object_->getRootNode()->setVisible( false );
+}
+
+void OrbitCamera::mouseRightUp( int x, int y )
+{
+  focal_point_object_->getRootNode()->setVisible( false );
 }
 
 } // namespace ogre_tools
