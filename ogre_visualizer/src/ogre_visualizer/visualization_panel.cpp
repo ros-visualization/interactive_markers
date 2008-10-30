@@ -424,10 +424,11 @@ void VisualizationPanel::onDeleteDisplay( wxCommandEvent& event )
 
 void VisualizationPanel::onVisualizerStateChanged( VisualizerBase* visualizer )
 {
-  wxPGProperty* property = property_grid_->GetProperty( wxString::FromAscii( visualizer->getName().c_str() ) );
+  std::string category_name = visualizer->getName() + " (" + visualizer->getType() + ")";
+  wxPGProperty* property = property_grid_->GetProperty( wxString::FromAscii( category_name.c_str() ) );
   ROS_ASSERT( property );
 
-  wxPGCell* cell = new wxPGCell( wxString::FromAscii( visualizer->getName().c_str() ), wxNullBitmap, *wxLIGHT_GREY, *wxGREEN );
+  wxPGCell* cell = new wxPGCell( wxString::FromAscii( category_name.c_str() ), wxNullBitmap, *wxLIGHT_GREY, *wxGREEN );
   property->SetCell( 0, cell );
   ROS_ASSERT( cell );
 

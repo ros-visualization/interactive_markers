@@ -85,9 +85,9 @@ public:
     VisualizationManager* manager = visualization_panel_->getManager();
 
     manager->createVisualizer<GridVisualizer>( "Grid", true );
-    manager->createVisualizer<AxesVisualizer>( "Origin Axes", true );
+    manager->createVisualizer<AxesVisualizer>( "Origin Axes", false );
 
-    RobotModelVisualizer* model = manager->createVisualizer<RobotModelVisualizer>( "Robot Model", true );
+    RobotModelVisualizer* model = manager->createVisualizer<RobotModelVisualizer>( "Robot Model", false );
     model->setRobotDescription( "robotdesc/pr2" );
 
     PlanningVisualizer* planning = manager->createVisualizer<PlanningVisualizer>( "Planning", false );

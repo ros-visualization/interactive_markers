@@ -224,7 +224,7 @@ void VisualizationManager::addVisualizer( VisualizerBase* visualizer, bool allow
 
   vis_panel_->getPropertyGrid()->Freeze();
 
-  std::string category_name = visualizer->getName();
+  std::string category_name = visualizer->getName() + " (" + visualizer->getType() + ")";
   CategoryProperty* category = property_manager_->createCategory( category_name, "", NULL );
   category->setUserData( visualizer );
 

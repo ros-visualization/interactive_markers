@@ -42,6 +42,7 @@
 #include <OgreSceneNode.h>
 #include <OgreSceneManager.h>
 #include <OgreManualObject.h>
+#include <OgreBillboardSet.h>
 
 #include <ogre_tools/point_cloud.h>
 
@@ -51,7 +52,7 @@ namespace ogre_vis
 PolyLine2DVisualizer::PolyLine2DVisualizer( const std::string& name, VisualizationManager* manager )
 : VisualizerBase( name, manager )
 , color_( 0.1f, 1.0f, 0.0f )
-, render_operation_( Ogre::RenderOperation::OT_LINE_LIST )
+, render_operation_( poly_line_render_ops::Lines )
 , loop_( false )
 , override_color_( false )
 , new_message_( false )
@@ -61,6 +62,8 @@ PolyLine2DVisualizer::PolyLine2DVisualizer( const std::string& name, Visualizati
 , loop_property_( NULL )
 , render_operation_property_( NULL )
 , point_size_property_( NULL )
+, z_position_property_( NULL )
+, alpha_property_( NULL )
 {
   scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
 
@@ -72,7 +75,12 @@ PolyLine2DVisualizer::PolyLine2DVisualizer( const std::string& name, Visualizati
   scene_node_->attachObject( manual_object_ );
 
   cloud_ = new ogre_tools::PointCloud( scene_manager_, scene_node_ );
+  cloud_->setBillboardType( Ogre::BBT_PERPENDICULAR_COMMON );
+  cloud_->setCommonDirection( Ogre::Vector3::UNIT_Y );
+  cloud_->setCommonUpVector( Ogre::Vector3::NEGATIVE_UNIT_Z );
+  setAlpha( 1.0f );
   setPointSize( 0.1f );
+  setZPosition( 0.0f );
 }
 
 PolyLine2DVisualizer::~PolyLine2DVisualizer()
@@ -172,6 +180,34 @@ void PolyLine2DVisualizer::setPointSize( float size )
   causeRender();
 }
 
+void PolyLine2DVisualizer::setZPosition( float z )
+{
+  z_position_ = z;
+
+  if ( z_position_property_ )
+  {
+    z_position_property_->changed();
+  }
+
+  scene_node_->setPosition( 0.0f, z, 0.0f );
+  causeRender();
+}
+
+void PolyLine2DVisualizer::setAlpha( float alpha )
+{
+  alpha_ = alpha;
+
+  cloud_->setAlpha( alpha );
+
+  if ( alpha_property_ )
+  {
+    alpha_property_->changed();
+  }
+
+  processMessage();
+  causeRender();
+}
+
 void PolyLine2DVisualizer::subscribe()
 {
   if ( !isEnabled() )
@@ -218,11 +254,15 @@ void PolyLine2DVisualizer::createProperties()
 
   render_operation_property_ = property_manager_->createProperty<EnumProperty>( "Render Operation", property_prefix_, boost::bind( &PolyLine2DVisualizer::getRenderOperation, this ),
                                                                                 boost::bind( &PolyLine2DVisualizer::setRenderOperation, this, _1 ), parent_category_, this );
-  render_operation_property_->addOption( "Lines", Ogre::RenderOperation::OT_LINE_LIST );
-  render_operation_property_->addOption( "Points", Ogre::RenderOperation::OT_POINT_LIST );
+  render_operation_property_->addOption( "Lines", poly_line_render_ops::Lines );
+  render_operation_property_->addOption( "Points", poly_line_render_ops::Points );
 
   point_size_property_ = property_manager_->createProperty<FloatProperty>( "Point Size", property_prefix_, boost::bind( &PolyLine2DVisualizer::getPointSize, this ),
                                                                       boost::bind( &PolyLine2DVisualizer::setPointSize, this, _1 ), parent_category_, this );
+  z_position_property_ = property_manager_->createProperty<FloatProperty>( "Z Position", property_prefix_, boost::bind( &PolyLine2DVisualizer::getZPosition, this ),
+                                                                        boost::bind( &PolyLine2DVisualizer::setZPosition, this, _1 ), parent_category_, this );
+  alpha_property_ = property_manager_->createProperty<FloatProperty>( "Alpha", property_prefix_, boost::bind( &PolyLine2DVisualizer::getAlpha, this ),
+                                                                       boost::bind( &PolyLine2DVisualizer::setAlpha, this, _1 ), parent_category_, this );
 
   topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &PolyLine2DVisualizer::getTopic, this ),
                                                                                 boost::bind( &PolyLine2DVisualizer::setTopic, this, _1 ), parent_category_, this );
@@ -251,7 +291,7 @@ void PolyLine2DVisualizer::processMessage()
 
   clear();
 
-  tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0.0f, 0.0f, 0.0f ), btVector3( 0.0f, 0.0f, 0.0f ) ),
+  tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0.0f, 0.0f, 0.0f ), btVector3( 0.0f, 0.0f, z_position_ ) ),
                                 ros::Time(0), "map" );
 
   try
@@ -281,15 +321,15 @@ void PolyLine2DVisualizer::processMessage()
   Ogre::ColourValue color;
   if ( override_color_ )
   {
-    color = Ogre::ColourValue( color_.r_, color_.g_, color_.b_ );
+    color = Ogre::ColourValue( color_.r_, color_.g_, color_.b_, alpha_ );
   }
   else
   {
-    color = Ogre::ColourValue( message_.color.r, message_.color.g, message_.color.b );
+    color = Ogre::ColourValue( message_.color.r, message_.color.g, message_.color.b, alpha_ );
   }
 
   uint32_t num_points = message_.get_points_size();
-  if ( render_operation_ == Ogre::RenderOperation::OT_POINT_LIST )
+  if ( render_operation_ == poly_line_render_ops::Points )
   {
     typedef std::vector< ogre_tools::PointCloud::Point > V_Point;
     V_Point points;
@@ -316,7 +356,7 @@ void PolyLine2DVisualizer::processMessage()
   else
   {
     manual_object_->estimateVertexCount( num_points );
-    manual_object_->begin( "BaseWhiteNoLighting", (Ogre::RenderOperation::OperationType)render_operation_ );
+    manual_object_->begin( "BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_LIST );
     for( uint32_t i=0; i < num_points; ++i)
     {
       manual_object_->position(-message_.points[i].y, 0.0f, -message_.points[i].x);

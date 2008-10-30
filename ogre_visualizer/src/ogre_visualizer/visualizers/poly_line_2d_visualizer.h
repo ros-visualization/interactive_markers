@@ -56,6 +56,18 @@ class FloatProperty;
 class BoolProperty;
 class EnumProperty;
 
+namespace poly_line_render_ops
+{
+enum PolyLineRenderOp
+{
+  Lines,
+  Points,
+
+  Count,
+};
+}
+typedef poly_line_render_ops::PolyLineRenderOp PolyLineRenderOp;
+
 /**
  * \class PolyLine2DVisualizer
  * \brief Displays a std_msgs::Polyline2D message
@@ -83,6 +95,12 @@ public:
 
   void setPointSize( float size );
   float getPointSize() { return point_size_; }
+
+  void setZPosition( float z );
+  float getZPosition() { return z_position_; }
+
+  void setAlpha( float alpha );
+  float getAlpha() { return alpha_; }
 
   // Overrides from VisualizerBase
   virtual void targetFrameChanged() {}
@@ -112,6 +130,8 @@ protected:
   bool loop_;
   bool override_color_;
   float point_size_;
+  float z_position_;
+  float alpha_;
 
   Ogre::SceneNode* scene_node_;
   Ogre::ManualObject* manual_object_;
@@ -126,6 +146,8 @@ protected:
   BoolProperty* loop_property_;
   EnumProperty* render_operation_property_;
   FloatProperty* point_size_property_;
+  FloatProperty* z_position_property_;
+  FloatProperty* alpha_property_;
 };
 
 } // namespace ogre_vis
