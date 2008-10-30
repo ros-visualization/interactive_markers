@@ -257,8 +257,8 @@ void PolyLine2DVisualizer::createProperties()
   render_operation_property_->addOption( "Lines", poly_line_render_ops::Lines );
   render_operation_property_->addOption( "Points", poly_line_render_ops::Points );
 
-  point_size_property_ = property_manager_->createProperty<FloatProperty>( "Point Size", property_prefix_, boost::bind( &PolyLine2DVisualizer::getPointSize, this ),
-                                                                      boost::bind( &PolyLine2DVisualizer::setPointSize, this, _1 ), parent_category_, this );
+  /*point_size_property_ = property_manager_->createProperty<FloatProperty>( "Point Size", property_prefix_, boost::bind( &PolyLine2DVisualizer::getPointSize, this ),
+                                                                      boost::bind( &PolyLine2DVisualizer::setPointSize, this, _1 ), parent_category_, this );*/
   z_position_property_ = property_manager_->createProperty<FloatProperty>( "Z Position", property_prefix_, boost::bind( &PolyLine2DVisualizer::getZPosition, this ),
                                                                         boost::bind( &PolyLine2DVisualizer::setZPosition, this, _1 ), parent_category_, this );
   alpha_property_ = property_manager_->createProperty<FloatProperty>( "Alpha", property_prefix_, boost::bind( &PolyLine2DVisualizer::getAlpha, this ),
@@ -282,6 +282,20 @@ void PolyLine2DVisualizer::update( float dt )
     new_message_ = false;
 
     causeRender();
+  }
+
+  static float resolution_timer = 2.0f;
+  resolution_timer += dt;
+
+  if ( resolution_timer > 2.0f )
+  {
+    resolution_timer = 0.0f;
+
+    double res = 0.0f;
+    if ( ros_node_->get_param( "map_resolution", res ) )
+    {
+      setPointSize( res );
+    }
   }
 }
 
