@@ -78,7 +78,7 @@ PointCloud::PointCloud( Ogre::SceneManager* scene_manager, Ogre::SceneNode* pare
   Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().create( material_name_, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
   material->setReceiveShadows(false);
   material->getTechnique(0)->setLightingEnabled(false);
-  material->setDepthWriteEnabled( false );
+  material->setCullingMode( Ogre::CULL_NONE );
 
   setAlpha( 1.0f );
 
@@ -220,10 +220,12 @@ void PointCloud::setAlpha( float alpha )
   if ( alpha_ < 0.9998 )
   {
     material->setSceneBlending( Ogre::SBT_TRANSPARENT_ALPHA );
+    material->setDepthWriteEnabled( false );
   }
   else
   {
     material->setSceneBlending( Ogre::SBT_REPLACE );
+    material->setDepthWriteEnabled( true );
   }
 }
 
@@ -293,6 +295,12 @@ void PointCloud::_updateRenderQueue( Ogre::RenderQueue* queue )
 {
   if ( point_count_ == 0 )
   {
+    V_BillboardSet::iterator bbs_it = billboard_sets_.begin();
+    V_BillboardSet::iterator bbs_end = billboard_sets_.end();
+    for ( ; bbs_it != bbs_end; ++bbs_it )
+    {
+      (*bbs_it)->setVisible( false );
+    }
     return;
   }
 
