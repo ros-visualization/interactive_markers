@@ -46,8 +46,6 @@
 
 class wxConfigBase;
 
-#define PROPERTY_DEBUG(...) ROS_DEBUG_NAMED("properties", __VA_ARGS__)
-
 namespace ogre_vis
 {
 
@@ -126,8 +124,6 @@ public:
    */
   virtual ~Property()
   {
-    PROPERTY_DEBUG("Property Destructor: 0x%08x, %s%s", (int)this, (const char*)prefix_.mb_str(), (const char*)name_.mb_str());
-    PROPERTY_DEBUG("Deleting wxPGProperty: 0x%08x", (int)property_);
     grid_->DeleteProperty( property_ );
   }
 

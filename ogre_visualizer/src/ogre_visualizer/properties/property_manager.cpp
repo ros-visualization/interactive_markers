@@ -40,21 +40,14 @@ namespace ogre_vis
 PropertyManager::PropertyManager( wxPropertyGrid* grid )
 : grid_( grid )
 {
-  log4cxx::LoggerPtr logger = log4cxx::Logger::getLogger( ROSCONSOLE_DEFAULT_NAME ".properties" );
-  if ( logger->getLevel() == 0  )
-  {
-    logger->setLevel( log4cxx::Level::getInfo() );
-  }
 }
 
 PropertyManager::~PropertyManager()
 {
-  PROPERTY_DEBUG("PropertyManager Destructor");
   M_Property::iterator it = properties_.begin();
   M_Property::iterator end = properties_.end();
   for ( ; it != end; ++it )
   {
-    PROPERTY_DEBUG("Deleting property: %s%s", it->first.first.c_str(), it->first.second.c_str());
     delete it->second;
   }
   properties_.clear();
@@ -75,15 +68,11 @@ void PropertyManager::deleteProperty( PropertyBase* property )
     return;
   }
 
-  PROPERTY_DEBUG("PropertyManager::deleteProperty( PropertyBase* property ): 0x%08x, %s%s", (int)property, property->getPrefix().c_str(), property->getName().c_str());
-
   deleteProperty( property->getName(), property->getPrefix() );
 }
 
 void PropertyManager::deleteProperty( const std::string& name, const std::string& prefix )
 {
-  PROPERTY_DEBUG("PropertyManager::deleteProperty( const std::string& name, const std::string& prefix ): %s%s", prefix.c_str(), name.c_str());
-
   M_Property::iterator found_it = properties_.find( std::make_pair( prefix, name ) );
   ROS_ASSERT( found_it != properties_.end() );
 
@@ -121,8 +110,6 @@ void PropertyManager::deleteChildren( PropertyBase* property )
 
 void PropertyManager::deleteByUserData( void* user_data )
 {
-  PROPERTY_DEBUG("PropertyManager::deleteByUserData: user_data=0x%08x", (int)user_data);
-
   std::set<PropertyBase*> to_delete;
 
   M_Property::iterator it = properties_.begin();
