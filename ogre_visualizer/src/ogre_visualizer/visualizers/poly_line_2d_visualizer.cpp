@@ -79,7 +79,7 @@ PolyLine2DVisualizer::PolyLine2DVisualizer( const std::string& name, Visualizati
   cloud_->setCommonDirection( Ogre::Vector3::UNIT_Y );
   cloud_->setCommonUpVector( Ogre::Vector3::NEGATIVE_UNIT_Z );
   setAlpha( 1.0f );
-  setPointSize( 0.1f );
+  setPointSize( 0.05f );
   setZPosition( 0.0f );
 }
 
