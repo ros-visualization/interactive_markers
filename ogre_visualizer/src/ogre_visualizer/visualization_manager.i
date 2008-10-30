@@ -11,6 +11,7 @@
 #include "visualizers/robot_model_visualizer.h"
 #include "visualizers/robot_base2d_pose_visualizer.h"
 #include "visualizers/particle_cloud_2d_visualizer.h"
+#include "visualizers/poly_line_2d_visualizer.h"
 #include "visualizers/map_visualizer.h"
 #include "visualizers/tf_visualizer.h"
 %}
@@ -27,6 +28,7 @@
 %include "visualizers/robot_model_visualizer.h"
 %include "visualizers/robot_base2d_pose_visualizer.h"
 %include "visualizers/particle_cloud_2d_visualizer.h"
+%include "visualizers/poly_line_2d_visualizer.h"
 %include "visualizers/map_visualizer.h"
 %include "visualizers/tf_visualizer.h"
 
@@ -46,6 +48,7 @@
   %template(createRobotModelVisualizer) createVisualizer<ogre_vis::RobotModelVisualizer>;
   %template(createRobotBase2DPoseVisualizer) createVisualizer<ogre_vis::RobotBase2DPoseVisualizer>;
   %template(createParticleCloud2DVisualizer) createVisualizer<ogre_vis::ParticleCloud2DVisualizer>;
+  %template(createPolyLine2DVisualizer) createVisualizer<ogre_vis::PolyLine2DVisualizer>;
   %template(createMapVisualizer) createVisualizer<ogre_vis::MapVisualizer>;
   %template(createTFVisualizer) createVisualizer<ogre_vis::TFVisualizer>;
 };

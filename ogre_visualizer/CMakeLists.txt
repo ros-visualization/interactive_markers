@@ -54,6 +54,7 @@ add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE}
                             src/ogre_visualizer/visualizers/robot_model_visualizer.h
                             src/ogre_visualizer/visualizers/robot_base2d_pose_visualizer.h
                             src/ogre_visualizer/visualizers/particle_cloud_2d_visualizer.h
+                            src/ogre_visualizer/visualizers/poly_line_2d_visualizer.h
                             src/ogre_visualizer/visualizers/map_visualizer.h
                             src/ogre_visualizer/visualizers/tf_visualizer.h
                             src/ogre_visualizer/helpers/color.h)
@@ -78,6 +79,7 @@ rospack_add_library(${PROJECT_NAME}  src/ogre_visualizer/properties/property.cpp
   				   												 src/ogre_visualizer/visualizers/octree_visualizer.cpp
   				   												 src/ogre_visualizer/visualizers/robot_base2d_pose_visualizer.cpp
   				   												 src/ogre_visualizer/visualizers/particle_cloud_2d_visualizer.cpp
+  				   												 src/ogre_visualizer/visualizers/poly_line_2d_visualizer.cpp
   				   												 src/ogre_visualizer/visualizers/map_visualizer.cpp
   				   												 src/ogre_visualizer/visualizers/tf_visualizer.cpp
    				   												 src/ogre_visualizer/generated/visualization_panel_generated.cpp
