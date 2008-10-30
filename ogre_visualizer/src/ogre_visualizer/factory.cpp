@@ -39,6 +39,7 @@
 #include "visualizers/octree_visualizer.h"
 #include "visualizers/planning_visualizer.h"
 #include "visualizers/robot_base2d_pose_visualizer.h"
+#include "visualizers/particle_cloud_2d_visualizer.h"
 #include "visualizers/map_visualizer.h"
 #include "visualizers/tf_visualizer.h"
 
@@ -56,6 +57,7 @@ void registerFactories(VisualizationManager* manager)
   manager->registerFactory( OctreeVisualizer::getTypeStatic(), new VisualizerFactoryImpl<OctreeVisualizer>() );
   manager->registerFactory( PlanningVisualizer::getTypeStatic(), new VisualizerFactoryImpl<PlanningVisualizer>() );
   manager->registerFactory( RobotBase2DPoseVisualizer::getTypeStatic(), new VisualizerFactoryImpl<RobotBase2DPoseVisualizer>() );
+  manager->registerFactory( ParticleCloud2DVisualizer::getTypeStatic(), new VisualizerFactoryImpl<ParticleCloud2DVisualizer>() );
   manager->registerFactory( MapVisualizer::getTypeStatic(), new VisualizerFactoryImpl<MapVisualizer>() );
   manager->registerFactory( TFVisualizer::getTypeStatic(), new VisualizerFactoryImpl<TFVisualizer>() );
 }

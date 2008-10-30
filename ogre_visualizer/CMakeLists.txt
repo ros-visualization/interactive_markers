@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 2.6)
 include(rosbuild)
 include(FindPkgConfig)
 
-#set(ROS_BUILD_TYPE RelWithDebInfo)
-set(ROS_BUILD_TYPE Debug)
+set(ROS_BUILD_TYPE RelWithDebInfo)
+#set(ROS_BUILD_TYPE Debug)
 
 rospack(ogre_visualizer)
 
@@ -39,17 +39,6 @@ add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE}
                             src/ogre_visualizer/visualizer_base.i
                             src/ogre_visualizer/visualization_panel.i
                             src/ogre_visualizer/visualization_manager.i
-                            src/ogre_visualizer/visualizers/axes_visualizer.i
-                            src/ogre_visualizer/visualizers/grid_visualizer.i
-                            src/ogre_visualizer/visualizers/laser_scan_visualizer.i
-                            src/ogre_visualizer/visualizers/marker_visualizer.i
-                            src/ogre_visualizer/visualizers/octree_visualizer.i
-                            src/ogre_visualizer/visualizers/planning_visualizer.i
-                            src/ogre_visualizer/visualizers/point_cloud_visualizer.i
-                            src/ogre_visualizer/visualizers/robot_model_visualizer.i
-                            src/ogre_visualizer/visualizers/robot_base2d_pose_visualizer.i
-                            src/ogre_visualizer/visualizers/map_visualizer.i
-                            src/ogre_visualizer/visualizers/tf_visualizer.i
                             src/ogre_visualizer/helpers/color.i
                             src/ogre_visualizer/visualization_panel.h
                             src/ogre_visualizer/visualization_manager.h  
@@ -64,6 +53,7 @@ add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE}
                             src/ogre_visualizer/visualizers/point_cloud_visualizer.h
                             src/ogre_visualizer/visualizers/robot_model_visualizer.h
                             src/ogre_visualizer/visualizers/robot_base2d_pose_visualizer.h
+                            src/ogre_visualizer/visualizers/particle_cloud_2d_visualizer.h
                             src/ogre_visualizer/visualizers/map_visualizer.h
                             src/ogre_visualizer/visualizers/tf_visualizer.h
                             src/ogre_visualizer/helpers/color.h)
@@ -87,6 +77,7 @@ rospack_add_library(${PROJECT_NAME}  src/ogre_visualizer/properties/property.cpp
   				   												 src/ogre_visualizer/visualizers/planning_visualizer.cpp
   				   												 src/ogre_visualizer/visualizers/octree_visualizer.cpp
   				   												 src/ogre_visualizer/visualizers/robot_base2d_pose_visualizer.cpp
+  				   												 src/ogre_visualizer/visualizers/particle_cloud_2d_visualizer.cpp
   				   												 src/ogre_visualizer/visualizers/map_visualizer.cpp
   				   												 src/ogre_visualizer/visualizers/tf_visualizer.cpp
    				   												 src/ogre_visualizer/generated/visualization_panel_generated.cpp
