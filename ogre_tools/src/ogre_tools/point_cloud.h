@@ -33,6 +33,7 @@
 #include <OgreMovableObject.h>
 #include <OgreString.h>
 #include <OgreAxisAlignedBox.h>
+#include <OgreVector3.h>
 
 #include <stdint.h>
 
@@ -109,6 +110,19 @@ public:
    */
   void setBillboardDimensions( float width, float height );
 
+  /**
+   * \brief Set the billboard type... see Ogre::BillboardType
+   * @param type The type
+   */
+  void setBillboardType( int type );
+
+  /// See Ogre::BillboardSet::setCommonDirection
+  void setCommonDirection( const Ogre::Vector3& vec );
+  /// See Ogre::BillboardSet::setCommonUpVector
+  void setCommonUpVector( const Ogre::Vector3& vec );
+
+  void setAlpha( float alpha );
+
   void setCloudVisible( bool visible );
 
   // overrides from MovableObject
@@ -142,6 +156,12 @@ private:
   bool use_points_;                         ///< Are we rendering as points?
   float billboard_width_;                   ///< Billboard width
   float billboard_height_;                  ///< Billboard height
+  int billboard_type_;                      ///< Billboard type: see Ogre::BillboardType enum
+  Ogre::Vector3 common_direction_;          ///< See Ogre::BillboardSet::setCommonDirection
+  Ogre::Vector3 common_up_vector_;          ///< See Ogre::BillboardSet::setCommonUpVector
+
+  std::string material_name_;
+  float alpha_;
 
   static Ogre::String sm_Type;              ///< The "renderable type" used by Ogre
 };

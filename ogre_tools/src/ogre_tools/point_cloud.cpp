@@ -54,8 +54,11 @@ PointCloud::PointCloud( Ogre::SceneManager* scene_manager, Ogre::SceneNode* pare
 , point_count_( 0 )
 , points_per_bbs_( MAX_BILLBOARDS_PER_BBS )
 , use_points_( false )
-, billboard_width_( 0.003f )
-, billboard_height_( 0.003f )
+, billboard_width_( 0.01f )
+, billboard_height_( 0.01f )
+, billboard_type_( Ogre::BBT_POINT )
+, common_direction_( Ogre::Vector3::NEGATIVE_UNIT_Z )
+, common_up_vector_( Ogre::Vector3::UNIT_Y )
 {
   if ( parent )
   {
@@ -67,6 +70,17 @@ PointCloud::PointCloud( Ogre::SceneManager* scene_manager, Ogre::SceneNode* pare
   }
 
   scene_node_->attachObject( this );
+
+  std::stringstream ss;
+  static int count = 0;
+  ss << "PointCloudMaterial" << count++;
+  material_name_ = ss.str();
+  Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().create( material_name_, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
+  material->setReceiveShadows(false);
+  material->getTechnique(0)->setLightingEnabled(false);
+  material->setDepthWriteEnabled( false );
+
+  setAlpha( 1.0f );
 
   clear();
 }
@@ -156,6 +170,63 @@ void PointCloud::setBillboardDimensions( float width, float height )
   }
 }
 
+void PointCloud::setBillboardType( int type )
+{
+  billboard_type_ = type;
+
+  V_BillboardSet::iterator bbs_it = billboard_sets_.begin();
+  V_BillboardSet::iterator bbs_end = billboard_sets_.end();
+  for ( ; bbs_it != bbs_end; ++bbs_it )
+  {
+    Ogre::BillboardSet* bbs = *bbs_it;
+
+    bbs->setBillboardType( (Ogre::BillboardType)billboard_type_ );
+  }
+}
+
+void PointCloud::setCommonDirection( const Ogre::Vector3& vec )
+{
+  common_direction_ = vec;
+
+  V_BillboardSet::iterator bbs_it = billboard_sets_.begin();
+  V_BillboardSet::iterator bbs_end = billboard_sets_.end();
+  for ( ; bbs_it != bbs_end; ++bbs_it )
+  {
+    Ogre::BillboardSet* bbs = *bbs_it;
+
+    bbs->setCommonDirection( vec );
+  }
+}
+
+void PointCloud::setCommonUpVector( const Ogre::Vector3& vec )
+{
+  common_up_vector_ = vec;
+
+  V_BillboardSet::iterator bbs_it = billboard_sets_.begin();
+  V_BillboardSet::iterator bbs_end = billboard_sets_.end();
+  for ( ; bbs_it != bbs_end; ++bbs_it )
+  {
+    Ogre::BillboardSet* bbs = *bbs_it;
+
+    bbs->setCommonUpVector( vec );
+  }
+}
+
+void PointCloud::setAlpha( float alpha )
+{
+  alpha_ = alpha;
+
+  Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().getByName( material_name_ );
+  if ( alpha_ < 0.9998 )
+  {
+    material->setSceneBlending( Ogre::SBT_TRANSPARENT_ALPHA );
+  }
+  else
+  {
+    material->setSceneBlending( Ogre::SBT_REPLACE );
+  }
+}
+
 Ogre::BillboardSet* PointCloud::createBillboardSet()
 {
   static uint32_t count = 0;
@@ -168,9 +239,12 @@ Ogre::BillboardSet* PointCloud::createBillboardSet()
   bbs->setBillboardsInWorldSpace(false);
   bbs->setBillboardOrigin( Ogre::BBO_CENTER );
   bbs->setBillboardRotationType( Ogre::BBR_VERTEX );
-  bbs->setMaterialName( "BaseWhiteNoLighting" );
+  bbs->setMaterialName( material_name_ );
   bbs->setCullIndividually( false );
   bbs->setPoolSize( points_per_bbs_ );
+  bbs->setBillboardType( (Ogre::BillboardType)billboard_type_ );
+  bbs->setCommonDirection( common_direction_ );
+  bbs->setCommonUpVector( common_up_vector_ );
 
   scene_node_->attachObject( bbs );
 
@@ -267,6 +341,7 @@ void PointCloud::_updateRenderQueue( Ogre::RenderQueue* queue )
     bb.mColour.r = p.r_;
     bb.mColour.g = p.g_;
     bb.mColour.b = p.b_;
+    bb.mColour.a = alpha_;
 
     bbs->injectBillboard(bb);
   }
