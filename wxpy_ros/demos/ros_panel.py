@@ -44,6 +44,7 @@ import  wx
 import  wx.xrc  as  xrc
 
 import rostools
+import rostools.packspec
 rostools.update_path('wxpy_ros')
 import wxpy_ros
 import rospy
@@ -51,8 +52,9 @@ import rospy
 class RosFrame(wx.Frame):
     def __init__(self, parent, id):
         wx.Frame.__init__(self, parent, id, 'Topics', size=(300,300))
-        
-        self.res = xrc.XmlResource('ros_panel.xrc')        
+
+        xrc_path = rostools.packspec.get_pkg_dir('wxpy_ros') + '/xrc/ros_panel.xrc'
+        self.res = xrc.XmlResource(xrc_path)     
 
         self.res.LoadPanel(self, 'main_panel')
 
@@ -67,8 +69,9 @@ class RosFrame(wx.Frame):
         self.style_txt = xrc.XRCCTRL(self,'style_txt')
         self.values_lctr = xrc.XRCCTRL(self,'values_lctr')
         self.path_txt = xrc.XRCCTRL(self,'path_txt')
-        
+                
         self.plot = wxpy_ros.WXSlidingPlot(self.plot_panel)
+
 #        hb = wx.BoxSizer(wx.VERTICAL)
 #        self.plot_panel.SetSizer(hb)
 #        hb.Add(self.plot)
@@ -78,7 +81,6 @@ class RosFrame(wx.Frame):
         #disabled for now due to a frustrating layout problem
         #self.values_lctr.InsertColumn(0,'Slot')
         #self.values_lctr.InsertColumn(1,'Value')
-
 
         self.Center()
         self.Fit()
