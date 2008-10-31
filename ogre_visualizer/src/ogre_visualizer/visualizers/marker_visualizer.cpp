@@ -261,7 +261,7 @@ void MarkerVisualizer::setCommonValues( const std_msgs::VisualizationMarker& mes
   }
 
   tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( message.yaw, message.pitch, message.roll ), btVector3( message.x, message.y, message.z ) ),
-                              ros::Time(message.header.stamp), frame_id );
+                              message.header.stamp, frame_id );
   try
   {
     tf_->transformPose( fixed_frame_, pose, pose );

@@ -306,7 +306,7 @@ void PolyLine2DVisualizer::processMessage()
   clear();
 
   tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0.0f, 0.0f, 0.0f ), btVector3( 0.0f, 0.0f, z_position_ ) ),
-                                ros::Time(0), "map" );
+                                ros::Time(0ULL), "map" );
 
   try
   {

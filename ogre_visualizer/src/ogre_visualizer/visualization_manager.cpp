@@ -574,7 +574,7 @@ void VisualizationManager::getRegisteredTypes( std::vector<std::string>& types )
 void VisualizationManager::updateRelativeNode()
 {
   tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0.0f, 0.0f, 0.0f ), btVector3( 0.0f, 0.0f, 0.0f ) ),
-                              ros::Time(0), target_frame_ );
+                              ros::Time(0ULL), target_frame_ );
 
   try
   {
@@ -601,7 +601,7 @@ void VisualizationManager::updateRelativeNode()
 
 void VisualizationManager::incomingROSTime()
 {
-  static ros::Time last_time = ros::Time(0);
+  static ros::Time last_time = ros::Time(0ULL);
 
   if ( time_message_.rostime < last_time )
   {

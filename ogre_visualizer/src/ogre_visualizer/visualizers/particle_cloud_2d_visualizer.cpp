@@ -205,7 +205,7 @@ void ParticleCloud2DVisualizer::processMessage()
   clear();
 
   tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0.0f, 0.0f, 0.0f ), btVector3( 0.0f, 0.0f, 0.0f ) ),
-                                ros::Time(0), "map" );
+                                ros::Time(0ULL), "map" );
 
   try
   {
