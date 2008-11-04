@@ -181,7 +181,7 @@ int PoseTool::processMouseEvent( wxMouseEvent& event, int last_x, int last_y )
         ros_node_->publish( "initialpose", pose );
       }
 
-      flags |= Finished;
+      flags |= (Finished|Render);
     }
   }
 

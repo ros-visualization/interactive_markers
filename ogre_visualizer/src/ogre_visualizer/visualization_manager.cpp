@@ -69,6 +69,9 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
 , current_tool_( NULL )
 , vis_panel_( panel )
 , needs_reset_( false )
+, new_ros_time_( false )
+, wall_clock_begin_( 0 )
+, ros_time_begin_( 0 )
 {
   initializeCommon();
   registerFactories( this );
@@ -109,11 +112,21 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
 
   property_manager_ = new PropertyManager( vis_panel_->getPropertyGrid() );
 
-  CategoryProperty* category = property_manager_->createCategory( "Global Options", "", NULL );
+  CategoryProperty* time_category = property_manager_->createCategory( "Time", "", NULL );
+  wall_clock_property_ = property_manager_->createProperty<DoubleProperty>( "Wall Clock Time", "", boost::bind( &VisualizationManager::getWallClock, this ),
+                                                                                    DoubleProperty::Setter(), time_category );
+  ros_time_property_ = property_manager_->createProperty<DoubleProperty>( "ROSTime Time", "", boost::bind( &VisualizationManager::getROSTime, this ),
+                                                                                   DoubleProperty::Setter(), time_category );
+  wall_clock_elapsed_property_ = property_manager_->createProperty<DoubleProperty>( "Wall Clock Elapsed Time", "", boost::bind( &VisualizationManager::getWallClockElapsed, this ),
+                                                                                    DoubleProperty::Setter(), time_category );
+  ros_time_elapsed_property_ = property_manager_->createProperty<DoubleProperty>( "ROSTime Elapsed Time", "", boost::bind( &VisualizationManager::getROSTimeElapsed, this ),
+                                                                                   DoubleProperty::Setter(), time_category );
+
+  CategoryProperty* options_category = property_manager_->createCategory( "Global Options", "", NULL );
   target_frame_property_ = property_manager_->createProperty<StringProperty>( "Target Frame", "", boost::bind( &VisualizationManager::getTargetFrame, this ),
-                                                                              boost::bind( &VisualizationManager::setTargetFrame, this, _1 ), category );
+                                                                              boost::bind( &VisualizationManager::setTargetFrame, this, _1 ), options_category );
   fixed_frame_property_ = property_manager_->createProperty<StringProperty>( "Fixed Frame", "", boost::bind( &VisualizationManager::getFixedFrame, this ),
-                                                                                boost::bind( &VisualizationManager::setFixedFrame, this, _1 ), category );
+                                                                                boost::bind( &VisualizationManager::setFixedFrame, this, _1 ), options_category );
 
   setTargetFrame( "base" );
   setFixedFrame( "map" );
@@ -230,6 +243,45 @@ void VisualizationManager::onUpdate( wxTimerEvent& event )
     needs_reset_ = false;
     resetVisualizers();
     tf_->clear();
+
+    ros_time_begin_ = ros::Time( 0 );
+    wall_clock_begin_ = ros::Time( 0 );
+  }
+
+  static float time_update_timer = 0.0f;
+  time_update_timer += dt;
+
+  if ( time_update_timer > 0.1f )
+  {
+    time_update_timer = 0.0f;
+
+    if ( new_ros_time_ )
+    {
+      time_message_.lock();
+
+      if ( ros_time_begin_.is_zero() )
+      {
+        ros_time_begin_ = time_message_.rostime;
+        wall_clock_begin_ = ros::Time::now();
+      }
+
+      ros_time_elapsed_ = time_message_.rostime - ros_time_begin_;
+
+      time_message_.unlock();
+
+
+      ros_time_property_->changed();
+      ros_time_elapsed_property_->changed();
+    }
+
+    if ( wall_clock_begin_.is_zero() )
+    {
+      wall_clock_begin_ = ros::Time::now();
+    }
+
+    wall_clock_elapsed_ = ros::Time::now() - wall_clock_begin_;
+    wall_clock_property_->changed();
+    wall_clock_elapsed_property_->changed();
   }
 }
 
@@ -657,6 +709,26 @@ void VisualizationManager::updateRelativeNode()
   target_relative_node_->setOrientation( orientation );
 }
 
+double VisualizationManager::getWallClock()
+{
+  return ros::Time::now().toSec();
+}
+
+double VisualizationManager::getROSTime()
+{
+  return (ros_time_begin_ + ros_time_elapsed_).toSec();
+}
+
+double VisualizationManager::getWallClockElapsed()
+{
+  return wall_clock_elapsed_.toSec();
+}
+
+double VisualizationManager::getROSTimeElapsed()
+{
+  return ros_time_elapsed_.toSec();
+}
+
 void VisualizationManager::incomingROSTime()
 {
   static ros::Time last_time = ros::Time(0ULL);
@@ -667,6 +739,8 @@ void VisualizationManager::incomingROSTime()
   }
 
   last_time = time_message_.rostime;
+
+  new_ros_time_ = true;
 }
 
 } // namespace ogre_vis

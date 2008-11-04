@@ -40,6 +40,7 @@
 #include <map>
 
 #include <rostools/Time.h>
+#include <ros/time.h>
 
 namespace ogre_tools
 {
@@ -81,6 +82,7 @@ namespace ogre_vis
 class VisualizationPanel;
 class PropertyManager;
 class StringProperty;
+class DoubleProperty;
 
 class VisualizerBase;
 class VisualizerFactory;
@@ -227,6 +229,11 @@ public:
 
   void resetVisualizers();
 
+  double getWallClock();
+  double getROSTime();
+  double getWallClockElapsed();
+  double getROSTimeElapsed();
+
 protected:
   /**
    * \brief Add a visualizer to be managed by this panel
@@ -293,6 +300,16 @@ protected:
 
   rostools::Time time_message_;
   bool needs_reset_;
+  bool new_ros_time_;
+  ros::Time wall_clock_begin_;
+  ros::Time ros_time_begin_;
+  ros::Duration wall_clock_elapsed_;
+  ros::Duration ros_time_elapsed_;
+
+  DoubleProperty* wall_clock_elapsed_property_;
+  DoubleProperty* ros_time_elapsed_property_;
+  DoubleProperty* wall_clock_property_;
+  DoubleProperty* ros_time_property_;
 };
 
 }
