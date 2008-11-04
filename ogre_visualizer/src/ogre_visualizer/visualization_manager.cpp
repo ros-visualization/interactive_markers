@@ -83,7 +83,7 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
   {
     int argc = 0;
     ros::init( argc, 0 );
-    ros_node_ = new ros::node( "VisualizationManager", ros::node::DONT_HANDLE_SIGINT );
+    ros_node_ = new ros::node( "VisualizationManager", ros::node::DONT_HANDLE_SIGINT | ros::node::ANONYMOUS_NAME );
   }
   ROS_ASSERT( ros_node_ );
 
