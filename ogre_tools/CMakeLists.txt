@@ -12,8 +12,12 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 find_package(wxWidgets REQUIRED)
 include(${wxWidgets_USE_FILE})
-message(${wxWidgets_INCLUDE_DIRS})
 include_directories( ${wxWidgets_INCLUDE_DIRS} )
+
+if(NOT wxWidgets_FOUND)
+message("wxWidgets not found!  Aborting...")
+fail()
+endif(NOT wxWidgets_FOUND)
 
 # The versioned check apparently doesn't work.  So we'll check the version
 # manually
