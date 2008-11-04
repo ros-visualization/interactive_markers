@@ -44,6 +44,7 @@
 #include <OgreSceneNode.h>
 
 #include <ros/node.h>
+#include <tf/transform_listener.h>
 
 #include <wx/wx.h>
 
@@ -137,16 +138,33 @@ int PoseTool::processMouseEvent( wxMouseEvent& event, int last_x, int last_y )
     if ( state_ == Orientation )
     {
       Ogre::Vector3 cur_pos = getPositionFromMouseXY( event.GetX(), event.GetY() );
-      double angle = atan2(pos_.z - cur_pos.z, cur_pos.x - pos_.x) - Ogre::Math::HALF_PI;
+      ogreToRobot( cur_pos );
 
       Ogre::Vector3 robot_pos = pos_;
       ogreToRobot( robot_pos );
 
+      const std::string& fixed_frame = manager_->getFixedFrame();
+      tf::Stamped<tf::Point> cur_pos_transformed( tf::Point(cur_pos.x, cur_pos.y, cur_pos.z), ros::Time(0ULL), fixed_frame );
+      tf::Stamped<tf::Point> robot_pos_transformed( tf::Point(robot_pos.x, robot_pos.y, robot_pos.z), ros::Time(0ULL), fixed_frame );
+
+      tf::TransformListener* tf = manager_->getTFClient();
+      try
+      {
+        tf->transformPoint( "map", cur_pos_transformed, cur_pos_transformed );
+        tf->transformPoint( "map", robot_pos_transformed, robot_pos_transformed );
+      }
+      catch(tf::TransformException& e)
+      {
+        ROS_ERROR( "Error transforming pose from frame '%s' to frame 'map': %s\n", fixed_frame.c_str(), e.what() );
+      }
+
+      double angle = atan2(cur_pos_transformed.y() - robot_pos_transformed.y(), cur_pos_transformed.x() - robot_pos_transformed.x());
+
       if ( is_goal_ )
       {
         std_msgs::Planner2DGoal goal;
-        goal.goal.x = robot_pos.x;
-        goal.goal.y = robot_pos.y;
+        goal.goal.x = robot_pos_transformed.x();
+        goal.goal.y = robot_pos_transformed.y();
         goal.goal.th = angle;
         goal.enable = 1;
         goal.header.frame_id = "map";
@@ -156,8 +174,8 @@ int PoseTool::processMouseEvent( wxMouseEvent& event, int last_x, int last_y )
       else
       {
         std_msgs::Pose2DFloat32 pose;
-        pose.x = robot_pos.x;
-        pose.y = robot_pos.y;
+        pose.x = robot_pos_transformed.x();
+        pose.y = robot_pos_transformed.y();
         pose.th = angle;
         ROS_INFO( "setting pose: %.3f %.3f %.3f\n", pose.x, pose.y, pose.th );
         ros_node_->publish( "initialpose", pose );
