@@ -37,6 +37,10 @@
 #include "factory.h"
 #include "new_display_dialog.h"
 
+#include "tools/tool.h"
+#include "tools/move_tool.h"
+#include "tools/pose_tool.h"
+
 #include <ogre_tools/wx_ogre_render_window.h>
 #include <ogre_tools/camera_base.h>
 
@@ -62,6 +66,7 @@ namespace ogre_vis
 
 VisualizationManager::VisualizationManager( VisualizationPanel* panel )
 : ogre_root_( Ogre::Root::getSingletonPtr() )
+, current_tool_( NULL )
 , vis_panel_( panel )
 , needs_reset_( false )
 {
@@ -142,6 +147,14 @@ VisualizationManager::~VisualizationManager()
   }
   factories_.clear();
 
+  V_Tool::iterator tool_it = tools_.begin();
+  V_Tool::iterator tool_end = tools_.end();
+  for ( ; tool_it != tool_end; ++tool_it )
+  {
+    delete *tool_it;
+  }
+  tools_.clear();
+
   delete tf_;
 
   delete property_manager_;
@@ -150,6 +163,18 @@ VisualizationManager::~VisualizationManager()
   scene_manager_->destroyParticleSystem( selection_bounds_particle_system_ );
   scene_manager_->destroyQuery( ray_scene_query_ );
   ogre_root_->destroySceneManager( scene_manager_ );
+}
+
+void VisualizationManager::initialize()
+{
+  MoveTool* move_tool = createTool< MoveTool >( "Move Camera" );
+  setCurrentTool( move_tool );
+  setDefaultTool( move_tool );
+
+  PoseTool* goal_tool = createTool< PoseTool >( "Set Goal" );
+  goal_tool->setIsGoal( true );
+
+  createTool< PoseTool >( "Set Pose" );
 }
 
 VisualizationManager::VisualizerInfo* VisualizationManager::getVisualizerInfo( const VisualizerBase* visualizer )
@@ -245,6 +270,39 @@ void VisualizationManager::resetVisualizers()
 
     visualizer->reset();
   }
+}
+
+void VisualizationManager::addTool( Tool* tool )
+{
+  tools_.push_back( tool );
+
+  vis_panel_->addTool( tool );
+}
+
+void VisualizationManager::setCurrentTool( Tool* tool )
+{
+  if ( current_tool_ )
+  {
+    current_tool_->deactivate();
+  }
+
+  current_tool_ = tool;
+  current_tool_->activate();
+
+  vis_panel_->setTool( tool );
+}
+
+void VisualizationManager::setDefaultTool( Tool* tool )
+{
+  default_tool_ = tool;
+}
+
+Tool* VisualizationManager::getTool( int index )
+{
+  ROS_ASSERT( index >= 0 );
+  ROS_ASSERT( index < (int)tools_.size() );
+
+  return tools_[ index ];
 }
 
 inline void createParticle( Ogre::ParticleSystem* particle_sys, const Ogre::Vector3& position, float size )

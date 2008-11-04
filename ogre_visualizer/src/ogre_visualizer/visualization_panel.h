@@ -100,6 +100,7 @@ namespace ogre_vis
 
 class VisualizerBase;
 class VisualizationManager;
+class Tool;
 
 /**
  * \class VisualizationPanel
@@ -138,6 +139,9 @@ public:
   VisualizationManager* getManager() { return manager_; }
   ogre_tools::CameraBase* getCurrentCamera() { return current_camera_; }
 
+  void addTool( Tool* tool );
+  void setTool( Tool* tool );
+
   /**
    * \brief Load configuration.  Simply passes through to the VisualizationManager, here for convenience
    * @param config The wx config object to load from
@@ -150,8 +154,6 @@ public:
   void saveConfig( wxConfigBase* config );
 
 protected:
-  /// Called when a "view" (camera) is selected from the list
-  void onViewClicked( wxCommandEvent& event );
   /// Called when a mouse event happens inside the render window
   void onRenderWindowMouseEvents( wxMouseEvent& event );
   /// Called when our custom EVT_RENDER is fired
@@ -162,7 +164,11 @@ protected:
   void onPropertyChanged( wxPropertyGridEvent& event );
   /// Called when a property is selected
   void onPropertySelected( wxPropertyGridEvent& event );
+  /// Called when a tool is selected
+  void onToolClicked( wxCommandEvent& event );
 
+  /// Called when a "view" (camera) is selected from the list
+  void onViewSelected( wxCommandEvent& event );
   /// Called when the "New Display" button is pressed
   virtual void onNewDisplay( wxCommandEvent& event );
   /// Called when the "Delete Display" button is pressed
@@ -180,9 +186,6 @@ protected:
   ogre_tools::OrthoCamera* top_down_ortho_;               ///< Top-down orthographic camera
 
   // Mouse handling
-  bool left_mouse_down_;                                  ///< Is the left mouse button down?
-  bool middle_mouse_down_;                                ///< Is the middle mouse button down?
-  bool right_mouse_down_;                                 ///< Is the right mouse button down?
   int mouse_x_;                                           ///< X position of the last mouse event
   int mouse_y_;                                           ///< Y position of the last mouse event
 

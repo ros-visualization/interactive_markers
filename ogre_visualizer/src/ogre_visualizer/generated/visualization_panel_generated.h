@@ -16,6 +16,7 @@
 #include <wx/settings.h>
 #include <wx/string.h>
 #include <wx/button.h>
+#include <wx/choice.h>
 #include <wx/toolbar.h>
 #include <wx/splitter.h>
 #include <wx/listbox.h>
@@ -43,11 +44,13 @@ class VisualizationPanelGenerated : public wxPanel
 		wxButton* delete_display_;
 		wxPanel* render_panel_;
 		wxBoxSizer* render_sizer_;
-		wxToolBar* views_;
+		wxChoice* views_;
+		wxToolBar* tools_;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void onNewDisplay( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onDeleteDisplay( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onViewSelected( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:

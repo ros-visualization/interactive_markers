@@ -33,6 +33,7 @@
 #include "new_display_dialog.h"
 #include "properties/property.h"
 #include "properties/property_manager.h"
+#include "tools/tool.h"
 
 #include "ogre_tools/wx_ogre_render_window.h"
 #include "ogre_tools/fps_camera.h"
@@ -50,16 +51,16 @@
 namespace ogre_vis
 {
 
-namespace IDs
+namespace Views
 {
-enum ID
+enum View
 {
-  FPS = wxID_HIGHEST + 1,
   Orbit,
+  FPS,
   TopDownOrtho,
 };
 }
-typedef IDs::ID ID;
+typedef Views::View View;
 
 BEGIN_DECLARE_EVENT_TYPES()
 DECLARE_EVENT_TYPE(EVT_RENDER, wxID_ANY)
@@ -69,9 +70,6 @@ DEFINE_EVENT_TYPE(EVT_RENDER)
 
 VisualizationPanel::VisualizationPanel( wxWindow* parent )
 : VisualizationPanelGenerated( parent )
-, left_mouse_down_( false )
-, middle_mouse_down_( false )
-, right_mouse_down_( false )
 , mouse_x_( 0 )
 , mouse_y_( 0 )
 , selected_visualizer_( NULL )
@@ -79,11 +77,10 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent )
   render_panel_ = new ogre_tools::wxOgreRenderWindow( Ogre::Root::getSingletonPtr(), VisualizationPanelGenerated::render_panel_ );
   render_sizer_->Add( render_panel_, 1, wxALL|wxEXPAND, 0 );
 
-  views_->AddRadioTool( IDs::Orbit, wxT("Orbit"), wxNullBitmap, wxNullBitmap, wxT("Orbit Camera Controls") );
-  views_->AddRadioTool( IDs::FPS, wxT("FPS"), wxNullBitmap, wxNullBitmap, wxT("FPS Camera Controls") );
-  views_->AddRadioTool( IDs::TopDownOrtho, wxT("Top-down Ortho"), wxNullBitmap, wxNullBitmap, wxT("Top-down Orthographic Camera") );
-
-  views_->Connect( wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( VisualizationPanel::onViewClicked ), NULL, this );
+  views_->Append( wxT( "Orbit" ) );
+  views_->Append( wxT( "FPS" ) );
+  views_->Append( wxT( "Top-down Orthographic" ) );
+  views_->SetSelection( 0 );
 
   render_panel_->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
   render_panel_->Connect( wxEVT_MIDDLE_DOWN, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
@@ -115,6 +112,7 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent )
   delete_display_->Enable( false );
 
   manager_ = new VisualizationManager( this );
+  manager_->initialize();
   manager_->getVisualizerStateSignal().connect( boost::bind( &VisualizationPanel::onVisualizerStateChanged, this, _1 ) );
 
   fps_camera_ = new ogre_tools::FPSCamera( manager_->getSceneManager() );
@@ -132,21 +130,22 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent )
   top_down_ortho_->pitch( -Ogre::Math::HALF_PI );
   top_down_ortho_->setRelativeNode( manager_->getTargetRelativeNode() );
 
-
   current_camera_ = orbit_camera_;
 
   render_panel_->getViewport()->setCamera( current_camera_->getOgreCamera() );
+
+  tools_->Connect( wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( VisualizationPanel::onToolClicked ), NULL, this );
 }
 
 VisualizationPanel::~VisualizationPanel()
 {
+  tools_->Disconnect( wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( VisualizationPanel::onToolClicked ), NULL, this );
+
   delete fps_camera_;
   delete orbit_camera_;
   delete top_down_ortho_;
 
   delete manager_;
-
-  views_->Disconnect( wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( VisualizationPanel::onViewClicked ), NULL, this );
 
   render_panel_->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
   render_panel_->Disconnect( wxEVT_MIDDLE_DOWN, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
@@ -168,6 +167,24 @@ VisualizationPanel::~VisualizationPanel()
   render_panel_->Destroy();
 }
 
+void VisualizationPanel::addTool( Tool* tool )
+{
+  tools_->AddRadioTool( tools_->GetToolsCount(), wxString::FromAscii( tool->getName().c_str() ), wxNullBitmap, wxNullBitmap );
+}
+
+void VisualizationPanel::setTool( Tool* tool )
+{
+  int count = tools_->GetToolsCount();
+  for ( int i = 0; i < count; ++i )
+  {
+    if ( manager_->getTool( i ) == tool )
+    {
+      tools_->ToggleTool( i, true );
+      break;
+    }
+  }
+}
+
 void VisualizationPanel::queueRender()
 {
   wxCommandEvent event( EVT_RENDER, GetId() );
@@ -179,36 +196,45 @@ void VisualizationPanel::onRender( wxCommandEvent& event )
   render_panel_->Refresh();
 }
 
-void VisualizationPanel::onViewClicked( wxCommandEvent& event )
+void VisualizationPanel::onToolClicked( wxCommandEvent& event )
+{
+  Tool* tool = manager_->getTool( event.GetId() );
+
+  manager_->setCurrentTool( tool );
+}
+
+
+void VisualizationPanel::onViewSelected( wxCommandEvent& event )
 {
   ogre_tools::CameraBase* prev_camera = current_camera_;
 
   bool set_from_old = false;
 
-  switch ( event.GetId() )
+  switch ( views_->GetSelection() )
   {
-  case IDs::FPS:
+  case Views::FPS:
     {
-      current_camera_ = fps_camera_;
-
       if ( current_camera_ == orbit_camera_ )
       {
         set_from_old = true;
       }
+
+      current_camera_ = fps_camera_;
     }
     break;
 
-  case IDs::Orbit:
+  case Views::Orbit:
     {
-      current_camera_ = orbit_camera_;
       if ( current_camera_ == fps_camera_ )
       {
         set_from_old = true;
       }
+
+      current_camera_ = orbit_camera_;
     }
     break;
 
-  case IDs::TopDownOrtho:
+  case Views::TopDownOrtho:
     {
       current_camera_ = top_down_ortho_;
     }
@@ -291,91 +317,16 @@ void VisualizationPanel::onRenderWindowMouseEvents( wxMouseEvent& event )
   mouse_x_ = event.GetX();
   mouse_y_ = event.GetY();
 
-  if ( event.LeftDown() )
+  int flags = manager_->getCurrentTool()->processMouseEvent( event, last_x, last_y );
+
+  if ( flags & Tool::Render )
   {
-    if ( event.ControlDown() )
-    {
-      manager_->pick( mouse_x_, mouse_y_ );
-    }
-    else
-    {
-      left_mouse_down_ = true;
-      middle_mouse_down_ = false;
-      right_mouse_down_ = false;
-
-      current_camera_->mouseLeftDown( mouse_x_, mouse_y_ );
-    }
-  }
-  else if ( event.MiddleDown() )
-  {
-    left_mouse_down_ = false;
-    middle_mouse_down_ = true;
-    right_mouse_down_ = false;
-
-    current_camera_->mouseMiddleDown( mouse_x_, mouse_y_ );
-  }
-  else if ( event.RightDown() )
-  {
-    left_mouse_down_ = false;
-    middle_mouse_down_ = false;
-    right_mouse_down_ = true;
-
-    current_camera_->mouseRightDown( mouse_x_, mouse_y_ );
-  }
-  else if ( event.LeftUp() )
-  {
-    left_mouse_down_ = false;
-
-    current_camera_->mouseLeftUp( mouse_x_, mouse_y_ );
-  }
-  else if ( event.MiddleUp() )
-  {
-    middle_mouse_down_ = false;
-
-    current_camera_->mouseMiddleUp( mouse_x_, mouse_y_ );
-  }
-  else if ( event.RightUp() )
-  {
-    right_mouse_down_ = false;
-
-    current_camera_->mouseRightUp( mouse_x_, mouse_y_ );
-  }
-  else if ( event.Dragging() )
-  {
-    int32_t diff_x = mouse_x_ - last_x;
-    int32_t diff_y = mouse_y_ - last_y;
-
-    bool handled = false;
-    if ( left_mouse_down_ )
-    {
-      current_camera_->mouseLeftDrag( diff_x, diff_y );
-
-      handled = true;
-    }
-    else if ( middle_mouse_down_ )
-    {
-      current_camera_->mouseMiddleDrag( diff_x, diff_y );
-
-      handled = true;
-    }
-    else if ( right_mouse_down_ )
-    {
-      current_camera_->mouseRightDrag( diff_x, diff_y );
-
-      handled = true;
-    }
-
-    if ( handled )
-    {
-      queueRender();
-    }
-  }
-
-  if ( event.GetWheelRotation() != 0 )
-  {
-    current_camera_->scrollWheel( event.GetWheelRotation() );
-
     queueRender();
+  }
+
+  if ( flags & Tool::Finished )
+  {
+    manager_->setCurrentTool( manager_->getDefaultTool() );
   }
 }
 

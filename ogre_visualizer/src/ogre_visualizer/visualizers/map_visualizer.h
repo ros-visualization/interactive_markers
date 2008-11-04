@@ -35,6 +35,9 @@
 #include <OgreTexture.h>
 #include <OgreMaterial.h>
 
+#include <std_msgs/MapMetaData.h>
+#include <ros/time.h>
+
 namespace Ogre
 {
 class SceneNode;
@@ -83,6 +86,11 @@ protected:
   virtual void onEnable();
   virtual void onDisable();
 
+  void subscribe();
+  void unsubscribe();
+
+  void incomingMetaData();
+
   void clear();
   void load();
   void transformMap();
@@ -101,6 +109,10 @@ protected:
   float load_timer_;
 
   float alpha_;
+
+  bool new_metadata_;
+  std_msgs::MapMetaData metadata_message_;
+  ros::Time last_loaded_map_time_;
 
   StringProperty* service_property_;
   FloatProperty* resolution_property_;

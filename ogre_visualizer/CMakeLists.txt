@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 2.6)
 include(rosbuild)
 include(FindPkgConfig)
 
-set(ROS_BUILD_TYPE RelWithDebInfo)
-#set(ROS_BUILD_TYPE Debug)
+#set(ROS_BUILD_TYPE RelWithDebInfo)
+set(ROS_BUILD_TYPE Debug)
 
 rospack(ogre_visualizer)
 
@@ -61,6 +61,9 @@ add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE}
 
 rospack_add_library(${PROJECT_NAME}  src/ogre_visualizer/properties/property.cpp
                                      src/ogre_visualizer/properties/property_manager.cpp
+                                     src/ogre_visualizer/tools/tool.cpp
+                                     src/ogre_visualizer/tools/move_tool.cpp
+                                     src/ogre_visualizer/tools/pose_tool.cpp
                                      src/ogre_visualizer/visualization_panel.cpp
                                      src/ogre_visualizer/visualization_manager.cpp
   				   												 src/ogre_visualizer/visualizer_base.cpp

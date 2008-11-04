@@ -59,6 +59,8 @@ MapVisualizer::MapVisualizer( const std::string& name, VisualizationManager* man
 , width_( 0.0f )
 , height_( 0.0f )
 , load_timer_( 2.0f )
+, new_metadata_( false )
+, last_loaded_map_time_( 0 )
 , service_property_( NULL )
 , resolution_property_( NULL )
 , width_property_( NULL )
@@ -85,13 +87,32 @@ MapVisualizer::~MapVisualizer()
 
 void MapVisualizer::onEnable()
 {
+  subscribe();
+
   scene_node_->setVisible( true );
 }
 
 void MapVisualizer::onDisable()
 {
+  unsubscribe();
+
   scene_node_->setVisible( false );
   clear();
+}
+
+void MapVisualizer::subscribe()
+{
+  if ( !isEnabled() )
+  {
+    return;
+  }
+
+  ros_node_->subscribe( "map_metadata", metadata_message_, &MapVisualizer::incomingMetaData, this, 1 );
+}
+
+void MapVisualizer::unsubscribe()
+{
+  ros_node_->unsubscribe( "map_metadata", &MapVisualizer::incomingMetaData, this );
 }
 
 void MapVisualizer::setAlpha( float alpha )
@@ -201,7 +222,7 @@ void MapVisualizer::load()
       pixels[pidx+0] = val;
       pixels[pidx+1] = val;
       pixels[pidx+2] = val;
-      //pixels[pidx+3] = 1.0f;
+      //pixels[pidx+3] = 1.0f;stamp
     }
   }
 
@@ -324,6 +345,17 @@ void MapVisualizer::transformMap()
 
 void MapVisualizer::update( float dt )
 {
+  if ( new_metadata_ )
+  {
+    /// @todo implement ros::Time::operator!=
+    if ( !(metadata_message_.map_load_time == last_loaded_map_time_) )
+    {
+      last_loaded_map_time_ = metadata_message_.map_load_time;
+
+      clear();
+    }
+  }
+
   if ( !loaded_ )
   {
     load_timer_ += dt;
@@ -360,6 +392,11 @@ void MapVisualizer::fixedFrameChanged()
 void MapVisualizer::reset()
 {
   clear();
+}
+
+void MapVisualizer::incomingMetaData()
+{
+  new_metadata_ = true;
 }
 
 } // namespace ogre_vis

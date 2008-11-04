@@ -56,6 +56,7 @@ PolyLine2DVisualizer::PolyLine2DVisualizer( const std::string& name, Visualizati
 , loop_( false )
 , override_color_( false )
 , new_message_( false )
+, new_metadata_( false )
 , color_property_( NULL )
 , topic_property_( NULL )
 , override_color_property_( NULL )
@@ -219,6 +220,8 @@ void PolyLine2DVisualizer::subscribe()
   {
     ros_node_->subscribe( topic_, message_, &PolyLine2DVisualizer::incomingMessage, this, 1 );
   }
+
+  ros_node_->subscribe( "map_metadata", metadata_message_, &PolyLine2DVisualizer::incomingMetadataMessage, this, 1 );
 }
 
 void PolyLine2DVisualizer::unsubscribe()
@@ -227,6 +230,8 @@ void PolyLine2DVisualizer::unsubscribe()
   {
     ros_node_->unsubscribe( topic_, &PolyLine2DVisualizer::incomingMessage, this );
   }
+
+  ros_node_->unsubscribe( "map_metadata", &PolyLine2DVisualizer::incomingMetadataMessage, this );
 }
 
 void PolyLine2DVisualizer::onEnable()
@@ -240,32 +245,6 @@ void PolyLine2DVisualizer::onDisable()
   unsubscribe();
   clear();
   scene_node_->setVisible( false );
-}
-
-void PolyLine2DVisualizer::createProperties()
-{
-  override_color_property_ = property_manager_->createProperty<BoolProperty>( "Override Color", property_prefix_, boost::bind( &PolyLine2DVisualizer::getOverrideColor, this ),
-                                                                              boost::bind( &PolyLine2DVisualizer::setOverrideColor, this, _1 ), parent_category_, this );
-  color_property_ = property_manager_->createProperty<ColorProperty>( "Color", property_prefix_, boost::bind( &PolyLine2DVisualizer::getColor, this ),
-                                                                      boost::bind( &PolyLine2DVisualizer::setColor, this, _1 ), parent_category_, this );
-
-  loop_property_ = property_manager_->createProperty<BoolProperty>( "Loop", property_prefix_, boost::bind( &PolyLine2DVisualizer::getLoop, this ),
-                                                                    boost::bind( &PolyLine2DVisualizer::setLoop, this, _1 ), parent_category_, this );
-
-  render_operation_property_ = property_manager_->createProperty<EnumProperty>( "Render Operation", property_prefix_, boost::bind( &PolyLine2DVisualizer::getRenderOperation, this ),
-                                                                                boost::bind( &PolyLine2DVisualizer::setRenderOperation, this, _1 ), parent_category_, this );
-  render_operation_property_->addOption( "Lines", poly_line_render_ops::Lines );
-  render_operation_property_->addOption( "Points", poly_line_render_ops::Points );
-
-  /*point_size_property_ = property_manager_->createProperty<FloatProperty>( "Point Size", property_prefix_, boost::bind( &PolyLine2DVisualizer::getPointSize, this ),
-                                                                      boost::bind( &PolyLine2DVisualizer::setPointSize, this, _1 ), parent_category_, this );*/
-  z_position_property_ = property_manager_->createProperty<FloatProperty>( "Z Position", property_prefix_, boost::bind( &PolyLine2DVisualizer::getZPosition, this ),
-                                                                        boost::bind( &PolyLine2DVisualizer::setZPosition, this, _1 ), parent_category_, this );
-  alpha_property_ = property_manager_->createProperty<FloatProperty>( "Alpha", property_prefix_, boost::bind( &PolyLine2DVisualizer::getAlpha, this ),
-                                                                       boost::bind( &PolyLine2DVisualizer::setAlpha, this, _1 ), parent_category_, this );
-
-  topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &PolyLine2DVisualizer::getTopic, this ),
-                                                                                boost::bind( &PolyLine2DVisualizer::setTopic, this, _1 ), parent_category_, this );
 }
 
 void PolyLine2DVisualizer::fixedFrameChanged()
@@ -284,18 +263,9 @@ void PolyLine2DVisualizer::update( float dt )
     causeRender();
   }
 
-  static float resolution_timer = 2.0f;
-  resolution_timer += dt;
-
-  if ( resolution_timer > 2.0f )
+  if ( new_metadata_ )
   {
-    resolution_timer = 0.0f;
-
-    double res = 0.0f;
-    if ( ros_node_->get_param( "map_resolution", res ) )
-    {
-      setPointSize( res );
-    }
+    setPointSize( metadata_message_.resolution );
   }
 }
 
@@ -396,9 +366,41 @@ void PolyLine2DVisualizer::incomingMessage()
   new_message_ = true;
 }
 
+void PolyLine2DVisualizer::incomingMetadataMessage()
+{
+  new_metadata_ = true;
+}
+
+
 void PolyLine2DVisualizer::reset()
 {
   clear();
+}
+
+void PolyLine2DVisualizer::createProperties()
+{
+  override_color_property_ = property_manager_->createProperty<BoolProperty>( "Override Color", property_prefix_, boost::bind( &PolyLine2DVisualizer::getOverrideColor, this ),
+                                                                              boost::bind( &PolyLine2DVisualizer::setOverrideColor, this, _1 ), parent_category_, this );
+  color_property_ = property_manager_->createProperty<ColorProperty>( "Color", property_prefix_, boost::bind( &PolyLine2DVisualizer::getColor, this ),
+                                                                      boost::bind( &PolyLine2DVisualizer::setColor, this, _1 ), parent_category_, this );
+
+  loop_property_ = property_manager_->createProperty<BoolProperty>( "Loop", property_prefix_, boost::bind( &PolyLine2DVisualizer::getLoop, this ),
+                                                                    boost::bind( &PolyLine2DVisualizer::setLoop, this, _1 ), parent_category_, this );
+
+  render_operation_property_ = property_manager_->createProperty<EnumProperty>( "Render Operation", property_prefix_, boost::bind( &PolyLine2DVisualizer::getRenderOperation, this ),
+                                                                                boost::bind( &PolyLine2DVisualizer::setRenderOperation, this, _1 ), parent_category_, this );
+  render_operation_property_->addOption( "Lines", poly_line_render_ops::Lines );
+  render_operation_property_->addOption( "Points", poly_line_render_ops::Points );
+
+  /*point_size_property_ = property_manager_->createProperty<FloatProperty>( "Point Size", property_prefix_, boost::bind( &PolyLine2DVisualizer::getPointSize, this ),
+                                                                      boost::bind( &PolyLine2DVisualizer::setPointSize, this, _1 ), parent_category_, this );*/
+  z_position_property_ = property_manager_->createProperty<FloatProperty>( "Z Position", property_prefix_, boost::bind( &PolyLine2DVisualizer::getZPosition, this ),
+                                                                        boost::bind( &PolyLine2DVisualizer::setZPosition, this, _1 ), parent_category_, this );
+  alpha_property_ = property_manager_->createProperty<FloatProperty>( "Alpha", property_prefix_, boost::bind( &PolyLine2DVisualizer::getAlpha, this ),
+                                                                       boost::bind( &PolyLine2DVisualizer::setAlpha, this, _1 ), parent_category_, this );
+
+  topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &PolyLine2DVisualizer::getTopic, this ),
+                                                                                boost::bind( &PolyLine2DVisualizer::setTopic, this, _1 ), parent_category_, this );
 }
 
 } // namespace ogre_vis

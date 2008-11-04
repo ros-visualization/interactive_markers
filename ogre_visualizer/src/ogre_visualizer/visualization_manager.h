@@ -85,6 +85,8 @@ class StringProperty;
 class VisualizerBase;
 class VisualizerFactory;
 
+class Tool;
+
 typedef boost::signal<void (VisualizerBase*)> VisualizerSignal;
 
 class VisualizationManager : public wxEvtHandler
@@ -98,6 +100,8 @@ public:
    */
   VisualizationManager( VisualizationPanel* vis_panel );
   virtual ~VisualizationManager();
+
+  void initialize();
 
   /**
    * \brief Create and then add a visualizer to this panel.
@@ -139,6 +143,22 @@ public:
    * @param name The name of the visualizer to remove
    */
   void removeVisualizer( const std::string& name );
+
+  template< class T >
+  T* createTool( const std::string& name )
+  {
+    T* tool = new T( name, this );
+    addTool( tool );
+
+    return tool;
+  }
+
+  void addTool( Tool* tool );
+  Tool* getCurrentTool() { return current_tool_; }
+  Tool* getTool( int index );
+  void setCurrentTool( Tool* tool );
+  void setDefaultTool( Tool* tool );
+  Tool* getDefaultTool() { return default_tool_; }
 
   /**
    * \brief Load configuration
@@ -203,6 +223,8 @@ public:
 
   Ogre::SceneNode* getTargetRelativeNode() { return target_relative_node_; }
 
+  VisualizationPanel* getVisualizationPanel() { return vis_panel_; }
+
   void resetVisualizers();
 
 protected:
@@ -250,6 +272,11 @@ protected:
   V_VisualizerInfo visualizers_;                          ///< Our list of visualizers
   typedef std::map<std::string, VisualizerFactory*> M_Factory;
   M_Factory factories_;                                   ///< Factories by visualizer type name
+
+  typedef std::vector< Tool* > V_Tool;
+  V_Tool tools_;
+  Tool* current_tool_;
+  Tool* default_tool_;
 
   std::string target_frame_;                              ///< Target coordinate frame we're displaying everything in
   std::string fixed_frame_;                               ///< Frame to transform fixed data to

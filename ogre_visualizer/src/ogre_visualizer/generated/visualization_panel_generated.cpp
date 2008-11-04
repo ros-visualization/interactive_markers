@@ -64,10 +64,22 @@ VisualizationPanelGenerated::VisualizationPanelGenerated( wxWindow* parent, wxWi
 	render_panel_ = new wxPanel( main_splitter_, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	render_sizer_ = new wxBoxSizer( wxVERTICAL );
 	
-	views_ = new wxToolBar( render_panel_, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTB_HORIZONTAL|wxTB_NOICONS|wxTB_TEXT ); 
-	views_->Realize();
+	wxBoxSizer* bSizer9;
+	bSizer9 = new wxBoxSizer( wxHORIZONTAL );
 	
-	render_sizer_->Add( views_, 0, wxEXPAND, 0 );
+	wxArrayString views_Choices;
+	views_ = new wxChoice( render_panel_, wxID_ANY, wxDefaultPosition, wxDefaultSize, views_Choices, 0 );
+	views_->SetSelection( 0 );
+	views_->SetMinSize( wxSize( 150,-1 ) );
+	
+	bSizer9->Add( views_, 0, wxALL, 5 );
+	
+	tools_ = new wxToolBar( render_panel_, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTB_HORIZONTAL|wxTB_NOICONS|wxTB_TEXT ); 
+	tools_->Realize();
+	
+	bSizer9->Add( tools_, 1, wxEXPAND, 0 );
+	
+	render_sizer_->Add( bSizer9, 0, wxEXPAND, 5 );
 	
 	render_panel_->SetSizer( render_sizer_ );
 	render_panel_->Layout();
@@ -81,6 +93,7 @@ VisualizationPanelGenerated::VisualizationPanelGenerated( wxWindow* parent, wxWi
 	// Connect Events
 	new_display_->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( VisualizationPanelGenerated::onNewDisplay ), NULL, this );
 	delete_display_->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( VisualizationPanelGenerated::onDeleteDisplay ), NULL, this );
+	views_->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( VisualizationPanelGenerated::onViewSelected ), NULL, this );
 }
 
 VisualizationPanelGenerated::~VisualizationPanelGenerated()
@@ -88,6 +101,7 @@ VisualizationPanelGenerated::~VisualizationPanelGenerated()
 	// Disconnect Events
 	new_display_->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( VisualizationPanelGenerated::onNewDisplay ), NULL, this );
 	delete_display_->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( VisualizationPanelGenerated::onDeleteDisplay ), NULL, this );
+	views_->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( VisualizationPanelGenerated::onViewSelected ), NULL, this );
 }
 
 NewDisplayDialogGenerated::NewDisplayDialogGenerated( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
