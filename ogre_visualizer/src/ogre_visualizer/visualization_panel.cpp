@@ -70,6 +70,7 @@ DEFINE_EVENT_TYPE(EVT_RENDER)
 
 VisualizationPanel::VisualizationPanel( wxWindow* parent )
 : VisualizationPanelGenerated( parent )
+, current_camera_( NULL )
 , mouse_x_( 0 )
 , mouse_y_( 0 )
 , selected_visualizer_( NULL )

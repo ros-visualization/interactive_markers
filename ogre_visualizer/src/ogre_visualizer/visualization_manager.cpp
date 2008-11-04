@@ -635,6 +635,12 @@ void VisualizationManager::setTargetFrame( const std::string& frame )
   }
 
   target_frame_property_->changed();
+
+  updateRelativeNode();
+  if ( vis_panel_->getCurrentCamera() )
+  {
+    vis_panel_->getCurrentCamera()->lookAt( target_relative_node_->getPosition() );
+  }
 }
 
 void VisualizationManager::setFixedFrame( const std::string& frame )
