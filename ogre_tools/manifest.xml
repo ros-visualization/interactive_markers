@@ -17,5 +17,6 @@
     <sysdepend os="ubuntu" version="7.04-feisty" package="libwxgtk2.8-dev"/>
     <sysdepend os="ubuntu" version="8.04-hardy" package="libwxgtk2.8-dev"/>
     <sysdepend os="ubuntu" version="8.04-hardy" package="libboost-dev"/>
+    <sysdepend os="ubuntu" version="8.10-intrepid" package="libwxgtk2.8-dev"/>
 </package>
 
