@@ -51,8 +51,8 @@
 namespace ogre_vis
 {
 
-PoseTool::PoseTool( const std::string& name, VisualizationManager* manager )
-: Tool( name, manager )
+PoseTool::PoseTool( const std::string& name, char shortcut_key, VisualizationManager* manager )
+: Tool( name, shortcut_key, manager )
 , is_goal_( false )
 {
   arrow_ = new ogre_tools::Arrow( scene_manager_, NULL, 2.0f, 0.2f, 0.5f, 0.35f );

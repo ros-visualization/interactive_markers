@@ -40,7 +40,7 @@ class VisualizationManager;
 class MoveTool : public Tool
 {
 public:
-  MoveTool( const std::string& name, VisualizationManager* manager );
+  MoveTool( const std::string& name, char shortcut_key, VisualizationManager* manager );
 
   virtual void activate() {}
   virtual void deactivate() {}

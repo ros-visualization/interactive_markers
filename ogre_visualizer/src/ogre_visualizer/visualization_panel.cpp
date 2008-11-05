@@ -83,6 +83,9 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent )
   views_->Append( wxT( "Top-down Orthographic" ) );
   views_->SetSelection( 0 );
 
+  render_panel_->SetFocus();
+  render_panel_->Connect( wxEVT_CHAR, wxKeyEventHandler( VisualizationPanel::onChar ), NULL, this );
+
   render_panel_->Connect( wxEVT_LEFT_DOWN, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
   render_panel_->Connect( wxEVT_MIDDLE_DOWN, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
   render_panel_->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
@@ -148,6 +151,7 @@ VisualizationPanel::~VisualizationPanel()
 
   delete manager_;
 
+  render_panel_->Disconnect( wxEVT_CHAR, wxKeyEventHandler( VisualizationPanel::onChar ), NULL, this );
   render_panel_->Disconnect( wxEVT_LEFT_DOWN, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
   render_panel_->Disconnect( wxEVT_MIDDLE_DOWN, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
   render_panel_->Disconnect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( VisualizationPanel::onRenderWindowMouseEvents ), NULL, this );
@@ -170,7 +174,9 @@ VisualizationPanel::~VisualizationPanel()
 
 void VisualizationPanel::addTool( Tool* tool )
 {
-  tools_->AddRadioTool( tools_->GetToolsCount(), wxString::FromAscii( tool->getName().c_str() ), wxNullBitmap, wxNullBitmap );
+  char ascii_str[2] = { tool->getShortcutKey(), 0 };
+  wxString tooltip = wxString( wxT("Shortcut Key: ")) + wxString::FromAscii( ascii_str );
+  tools_->AddRadioTool( tools_->GetToolsCount(), wxString::FromAscii( tool->getName().c_str() ), wxNullBitmap, wxNullBitmap, tooltip );
 }
 
 void VisualizationPanel::setTool( Tool* tool )
@@ -318,6 +324,8 @@ void VisualizationPanel::onRenderWindowMouseEvents( wxMouseEvent& event )
   mouse_x_ = event.GetX();
   mouse_y_ = event.GetY();
 
+  render_panel_->SetFocus();
+
   int flags = manager_->getCurrentTool()->processMouseEvent( event, last_x, last_y );
 
   if ( flags & Tool::Render )
@@ -402,6 +410,11 @@ void VisualizationPanel::loadConfig( wxConfigBase* config )
 void VisualizationPanel::saveConfig( wxConfigBase* config )
 {
   manager_->saveConfig( config );
+}
+
+void VisualizationPanel::onChar( wxKeyEvent& event )
+{
+  manager_->handleChar( event );
 }
 
 } // namespace ogre_vis

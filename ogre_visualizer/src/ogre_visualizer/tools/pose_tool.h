@@ -47,7 +47,7 @@ class VisualizationManager;
 class PoseTool : public Tool
 {
 public:
-  PoseTool( const std::string& name, VisualizationManager* manager );
+  PoseTool( const std::string& name, char shortcut_key, VisualizationManager* manager );
   virtual ~PoseTool();
 
   void setIsGoal( bool is_goal );

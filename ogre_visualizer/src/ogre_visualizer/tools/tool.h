@@ -52,10 +52,11 @@ class VisualizationManager;
 class Tool
 {
 public:
-  Tool( const std::string& name, VisualizationManager* manager );
+  Tool( const std::string& name, char shortcut_key, VisualizationManager* manager );
   virtual ~Tool() {}
 
   const std::string& getName() { return name_; }
+  char getShortcutKey() { return shortcut_key_; }
 
   virtual void activate() = 0;
   virtual void deactivate() = 0;
@@ -72,6 +73,7 @@ protected:
   VisualizationManager* manager_;
 
   std::string name_;
+  char shortcut_key_;
 };
 
 }

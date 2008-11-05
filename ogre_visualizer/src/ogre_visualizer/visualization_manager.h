@@ -75,6 +75,7 @@ class wxTimer;
 class wxPropertyGrid;
 class wxPropertyGridEvent;
 class wxConfigBase;
+class wxKeyEvent;
 
 namespace ogre_vis
 {
@@ -147,9 +148,9 @@ public:
   void removeVisualizer( const std::string& name );
 
   template< class T >
-  T* createTool( const std::string& name )
+  T* createTool( const std::string& name, char shortcut_key )
   {
-    T* tool = new T( name, this );
+    T* tool = new T( name, shortcut_key, this );
     addTool( tool );
 
     return tool;
@@ -233,6 +234,8 @@ public:
   double getROSTime();
   double getWallClockElapsed();
   double getROSTimeElapsed();
+
+  void handleChar( wxKeyEvent& event );
 
 protected:
   /**

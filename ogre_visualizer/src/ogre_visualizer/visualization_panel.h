@@ -90,6 +90,7 @@ class node;
 }
 
 class wxTimerEvent;
+class wxKeyEvent;
 class wxTimer;
 class wxPropertyGrid;
 class wxPropertyGridEvent;
@@ -166,6 +167,8 @@ protected:
   void onPropertySelected( wxPropertyGridEvent& event );
   /// Called when a tool is selected
   void onToolClicked( wxCommandEvent& event );
+  /// Called when a key is pressed
+  void onChar( wxKeyEvent& event );
 
   /// Called when a "view" (camera) is selected from the list
   void onViewSelected( wxCommandEvent& event );

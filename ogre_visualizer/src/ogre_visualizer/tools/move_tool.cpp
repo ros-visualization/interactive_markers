@@ -37,8 +37,8 @@
 namespace ogre_vis
 {
 
-MoveTool::MoveTool( const std::string& name, VisualizationManager* manager )
-: Tool( name, manager )
+MoveTool::MoveTool( const std::string& name, char shortcut_key, VisualizationManager* manager )
+: Tool( name, shortcut_key, manager )
 {
 
 }

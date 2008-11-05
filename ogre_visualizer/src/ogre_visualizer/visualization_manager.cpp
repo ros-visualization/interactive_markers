@@ -180,14 +180,14 @@ VisualizationManager::~VisualizationManager()
 
 void VisualizationManager::initialize()
 {
-  MoveTool* move_tool = createTool< MoveTool >( "Move Camera" );
+  MoveTool* move_tool = createTool< MoveTool >( "Move Camera", 'm' );
   setCurrentTool( move_tool );
   setDefaultTool( move_tool );
 
-  PoseTool* goal_tool = createTool< PoseTool >( "Set Goal" );
+  PoseTool* goal_tool = createTool< PoseTool >( "Set Goal", 'g' );
   goal_tool->setIsGoal( true );
 
-  createTool< PoseTool >( "Set Pose" );
+  createTool< PoseTool >( "Set Pose", 'p' );
 }
 
 VisualizationManager::VisualizerInfo* VisualizationManager::getVisualizerInfo( const VisualizerBase* visualizer )
@@ -747,6 +747,29 @@ void VisualizationManager::incomingROSTime()
   last_time = time_message_.rostime;
 
   new_ros_time_ = true;
+}
+
+void VisualizationManager::handleChar( wxKeyEvent& event )
+{
+  if ( event.GetKeyCode() == WXK_ESCAPE )
+  {
+    setCurrentTool( getDefaultTool() );
+
+    return;
+  }
+
+  char key = event.GetKeyCode();
+  V_Tool::iterator it = tools_.begin();
+  V_Tool::iterator end = tools_.end();
+  for ( ; it != end; ++it )
+  {
+    Tool* tool = *it;
+    if ( tool->getShortcutKey() == key )
+    {
+      setCurrentTool( tool );
+      return;
+    }
+  }
 }
 
 } // namespace ogre_vis
