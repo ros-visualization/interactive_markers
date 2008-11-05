@@ -51,9 +51,7 @@
 #include <set>
 #include <rosthread/mutex.h>
 
-#include <boost/function.hpp>
-
-#include <wx/font.h>
+#include <boost/regex.hpp>
 
 namespace ros
 {
@@ -106,6 +104,9 @@ public:
    */
   void setBufferSize( uint32_t size );
 
+  void setInclude( const std::string& filter );
+  void setExclude( const std::string& filter );
+
 protected:
   /**
    * \brief (wx callback) Called when the "Setup" button is pressed
@@ -124,7 +125,9 @@ protected:
    */
   void onProcessTimer( wxTimerEvent& evt );
 
-  virtual void onFilterText( wxCommandEvent& event );
+  virtual void onIncludeText( wxCommandEvent& event );
+  virtual void onExcludeText( wxCommandEvent& event );
+  virtual void onRegexChecked( wxCommandEvent& event );
 
   /**
    * \brief subscribe to our topic
@@ -160,14 +163,16 @@ protected:
    * @param str The string to match against
    * @return True if the string matches, false otherwise
    */
-  bool filter( const std::string& str ) const;
+  bool include( const std::string& str ) const;
+  bool exclude( const std::string& str ) const;
   typedef std::vector<std::string> V_string;
   /**
    * \brief Filter a vector of strings based on our current filter
    * @param strs The strings to match against
    * @return True of any string matches, false otherwise
    */
-  bool filter( const V_string& strs ) const;
+  bool include( const V_string& strs ) const;
+  bool exclude( const V_string& strs ) const;
   /**
    * \brief Filter a message based on our current filter
    * @param id The id of the message to filter
@@ -178,7 +183,7 @@ protected:
    * \brief Re-filter all messages
    * @param old_filter The previous filter -- used for optimization in the case where the filter is growing in length
    */
-  void refilter( const std::string& old_filter );
+  void refilter();
 
   /**
    * \brief Get a message by index in our ordered message list.  Used by the list control.
@@ -208,12 +213,21 @@ protected:
   uint32_t message_id_counter_;                             ///< Counter for generating unique ids for messages
   typedef std::map<uint32_t, rostools::Log> M_IdToMessage;
   M_IdToMessage messages_;                                  ///< Map of id->message
-  std::string filter_;                                      ///< String to filter what's displayed in the list by
+  std::string include_filter_;                              ///< String to filter what's displayed in the list by
+  std::string exclude_filter_;
 
   typedef std::vector<uint32_t> V_u32;
   V_u32 ordered_messages_;                                  ///< Already-filtered messages that are being displayed in the list
 
   uint32_t max_messages_;                                   ///< Max number of messages to keep around.  When we hit this limit, we start throwing away the oldest messages
+
+  boost::regex include_regex_;
+  boost::regex exclude_regex_;
+  bool use_regex_;
+  bool valid_include_regex_;
+  bool valid_exclude_regex_;
+  bool needs_refilter_;
+  float refilter_timer_;
 };
 
 } // namespace wx_rosout

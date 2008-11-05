@@ -10,7 +10,11 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 find_package(wxWidgets REQUIRED)
 include(${wxWidgets_USE_FILE})
-include_directories( ${wxWidgets_INCLUDE_DIRS} )
+include_directories(${wxWidgets_INCLUDE_DIRS})
+
+find_package(Boost 0 REQUIRED COMPONENTS regex)
+include_directories(${Boost_INCLUDE_DIRS})
+link_directories(${Boost_LIBRARY_DIRS})
 
 # Find the combined swig flags for this project
 _rospack_invoke(${PROJECT_NAME} ${PROJECT_NAME} SWIG_FLAGS "--lang=swig" "--attrib=flags" "export")
@@ -37,7 +41,7 @@ rospack_add_library(${PROJECT_NAME} src/wx_rosout/rosout_generated.cpp
 				  src/wx_rosout/rosout_list_control.cpp
 				  src/wx_rosout/rosout_setup_dialog.cpp
 				  ${SWIG_OUTPUT_CPP_FILE})
-target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} ${Boost_LIBRARIES})
 # swig python needs a shared library named _<modulename>.[so|dll|...]
 # this renames the output file to conform to that by prepending an underscore and removing the "lib" prefix
 set_target_properties(${PROJECT_NAME}

@@ -22,6 +22,11 @@ RosoutPanel::RosoutPanel( wxWindow* parent )
 , topic_( "/rosout_agg" )
 , message_id_counter_( 0 )
 , max_messages_( 20000 )
+, use_regex_( false )
+, valid_include_regex_( false )
+, valid_exclude_regex_( false )
+, needs_refilter_( false )
+, refilter_timer_( 0.0f )
 {
   ros_node_ = ros::node::instance();
 
@@ -115,6 +120,14 @@ void RosoutPanel::setTopic( const std::string& topic )
 void RosoutPanel::onProcessTimer( wxTimerEvent& evt )
 {
   processMessages();
+
+  refilter_timer_ += 0.1f;
+  if ( needs_refilter_ && refilter_timer_ > 1.0f )
+  {
+    refilter_timer_ = 0.0f;
+    needs_refilter_ = false;
+    refilter();
+  }
 }
 
 void RosoutPanel::onClear( wxCommandEvent& event )
@@ -138,18 +151,90 @@ const rostools::Log& RosoutPanel::getMessageByIndex( uint32_t index ) const
   return it->second;
 }
 
-bool RosoutPanel::filter( const std::string& str ) const
+bool RosoutPanel::include( const std::string& str ) const
 {
-  return str.find( filter_ ) != std::string::npos;
+  if ( include_filter_.empty() )
+  {
+    return true;
+  }
+
+  bool include_match = false;
+
+  if ( use_regex_ )
+  {
+    if ( include_filter_.empty() )
+    {
+      include_match = true;
+    }
+    else if ( valid_include_regex_ )
+    {
+      include_match = boost::regex_match( str, include_regex_ );
+    }
+  }
+  else
+  {
+    if ( include_filter_.empty() )
+    {
+      include_match = true;
+    }
+    else
+    {
+      include_match = str.find( include_filter_ ) != std::string::npos;
+    }
+  }
+
+  return include_match;
 }
 
-bool RosoutPanel::filter( const V_string& strs ) const
+bool RosoutPanel::exclude( const std::string& str ) const
+{
+  if ( exclude_filter_.empty() )
+  {
+    return false;
+  }
+
+  bool exclude_match = false;
+
+  if ( use_regex_ )
+  {
+    if ( valid_exclude_regex_ )
+    {
+      exclude_match = boost::regex_match( str, exclude_regex_ );
+    }
+  }
+  else
+  {
+    if ( !exclude_filter_.empty() )
+    {
+      exclude_match = str.find( exclude_filter_ ) != std::string::npos;
+    }
+  }
+
+  return exclude_match;
+}
+
+bool RosoutPanel::include( const V_string& strs ) const
 {
   V_string::const_iterator it = strs.begin();
   V_string::const_iterator end = strs.end();
   for ( ; it != end; ++it )
   {
-    if ( filter( *it ) )
+    if ( include( *it ) )
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool RosoutPanel::exclude( const V_string& strs ) const
+{
+  V_string::const_iterator it = strs.begin();
+  V_string::const_iterator end = strs.end();
+  for ( ; it != end; ++it )
+  {
+    if ( exclude( *it ) )
     {
       return true;
     }
@@ -160,7 +245,7 @@ bool RosoutPanel::filter( const V_string& strs ) const
 
 bool RosoutPanel::filter( uint32_t id ) const
 {
-  if ( filter_.empty() )
+  if ( include_filter_.empty() && exclude_filter_.empty() )
   {
     return true;
   }
@@ -175,67 +260,61 @@ bool RosoutPanel::filter( uint32_t id ) const
   std::stringstream time;
   time << message.header.stamp;
 
-  return filter( message.name )
-      || filter( message.msg )
-      || filter( message.file )
-      || filter( message.function )
-      || filter( line.str() )
-      || filter( message.topics )
-      || filter( time.str() )
-      || filter( (const char*)table_->getSeverityText( message ).fn_str() );
+  if (   exclude( message.name )
+      || exclude( message.msg )
+      || exclude( message.file )
+      || exclude( message.function )
+      || exclude( line.str() )
+      || exclude( message.topics )
+      || exclude( time.str() )
+      || exclude( (const char*)table_->getSeverityText( message ).fn_str() ) )
+  {
+    return false;
+  }
+
+  return include( message.name )
+      || include( message.msg )
+      || include( message.file )
+      || include( message.function )
+      || include( line.str() )
+      || include( message.topics )
+      || include( time.str() )
+      || include( (const char*)table_->getSeverityText( message ).fn_str() );
 }
 
-void RosoutPanel::refilter( const std::string& old_filter )
+void RosoutPanel::refilter()
 {
   table_->Freeze();
 
-  long item_count = table_->GetItemCount();
-  bool select_last_item = false;
-  if ( item_count == 0 || table_->GetItemState( item_count - 1, wxLIST_STATE_FOCUSED ) & wxLIST_STATE_FOCUSED )
+  /// @todo wxListCtrl::GetScrollRange doesn't work, so I have to work around it.  Switch to use GetScrollPos and GetScrollRange once Bug #10155 in the wxWidgets trac is fixed.
+
+  bool scroll_to_bottom = false;
+  int count_per_page = table_->GetCountPerPage();
+  int scroll_pos = table_->GetScrollPos(wxVERTICAL);
+  if ( scroll_pos + count_per_page >= table_->GetItemCount() )
   {
-    select_last_item = true;
+    scroll_to_bottom = true;
   }
 
-  if ( filter_.substr( 0, old_filter.size() ) == old_filter )
+  ordered_messages_.clear();
+  M_IdToMessage::iterator it = messages_.begin();
+  M_IdToMessage::iterator end = messages_.end();
+  for ( ; it != end; ++it )
   {
-    V_u32 new_list;
-    new_list.reserve( ordered_messages_.size() );
-    V_u32::iterator it = ordered_messages_.begin();
-    V_u32::iterator end = ordered_messages_.end();
-    for ( ; it != end; ++it )
+    uint32_t id = it->first;
+    rostools::Log& message = it->second;
+
+    if ( filter( id ) )
     {
-      if ( filter( *it ) )
-      {
-        new_list.push_back( *it );
-      }
-    }
-
-    new_list.swap( ordered_messages_ );
-
-    table_->SetItemCount( ordered_messages_.size() );
-  }
-  else
-  {
-    ordered_messages_.clear();
-    M_IdToMessage::iterator it = messages_.begin();
-    M_IdToMessage::iterator end = messages_.end();
-    for ( ; it != end; ++it )
-    {
-      uint32_t id = it->first;
-      rostools::Log& message = it->second;
-
-      if ( filter( id ) )
-      {
-        addMessageToTable( message, id );
-      }
+      addMessageToTable( message, id );
     }
   }
 
-  if ( select_last_item )
+  table_->SetItemCount( ordered_messages_.size() );
+
+  if ( scroll_to_bottom )
   {
-    item_count = table_->GetItemCount();
-    table_->SetItemState( item_count - 1, wxLIST_STATE_FOCUSED, wxLIST_STATE_FOCUSED );
-    table_->EnsureVisible( item_count - 1 );
+    table_->EnsureVisible( table_->GetItemCount() - 1 );
   }
 
   // This for some reason prevents the control from flickering: http://wiki.wxwidgets.org/Flicker-Free_Drawing#No-flickering_for_wxListCtrl_with_wxLC_REPORT_.7C_wxLC_VIRTUAL_style
@@ -309,12 +388,14 @@ void RosoutPanel::processMessages()
 
   table_->Freeze();
 
-  long item_count = table_->GetItemCount();
-  bool select_last_item = false;
-  if ( item_count == 0 || table_->GetItemState( item_count - 1, wxLIST_STATE_FOCUSED ) & wxLIST_STATE_FOCUSED )
+  /// @todo wxListCtrl::GetScrollRange doesn't work, so I have to work around it.  Switch to use GetScrollPos and GetScrollRange once Bug #10155 in the wxWidgets trac is fixed.
+
+  bool scroll_to_bottom = false;
+  int count_per_page = table_->GetCountPerPage();
+  int scroll_pos = table_->GetScrollPos(wxVERTICAL);
+  if ( scroll_pos + count_per_page >= table_->GetItemCount() )
   {
-    select_last_item = true;
-    table_->SetItemState( item_count - 1, wxLIST_STATE_FOCUSED, 0 );
+    scroll_to_bottom = true;
   }
 
   V_Log::iterator it = local_queue.begin();
@@ -326,11 +407,9 @@ void RosoutPanel::processMessages()
     processMessage( message );
   }
 
-  if ( select_last_item )
+  if ( scroll_to_bottom )
   {
-    item_count = table_->GetItemCount();
-    table_->SetItemState( item_count - 1, wxLIST_STATE_FOCUSED, wxLIST_STATE_FOCUSED );
-    table_->EnsureVisible( item_count - 1 );
+    table_->EnsureVisible( table_->GetItemCount() - 1 );
   }
 
   // This for some reason prevents the control from flickering: http://wiki.wxwidgets.org/Flicker-Free_Drawing#No-flickering_for_wxListCtrl_with_wxLC_REPORT_.7C_wxLC_VIRTUAL_style
@@ -381,12 +460,70 @@ void RosoutPanel::setBufferSize( uint32_t size )
   }
 }
 
-void RosoutPanel::onFilterText( wxCommandEvent& event )
+void RosoutPanel::setInclude( const std::string& filter )
 {
-  std::string old_filter = filter_;
-  filter_ = filter_text_->GetValue().fn_str();
+  include_filter_ = filter;
 
-  refilter( old_filter );
+  include_text_->SetBackgroundColour( *wxWHITE );
+
+  valid_include_regex_ = true;
+
+  if ( use_regex_ && !filter.empty() )
+  {
+    try
+    {
+      include_regex_ = boost::regex( filter );
+    }
+    catch( std::runtime_error& )
+    {
+      include_text_->SetBackgroundColour( *wxRED );
+      valid_include_regex_ = false;
+    }
+  }
+
+  needs_refilter_ = true;
+}
+
+void RosoutPanel::setExclude( const std::string& filter )
+{
+  exclude_filter_ = filter;
+
+  exclude_text_->SetBackgroundColour( *wxWHITE );
+
+  valid_exclude_regex_ = true;
+
+  if ( use_regex_ && !filter.empty() )
+  {
+    try
+    {
+      exclude_regex_ = boost::regex( filter );
+    }
+    catch( std::runtime_error& )
+    {
+      exclude_text_->SetBackgroundColour( *wxRED );
+      valid_exclude_regex_ = false;
+    }
+  }
+
+  needs_refilter_ = true;
+}
+
+void RosoutPanel::onIncludeText( wxCommandEvent& event )
+{
+  setInclude( (const char*)include_text_->GetValue().fn_str() );
+}
+
+void RosoutPanel::onExcludeText( wxCommandEvent& event )
+{
+  setExclude( (const char*)exclude_text_->GetValue().fn_str() );
+}
+
+void RosoutPanel::onRegexChecked( wxCommandEvent& event )
+{
+  use_regex_ = regex_checkbox_->GetValue();
+
+  setInclude( include_filter_ );
+  setExclude( exclude_filter_ );
 }
 
 } // namespace wx_rosout

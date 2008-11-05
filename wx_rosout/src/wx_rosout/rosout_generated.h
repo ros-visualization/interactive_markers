@@ -18,6 +18,7 @@ namespace wx_rosout{ class RosoutListControl; }
 #include <wx/colour.h>
 #include <wx/settings.h>
 #include <wx/textctrl.h>
+#include <wx/checkbox.h>
 #include <wx/button.h>
 #include <wx/tglbtn.h>
 #include <wx/listctrl.h>
@@ -38,14 +39,19 @@ class RosoutPanelBase : public wxPanel
 	
 	protected:
 		wxStaticText* m_staticText1;
-		wxTextCtrl* filter_text_;
+		wxTextCtrl* include_text_;
+		wxStaticText* m_staticText11;
+		wxTextCtrl* exclude_text_;
+		wxCheckBox* regex_checkbox_;
 		wxButton* clear_button_;
 		wxToggleButton* pause_button_;
 		wxButton* setup_button_;
 		wx_rosout::RosoutListControl* table_;
 		
 		// Virtual event handlers, overide them in your derived class
-		virtual void onFilterText( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onIncludeText( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onExcludeText( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onRegexChecked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onClear( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onPause( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onSetup( wxCommandEvent& event ){ event.Skip(); }

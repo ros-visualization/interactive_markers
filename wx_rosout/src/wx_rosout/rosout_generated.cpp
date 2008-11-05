@@ -39,18 +39,29 @@ RosoutPanelBase::RosoutPanelBase( wxWindow* parent, wxWindowID id, const wxPoint
 	wxBoxSizer* bSizer9;
 	bSizer9 = new wxBoxSizer( wxHORIZONTAL );
 	
-	m_staticText1 = new wxStaticText( this, wxID_ANY, wxT("Filter:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText1 = new wxStaticText( this, wxID_ANY, wxT("Include:"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText1->Wrap( -1 );
 	bSizer9->Add( m_staticText1, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	filter_text_ = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer9->Add( filter_text_, 1, wxALL|wxEXPAND, 5 );
+	include_text_ = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer9->Add( include_text_, 1, wxALL|wxEXPAND, 5 );
+	
+	m_staticText11 = new wxStaticText( this, wxID_ANY, wxT("Exclude:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText11->Wrap( -1 );
+	bSizer9->Add( m_staticText11, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	exclude_text_ = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer9->Add( exclude_text_, 1, wxALL|wxEXPAND, 5 );
+	
+	regex_checkbox_ = new wxCheckBox( this, wxID_ANY, wxT("Regex"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	bSizer9->Add( regex_checkbox_, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	clear_button_ = new wxButton( this, wxID_ANY, wxT("Clear Messages"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer9->Add( clear_button_, 0, wxALL, 5 );
 	
 	pause_button_ = new wxToggleButton( this, wxID_ANY, wxT("Pause"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer9->Add( pause_button_, 0, wxALL, 5 );
+	bSizer9->Add( pause_button_, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	setup_button_ = new wxButton( this, wxID_ANY, wxT("Setup"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer9->Add( setup_button_, 0, wxALL|wxALIGN_RIGHT, 5 );
@@ -66,7 +77,9 @@ RosoutPanelBase::RosoutPanelBase( wxWindow* parent, wxWindowID id, const wxPoint
 	this->Layout();
 	
 	// Connect Events
-	filter_text_->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( RosoutPanelBase::onFilterText ), NULL, this );
+	include_text_->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( RosoutPanelBase::onIncludeText ), NULL, this );
+	exclude_text_->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( RosoutPanelBase::onExcludeText ), NULL, this );
+	regex_checkbox_->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( RosoutPanelBase::onRegexChecked ), NULL, this );
 	clear_button_->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( RosoutPanelBase::onClear ), NULL, this );
 	pause_button_->Connect( wxEVT_COMMAND_TOGGLEBUTTON_CLICKED, wxCommandEventHandler( RosoutPanelBase::onPause ), NULL, this );
 	setup_button_->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( RosoutPanelBase::onSetup ), NULL, this );
@@ -75,7 +88,9 @@ RosoutPanelBase::RosoutPanelBase( wxWindow* parent, wxWindowID id, const wxPoint
 RosoutPanelBase::~RosoutPanelBase()
 {
 	// Disconnect Events
-	filter_text_->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( RosoutPanelBase::onFilterText ), NULL, this );
+	include_text_->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( RosoutPanelBase::onIncludeText ), NULL, this );
+	exclude_text_->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( RosoutPanelBase::onExcludeText ), NULL, this );
+	regex_checkbox_->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( RosoutPanelBase::onRegexChecked ), NULL, this );
 	clear_button_->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( RosoutPanelBase::onClear ), NULL, this );
 	pause_button_->Disconnect( wxEVT_COMMAND_TOGGLEBUTTON_CLICKED, wxCommandEventHandler( RosoutPanelBase::onPause ), NULL, this );
 	setup_button_->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( RosoutPanelBase::onSetup ), NULL, this );
