@@ -57,7 +57,6 @@ class SceneManager;
 class SceneNode;
 class Camera;
 class RaySceneQuery;
-class ParticleSystem;
 }
 
 namespace ros
@@ -220,8 +219,6 @@ public:
 
   void getRegisteredTypes( std::vector<std::string>& types );
 
-  void pick( int mouse_x, int mouse_y );
-
   VisualizerSignal& getVisualizerStateSignal() { return visualizer_state_; }
 
   Ogre::SceneNode* getTargetRelativeNode() { return target_relative_node_; }
@@ -260,8 +257,6 @@ protected:
 
   Ogre::Root* ogre_root_;                                 ///< Ogre Root
   Ogre::SceneManager* scene_manager_;                     ///< Ogre scene manager associated with this panel
-  Ogre::RaySceneQuery* ray_scene_query_;                  ///< Used for querying the scene based on the mouse location
-  Ogre::ParticleSystem* selection_bounds_particle_system_;
 
   wxTimer* update_timer_;                                 ///< Update timer.  VisualizerBase::update is called on each visualizer whenever this timer fires
   wxStopWatch update_stopwatch_;                          ///< Update stopwatch.  Stores how long it's been since the last update

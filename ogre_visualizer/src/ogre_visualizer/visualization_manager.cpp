@@ -40,6 +40,7 @@
 #include "tools/tool.h"
 #include "tools/move_tool.h"
 #include "tools/pose_tool.h"
+#include "tools/selection_tool.h"
 
 #include <ogre_tools/wx_ogre_render_window.h>
 #include <ogre_tools/camera_base.h>
@@ -57,8 +58,6 @@
 #include <OgreRoot.h>
 #include <OgreSceneManager.h>
 #include <OgreSceneNode.h>
-#include <OgreParticleSystem.h>
-#include <OgreParticle.h>
 #include <OgreLight.h>
 
 namespace ogre_vis
@@ -90,15 +89,9 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
   tf_ = new tf::TransformListener( *ros_node_, true, 10000000000ULL, 1000000000ULL );
 
   scene_manager_ = ogre_root_->createSceneManager( Ogre::ST_GENERIC );
-  ray_scene_query_ = scene_manager_->createRayQuery( Ogre::Ray() );
 
   target_relative_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
   updateRelativeNode();
-
-  selection_bounds_particle_system_ = scene_manager_->createParticleSystem( "VisualizationManagerSelectionBoundsParticleSystem" );
-  selection_bounds_particle_system_->setMaterialName( "BaseWhiteNoLighting" );
-  Ogre::SceneNode* node = scene_manager_->getRootSceneNode()->createChildSceneNode();
-  node->attachObject( selection_bounds_particle_system_ );
 
   Ogre::Light* directional_light = scene_manager_->createLight( "MainDirectional" );
   directional_light->setType( Ogre::Light::LT_DIRECTIONAL );
@@ -173,8 +166,6 @@ VisualizationManager::~VisualizationManager()
   delete property_manager_;
   vis_panel_->getPropertyGrid()->Thaw();
 
-  scene_manager_->destroyParticleSystem( selection_bounds_particle_system_ );
-  scene_manager_->destroyQuery( ray_scene_query_ );
   ogre_root_->destroySceneManager( scene_manager_ );
 }
 
@@ -183,6 +174,8 @@ void VisualizationManager::initialize()
   MoveTool* move_tool = createTool< MoveTool >( "Move Camera", 'm' );
   setCurrentTool( move_tool );
   setDefaultTool( move_tool );
+
+  createTool< SelectionTool >( "Focus", 'f' );
 
   PoseTool* goal_tool = createTool< PoseTool >( "Set Goal", 'g' );
   goal_tool->setIsGoal( true );
@@ -224,14 +217,6 @@ void VisualizationManager::onUpdate( wxTimerEvent& event )
     {
       visualizer->update( dt );
     }
-  }
-
-  static float render_update_time = 0.0f;
-  render_update_time += dt;
-  if ( selection_bounds_particle_system_->getNumParticles() > 0 && render_update_time > 0.1 )
-  {
-    vis_panel_->queueRender();
-    render_update_time = 0.0f;
   }
 
   updateRelativeNode();
@@ -355,109 +340,6 @@ Tool* VisualizationManager::getTool( int index )
   ROS_ASSERT( index < (int)tools_.size() );
 
   return tools_[ index ];
-}
-
-inline void createParticle( Ogre::ParticleSystem* particle_sys, const Ogre::Vector3& position, float size )
-{
-  Ogre::Particle* p = particle_sys->createParticle();
-  if ( p )
-  {
-    p->setDimensions( size, size );
-    p->colour = Ogre::ColourValue( 1.0f, 1.0f, 1.0f, 1.0f );
-    p->timeToLive = p->totalTimeToLive = 2.0f;
-    p->rotationSpeed = 0.1f;
-    p->position = position;
-  }
-}
-
-void createParticleLine( Ogre::ParticleSystem* particle_sys, const Ogre::Vector3& point1, const Ogre::Vector3& point2, float size, float step )
-{
-  createParticle( particle_sys, point1, size );
-
-  float distance = point1.distance( point2 );
-  int num_particles = distance / step;
-  Ogre::Vector3 dir = point2 - point1;
-  dir.normalise();
-  for ( int i = 1; i < num_particles; ++i )
-  {
-    Ogre::Vector3 point = point1 + ( dir * ( step * i ) );
-
-    createParticle( particle_sys, point, size );
-  }
-
-  createParticle( particle_sys, point2, size );
-}
-
-void VisualizationManager::pick( int mouse_x, int mouse_y )
-{
-  int width, height;
-  vis_panel_->getRenderPanel()->GetSize( &width, &height );
-
-  Ogre::Ray mouse_ray = vis_panel_->getCurrentCamera()->getOgreCamera()->getCameraToViewportRay( (float)mouse_x / (float)width, (float)mouse_y / (float)height );
-  ray_scene_query_->setRay( mouse_ray );
-
-  Ogre::RaySceneQueryResult& result = ray_scene_query_->execute();
-
-  Ogre::MovableObject* picked = NULL;
-  float closest_distance = 9999999.0f;
-
-  // find the closest object that is also selectable
-  Ogre::RaySceneQueryResult::iterator it = result.begin();
-  Ogre::RaySceneQueryResult::iterator end = result.end();
-  for ( ; it != end; ++it )
-  {
-    Ogre::RaySceneQueryResultEntry& entry = *it;
-
-    const Ogre::Any& user_any = entry.movable->getUserAny();
-    if ( user_any.isEmpty() )
-    {
-      continue;
-    }
-
-    // ugh -- can't just any_cast to VisualizerBase because it's abstract
-    /// @todo This is dangerous, should find a better way
-    const VisualizerBase* visualizer = reinterpret_cast<const VisualizerBase*>( Ogre::any_cast<void*>( user_any ) );
-
-    if ( visualizer && visualizer->isObjectPickable( entry.movable ) )
-    {
-      if ( entry.distance < closest_distance )
-      {
-        closest_distance = entry.distance;
-        picked = entry.movable;
-      }
-    }
-  }
-
-  if ( picked )
-  {
-    Ogre::SceneNode* scene_node = picked->getParentSceneNode();
-    if ( scene_node )
-    {
-      selection_bounds_particle_system_->clear();
-
-      const Ogre::AxisAlignedBox& aabb = scene_node->_getWorldAABB();
-
-      const Ogre::Vector3* corners = aabb.getAllCorners();
-      const float size = 0.01f;
-      const float step = 0.02f;
-      createParticleLine( selection_bounds_particle_system_, corners[0], corners[1], size, step );
-      createParticleLine( selection_bounds_particle_system_, corners[1], corners[2], size, step );
-      createParticleLine( selection_bounds_particle_system_, corners[2], corners[3], size, step );
-      createParticleLine( selection_bounds_particle_system_, corners[3], corners[0], size, step );
-      createParticleLine( selection_bounds_particle_system_, corners[4], corners[5], size, step );
-      createParticleLine( selection_bounds_particle_system_, corners[5], corners[6], size, step );
-      createParticleLine( selection_bounds_particle_system_, corners[6], corners[7], size, step );
-      createParticleLine( selection_bounds_particle_system_, corners[7], corners[4], size, step );
-      createParticleLine( selection_bounds_particle_system_, corners[1], corners[5], size, step );
-      createParticleLine( selection_bounds_particle_system_, corners[2], corners[4], size, step );
-      createParticleLine( selection_bounds_particle_system_, corners[3], corners[7], size, step );
-      createParticleLine( selection_bounds_particle_system_, corners[0], corners[6], size, step );
-
-      vis_panel_->getCurrentCamera()->lookAt( aabb.getCenter() );
-
-      vis_panel_->queueRender();
-    }
-  }
 }
 
 VisualizerBase* VisualizationManager::getVisualizer( const std::string& name )

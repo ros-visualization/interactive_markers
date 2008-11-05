@@ -51,15 +51,7 @@ int MoveTool::processMouseEvent( wxMouseEvent& event, int last_x, int last_y )
 
   if ( event.LeftDown() )
   {
-    if ( event.ControlDown() )
-    {
-      manager_->pick( event.GetX(), event.GetY() );
-    }
-    else
-    {
-      camera->mouseLeftDown( event.GetX(), event.GetY() );
-    }
-
+    camera->mouseLeftDown( event.GetX(), event.GetY() );
     flags |= Render;
   }
   else if ( event.MiddleDown() )
