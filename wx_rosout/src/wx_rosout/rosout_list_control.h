@@ -47,12 +47,12 @@ enum Column
 {
   Message,
   Severity,
+  Node,
+  Time,
   Topics,
   File,
   Line,
   Function,
-  Time,
-  Node,
 };
 }
 typedef columns::Column Column;
