@@ -360,6 +360,10 @@ public:
   {
   }
 
+  void setLabel( const std::string& label );
+  void expand();
+  void collapse();
+
   virtual void writeToGrid();
   virtual void readFromGrid() {}
   virtual void saveToConfig( wxConfigBase* config ) {}

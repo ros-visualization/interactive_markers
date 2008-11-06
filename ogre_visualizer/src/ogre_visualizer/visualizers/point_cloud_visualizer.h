@@ -112,6 +112,7 @@ public:
 
   static const char* getTypeStatic() { return "Point Cloud"; }
   virtual const char* getType() { return getTypeStatic(); }
+  static const char* getDescription();
 
 protected:
   virtual void onEnable();

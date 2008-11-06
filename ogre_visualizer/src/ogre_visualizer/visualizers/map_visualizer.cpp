@@ -83,6 +83,7 @@ MapVisualizer::MapVisualizer( const std::string& name, VisualizationManager* man
 
 MapVisualizer::~MapVisualizer()
 {
+  unsubscribe();
 }
 
 void MapVisualizer::onEnable()
@@ -397,6 +398,11 @@ void MapVisualizer::reset()
 void MapVisualizer::incomingMetaData()
 {
   new_metadata_ = true;
+}
+
+const char* MapVisualizer::getDescription()
+{
+  return "Displays an image of a map gotten through a std_srvs::StaticMap service.";
 }
 
 } // namespace ogre_vis

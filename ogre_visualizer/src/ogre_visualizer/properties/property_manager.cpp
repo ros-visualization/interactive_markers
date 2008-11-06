@@ -79,7 +79,11 @@ void PropertyManager::deleteProperty( const std::string& name, const std::string
   // search for any children of this property, and delete them as well
   deleteChildren( found_it->second );
 
+  grid_->Freeze();
+
   delete found_it->second;
+
+  grid_->Thaw();
 
   properties_.erase( found_it );
 }
@@ -100,12 +104,16 @@ void PropertyManager::deleteChildren( PropertyBase* property )
     }
   }
 
+  grid_->Freeze();
+
   std::set<PropertyBase*>::iterator del_it = to_delete.begin();
   std::set<PropertyBase*>::iterator del_end = to_delete.end();
   for ( ; del_it != del_end; ++del_it )
   {
     deleteProperty( *del_it );
   }
+
+  grid_->Thaw();
 }
 
 void PropertyManager::deleteByUserData( void* user_data )
@@ -127,12 +135,16 @@ void PropertyManager::deleteByUserData( void* user_data )
     }
   }
 
+  grid_->Freeze();
+
   std::set<PropertyBase*>::iterator prop_it = to_delete.begin();
   std::set<PropertyBase*>::iterator prop_end = to_delete.end();
   for ( ; prop_it != prop_end; ++prop_it )
   {
     deleteProperty( *prop_it );
   }
+
+  grid_->Thaw();
 }
 
 void PropertyManager::propertyChanging( wxPropertyGridEvent& event )

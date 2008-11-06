@@ -43,18 +43,22 @@ typedef std::vector<std::string> V_string;
 class NewDisplayDialog : public NewDisplayDialogGenerated
 {
 public:
-  NewDisplayDialog( wxWindow* parent, const V_string& types );
+  NewDisplayDialog( wxWindow* parent, const V_string& types, const V_string& descriptions );
 
   std::string getTypeName();
   std::string getVisualizerName();
 
 protected:
-  void onOK( wxCommandEvent& event );
-  void onCancel( wxCommandEvent& event );
-  void onNameEnter( wxCommandEvent& event );
+  virtual void onDisplaySelected( wxCommandEvent& event );
+  virtual void onDisplayDClick( wxCommandEvent& event );
+  virtual void onOK( wxCommandEvent& event );
+  virtual void onCancel( wxCommandEvent& event );
+  virtual void onNameEnter( wxCommandEvent& event );
 
   std::string type_name_;
   std::string visualizer_name_;
+
+  const V_string& descriptions_;
 };
 
 } //namespace ogre_vis

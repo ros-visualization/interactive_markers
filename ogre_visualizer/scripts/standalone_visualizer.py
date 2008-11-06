@@ -4,6 +4,9 @@ import rostools
 import rostools.packspec
 rostools.update_path('ogre_visualizer')
 
+import os
+import shutil
+import glob
 import wx
 import ogre_visualizer
 import ogre_tools
@@ -14,14 +17,16 @@ class VisualizerFrame(wx.Frame):
     _CONFIG_WINDOW_WIDTH="/Window/Width"
     _CONFIG_WINDOW_HEIGHT="/Window/Height"
     
+    _CONFIG_EXTENSION="vcg"
+    
     def __init__(self, parent, id=wx.ID_ANY, title='Standalone Visualizer', pos=wx.DefaultPosition, size=(800, 600), style=wx.DEFAULT_FRAME_STYLE):
         wx.Frame.__init__(self, parent, id, title, pos, size, style)
         
-        self._config = wx.Config("standalone_visualizer")
-
         ogre_tools.initializeOgre()
-        
         visualizer_panel = ogre_visualizer.VisualizationPanel(self)
+        
+        self._package_path = rostools.packspec.get_pkg_dir('ogre_visualizer')
+        self._global_config_path = os.path.join(self._package_path, "configs")
         
         self._visualizer_panel = visualizer_panel
         
@@ -40,76 +45,10 @@ class VisualizerFrame(wx.Frame):
         
         ogre_tools.initializeResources( media_paths )
         
+        self.init_config()
+        self.init_menu()
+        
         manager = visualizer_panel.getManager()
-        
-        manager.createGridVisualizer( "Grid", True )
-        manager.createAxesVisualizer( "Origin Axes", False )
-        manager.createMarkerVisualizer( "Visualization Markers", True )
-        
-        robot_vis = manager.createRobotModelVisualizer( "Robot Model", False )
-        robot_vis.setRobotDescription( "robotdesc/pr2" )
-        
-        manager.createRobotBase2DPoseVisualizer( "2D Pose: Odom", True )
-        localized_pose = manager.createRobotBase2DPoseVisualizer("2D Pose: Localized", True)
-        localized_pose.setTopic("localizedpose")
-        localized_pose.setColor(ogre_visualizer.Color(0.0, 0.1, 0.8))
-        
-        manager.createMapVisualizer("Map", True)
-        
-        planning = manager.createPlanningVisualizer( "Planning", False )
-        planning.initialize( "robotdesc/pr2", "display_kinematic_path" )
-        
-        point_cloud = manager.createPointCloudVisualizer( "Stereo Full Cloud", True )
-        point_cloud.setTopic("videre/cloud")
-        point_cloud.setColor(ogre_visualizer.Color(1.0, 1.0, 1.0))
-        
-        point_cloud = manager.createPointCloudVisualizer( "Head Full Cloud", True )
-        point_cloud.setTopic( "full_cloud" )
-        point_cloud.setColor(ogre_visualizer.Color(1.0, 1.0, 0.0))
-        
-        point_cloud = manager.createPointCloudVisualizer( "World 3D Map", True )
-        point_cloud.setTopic( "world_3d_map" )
-        point_cloud.setColor(ogre_visualizer.Color(1.0, 0.0, 0.0))
-        point_cloud.setBillboardSize( 0.01 )
-        
-        laser_scan = manager.createLaserScanVisualizer( "Head Scan", True )
-        laser_scan.setScanTopic( "tilt_scan" )
-        laser_scan.setColor(ogre_visualizer.Color(1.0, 0.0, 0.0))
-        laser_scan.setDecayTime( 30.0 )
-        
-        laser_scan = manager.createLaserScanVisualizer( "Floor Scan", True )
-        laser_scan.setScanTopic( "base_scan" )
-        laser_scan.setColor(ogre_visualizer.Color(0.0, 1.0, 0.0))
-        laser_scan.setDecayTime( 0.0 )
-        
-        manager.createParticleCloud2DVisualizer( "Localization Cloud", True )
-        polyline = manager.createPolyLine2DVisualizer( "Global Path", True )
-        polyline.setTopic( "gui_path" )
-        polyline.setZPosition( 0.003 )
-        polyline.setRenderOperation( ogre_visualizer.Lines )
-        polyline = manager.createPolyLine2DVisualizer( "Local Path", True )
-        polyline.setTopic( "local_path" )
-        polyline.setZPosition( 0.003 )
-        polyline.setRenderOperation( ogre_visualizer.Lines )
-        polyline = manager.createPolyLine2DVisualizer( "Robot Footprint", True )
-        polyline.setTopic( "robot_footprint" )
-        polyline.setZPosition( 0.001 )
-        polyline.setRenderOperation( ogre_visualizer.Lines )
-        polyline = manager.createPolyLine2DVisualizer( "Laser Accum", True )
-        polyline.setTopic( "gui_laser" )
-        polyline.setZPosition( 0.002 )
-        polyline.setRenderOperation( ogre_visualizer.Points )
-        polyline = manager.createPolyLine2DVisualizer( "Raw Obstacles", True )
-        polyline.setTopic( "raw_obstacles" )
-        polyline.setZPosition( 0.001 )
-        polyline.setAlpha( 0.5 )
-        polyline.setRenderOperation( ogre_visualizer.Points )
-        polyline = manager.createPolyLine2DVisualizer( "Inflated Obstacles", True )
-        polyline.setTopic( "inflated_obstacles" )
-        polyline.setAlpha( 0.5 )
-        polyline.setRenderOperation( ogre_visualizer.Points )
-        
-        manager.createOctreeVisualizer( "Octree", True ).setOctreeTopic( "full_octree" )
         
         # Load our window options
         (x, y) = self.GetPositionTuple()
@@ -131,6 +70,126 @@ class VisualizerFrame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.on_close)
         
     def on_close(self, event):
+        self.save_config()
+        self.Destroy()
+        
+    def load_config_from_path(self, path):
+        manager = self._visualizer_panel.getManager()
+        manager.removeAllVisualizers()
+        config = wx.FileConfig(localFilename=path)
+        manager.loadConfig(config)
+        
+    def on_open(self, event):
+        dialog = wx.FileDialog(self, "Choose a file to open", self._save_location, wildcard="*."+self._CONFIG_EXTENSION, style=wx.FD_OPEN)
+        if dialog.ShowModal() == wx.ID_OK:
+            path = dialog.GetPath()
+            self.load_config_from_path(path)
+    
+    def on_save(self, event):
+        dialog = wx.FileDialog(self, "Choose a file to save to", self._save_location, wildcard="*."+self._CONFIG_EXTENSION, style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
+        if dialog.ShowModal() == wx.ID_OK:
+            path = dialog.GetPath()
+            if (not path.endswith("."+self._CONFIG_EXTENSION)):
+                path += "."+self._CONFIG_EXTENSION
+                
+            manager = self._visualizer_panel.getManager()
+            config = wx.FileConfig(localFilename=path)
+            config.DeleteAll()
+            manager.saveConfig(config)
+            config.Flush()
+            
+            self.load_config_menus()
+            
+    def on_global_config(self, event):
+        item = self._menubar.FindItemById(event.GetId())
+        filename = item.GetItemLabelText();
+        #for some reason all underscores get doubled up
+        filename = filename.replace('__', '_')
+        path = os.path.join(self._global_config_path, filename + "." + self._CONFIG_EXTENSION)
+        self.load_config_from_path(path)
+        
+    def on_local_config(self, event):
+        item = self._menubar.FindItemById(event.GetId())
+        filename = item.GetItemLabelText();
+        #for some reason all underscores get doubled up
+        filename = filename.replace('__', '_')
+        path = os.path.join(self._save_location, filename + "." + self._CONFIG_EXTENSION)
+        self.load_config_from_path(path)
+        
+    def load_config_menus(self):
+        #first clear the menus
+        items = self._local_configs_menu.GetMenuItems()
+        for item in items:
+            self._local_configs_menu.DestroyItem(item)
+            
+        items = self._global_configs_menu.GetMenuItems()
+        for item in items:
+            self._global_configs_menu.DestroyItem(item)
+
+        wildcard = os.path.join(self._save_location, "*."+self._CONFIG_EXTENSION)
+        files = glob.glob(wildcard)
+        for file in files:
+            option = os.path.basename(file)
+            # strip off extension
+            option = option[:len(option)-4]
+            item = self._local_configs_menu.Append(wx.ID_ANY, option)
+            self.Bind(wx.EVT_MENU, self.on_local_config, item)
+        
+        wildcard = os.path.join(self._global_config_path, "*."+self._CONFIG_EXTENSION)
+        files = glob.glob(wildcard)
+        for file in files:
+            option = os.path.basename(file)
+            # strip off extension
+            option = option[:len(option)-4]
+            item = self._global_configs_menu.Append(wx.ID_ANY, option)
+            self.Bind(wx.EVT_MENU, self.on_global_config, item)
+        
+    def init_menu(self):
+        self._menubar = wx.MenuBar()
+        
+        self._filemenu = wx.Menu("")
+        item = self._filemenu.Append(wx.ID_OPEN, "&Open Config\tCtrl-O")
+        self.Bind(wx.EVT_MENU, self.on_open, item)
+        item = self._filemenu.Append(wx.ID_SAVE, "&Save Config\tCtrl-S")
+        self.Bind(wx.EVT_MENU, self.on_save, item)
+        
+        self._local_configs_menu = wx.Menu("")
+        self._global_configs_menu = wx.Menu("")
+        
+        self._filemenu.AppendMenu(wx.ID_ANY, "&Local Configs", self._local_configs_menu)
+        self._filemenu.AppendMenu(wx.ID_ANY, "&Global Configs", self._global_configs_menu)
+        
+        self._filemenu.AppendSeparator()
+        item = self._filemenu.Append(wx.ID_EXIT, "&Quit")
+        self.Bind(wx.EVT_MENU, self.on_close, item)
+        
+        self._menubar.Append(self._filemenu, "&File")
+        self.SetMenuBar(self._menubar)
+        
+        self.load_config_menus()
+        
+    def init_config(self):
+        config_dir = wx.StandardPaths.Get().GetUserDataDir()
+        config_file = os.path.join(config_dir, 'config')
+        # legacy case: copy the old config to the new location
+        if os.path.isfile(config_dir):
+            print("Migrating old config file to new location (%s to %s)"%(config_dir, config_file))
+            backup_file = config_dir + "bak"
+            shutil.move(config_dir, backup_file)
+            os.mkdir(config_dir)
+            shutil.move(backup_file, config_file)
+        elif not os.path.exists(config_dir):
+            os.mkdir(config_dir)
+        
+        self._config = wx.FileConfig(localFilename=config_file)
+        self._config_dir = config_dir
+        self._config_file = config_file
+        self._save_location = os.path.join(config_dir, "saved")
+        
+        if not os.path.exists(self._save_location):
+            os.mkdir(self._save_location)
+        
+    def save_config(self):
         self._config.DeleteAll()
         
         (x, y) = self.GetPositionTuple()
@@ -141,10 +200,11 @@ class VisualizerFrame(wx.Frame):
         self._config.WriteInt(self._CONFIG_WINDOW_HEIGHT, height)
         
         self._visualizer_panel.getManager().saveConfig(self._config)
-        self.Destroy()
+        self._config.Flush()
 
 class VisualizerApp(wx.App):
     def OnInit(self):
+        self.SetAppName("standalone_visualizer")
         frame = VisualizerFrame(None, wx.ID_ANY, "Standalone Visualizer", wx.DefaultPosition, wx.Size( 800, 600 ) )
         frame.Show(True)
         return True

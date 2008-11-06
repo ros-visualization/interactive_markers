@@ -134,4 +134,9 @@ void GridVisualizer::createProperties()
                                                                       boost::bind( &GridVisualizer::setColor, this, _1 ), parent_category_, this );
 }
 
+const char* GridVisualizer::getDescription()
+{
+  return "Displays a grid along the ground plane, centered at the origin of the target frame of reference.";
+}
+
 } // namespace ogre_vis

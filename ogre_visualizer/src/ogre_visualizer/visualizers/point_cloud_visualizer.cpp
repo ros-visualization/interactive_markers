@@ -403,4 +403,9 @@ void PointCloudVisualizer::reset()
   cloud_->clear();
 }
 
+const char* PointCloudVisualizer::getDescription()
+{
+  return "Displays a point cloud from a std_msgs::PointCloud message.  Each message received clears the previous points.  More efficient than LaserScanVisualizer.";
+}
+
 } // namespace ogre_vis

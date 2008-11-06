@@ -83,6 +83,7 @@ class VisualizationPanel;
 class PropertyManager;
 class StringProperty;
 class DoubleProperty;
+class CategoryProperty;
 
 class VisualizerBase;
 class VisualizerFactory;
@@ -90,6 +91,17 @@ class VisualizerFactory;
 class Tool;
 
 typedef boost::signal<void (VisualizerBase*)> VisualizerSignal;
+
+struct VisualizerInfo
+{
+  VisualizerInfo()
+  : visualizer_(NULL)
+  {}
+  VisualizerBase* visualizer_;
+  CategoryProperty* category_;
+  uint32_t index_;
+};
+typedef std::vector< VisualizerInfo* > V_VisualizerInfo;
 
 class VisualizationManager : public wxEvtHandler
 {
@@ -112,7 +124,7 @@ public:
    * @return A pointer to the new visualizer
    */
   template< class T >
-  T* createVisualizer( const std::string& name, bool enabled, bool allow_deletion = false )
+  T* createVisualizer( const std::string& name, bool enabled )
   {
     VisualizerBase* current_vis = getVisualizer( name );
     if ( current_vis )
@@ -121,7 +133,7 @@ public:
     }
 
     T* visualizer = new T( name, this );
-    addVisualizer( visualizer, allow_deletion, enabled );
+    addVisualizer( visualizer, enabled );
 
     return visualizer;
   }
@@ -133,7 +145,7 @@ public:
    * @param enabled Whether to start enabled
    * @return A pointer to the new visualizer
    */
-  VisualizerBase* createVisualizer( const std::string& type, const std::string& name, bool enabled, bool allow_deletion = false );
+  VisualizerBase* createVisualizer( const std::string& type, const std::string& name, bool enabled );
 
   /**
    * \brief Remove a visualizer
@@ -145,6 +157,10 @@ public:
    * @param name The name of the visualizer to remove
    */
   void removeVisualizer( const std::string& name );
+  /**
+   * \brief Remove all visualizers
+   */
+  void removeAllVisualizers();
 
   template< class T >
   T* createTool( const std::string& name, char shortcut_key )
@@ -179,7 +195,7 @@ public:
    * @param factory The factory which will create this type of visualizer
    * @return Whether or not the registration succeeded.  The only failure condition is a non-unique type.
    */
-  bool registerFactory( const std::string& type, VisualizerFactory* factory );
+  bool registerFactory( const std::string& type, const std::string& description, VisualizerFactory* factory );
 
   /**
    * \brief Set the coordinate frame we should be displaying in
@@ -210,14 +226,13 @@ public:
 
   PropertyManager* getPropertyManager() { return property_manager_; }
 
-  bool isDeletionAllowed( VisualizerBase* visualizer );
   bool isValidVisualizer( VisualizerBase* visualizer );
 
   ros::node* getROSNode() { return ros_node_; }
   tf::TransformListener* getTFClient() { return tf_; }
   Ogre::SceneManager* getSceneManager() { return scene_manager_; }
 
-  void getRegisteredTypes( std::vector<std::string>& types );
+  void getRegisteredTypes( std::vector<std::string>& types, std::vector<std::string>& descriptions );
 
   VisualizerSignal& getVisualizerStateSignal() { return visualizer_state_; }
 
@@ -234,19 +249,21 @@ public:
 
   void handleChar( wxKeyEvent& event );
 
+  /**
+   * \brief Performs a linear search to find a VisualizerInfo struct based on the visualizer contained inside it
+   * @param visualizer The visualizer to find the info for
+   */
+  VisualizerInfo* getVisualizerInfo( const VisualizerBase* visualizer );
+  void moveVisualizerUp( VisualizerBase* visualizer );
+  void moveVisualizerDown( VisualizerBase* visualizer );
+  void resetVisualizerIndices();
+
 protected:
   /**
    * \brief Add a visualizer to be managed by this panel
    * @param visualizer The visualizer to be added
    */
-  void addVisualizer( VisualizerBase* visualizer, bool allow_deletion, bool enabled );
-
-  /**
-   * \brief Performs a linear search to find a VisualizerInfo struct based on the visualizer contained inside it
-   * @param visualizer The visualizer to find the info for
-   */
-  struct VisualizerInfo;
-  VisualizerInfo* getVisualizerInfo( const VisualizerBase* visualizer );
+  void addVisualizer( VisualizerBase* visualizer, bool enabled );
 
   /// Called from the update timer
   void onUpdate( wxTimerEvent& event );
@@ -264,19 +281,23 @@ protected:
   ros::node* ros_node_;                                   ///< Our ros::node
   tf::TransformListener* tf_;                             ///< Our rosTF client
 
-  struct VisualizerInfo
-  {
-    VisualizerInfo()
-    : visualizer_(NULL)
-    , allow_deletion_(false)
-    {}
-    VisualizerBase* visualizer_;
-    bool allow_deletion_;
-  };
-  typedef std::vector< VisualizerInfo > V_VisualizerInfo;
+
   V_VisualizerInfo visualizers_;                          ///< Our list of visualizers
-  typedef std::map<std::string, VisualizerFactory*> M_Factory;
-  M_Factory factories_;                                   ///< Factories by visualizer type name
+
+  struct FactoryInfo
+  {
+    FactoryInfo(const std::string& name, const std::string& description, VisualizerFactory* factory)
+    : name_( name )
+    , description_( description )
+    , factory_( factory )
+    {}
+
+    std::string name_;
+    std::string description_;
+    VisualizerFactory* factory_;
+  };
+  typedef std::map<std::string, FactoryInfo> M_FactoryInfo;
+  M_FactoryInfo factories_;                                   ///< Factories by visualizer type name
 
   typedef std::vector< Tool* > V_Tool;
   V_Tool tools_;

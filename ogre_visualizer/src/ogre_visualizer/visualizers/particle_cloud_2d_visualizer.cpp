@@ -298,5 +298,10 @@ void ParticleCloud2DVisualizer::reset()
   clear();
 }
 
+const char* ParticleCloud2DVisualizer::getDescription()
+{
+  return "Displays the poses from a std_msgs::ParticleCloud2D message as a cloud of arrows on the ground plane.";
+}
+
 } // namespace ogre_vis
 

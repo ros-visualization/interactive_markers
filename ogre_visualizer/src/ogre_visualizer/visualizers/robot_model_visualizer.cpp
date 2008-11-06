@@ -260,5 +260,10 @@ void RobotModelVisualizer::reset()
   has_new_transforms_ = true;
 }
 
+const char* RobotModelVisualizer::getDescription()
+{
+  return "Displays a visual representation of a robot in the correct pose (as defined by the current TF transforms).";
+}
+
 } // namespace ogre_vis
 

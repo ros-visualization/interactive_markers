@@ -447,5 +447,10 @@ void TFVisualizer::reset()
   clear();
 }
 
+const char* TFVisualizer::getDescription()
+{
+  return "Displays the TF transform hierarchy.";
+}
+
 } // namespace ogre_vis
 

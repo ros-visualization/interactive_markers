@@ -120,6 +120,7 @@ public:
 
   static const char* getTypeStatic() { return "Planning"; }
   virtual const char* getType() { return getTypeStatic(); }
+  static const char* getDescription();
 
 
 protected:

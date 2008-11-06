@@ -101,6 +101,7 @@ public:
 
   static const char* getTypeStatic() { return "Grid"; }
   virtual const char* getType() { return getTypeStatic(); }
+  static const char* getDescription();
 
 protected:
   /**

@@ -122,6 +122,7 @@ public:
 
   static const char* getTypeStatic() { return "TF"; }
   virtual const char* getType() { return getTypeStatic(); }
+  static const char* getDescription();
 
 protected:
   void updateFrames();

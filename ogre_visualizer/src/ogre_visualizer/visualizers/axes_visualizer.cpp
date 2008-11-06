@@ -119,4 +119,9 @@ void AxesVisualizer::createProperties()
   radius_property_->setMin( 0.0001 );
 }
 
+const char* AxesVisualizer::getDescription()
+{
+  return "Displays a set of Axes at the origin of the target frame of reference.";
+}
+
 } // namespace ogre_vis

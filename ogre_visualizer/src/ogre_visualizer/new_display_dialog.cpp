@@ -34,8 +34,9 @@
 namespace ogre_vis
 {
 
-NewDisplayDialog::NewDisplayDialog( wxWindow* parent, const V_string& types )
+NewDisplayDialog::NewDisplayDialog( wxWindow* parent, const V_string& types, const V_string& descriptions )
 : NewDisplayDialogGenerated( parent )
+, descriptions_( descriptions )
 {
   V_string::const_iterator it = types.begin();
   V_string::const_iterator end = types.end();
@@ -43,6 +44,22 @@ NewDisplayDialog::NewDisplayDialog( wxWindow* parent, const V_string& types )
   {
     types_->Append( wxString::FromAscii( it->c_str() ) );
   }
+}
+
+void NewDisplayDialog::onDisplaySelected( wxCommandEvent& event )
+{
+  type_description_->SetValue( wxString::FromAscii( descriptions_[types_->GetSelection()].c_str() ) );
+}
+
+void NewDisplayDialog::onDisplayDClick( wxCommandEvent& event )
+{
+  if ( name_->GetValue().IsEmpty() )
+  {
+    wxMessageBox( wxT("You must enter a name!"), wxT("No name"), wxICON_ERROR | wxOK, this );
+    return;
+  }
+
+  EndModal(wxOK);
 }
 
 void NewDisplayDialog::onOK( wxCommandEvent& event )

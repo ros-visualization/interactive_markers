@@ -105,7 +105,7 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
 
   property_manager_ = new PropertyManager( vis_panel_->getPropertyGrid() );
 
-  CategoryProperty* time_category = property_manager_->createCategory( "Time", "", NULL );
+  CategoryProperty* time_category = property_manager_->createCategory( ".Time", "", NULL );
   wall_clock_property_ = property_manager_->createProperty<DoubleProperty>( "Wall Clock Time", "", boost::bind( &VisualizationManager::getWallClock, this ),
                                                                                     DoubleProperty::Setter(), time_category );
   ros_time_property_ = property_manager_->createProperty<DoubleProperty>( "ROSTime Time", "", boost::bind( &VisualizationManager::getROSTime, this ),
@@ -114,12 +114,15 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
                                                                                     DoubleProperty::Setter(), time_category );
   ros_time_elapsed_property_ = property_manager_->createProperty<DoubleProperty>( "ROSTime Elapsed Time", "", boost::bind( &VisualizationManager::getROSTimeElapsed, this ),
                                                                                    DoubleProperty::Setter(), time_category );
+  time_category->collapse();
 
-  CategoryProperty* options_category = property_manager_->createCategory( "Global Options", "", NULL );
+  CategoryProperty* options_category = property_manager_->createCategory( ".Global Options", "", NULL );
   target_frame_property_ = property_manager_->createProperty<StringProperty>( "Target Frame", "", boost::bind( &VisualizationManager::getTargetFrame, this ),
                                                                               boost::bind( &VisualizationManager::setTargetFrame, this, _1 ), options_category );
   fixed_frame_property_ = property_manager_->createProperty<StringProperty>( "Fixed Frame", "", boost::bind( &VisualizationManager::getFixedFrame, this ),
                                                                                 boost::bind( &VisualizationManager::setFixedFrame, this, _1 ), options_category );
+
+  options_category->collapse();
 
   setTargetFrame( "base" );
   setFixedFrame( "map" );
@@ -140,16 +143,18 @@ VisualizationManager::~VisualizationManager()
   V_VisualizerInfo::iterator vis_end = visualizers_.end();
   for ( ; vis_it != vis_end; ++vis_it )
   {
-    VisualizerBase* visualizer = vis_it->visualizer_;
+    VisualizerBase* visualizer = (*vis_it)->visualizer_;
     delete visualizer;
+
+    delete *vis_it;
   }
   visualizers_.clear();
 
-  M_Factory::iterator factory_it = factories_.begin();
-  M_Factory::iterator factory_end = factories_.end();
+  M_FactoryInfo::iterator factory_it = factories_.begin();
+  M_FactoryInfo::iterator factory_end = factories_.end();
   for ( ; factory_it != factory_end; ++factory_it )
   {
-    delete factory_it->second;
+    delete factory_it->second.factory_;
   }
   factories_.clear();
 
@@ -183,17 +188,17 @@ void VisualizationManager::initialize()
   createTool< PoseTool >( "Set Pose", 'p' );
 }
 
-VisualizationManager::VisualizerInfo* VisualizationManager::getVisualizerInfo( const VisualizerBase* visualizer )
+VisualizerInfo* VisualizationManager::getVisualizerInfo( const VisualizerBase* visualizer )
 {
   V_VisualizerInfo::iterator vis_it = visualizers_.begin();
   V_VisualizerInfo::iterator vis_end = visualizers_.end();
   for ( ; vis_it != vis_end; ++vis_it )
   {
-    VisualizerBase* it_visualizer = vis_it->visualizer_;
+    VisualizerBase* it_visualizer = (*vis_it)->visualizer_;
 
     if ( visualizer == it_visualizer )
     {
-     return &(*vis_it);
+     return *vis_it;
     }
   }
 
@@ -211,7 +216,7 @@ void VisualizationManager::onUpdate( wxTimerEvent& event )
   V_VisualizerInfo::iterator vis_end = visualizers_.end();
   for ( ; vis_it != vis_end; ++vis_it )
   {
-    VisualizerBase* visualizer = vis_it->visualizer_;
+    VisualizerBase* visualizer = (*vis_it)->visualizer_;
 
     if ( visualizer->isEnabled() )
     {
@@ -270,11 +275,18 @@ void VisualizationManager::onUpdate( wxTimerEvent& event )
   }
 }
 
-void VisualizationManager::addVisualizer( VisualizerBase* visualizer, bool allow_deletion, bool enabled )
+std::string getCategoryLabel( VisualizerInfo* info )
 {
-  VisualizerInfo info;
-  info.visualizer_ = visualizer;
-  info.allow_deletion_ = allow_deletion;
+  char buf[1024];
+  snprintf( buf, 1024, "%02d. %s (%s)", info->index_ + 1, info->visualizer_->getName().c_str(), info->visualizer_->getType() );
+  return buf;
+}
+
+void VisualizationManager::addVisualizer( VisualizerBase* visualizer, bool enabled )
+{
+  VisualizerInfo* info = new VisualizerInfo;
+  info->visualizer_ = visualizer;
+  info->index_ = visualizers_.size();
   visualizers_.push_back( info );
 
   visualizer->setRenderCallback( boost::bind( &VisualizationPanel::queueRender, vis_panel_ ) );
@@ -286,15 +298,139 @@ void VisualizationManager::addVisualizer( VisualizerBase* visualizer, bool allow
 
   vis_panel_->getPropertyGrid()->Freeze();
 
-  std::string category_name = visualizer->getName() + " (" + visualizer->getType() + ")";
-  CategoryProperty* category = property_manager_->createCategory( category_name, "", NULL );
-  category->setUserData( visualizer );
+  std::string category_label = getCategoryLabel( info );
+  info->category_ = property_manager_->createCategory( visualizer->getName(), "", NULL );
+  info->category_->setLabel( category_label );
+  info->category_->setUserData( visualizer );
 
   setVisualizerEnabled( visualizer, enabled );
-  visualizer->setPropertyManager( property_manager_, category );
+  visualizer->setPropertyManager( property_manager_, info->category_ );
+
+  vis_panel_->getPropertyGrid()->Sort( vis_panel_->getPropertyGrid()->GetRoot() );
 
   vis_panel_->getPropertyGrid()->Thaw();
   vis_panel_->getPropertyGrid()->Refresh();
+}
+
+void VisualizationManager::resetVisualizerIndices()
+{
+  V_VisualizerInfo::iterator it = visualizers_.begin();
+  V_VisualizerInfo::iterator end = visualizers_.end();
+  for ( uint32_t i = 0; it != end; ++it, ++i )
+  {
+    VisualizerInfo* info = *it;
+
+    info->index_ = i;
+    info->category_->setLabel( getCategoryLabel( info ) );
+  }
+
+  vis_panel_->getPropertyGrid()->Freeze();
+  vis_panel_->getPropertyGrid()->Sort( vis_panel_->getPropertyGrid()->GetRoot() );
+  vis_panel_->getPropertyGrid()->Thaw();
+}
+
+void VisualizationManager::removeVisualizer( VisualizerBase* visualizer )
+{
+  V_VisualizerInfo::iterator it = visualizers_.begin();
+  V_VisualizerInfo::iterator end = visualizers_.end();
+  for ( ; it != end; ++it )
+  {
+    if ( (*it)->visualizer_ == visualizer )
+    {
+      break;
+    }
+  }
+  ROS_ASSERT( it != visualizers_.end() );
+
+  VisualizerInfo* info = *it;
+  visualizers_.erase( it );
+
+  delete info;
+
+  vis_panel_->getPropertyGrid()->Freeze();
+
+  delete visualizer;
+
+  resetVisualizerIndices();
+
+  vis_panel_->getPropertyGrid()->Thaw();
+
+  vis_panel_->queueRender();
+}
+
+void VisualizationManager::removeAllVisualizers()
+{
+  vis_panel_->getPropertyGrid()->Freeze();
+
+  while (!visualizers_.empty())
+  {
+    removeVisualizer(visualizers_.back()->visualizer_);
+  }
+
+  vis_panel_->getPropertyGrid()->Thaw();
+}
+
+void VisualizationManager::removeVisualizer( const std::string& name )
+{
+  VisualizerBase* visualizer = getVisualizer( name );
+
+  if ( !visualizer )
+  {
+    return;
+  }
+
+  removeVisualizer( visualizer );
+}
+
+void VisualizationManager::moveVisualizerUp( VisualizerBase* visualizer )
+{
+  VisualizerInfo* info = getVisualizerInfo( visualizer );
+  ROS_ASSERT( info );
+
+  if ( info->index_ == 0 )
+  {
+    return;
+  }
+
+  VisualizerInfo* other_info = visualizers_[ info->index_ - 1 ];
+  visualizers_[ info->index_ - 1 ] = info;
+  visualizers_[ info->index_ ] = other_info;
+
+  --info->index_;
+  ++other_info->index_;
+
+  info->category_->setLabel( getCategoryLabel( info ) );
+  other_info->category_->setLabel( getCategoryLabel( other_info ) );
+
+  vis_panel_->getPropertyGrid()->Freeze();
+  vis_panel_->getPropertyGrid()->Sort( vis_panel_->getPropertyGrid()->GetRoot() );
+  vis_panel_->getPropertyGrid()->Thaw();
+}
+
+void VisualizationManager::moveVisualizerDown( VisualizerBase* visualizer )
+{
+  VisualizerInfo* info = getVisualizerInfo( visualizer );
+  ROS_ASSERT( info );
+
+  if ( info->index_ == visualizers_.size() - 1 )
+  {
+    return;
+  }
+
+  VisualizerInfo* other_info = visualizers_[ info->index_ + 1 ];
+  visualizers_[ info->index_ + 1 ] = info;
+  visualizers_[ info->index_ ] = other_info;
+
+  ++info->index_;
+  --other_info->index_;
+
+  info->category_->setLabel( getCategoryLabel( info ) );
+  other_info->category_->setLabel( getCategoryLabel( other_info ) );
+
+  vis_panel_->getPropertyGrid()->Freeze();
+  vis_panel_->getPropertyGrid()->Sort( vis_panel_->getPropertyGrid()->GetRoot() );
+  vis_panel_->getPropertyGrid()->Refresh(false);
+  vis_panel_->getPropertyGrid()->Thaw();
 }
 
 void VisualizationManager::resetVisualizers()
@@ -303,7 +439,7 @@ void VisualizationManager::resetVisualizers()
   V_VisualizerInfo::iterator vis_end = visualizers_.end();
   for ( ; vis_it != vis_end; ++vis_it )
   {
-    VisualizerBase* visualizer = vis_it->visualizer_;
+    VisualizerBase* visualizer = (*vis_it)->visualizer_;
 
     visualizer->reset();
   }
@@ -348,7 +484,7 @@ VisualizerBase* VisualizationManager::getVisualizer( const std::string& name )
   V_VisualizerInfo::iterator vis_end = visualizers_.end();
   for ( ; vis_it != vis_end; ++vis_it )
   {
-    VisualizerBase* visualizer = vis_it->visualizer_;
+    VisualizerBase* visualizer = (*vis_it)->visualizer_;
 
     if ( visualizer->getName() == name )
     {
@@ -395,7 +531,7 @@ void VisualizationManager::loadConfig( wxConfigBase* config )
       break;
     }
 
-    createVisualizer( (const char*)vis_type.mb_str(), (const char*)vis_name.mb_str(), false, true );
+    createVisualizer( (const char*)vis_type.mb_str(), (const char*)vis_name.mb_str(), false );
 
     ++i;
   }
@@ -416,7 +552,7 @@ void VisualizationManager::saveConfig( wxConfigBase* config )
   V_VisualizerInfo::iterator vis_end = visualizers_.end();
   for ( ; vis_it != vis_end; ++vis_it, ++i )
   {
-    VisualizerBase* visualizer = vis_it->visualizer_;
+    VisualizerBase* visualizer = (*vis_it)->visualizer_;
 
     wxString type, name;
     type.Printf( wxT("Display%d/Type"), i );
@@ -430,22 +566,22 @@ void VisualizationManager::saveConfig( wxConfigBase* config )
   config->Write( PROPERTY_GRID_CONFIG, vis_panel_->getPropertyGrid()->SaveEditableState() );
 }
 
-bool VisualizationManager::registerFactory( const std::string& type, VisualizerFactory* factory )
+bool VisualizationManager::registerFactory( const std::string& type, const std::string& description, VisualizerFactory* factory )
 {
-  M_Factory::iterator it = factories_.find( type );
+  M_FactoryInfo::iterator it = factories_.find( type );
   if ( it != factories_.end() )
   {
     return false;
   }
 
-  factories_.insert( std::make_pair( type, factory ) );
+  factories_.insert( std::make_pair( type, FactoryInfo( type, description, factory ) ) );
 
   return true;
 }
 
-VisualizerBase* VisualizationManager::createVisualizer( const std::string& type, const std::string& name, bool enabled, bool allow_deletion )
+VisualizerBase* VisualizationManager::createVisualizer( const std::string& type, const std::string& name, bool enabled )
 {
-  M_Factory::iterator it = factories_.find( type );
+  M_FactoryInfo::iterator it = factories_.find( type );
   if ( it == factories_.end() )
   {
     return NULL;
@@ -457,50 +593,12 @@ VisualizerBase* VisualizationManager::createVisualizer( const std::string& type,
     return NULL;
   }
 
-  VisualizerFactory* factory = it->second;
+  VisualizerFactory* factory = it->second.factory_;
   VisualizerBase* visualizer = factory->create( name, this );
 
-  addVisualizer( visualizer, allow_deletion, enabled );
+  addVisualizer( visualizer, enabled );
 
   return visualizer;
-}
-
-void VisualizationManager::removeVisualizer( VisualizerBase* visualizer )
-{
-  V_VisualizerInfo::iterator it = visualizers_.begin();
-  V_VisualizerInfo::iterator end = visualizers_.end();
-  for ( ; it != end; ++it )
-  {
-    if ( it->visualizer_ == visualizer )
-    {
-      break;
-    }
-  }
-  ROS_ASSERT( it != visualizers_.end() );
-
-  if ( !it->allow_deletion_ )
-  {
-    wxMessageBox( wxT("The selected display is part of the default set of displays.  You cannot remove it."), wxT("Cannot remove.") );
-    return;
-  }
-
-  visualizers_.erase( it );
-
-  delete visualizer;
-
-  vis_panel_->queueRender();
-}
-
-void VisualizationManager::removeVisualizer( const std::string& name )
-{
-  VisualizerBase* visualizer = getVisualizer( name );
-
-  if ( !visualizer )
-  {
-    return;
-  }
-
-  removeVisualizer( visualizer );
 }
 
 void VisualizationManager::setTargetFrame( const std::string& frame )
@@ -511,7 +609,7 @@ void VisualizationManager::setTargetFrame( const std::string& frame )
   V_VisualizerInfo::iterator end = visualizers_.end();
   for ( ; it != end; ++it )
   {
-    VisualizerBase* visualizer = it->visualizer_;
+    VisualizerBase* visualizer = (*it)->visualizer_;
 
     visualizer->setTargetFrame(frame);
   }
@@ -533,24 +631,12 @@ void VisualizationManager::setFixedFrame( const std::string& frame )
   V_VisualizerInfo::iterator end = visualizers_.end();
   for ( ; it != end; ++it )
   {
-    VisualizerBase* visualizer = it->visualizer_;
+    VisualizerBase* visualizer = (*it)->visualizer_;
 
     visualizer->setFixedFrame(frame);
   }
 
   fixed_frame_property_->changed();
-}
-
-bool VisualizationManager::isDeletionAllowed( VisualizerBase* visualizer )
-{
-  VisualizerInfo* info = getVisualizerInfo( visualizer );
-
-  if ( info )
-  {
-    return info->allow_deletion_;
-  }
-
-  return false;
 }
 
 bool VisualizationManager::isValidVisualizer( VisualizerBase* visualizer )
@@ -559,13 +645,14 @@ bool VisualizationManager::isValidVisualizer( VisualizerBase* visualizer )
   return info != NULL;
 }
 
-void VisualizationManager::getRegisteredTypes( std::vector<std::string>& types )
+void VisualizationManager::getRegisteredTypes( std::vector<std::string>& types, std::vector<std::string>& descriptions )
 {
-  M_Factory::iterator it = factories_.begin();
-  M_Factory::iterator end = factories_.end();
+  M_FactoryInfo::iterator it = factories_.begin();
+  M_FactoryInfo::iterator end = factories_.end();
   for ( ; it != end; ++it )
   {
     types.push_back( it->first );
+    descriptions.push_back( it->second.description_ );
   }
 }
 

@@ -42,14 +42,28 @@ VisualizationPanelGenerated::VisualizationPanelGenerated( wxWindow* parent, wxWi
 	bSizer7 = new wxBoxSizer( wxHORIZONTAL );
 	
 	new_display_ = new wxButton( displays_panel_, wxID_ANY, wxT("Add"), wxDefaultPosition, wxDefaultSize, 0 );
-	new_display_->SetToolTip( wxT("Add a new display.") );
+	new_display_->SetToolTip( wxT("Add a new display") );
 	
 	bSizer7->Add( new_display_, 0, wxALL, 5 );
 	
 	delete_display_ = new wxButton( displays_panel_, wxID_ANY, wxT("Remove"), wxDefaultPosition, wxDefaultSize, 0 );
-	delete_display_->SetToolTip( wxT("Remove the selected display.  Displays with a '*' next to them are defaults, and cannot be removed.") );
+	delete_display_->SetToolTip( wxT("Remove the selected display") );
 	
 	bSizer7->Add( delete_display_, 0, wxALL, 5 );
+	
+	down_button_ = new wxBitmapButton( displays_panel_, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize, wxBU_AUTODRAW );
+	down_button_->SetToolTip( wxT("Move a display down in the list") );
+	
+	down_button_->SetToolTip( wxT("Move a display down in the list") );
+	
+	bSizer7->Add( down_button_, 0, wxALL, 5 );
+	
+	up_button_ = new wxBitmapButton( displays_panel_, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize, wxBU_AUTODRAW );
+	up_button_->SetToolTip( wxT("Move a display up in the list") );
+	
+	up_button_->SetToolTip( wxT("Move a display up in the list") );
+	
+	bSizer7->Add( up_button_, 0, wxALL, 5 );
 	
 	bSizer8->Add( bSizer7, 0, wxEXPAND, 5 );
 	
@@ -84,7 +98,7 @@ VisualizationPanelGenerated::VisualizationPanelGenerated( wxWindow* parent, wxWi
 	render_panel_->SetSizer( render_sizer_ );
 	render_panel_->Layout();
 	render_sizer_->Fit( render_panel_ );
-	main_splitter_->SplitVertically( m_panel3, render_panel_, 265 );
+	main_splitter_->SplitVertically( m_panel3, render_panel_, 304 );
 	bSizer23->Add( main_splitter_, 1, wxEXPAND, 5 );
 	
 	this->SetSizer( bSizer23 );
@@ -93,6 +107,8 @@ VisualizationPanelGenerated::VisualizationPanelGenerated( wxWindow* parent, wxWi
 	// Connect Events
 	new_display_->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( VisualizationPanelGenerated::onNewDisplay ), NULL, this );
 	delete_display_->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( VisualizationPanelGenerated::onDeleteDisplay ), NULL, this );
+	down_button_->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( VisualizationPanelGenerated::onMoveDown ), NULL, this );
+	up_button_->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( VisualizationPanelGenerated::onMoveUp ), NULL, this );
 	views_->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( VisualizationPanelGenerated::onViewSelected ), NULL, this );
 }
 
@@ -101,6 +117,8 @@ VisualizationPanelGenerated::~VisualizationPanelGenerated()
 	// Disconnect Events
 	new_display_->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( VisualizationPanelGenerated::onNewDisplay ), NULL, this );
 	delete_display_->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( VisualizationPanelGenerated::onDeleteDisplay ), NULL, this );
+	down_button_->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( VisualizationPanelGenerated::onMoveDown ), NULL, this );
+	up_button_->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( VisualizationPanelGenerated::onMoveUp ), NULL, this );
 	views_->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( VisualizationPanelGenerated::onViewSelected ), NULL, this );
 }
 
@@ -116,6 +134,15 @@ NewDisplayDialogGenerated::NewDisplayDialogGenerated( wxWindow* parent, wxWindow
 	
 	types_ = new wxListBox( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
 	sbSizer1->Add( types_, 1, wxALL|wxEXPAND, 5 );
+	
+	m_staticText2 = new wxStaticText( this, wxID_ANY, wxT("Description:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText2->Wrap( -1 );
+	sbSizer1->Add( m_staticText2, 0, wxALL, 5 );
+	
+	type_description_ = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY|wxTE_WORDWRAP );
+	type_description_->SetMinSize( wxSize( -1,100 ) );
+	
+	sbSizer1->Add( type_description_, 0, wxALL|wxEXPAND, 5 );
 	
 	bSizer8->Add( sbSizer1, 1, wxEXPAND, 5 );
 	
@@ -139,6 +166,8 @@ NewDisplayDialogGenerated::NewDisplayDialogGenerated( wxWindow* parent, wxWindow
 	this->Layout();
 	
 	// Connect Events
+	types_->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( NewDisplayDialogGenerated::onDisplaySelected ), NULL, this );
+	types_->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( NewDisplayDialogGenerated::onDisplayDClick ), NULL, this );
 	name_->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( NewDisplayDialogGenerated::onNameEnter ), NULL, this );
 	m_sdbSizer1Cancel->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( NewDisplayDialogGenerated::onCancel ), NULL, this );
 	m_sdbSizer1OK->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( NewDisplayDialogGenerated::onOK ), NULL, this );
@@ -147,6 +176,8 @@ NewDisplayDialogGenerated::NewDisplayDialogGenerated( wxWindow* parent, wxWindow
 NewDisplayDialogGenerated::~NewDisplayDialogGenerated()
 {
 	// Disconnect Events
+	types_->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( NewDisplayDialogGenerated::onDisplaySelected ), NULL, this );
+	types_->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( NewDisplayDialogGenerated::onDisplayDClick ), NULL, this );
 	name_->Disconnect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( NewDisplayDialogGenerated::onNameEnter ), NULL, this );
 	m_sdbSizer1Cancel->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( NewDisplayDialogGenerated::onCancel ), NULL, this );
 	m_sdbSizer1OK->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( NewDisplayDialogGenerated::onOK ), NULL, this );

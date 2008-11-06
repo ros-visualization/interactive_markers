@@ -42,6 +42,7 @@
 
 #include <wx/propgrid/propgrid.h>
 #include <wx/confbase.h>
+#include <wx/artprov.h>
 
 #include <boost/bind.hpp>
 
@@ -113,8 +114,6 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent )
   property_grid_->SetCaptionBackgroundColour( wxColour( 2, 0, 174 ) );
   property_grid_->SetCaptionForegroundColour( *wxLIGHT_GREY );
 
-  delete_display_->Enable( false );
-
   manager_ = new VisualizationManager( this );
   manager_->initialize();
   manager_->getVisualizerStateSignal().connect( boost::bind( &VisualizationPanel::onVisualizerStateChanged, this, _1 ) );
@@ -139,6 +138,9 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent )
   render_panel_->getViewport()->setCamera( current_camera_->getOgreCamera() );
 
   tools_->Connect( wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( VisualizationPanel::onToolClicked ), NULL, this );
+
+  up_button_->SetBitmapLabel( wxArtProvider::GetIcon( wxART_GO_UP, wxART_OTHER, wxSize(16,16) ) );
+  down_button_->SetBitmapLabel( wxArtProvider::GetIcon( wxART_GO_DOWN, wxART_OTHER, wxSize(16,16) ) );
 }
 
 VisualizationPanel::~VisualizationPanel()
@@ -284,9 +286,9 @@ void VisualizationPanel::onPropertyChanged( wxPropertyGridEvent& event )
 
 void VisualizationPanel::onPropertySelected( wxPropertyGridEvent& event )
 {
-  delete_display_->Enable( false );
-
   wxPGProperty* pg_property = event.GetProperty();
+
+  selected_visualizer_ = NULL;
 
   if ( !pg_property )
   {
@@ -306,11 +308,6 @@ void VisualizationPanel::onPropertySelected( wxPropertyGridEvent& event )
       if ( manager_->isValidVisualizer( visualizer ) )
       {
         selected_visualizer_ = visualizer;
-
-        if ( manager_->isDeletionAllowed( visualizer ) )
-        {
-          delete_display_->Enable( true );
-        }
       }
     }
   }
@@ -341,10 +338,11 @@ void VisualizationPanel::onRenderWindowMouseEvents( wxMouseEvent& event )
 
 void VisualizationPanel::onNewDisplay( wxCommandEvent& event )
 {
-  std::vector<std::string> types;
-  manager_->getRegisteredTypes( types );
+  V_string types;
+  V_string descriptions;
+  manager_->getRegisteredTypes( types, descriptions );
 
-  NewDisplayDialog dialog( this, types );
+  NewDisplayDialog dialog( this, types, descriptions );
   while (1)
   {
     if ( dialog.ShowModal() == wxOK )
@@ -358,7 +356,7 @@ void VisualizationPanel::onNewDisplay( wxCommandEvent& event )
         continue;
       }
 
-      VisualizerBase* visualizer = manager_->createVisualizer( type, name, true, true );
+      VisualizerBase* visualizer = manager_->createVisualizer( type, name, true );
       ROS_ASSERT(visualizer);
       (void)visualizer;
 
@@ -382,15 +380,35 @@ void VisualizationPanel::onDeleteDisplay( wxCommandEvent& event )
   selected_visualizer_ = NULL;
 }
 
+void VisualizationPanel::onMoveUp( wxCommandEvent& event )
+{
+  if ( selected_visualizer_ )
+  {
+    manager_->moveVisualizerUp( selected_visualizer_ );
+  }
+}
+
+void VisualizationPanel::onMoveDown( wxCommandEvent& event )
+{
+  if ( selected_visualizer_ )
+  {
+    manager_->moveVisualizerDown( selected_visualizer_ );
+  }
+}
+
 void VisualizationPanel::onVisualizerStateChanged( VisualizerBase* visualizer )
 {
-  std::string category_name = visualizer->getName() + " (" + visualizer->getType() + ")";
-  wxPGProperty* property = property_grid_->GetProperty( wxString::FromAscii( category_name.c_str() ) );
+  VisualizerInfo* info = manager_->getVisualizerInfo( visualizer );
+  ROS_ASSERT( info );
+  wxPGProperty* property = info->category_->getPGProperty();
   ROS_ASSERT( property );
 
-  wxPGCell* cell = new wxPGCell( wxString::FromAscii( category_name.c_str() ), wxNullBitmap, *wxLIGHT_GREY, *wxGREEN );
-  property->SetCell( 0, cell );
-  ROS_ASSERT( cell );
+  wxPGCell* cell = property->GetCell( 0 );
+  if ( !cell )
+  {
+    cell = new wxPGCell( property->GetLabel(), wxNullBitmap, *wxLIGHT_GREY, *wxGREEN );
+    property->SetCell( 0, cell );
+  }
 
   if ( visualizer->isEnabled() )
   {

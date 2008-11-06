@@ -437,4 +437,9 @@ void LaserScanVisualizer::reset()
   clear();
 }
 
+const char* LaserScanVisualizer::getDescription()
+{
+  return "Displays the data from either a std_msgs::PointCloud or std_msgs::LaserScan message, accumulated over a period of time.";
+}
+
 } // namespace ogre_vis

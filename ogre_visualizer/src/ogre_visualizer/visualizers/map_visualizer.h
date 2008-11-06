@@ -80,6 +80,7 @@ public:
 
   static const char* getTypeStatic() { return "Map"; }
   virtual const char* getType() { return getTypeStatic(); }
+  static const char* getDescription();
 
 protected:
   // overrides from VisualizerBase

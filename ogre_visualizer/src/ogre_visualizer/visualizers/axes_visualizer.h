@@ -71,6 +71,7 @@ public:
 
   static const char* getTypeStatic() { return "Axes"; }
   virtual const char* getType() { return getTypeStatic(); }
+  static const char* getDescription();
 
 protected:
   /**

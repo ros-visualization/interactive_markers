@@ -302,6 +302,11 @@ void PlanningVisualizer::createProperties()
                                                                                boost::bind( &PlanningVisualizer::setTopic, this, _1 ), parent_category_, this );
 }
 
+const char* PlanningVisualizer::getDescription()
+{
+  return "Displays a planned path given my a robot_msgs::DisplayKinematicPath message.";
+}
+
 } // namespace ogre_vis
 
 

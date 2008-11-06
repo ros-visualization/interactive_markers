@@ -49,19 +49,19 @@ namespace ogre_vis
 
 void registerFactories(VisualizationManager* manager)
 {
-  manager->registerFactory( GridVisualizer::getTypeStatic(), new VisualizerFactoryImpl<GridVisualizer>() );
-  manager->registerFactory( AxesVisualizer::getTypeStatic(), new VisualizerFactoryImpl<AxesVisualizer>() );
-  manager->registerFactory( PointCloudVisualizer::getTypeStatic(), new VisualizerFactoryImpl<PointCloudVisualizer>() );
-  manager->registerFactory( LaserScanVisualizer::getTypeStatic(), new VisualizerFactoryImpl<LaserScanVisualizer>() );
-  manager->registerFactory( RobotModelVisualizer::getTypeStatic(), new VisualizerFactoryImpl<RobotModelVisualizer>() );
-  manager->registerFactory( MarkerVisualizer::getTypeStatic(), new VisualizerFactoryImpl<MarkerVisualizer>() );
-  manager->registerFactory( OctreeVisualizer::getTypeStatic(), new VisualizerFactoryImpl<OctreeVisualizer>() );
-  manager->registerFactory( PlanningVisualizer::getTypeStatic(), new VisualizerFactoryImpl<PlanningVisualizer>() );
-  manager->registerFactory( RobotBase2DPoseVisualizer::getTypeStatic(), new VisualizerFactoryImpl<RobotBase2DPoseVisualizer>() );
-  manager->registerFactory( ParticleCloud2DVisualizer::getTypeStatic(), new VisualizerFactoryImpl<ParticleCloud2DVisualizer>() );
-  manager->registerFactory( PolyLine2DVisualizer::getTypeStatic(), new VisualizerFactoryImpl<PolyLine2DVisualizer>() );
-  manager->registerFactory( MapVisualizer::getTypeStatic(), new VisualizerFactoryImpl<MapVisualizer>() );
-  manager->registerFactory( TFVisualizer::getTypeStatic(), new VisualizerFactoryImpl<TFVisualizer>() );
+  manager->registerFactory( GridVisualizer::getTypeStatic(), GridVisualizer::getDescription(), new VisualizerFactoryImpl<GridVisualizer>() );
+  manager->registerFactory( AxesVisualizer::getTypeStatic(), AxesVisualizer::getDescription(), new VisualizerFactoryImpl<AxesVisualizer>() );
+  manager->registerFactory( PointCloudVisualizer::getTypeStatic(), PointCloudVisualizer::getDescription(), new VisualizerFactoryImpl<PointCloudVisualizer>() );
+  manager->registerFactory( LaserScanVisualizer::getTypeStatic(), LaserScanVisualizer::getDescription(), new VisualizerFactoryImpl<LaserScanVisualizer>() );
+  manager->registerFactory( RobotModelVisualizer::getTypeStatic(), RobotModelVisualizer::getDescription(), new VisualizerFactoryImpl<RobotModelVisualizer>() );
+  manager->registerFactory( MarkerVisualizer::getTypeStatic(), MarkerVisualizer::getDescription(), new VisualizerFactoryImpl<MarkerVisualizer>() );
+  manager->registerFactory( OctreeVisualizer::getTypeStatic(), OctreeVisualizer::getDescription(), new VisualizerFactoryImpl<OctreeVisualizer>() );
+  manager->registerFactory( PlanningVisualizer::getTypeStatic(), PlanningVisualizer::getDescription(), new VisualizerFactoryImpl<PlanningVisualizer>() );
+  manager->registerFactory( RobotBase2DPoseVisualizer::getTypeStatic(), RobotBase2DPoseVisualizer::getDescription(), new VisualizerFactoryImpl<RobotBase2DPoseVisualizer>() );
+  manager->registerFactory( ParticleCloud2DVisualizer::getTypeStatic(), ParticleCloud2DVisualizer::getDescription(), new VisualizerFactoryImpl<ParticleCloud2DVisualizer>() );
+  manager->registerFactory( PolyLine2DVisualizer::getTypeStatic(), PolyLine2DVisualizer::getDescription(), new VisualizerFactoryImpl<PolyLine2DVisualizer>() );
+  manager->registerFactory( MapVisualizer::getTypeStatic(), MapVisualizer::getDescription(), new VisualizerFactoryImpl<MapVisualizer>() );
+  manager->registerFactory( TFVisualizer::getTypeStatic(), TFVisualizer::getDescription(), new VisualizerFactoryImpl<TFVisualizer>() );
 }
 
 } //namespace ogre_vis

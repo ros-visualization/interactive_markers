@@ -80,6 +80,7 @@ public:
 
   static const char* getTypeStatic() { return "ParticleCloud2D"; }
   virtual const char* getType() { return getTypeStatic(); }
+  static const char* getDescription();
 
 protected:
   void subscribe();

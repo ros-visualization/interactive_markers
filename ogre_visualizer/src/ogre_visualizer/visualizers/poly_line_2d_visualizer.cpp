@@ -403,5 +403,10 @@ void PolyLine2DVisualizer::createProperties()
                                                                                 boost::bind( &PolyLine2DVisualizer::setTopic, this, _1 ), parent_category_, this );
 }
 
+const char* PolyLine2DVisualizer::getDescription()
+{
+  return "Displays data from a std_msgs::Polyline2D message as either points or lines.";
+}
+
 } // namespace ogre_vis
 

@@ -363,6 +363,27 @@ void EnumProperty::loadFromConfig( wxConfigBase* config )
   set( val );
 }
 
+void CategoryProperty::setLabel( const std::string& label )
+{
+  grid_->SetPropertyLabel( property_, wxString::FromAscii( label.c_str() ) );
+
+  wxPGCell* cell = property_->GetCell( 0 );
+  if ( cell )
+  {
+    cell->SetText( wxString::FromAscii( label.c_str() ) );
+  }
+}
+
+void CategoryProperty::expand()
+{
+  grid_->Expand( property_ );
+}
+
+void CategoryProperty::collapse()
+{
+  grid_->Collapse( property_ );
+}
+
 void CategoryProperty::writeToGrid()
 {
   if ( !property_ )

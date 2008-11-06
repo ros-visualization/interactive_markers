@@ -60,10 +60,10 @@ MarkerVisualizer::MarkerVisualizer( const std::string& name, VisualizationManage
 
 MarkerVisualizer::~MarkerVisualizer()
 {
+  unsubscribe();
+
   delete urdf_;
   delete kinematic_model_;
-
-  unsubscribe();
 
   clearMarkers();
 }
@@ -335,6 +335,11 @@ void MarkerVisualizer::fixedFrameChanged()
 void MarkerVisualizer::reset()
 {
   clearMarkers();
+}
+
+const char* MarkerVisualizer::getDescription()
+{
+  return "Displays visualization markers sent over the visualizationMarker topic.";
 }
 
 } // namespace ogre_vis

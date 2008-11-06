@@ -113,6 +113,7 @@ public:
 
   static const char* getTypeStatic() { return "PolyLine2D"; }
   virtual const char* getType() { return getTypeStatic(); }
+  static const char* getDescription();
 
 protected:
   void subscribe();

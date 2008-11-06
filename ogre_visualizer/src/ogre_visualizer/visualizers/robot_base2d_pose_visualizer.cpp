@@ -290,4 +290,9 @@ void RobotBase2DPoseVisualizer::reset()
   clear();
 }
 
+const char* RobotBase2DPoseVisualizer::getDescription()
+{
+  return "Accumulates and displays poses from a std_msgs::RobotBase2DOdom message.";
+}
+
 } // namespace ogre_vis

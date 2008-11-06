@@ -117,6 +117,7 @@ public:
 
   static const char* getTypeStatic() { return "Robot Model"; }
   virtual const char* getType() { return getTypeStatic(); }
+  static const char* getDescription();
 
 protected:
 

@@ -86,6 +86,7 @@ public:
 
   static const char* getTypeStatic() { return "RobotBase2DPose"; }
   virtual const char* getType() { return getTypeStatic(); }
+  static const char* getDescription();
 
 protected:
   void subscribe();

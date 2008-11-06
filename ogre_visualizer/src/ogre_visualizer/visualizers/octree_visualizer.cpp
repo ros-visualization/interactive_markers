@@ -82,6 +82,8 @@ OctreeVisualizer::OctreeVisualizer(const std::string& name, VisualizationManager
 
 OctreeVisualizer::~OctreeVisualizer()
 {
+  unsubscribe();
+
   scene_node_->detachAllObjects();
   scene_manager_->destroySceneNode(scene_node_->getName());
   scene_manager_->destroyManualObject(manual_object_);
@@ -255,6 +257,11 @@ void OctreeVisualizer::createProperties()
 void OctreeVisualizer::reset()
 {
   manual_object_->clear();
+}
+
+const char* OctreeVisualizer::getDescription()
+{
+  return "Displays the data from a scan_utils::OctreeMsg message.";
 }
 
 }
