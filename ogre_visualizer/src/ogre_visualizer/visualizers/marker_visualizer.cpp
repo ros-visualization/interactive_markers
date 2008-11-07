@@ -274,11 +274,13 @@ void MarkerVisualizer::setCommonValues( const std_msgs::VisualizationMarker& mes
   Ogre::Vector3 position( pose.getOrigin().x(), pose.getOrigin().y(), pose.getOrigin().z() );
   robotToOgre( position );
 
-  btScalar yaw, pitch, roll;
-  pose.getBasis().getEulerZYX( yaw, pitch, roll );
+  btQuaternion quat;
+  pose.getBasis().getRotation( quat );
+  Ogre::Quaternion orientation;
+  ogreToRobot( orientation );
+  orientation = Ogre::Quaternion( quat.w(), quat.x(), quat.y(), quat.z() ) * orientation;
+  robotToOgre( orientation );
 
-  Ogre::Matrix3 orientation;
-  orientation.FromEulerAnglesZXY( Ogre::Radian( roll ), Ogre::Radian( pitch ), Ogre::Radian( -yaw) );
   Ogre::Vector3 scale( message.xScale, message.yScale, message.zScale );
   scaleRobotToOgre( scale );
 
