@@ -84,6 +84,8 @@ MapVisualizer::MapVisualizer( const std::string& name, VisualizationManager* man
 MapVisualizer::~MapVisualizer()
 {
   unsubscribe();
+
+  clear();
 }
 
 void MapVisualizer::onEnable()
