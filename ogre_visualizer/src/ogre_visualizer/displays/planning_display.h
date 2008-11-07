@@ -27,10 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_VISUALIZER_PLANNING_VISUALIZER_H
-#define OGRE_VISUALIZER_PLANNING_VISUALIZER_H
+#ifndef OGRE_VISUALIZER_PLANNING_DISPLAY_H
+#define OGRE_VISUALIZER_PLANNING_DISPLAY_H
 
-#include "visualizer_base.h"
+#include "display.h"
 #include <robot_msgs/DisplayKinematicPath.h>
 
 #include <map>
@@ -57,17 +57,17 @@ class ROSTopicStringProperty;
 class Robot;
 
 /**
- * \class PlanningVisualizer
+ * \class PlanningDisplay
  * \brief
  */
-class PlanningVisualizer : public VisualizerBase
+class PlanningDisplay : public Display
 {
 public:
-  PlanningVisualizer( const std::string& name, VisualizationManager* manager );
-  virtual ~PlanningVisualizer();
+  PlanningDisplay( const std::string& name, VisualizationManager* manager );
+  virtual ~PlanningDisplay();
 
   /**
-   * \brief Initializes the visualizer.
+   * \brief Initializes the display.
    * @param description_param The ROS parameter name which contains the robot xml description
    * @param kinematic_path_topic The topic to listen on for a NamedKinematicPath
    */
@@ -111,7 +111,7 @@ public:
 
   virtual void update( float dt );
 
-  // Overrides from VisualizerBase
+  // Overrides from Display
   virtual void targetFrameChanged();
   virtual void fixedFrameChanged() {}
   virtual void createProperties();
@@ -148,7 +148,7 @@ protected:
    */
   void calculateRobotPosition();
 
-  // overrides from VisualizerBase
+  // overrides from Display
   virtual void onEnable();
   virtual void onDisable();
 

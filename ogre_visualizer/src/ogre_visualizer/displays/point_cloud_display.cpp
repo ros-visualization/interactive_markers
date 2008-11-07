@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "point_cloud_visualizer.h"
+#include "point_cloud_display.h"
 #include "common.h"
 #include "ros_topic_property.h"
 #include "properties/property.h"
@@ -45,8 +45,8 @@
 namespace ogre_vis
 {
 
-PointCloudVisualizer::PointCloudVisualizer( const std::string& name, VisualizationManager* manager )
-: VisualizerBase( name, manager )
+PointCloudDisplay::PointCloudDisplay( const std::string& name, VisualizationManager* manager )
+: Display( name, manager )
 , color_( 1.0f, 1.0f, 1.0f )
 , style_( Billboards )
 , billboard_size_( 0.01 )
@@ -62,14 +62,14 @@ PointCloudVisualizer::PointCloudVisualizer( const std::string& name, Visualizati
   setBillboardSize( billboard_size_ );
 }
 
-PointCloudVisualizer::~PointCloudVisualizer()
+PointCloudDisplay::~PointCloudDisplay()
 {
   unsubscribe();
 
   delete cloud_;
 }
 
-void PointCloudVisualizer::setTopic( const std::string& topic )
+void PointCloudDisplay::setTopic( const std::string& topic )
 {
   unsubscribe();
 
@@ -85,7 +85,7 @@ void PointCloudVisualizer::setTopic( const std::string& topic )
   causeRender();
 }
 
-void PointCloudVisualizer::setColor( const Color& color )
+void PointCloudDisplay::setColor( const Color& color )
 {
   color_ = color;
 
@@ -97,7 +97,7 @@ void PointCloudVisualizer::setColor( const Color& color )
   causeRender();
 }
 
-void PointCloudVisualizer::setStyle( int style )
+void PointCloudDisplay::setStyle( int style )
 {
   ROS_ASSERT( style < StyleCount );
 
@@ -118,7 +118,7 @@ void PointCloudVisualizer::setStyle( int style )
   causeRender();
 }
 
-void PointCloudVisualizer::setBillboardSize( float size )
+void PointCloudDisplay::setBillboardSize( float size )
 {
   {
     RenderAutoLock renderLock( this );
@@ -137,13 +137,13 @@ void PointCloudVisualizer::setBillboardSize( float size )
   causeRender();
 }
 
-void PointCloudVisualizer::onEnable()
+void PointCloudDisplay::onEnable()
 {
   cloud_->setCloudVisible( true );
   subscribe();
 }
 
-void PointCloudVisualizer::onDisable()
+void PointCloudDisplay::onDisable()
 {
   unsubscribe();
 
@@ -151,7 +151,7 @@ void PointCloudVisualizer::onDisable()
   cloud_->setCloudVisible( false );
 }
 
-void PointCloudVisualizer::subscribe()
+void PointCloudDisplay::subscribe()
 {
   if ( !isEnabled() )
   {
@@ -160,15 +160,15 @@ void PointCloudVisualizer::subscribe()
 
   if ( !topic_.empty() )
   {
-    ros_node_->subscribe( topic_, message_, &PointCloudVisualizer::incomingCloudCallback, this, 1 );
+    ros_node_->subscribe( topic_, message_, &PointCloudDisplay::incomingCloudCallback, this, 1 );
   }
 }
 
-void PointCloudVisualizer::unsubscribe()
+void PointCloudDisplay::unsubscribe()
 {
   if ( !topic_.empty() )
   {
-    ros_node_->unsubscribe( topic_, &PointCloudVisualizer::incomingCloudCallback, this );
+    ros_node_->unsubscribe( topic_, &PointCloudDisplay::incomingCloudCallback, this );
   }
 }
 
@@ -203,7 +203,7 @@ void transformB( float val, ogre_tools::PointCloud::Point& point, float, float, 
   point.b_ = val;
 }
 
-void PointCloudVisualizer::transformCloud()
+void PointCloudDisplay::transformCloud()
 {
   if ( message_.header.frame_id.empty() )
   {
@@ -355,13 +355,13 @@ void PointCloudVisualizer::transformCloud()
 
 }
 
-void PointCloudVisualizer::incomingCloudCallback()
+void PointCloudDisplay::incomingCloudCallback()
 {
   transformCloud();
 }
 
 #if 0
-void PointCloudVisualizer::targetFrameChanged()
+void PointCloudDisplay::targetFrameChanged()
 {
   message_.lock();
 
@@ -371,41 +371,41 @@ void PointCloudVisualizer::targetFrameChanged()
 }
 #endif
 
-void PointCloudVisualizer::fixedFrameChanged()
+void PointCloudDisplay::fixedFrameChanged()
 {
   RenderAutoLock renderLock( this );
 
   cloud_->clear();
 }
 
-void PointCloudVisualizer::createProperties()
+void PointCloudDisplay::createProperties()
 {
-  style_property_ = property_manager_->createProperty<EnumProperty>( "Style", property_prefix_, boost::bind( &PointCloudVisualizer::getStyle, this ),
-                                                                     boost::bind( &PointCloudVisualizer::setStyle, this, _1 ), parent_category_, this );
+  style_property_ = property_manager_->createProperty<EnumProperty>( "Style", property_prefix_, boost::bind( &PointCloudDisplay::getStyle, this ),
+                                                                     boost::bind( &PointCloudDisplay::setStyle, this, _1 ), parent_category_, this );
   style_property_->addOption( "Billboards", Billboards );
   style_property_->addOption( "Points", Points );
 
-  color_property_ = property_manager_->createProperty<ColorProperty>( "Color", property_prefix_, boost::bind( &PointCloudVisualizer::getColor, this ),
-                                                                        boost::bind( &PointCloudVisualizer::setColor, this, _1 ), parent_category_, this );
+  color_property_ = property_manager_->createProperty<ColorProperty>( "Color", property_prefix_, boost::bind( &PointCloudDisplay::getColor, this ),
+                                                                        boost::bind( &PointCloudDisplay::setColor, this, _1 ), parent_category_, this );
 
-  billboard_size_property_ = property_manager_->createProperty<FloatProperty>( "Billboard Size", property_prefix_, boost::bind( &PointCloudVisualizer::getBillboardSize, this ),
-                                                                                boost::bind( &PointCloudVisualizer::setBillboardSize, this, _1 ), parent_category_, this );
+  billboard_size_property_ = property_manager_->createProperty<FloatProperty>( "Billboard Size", property_prefix_, boost::bind( &PointCloudDisplay::getBillboardSize, this ),
+                                                                                boost::bind( &PointCloudDisplay::setBillboardSize, this, _1 ), parent_category_, this );
   billboard_size_property_->setMin( 0.0001 );
 
-  topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &PointCloudVisualizer::getTopic, this ),
-                                                                              boost::bind( &PointCloudVisualizer::setTopic, this, _1 ), parent_category_, this );
+  topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &PointCloudDisplay::getTopic, this ),
+                                                                              boost::bind( &PointCloudDisplay::setTopic, this, _1 ), parent_category_, this );
 }
 
-void PointCloudVisualizer::reset()
+void PointCloudDisplay::reset()
 {
   RenderAutoLock renderLock( this );
 
   cloud_->clear();
 }
 
-const char* PointCloudVisualizer::getDescription()
+const char* PointCloudDisplay::getDescription()
 {
-  return "Displays a point cloud from a std_msgs::PointCloud message.  Each message received clears the previous points.  More efficient than LaserScanVisualizer.";
+  return "Displays a point cloud from a std_msgs::PointCloud message.  Each message received clears the previous points.  More efficient than LaserScanDisplay.";
 }
 
 } // namespace ogre_vis

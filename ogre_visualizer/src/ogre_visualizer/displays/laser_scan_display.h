@@ -27,10 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_VISUALIZER_LASER_SCAN_VISUALIZER_H
-#define OGRE_VISUALIZER_LASER_SCAN_VISUALIZER_H
+#ifndef OGRE_VISUALIZER_LASER_SCAN_DISPLAY_H
+#define OGRE_VISUALIZER_LASER_SCAN_DISPLAY_H
 
-#include "visualizer_base.h"
+#include "display.h"
 #include "ogre_tools/point_cloud.h"
 #include "helpers/color.h"
 
@@ -56,12 +56,12 @@ class ColorProperty;
 class EnumProperty;
 
 /**
- * \class LaserScanVisualizer
+ * \class LaserScanDisplay
  * \brief Visualizes a laser scan, received either as a std_msgs::LaserScan or std_msgs::PointCloud
  *
- * \todo find out some way to share most of this code with PointCloudVisualizer
+ * \todo find out some way to share most of this code with PointCloudDisplay
  */
-class LaserScanVisualizer : public VisualizerBase
+class LaserScanDisplay : public Display
 {
 public:
   /**
@@ -76,8 +76,8 @@ public:
     StyleCount,
   };
 
-  LaserScanVisualizer( const std::string& name, VisualizationManager* manager );
-  ~LaserScanVisualizer();
+  LaserScanDisplay( const std::string& name, VisualizationManager* manager );
+  ~LaserScanDisplay();
 
   /**
    * \brief Set the PointCloud topic we should listen on
@@ -121,7 +121,7 @@ public:
 
   virtual void update( float dt );
 
-  // Overrides from VisualizerBase
+  // Overrides from Display
   virtual void targetFrameChanged() {}
   virtual void fixedFrameChanged();
   virtual void createProperties();

@@ -28,10 +28,10 @@
  */
 
 
-#ifndef OGRE_VISUALIZER_POLY_LINE_2D_VISUALIZER_H_
-#define OGRE_VISUALIZER_POLY_LINE_2D_VISUALIZER_H_
+#ifndef OGRE_VISUALIZER_POLY_LINE_2D_DISPLAY_H_
+#define OGRE_VISUALIZER_POLY_LINE_2D_DISPLAY_H_
 
-#include "visualizer_base.h"
+#include "display.h"
 #include "helpers/color.h"
 
 #include <std_msgs/Polyline2D.h>
@@ -70,14 +70,14 @@ enum PolyLineRenderOp
 typedef poly_line_render_ops::PolyLineRenderOp PolyLineRenderOp;
 
 /**
- * \class PolyLine2DVisualizer
+ * \class PolyLine2DDisplay
  * \brief Displays a std_msgs::Polyline2D message
  */
-class PolyLine2DVisualizer : public VisualizerBase
+class PolyLine2DDisplay : public Display
 {
 public:
-  PolyLine2DVisualizer( const std::string& name, VisualizationManager* manager );
-  virtual ~PolyLine2DVisualizer();
+  PolyLine2DDisplay( const std::string& name, VisualizationManager* manager );
+  virtual ~PolyLine2DDisplay();
 
   void setTopic( const std::string& topic );
   const std::string& getTopic() { return topic_; }
@@ -103,7 +103,7 @@ public:
   void setAlpha( float alpha );
   float getAlpha() { return alpha_; }
 
-  // Overrides from VisualizerBase
+  // Overrides from Display
   virtual void targetFrameChanged() {}
   virtual void fixedFrameChanged();
   virtual void createProperties();
@@ -123,7 +123,7 @@ protected:
   void incomingMetadataMessage();
   void processMessage();
 
-  // overrides from VisualizerBase
+  // overrides from Display
   virtual void onEnable();
   virtual void onDisable();
 
@@ -158,5 +158,5 @@ protected:
 
 } // namespace ogre_vis
 
-#endif /* OGRE_VISUALIZER_POLY_LINE_2D_VISUALIZER_H_ */
+#endif /* OGRE_VISUALIZER_POLY_LINE_2D_DISPLAY_H_ */
 

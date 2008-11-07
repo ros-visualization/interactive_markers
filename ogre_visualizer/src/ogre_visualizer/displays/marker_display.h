@@ -27,10 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_VISUALIZER_MARKER_VISUALIZER_H
-#define OGRE_VISUALIZER_MARKER_VISUALIZER_H
+#ifndef OGRE_VISUALIZER_MARKER_DISPLAY_H
+#define OGRE_VISUALIZER_MARKER_DISPLAY_H
 
-#include "visualizer_base.h"
+#include "display.h"
 
 #include <map>
 
@@ -89,16 +89,16 @@ enum MarkerAction
 typedef MarkerActions::MarkerAction MarkerAction;
 
 /**
- * \class MarkerVisualizer
+ * \class MarkerDisplay
  * \brief Displays "markers" sent in by other ROS nodes on the "visualizationMarker" topic
  *
  * Markers come in as std_msgs::VisualizationMarker messages.  See the VisualizationMarker message for more information.
  */
-class MarkerVisualizer : public VisualizerBase
+class MarkerDisplay : public Display
 {
 public:
-  MarkerVisualizer( const std::string& name, VisualizationManager* manager );
-  virtual ~MarkerVisualizer();
+  MarkerDisplay( const std::string& name, VisualizationManager* manager );
+  virtual ~MarkerDisplay();
 
   virtual void update( float dt );
 
@@ -189,4 +189,4 @@ protected:
 
 } // namespace ogre_vis
 
-#endif /* OGRE_VISUALIZER_MARKER_VISUALIZER_H */
+#endif /* OGRE_VISUALIZER_MARKER_DISPLAY_H */

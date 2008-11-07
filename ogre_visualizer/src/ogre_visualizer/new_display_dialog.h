@@ -46,7 +46,7 @@ public:
   NewDisplayDialog( wxWindow* parent, const V_string& types, const V_string& descriptions );
 
   std::string getTypeName();
-  std::string getVisualizerName();
+  std::string getDisplayName();
 
 protected:
   virtual void onDisplaySelected( wxCommandEvent& event );
@@ -56,7 +56,7 @@ protected:
   virtual void onNameEnter( wxCommandEvent& event );
 
   std::string type_name_;
-  std::string visualizer_name_;
+  std::string display_name_;
 
   const V_string& descriptions_;
 };

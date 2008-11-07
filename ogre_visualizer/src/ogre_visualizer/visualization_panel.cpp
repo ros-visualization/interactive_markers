@@ -29,7 +29,7 @@
 
 #include "visualization_panel.h"
 #include "visualization_manager.h"
-#include "visualizer_base.h"
+#include "display.h"
 #include "new_display_dialog.h"
 #include "properties/property.h"
 #include "properties/property_manager.h"
@@ -74,7 +74,7 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent )
 , current_camera_( NULL )
 , mouse_x_( 0 )
 , mouse_y_( 0 )
-, selected_visualizer_( NULL )
+, selected_display_( NULL )
 {
   render_panel_ = new ogre_tools::wxOgreRenderWindow( Ogre::Root::getSingletonPtr(), VisualizationPanelGenerated::render_panel_ );
   render_sizer_->Add( render_panel_, 1, wxALL|wxEXPAND, 0 );
@@ -116,7 +116,7 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent )
 
   manager_ = new VisualizationManager( this );
   manager_->initialize();
-  manager_->getVisualizerStateSignal().connect( boost::bind( &VisualizationPanel::onVisualizerStateChanged, this, _1 ) );
+  manager_->getDisplayStateSignal().connect( boost::bind( &VisualizationPanel::onDisplayStateChanged, this, _1 ) );
 
   fps_camera_ = new ogre_tools::FPSCamera( manager_->getSceneManager() );
   fps_camera_->getOgreCamera()->setNearClipDistance( 0.1f );
@@ -288,7 +288,7 @@ void VisualizationPanel::onPropertySelected( wxPropertyGridEvent& event )
 {
   wxPGProperty* pg_property = event.GetProperty();
 
-  selected_visualizer_ = NULL;
+  selected_display_ = NULL;
 
   if ( !pg_property )
   {
@@ -303,11 +303,11 @@ void VisualizationPanel::onPropertySelected( wxPropertyGridEvent& event )
     void* user_data = property->getUserData();
     if ( user_data )
     {
-      VisualizerBase* visualizer = reinterpret_cast<VisualizerBase*>(user_data);
+      Display* display = reinterpret_cast<Display*>(user_data);
 
-      if ( manager_->isValidVisualizer( visualizer ) )
+      if ( manager_->isValidDisplay( display ) )
       {
-        selected_visualizer_ = visualizer;
+        selected_display_ = display;
       }
     }
   }
@@ -348,17 +348,17 @@ void VisualizationPanel::onNewDisplay( wxCommandEvent& event )
     if ( dialog.ShowModal() == wxOK )
     {
       std::string type = dialog.getTypeName();
-      std::string name = dialog.getVisualizerName();
+      std::string name = dialog.getDisplayName();
 
-      if ( manager_->getVisualizer( name ) != NULL )
+      if ( manager_->getDisplay( name ) != NULL )
       {
-        wxMessageBox( wxT("A visualizer with that name already exists!"), wxT("Invalid name"), wxICON_ERROR | wxOK, this );
+        wxMessageBox( wxT("A display with that name already exists!"), wxT("Invalid name"), wxICON_ERROR | wxOK, this );
         continue;
       }
 
-      VisualizerBase* visualizer = manager_->createVisualizer( type, name, true );
-      ROS_ASSERT(visualizer);
-      (void)visualizer;
+      Display* display = manager_->createDisplay( type, name, true );
+      ROS_ASSERT(display);
+      (void)display;
 
       break;
     }
@@ -371,34 +371,34 @@ void VisualizationPanel::onNewDisplay( wxCommandEvent& event )
 
 void VisualizationPanel::onDeleteDisplay( wxCommandEvent& event )
 {
-  if ( !selected_visualizer_ )
+  if ( !selected_display_ )
   {
     return;
   }
 
-  manager_->removeVisualizer( selected_visualizer_ );
-  selected_visualizer_ = NULL;
+  manager_->removeDisplay( selected_display_ );
+  selected_display_ = NULL;
 }
 
 void VisualizationPanel::onMoveUp( wxCommandEvent& event )
 {
-  if ( selected_visualizer_ )
+  if ( selected_display_ )
   {
-    manager_->moveVisualizerUp( selected_visualizer_ );
+    manager_->moveDisplayUp( selected_display_ );
   }
 }
 
 void VisualizationPanel::onMoveDown( wxCommandEvent& event )
 {
-  if ( selected_visualizer_ )
+  if ( selected_display_ )
   {
-    manager_->moveVisualizerDown( selected_visualizer_ );
+    manager_->moveDisplayDown( selected_display_ );
   }
 }
 
-void VisualizationPanel::onVisualizerStateChanged( VisualizerBase* visualizer )
+void VisualizationPanel::onDisplayStateChanged( Display* display )
 {
-  VisualizerInfo* info = manager_->getVisualizerInfo( visualizer );
+  DisplayInfo* info = manager_->getDisplayInfo( display );
   ROS_ASSERT( info );
   wxPGProperty* property = info->category_->getPGProperty();
   ROS_ASSERT( property );
@@ -410,7 +410,7 @@ void VisualizationPanel::onVisualizerStateChanged( VisualizerBase* visualizer )
     property->SetCell( 0, cell );
   }
 
-  if ( visualizer->isEnabled() )
+  if ( display->isEnabled() )
   {
     cell->SetBgCol( wxColour( 32, 116, 38 ) );
   }

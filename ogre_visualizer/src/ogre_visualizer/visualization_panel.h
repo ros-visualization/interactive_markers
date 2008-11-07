@@ -35,26 +35,8 @@
  *
  * @htmlinclude manifest.html
  *
- * @b ogre_visualizer is a 3D visualization framework that is embeddable anywhere, as a wxPanel
+ * @b ogre_display is a 3D visualization framework that is embeddable anywhere, as a wxPanel
  *
- * @section vispanelusage VisualizationPanel Usage
- * The visualization panel needs an initialized Ogre::Root before it can be created.  For an example of this, see the visualizer_test.cpp test application.
- *
- * Once Ogre::Root is initialized, create a VisualizationPanel with:
- @verbatim
- ogre_tools::VisualizationPanel* visualization_panel = new VisualizationPanel( <parent wxWindow>, <Ogre::Root*> );
- @endverbatim
- * You can then add any number of visualizers:
- @verbatim
- visualization_panel->createVisualizer<AxesVisualizer>( "Origin Axes", true );
-
- pointCloud = visualization_panel->createVisualizer<PointCloudVisualizer>( "Head Full Cloud", false );
- pointCloud->setTopic( "full_cloud" );
- pointCloud->setColor( 1.0, 1.0, 0.0 );
- ...
- @endverbatim
- *
- * Writing your own visualizer is easy.  For a simple example, see http://pr.willowgarage.com/wiki/ogre_visualizer/SimpleVisualizerTutorial
  */
 
 #include "generated/visualization_panel_generated.h"
@@ -99,7 +81,7 @@ class wxConfigBase;
 namespace ogre_vis
 {
 
-class VisualizerBase;
+class Display;
 class VisualizationManager;
 class Tool;
 
@@ -181,9 +163,9 @@ protected:
   /// Called when the "Move Down" button is pressed
   virtual void onMoveDown( wxCommandEvent& event );
 
-  void onVisualizerStateChanged( VisualizerBase* visualizer );
+  void onDisplayStateChanged( Display* display );
 
-  wxPropertyGrid* property_grid_;                         ///< Visualizer property grid
+  wxPropertyGrid* property_grid_;                         ///< Display property grid
 
   ogre_tools::wxOgreRenderWindow* render_panel_;          ///< Render window
 
@@ -202,7 +184,7 @@ protected:
 
   VisualizationManager* manager_;
 
-  VisualizerBase* selected_visualizer_;
+  Display* selected_display_;
 };
 
 } // namespace ogre_vis

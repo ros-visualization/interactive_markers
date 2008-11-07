@@ -1,5 +1,5 @@
 %{
-#include "visualizer_base.h"
+#include "display.h"
 %}
 
 %include typemaps.i
@@ -10,7 +10,7 @@
 
 %pythonAppend VisualizerBase "self._setOORInfo(self)"
 
-%include "visualizer_base.h"
+%include "display.h"
 
 %init %{
 

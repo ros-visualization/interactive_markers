@@ -94,7 +94,7 @@ std::string NewDisplayDialog::getTypeName()
   return (const char*)types_->GetStringSelection().mb_str();
 }
 
-std::string NewDisplayDialog::getVisualizerName()
+std::string NewDisplayDialog::getDisplayName()
 {
   return (const char*)name_->GetValue().mb_str();
 }

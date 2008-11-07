@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "particle_cloud_2d_visualizer.h"
+#include "particle_cloud_2d_display.h"
 #include "properties/property.h"
 #include "properties/property_manager.h"
 #include "common.h"
@@ -46,8 +46,8 @@
 namespace ogre_vis
 {
 
-ParticleCloud2DVisualizer::ParticleCloud2DVisualizer( const std::string& name, VisualizationManager* manager )
-: VisualizerBase( name, manager )
+ParticleCloud2DDisplay::ParticleCloud2DDisplay( const std::string& name, VisualizationManager* manager )
+: Display( name, manager )
 , topic_( "particlecloud" )
 , color_( 1.0f, 0.1f, 0.0f )
 , new_message_( false )
@@ -64,7 +64,7 @@ ParticleCloud2DVisualizer::ParticleCloud2DVisualizer( const std::string& name, V
   scene_node_->attachObject( manual_object_ );
 }
 
-ParticleCloud2DVisualizer::~ParticleCloud2DVisualizer()
+ParticleCloud2DDisplay::~ParticleCloud2DDisplay()
 {
   unsubscribe();
   clear();
@@ -84,7 +84,7 @@ ParticleCloud2DVisualizer::~ParticleCloud2DVisualizer()
   scene_manager_->destroyManualObject( manual_object_ );
 }
 
-void ParticleCloud2DVisualizer::clear()
+void ParticleCloud2DDisplay::clear()
 {
 #if 0
   V_Arrow::iterator it = arrows_.begin();
@@ -101,7 +101,7 @@ void ParticleCloud2DVisualizer::clear()
   manual_object_->clear();
 }
 
-void ParticleCloud2DVisualizer::setTopic( const std::string& topic )
+void ParticleCloud2DDisplay::setTopic( const std::string& topic )
 {
   unsubscribe();
 
@@ -117,7 +117,7 @@ void ParticleCloud2DVisualizer::setTopic( const std::string& topic )
   causeRender();
 }
 
-void ParticleCloud2DVisualizer::setColor( const Color& color )
+void ParticleCloud2DDisplay::setColor( const Color& color )
 {
   color_ = color;
 
@@ -139,7 +139,7 @@ void ParticleCloud2DVisualizer::setColor( const Color& color )
   causeRender();
 }
 
-void ParticleCloud2DVisualizer::subscribe()
+void ParticleCloud2DDisplay::subscribe()
 {
   if ( !isEnabled() )
   {
@@ -148,45 +148,45 @@ void ParticleCloud2DVisualizer::subscribe()
 
   if ( !topic_.empty() )
   {
-    ros_node_->subscribe( topic_, message_, &ParticleCloud2DVisualizer::incomingMessage, this, 1 );
+    ros_node_->subscribe( topic_, message_, &ParticleCloud2DDisplay::incomingMessage, this, 1 );
   }
 }
 
-void ParticleCloud2DVisualizer::unsubscribe()
+void ParticleCloud2DDisplay::unsubscribe()
 {
   if ( !topic_.empty() )
   {
-    ros_node_->unsubscribe( topic_, &ParticleCloud2DVisualizer::incomingMessage, this );
+    ros_node_->unsubscribe( topic_, &ParticleCloud2DDisplay::incomingMessage, this );
   }
 }
 
-void ParticleCloud2DVisualizer::onEnable()
+void ParticleCloud2DDisplay::onEnable()
 {
   scene_node_->setVisible( true );
   subscribe();
 }
 
-void ParticleCloud2DVisualizer::onDisable()
+void ParticleCloud2DDisplay::onDisable()
 {
   unsubscribe();
   clear();
   scene_node_->setVisible( false );
 }
 
-void ParticleCloud2DVisualizer::createProperties()
+void ParticleCloud2DDisplay::createProperties()
 {
-  color_property_ = property_manager_->createProperty<ColorProperty>( "Color", property_prefix_, boost::bind( &ParticleCloud2DVisualizer::getColor, this ),
-                                                                          boost::bind( &ParticleCloud2DVisualizer::setColor, this, _1 ), parent_category_, this );
-  topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &ParticleCloud2DVisualizer::getTopic, this ),
-                                                                                boost::bind( &ParticleCloud2DVisualizer::setTopic, this, _1 ), parent_category_, this );
+  color_property_ = property_manager_->createProperty<ColorProperty>( "Color", property_prefix_, boost::bind( &ParticleCloud2DDisplay::getColor, this ),
+                                                                          boost::bind( &ParticleCloud2DDisplay::setColor, this, _1 ), parent_category_, this );
+  topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &ParticleCloud2DDisplay::getTopic, this ),
+                                                                                boost::bind( &ParticleCloud2DDisplay::setTopic, this, _1 ), parent_category_, this );
 }
 
-void ParticleCloud2DVisualizer::fixedFrameChanged()
+void ParticleCloud2DDisplay::fixedFrameChanged()
 {
   clear();
 }
 
-void ParticleCloud2DVisualizer::update( float dt )
+void ParticleCloud2DDisplay::update( float dt )
 {
   if ( new_message_ )
   {
@@ -198,7 +198,7 @@ void ParticleCloud2DVisualizer::update( float dt )
   }
 }
 
-void ParticleCloud2DVisualizer::processMessage()
+void ParticleCloud2DDisplay::processMessage()
 {
   message_.lock();
 
@@ -288,17 +288,17 @@ void ParticleCloud2DVisualizer::processMessage()
   message_.unlock();
 }
 
-void ParticleCloud2DVisualizer::incomingMessage()
+void ParticleCloud2DDisplay::incomingMessage()
 {
   new_message_ = true;
 }
 
-void ParticleCloud2DVisualizer::reset()
+void ParticleCloud2DDisplay::reset()
 {
   clear();
 }
 
-const char* ParticleCloud2DVisualizer::getDescription()
+const char* ParticleCloud2DDisplay::getDescription()
 {
   return "Displays the poses from a std_msgs::ParticleCloud2D message as a cloud of arrows on the ground plane.";
 }

@@ -40,14 +40,14 @@
 
 #include "visualization_panel.h"
 #include "visualization_manager.h"
-#include "visualizers/grid_visualizer.h"
-#include "visualizers/axes_visualizer.h"
-#include "visualizers/point_cloud_visualizer.h"
-#include "visualizers/laser_scan_visualizer.h"
-#include "visualizers/robot_model_visualizer.h"
-#include "visualizers/marker_visualizer.h"
-#include "visualizers/octree_visualizer.h"
-#include "visualizers/planning_visualizer.h"
+#include "displays/grid_display.h"
+#include "displays/axes_display.h"
+#include "displays/point_cloud_display.h"
+#include "displays/laser_scan_display.h"
+#include "displays/robot_model_display.h"
+#include "displays/marker_display.h"
+#include "displays/octree_display.h"
+#include "displays/planning_display.h"
 
 #include <OgreRoot.h>
 #include <OgreSceneManager.h>
@@ -58,7 +58,7 @@ using namespace ogre_vis;
 class MyFrame : public wxFrame
 {
 public:
-  MyFrame(wxWindow* parent) : wxFrame(parent, -1, _("Ogre Visualizer Test App"),
+  MyFrame(wxWindow* parent) : wxFrame(parent, -1, _("Ogre Display Test App"),
                       wxDefaultPosition, wxSize(800,600),
                       wxDEFAULT_FRAME_STYLE)
   {
@@ -84,40 +84,40 @@ public:
 
     VisualizationManager* manager = visualization_panel_->getManager();
 
-    manager->createVisualizer<GridVisualizer>( "Grid", true );
-    manager->createVisualizer<AxesVisualizer>( "Origin Axes", false );
+    manager->createDisplay<GridDisplay>( "Grid", true );
+    manager->createDisplay<AxesDisplay>( "Origin Axes", false );
 
-    RobotModelVisualizer* model = manager->createVisualizer<RobotModelVisualizer>( "Robot Model", false );
+    RobotModelDisplay* model = manager->createDisplay<RobotModelDisplay>( "Robot Model", false );
     model->setRobotDescription( "robotdesc/pr2" );
 
-    PlanningVisualizer* planning = manager->createVisualizer<PlanningVisualizer>( "Planning", false );
+    PlanningDisplay* planning = manager->createDisplay<PlanningDisplay>( "Planning", false );
     planning->initialize( "robotdesc/pr2", "display_kinematic_path" );
 
-    PointCloudVisualizer* pointCloud = manager->createVisualizer<PointCloudVisualizer>( "Stereo Full Cloud", false );
+    PointCloudDisplay* pointCloud = manager->createDisplay<PointCloudDisplay>( "Stereo Full Cloud", false );
     pointCloud->setTopic( "videre/cloud" );
     pointCloud->setColor( Color( 1.0, 1.0, 1.0 ) );
 
-    pointCloud = manager->createVisualizer<PointCloudVisualizer>( "Head Full Cloud", false );
+    pointCloud = manager->createDisplay<PointCloudDisplay>( "Head Full Cloud", false );
     pointCloud->setTopic( "full_cloud" );
     pointCloud->setColor( Color( 1.0, 1.0, 0.0 ) );
 
-    pointCloud = manager->createVisualizer<PointCloudVisualizer>( "World 3D Map", false );
+    pointCloud = manager->createDisplay<PointCloudDisplay>( "World 3D Map", false );
     pointCloud->setTopic( "world_3d_map" );
     pointCloud->setColor( Color( 1.0f, 0.0f, 0.0f ) );
     pointCloud->setBillboardSize( 0.01 );
 
-    LaserScanVisualizer* laserScan = manager->createVisualizer<LaserScanVisualizer>( "Head Scan", false );
+    LaserScanDisplay* laserScan = manager->createDisplay<LaserScanDisplay>( "Head Scan", false );
     laserScan->setScanTopic( "tilt_scan" );
     laserScan->setColor( Color( 1.0, 0.0, 0.0 ) );
     laserScan->setDecayTime( 30.0f );
 
-    laserScan = manager->createVisualizer<LaserScanVisualizer>( "Floor Scan", false );
+    laserScan = manager->createDisplay<LaserScanDisplay>( "Floor Scan", false );
     laserScan->setScanTopic( "base_scan" );
     laserScan->setColor( Color( 0.0f, 1.0f, 0.0f ) );
     laserScan->setDecayTime( 0.0f );
 
-    manager->createVisualizer<OctreeVisualizer>( "Octree", false )->setOctreeTopic( "full_octree" );
-    manager->createVisualizer<MarkerVisualizer>( "Visualization Markers", false );
+    manager->createDisplay<OctreeDisplay>( "Octree", false )->setOctreeTopic( "full_octree" );
+    manager->createDisplay<MarkerDisplay>( "Visualization Markers", false );
   }
 
   ~MyFrame()
@@ -152,7 +152,7 @@ public:
     }
 
     ros::init(argc, localArgv);
-    new ros::node( "Visualizer Test", ros::node::DONT_HANDLE_SIGINT );
+    new ros::node( "Display Test", ros::node::DONT_HANDLE_SIGINT );
 
     wxFrame* frame = new MyFrame(NULL);
     SetTopWindow(frame);

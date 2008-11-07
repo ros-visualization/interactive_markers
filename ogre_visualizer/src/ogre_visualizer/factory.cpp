@@ -30,38 +30,38 @@
 #include "factory.h"
 
 #include "visualization_manager.h"
-#include "visualizers/grid_visualizer.h"
-#include "visualizers/axes_visualizer.h"
-#include "visualizers/point_cloud_visualizer.h"
-#include "visualizers/laser_scan_visualizer.h"
-#include "visualizers/robot_model_visualizer.h"
-#include "visualizers/marker_visualizer.h"
-#include "visualizers/octree_visualizer.h"
-#include "visualizers/planning_visualizer.h"
-#include "visualizers/robot_base2d_pose_visualizer.h"
-#include "visualizers/particle_cloud_2d_visualizer.h"
-#include "visualizers/poly_line_2d_visualizer.h"
-#include "visualizers/map_visualizer.h"
-#include "visualizers/tf_visualizer.h"
+#include "displays/grid_display.h"
+#include "displays/axes_display.h"
+#include "displays/point_cloud_display.h"
+#include "displays/laser_scan_display.h"
+#include "displays/robot_model_display.h"
+#include "displays/marker_display.h"
+#include "displays/octree_display.h"
+#include "displays/planning_display.h"
+#include "displays/robot_base2d_pose_display.h"
+#include "displays/particle_cloud_2d_display.h"
+#include "displays/poly_line_2d_display.h"
+#include "displays/map_display.h"
+#include "displays/tf_display.h"
 
 namespace ogre_vis
 {
 
 void registerFactories(VisualizationManager* manager)
 {
-  manager->registerFactory( GridVisualizer::getTypeStatic(), GridVisualizer::getDescription(), new VisualizerFactoryImpl<GridVisualizer>() );
-  manager->registerFactory( AxesVisualizer::getTypeStatic(), AxesVisualizer::getDescription(), new VisualizerFactoryImpl<AxesVisualizer>() );
-  manager->registerFactory( PointCloudVisualizer::getTypeStatic(), PointCloudVisualizer::getDescription(), new VisualizerFactoryImpl<PointCloudVisualizer>() );
-  manager->registerFactory( LaserScanVisualizer::getTypeStatic(), LaserScanVisualizer::getDescription(), new VisualizerFactoryImpl<LaserScanVisualizer>() );
-  manager->registerFactory( RobotModelVisualizer::getTypeStatic(), RobotModelVisualizer::getDescription(), new VisualizerFactoryImpl<RobotModelVisualizer>() );
-  manager->registerFactory( MarkerVisualizer::getTypeStatic(), MarkerVisualizer::getDescription(), new VisualizerFactoryImpl<MarkerVisualizer>() );
-  manager->registerFactory( OctreeVisualizer::getTypeStatic(), OctreeVisualizer::getDescription(), new VisualizerFactoryImpl<OctreeVisualizer>() );
-  manager->registerFactory( PlanningVisualizer::getTypeStatic(), PlanningVisualizer::getDescription(), new VisualizerFactoryImpl<PlanningVisualizer>() );
-  manager->registerFactory( RobotBase2DPoseVisualizer::getTypeStatic(), RobotBase2DPoseVisualizer::getDescription(), new VisualizerFactoryImpl<RobotBase2DPoseVisualizer>() );
-  manager->registerFactory( ParticleCloud2DVisualizer::getTypeStatic(), ParticleCloud2DVisualizer::getDescription(), new VisualizerFactoryImpl<ParticleCloud2DVisualizer>() );
-  manager->registerFactory( PolyLine2DVisualizer::getTypeStatic(), PolyLine2DVisualizer::getDescription(), new VisualizerFactoryImpl<PolyLine2DVisualizer>() );
-  manager->registerFactory( MapVisualizer::getTypeStatic(), MapVisualizer::getDescription(), new VisualizerFactoryImpl<MapVisualizer>() );
-  manager->registerFactory( TFVisualizer::getTypeStatic(), TFVisualizer::getDescription(), new VisualizerFactoryImpl<TFVisualizer>() );
+  manager->registerFactory( GridDisplay::getTypeStatic(), GridDisplay::getDescription(), new DisplayFactoryImpl<GridDisplay>() );
+  manager->registerFactory( AxesDisplay::getTypeStatic(), AxesDisplay::getDescription(), new DisplayFactoryImpl<AxesDisplay>() );
+  manager->registerFactory( PointCloudDisplay::getTypeStatic(), PointCloudDisplay::getDescription(), new DisplayFactoryImpl<PointCloudDisplay>() );
+  manager->registerFactory( LaserScanDisplay::getTypeStatic(), LaserScanDisplay::getDescription(), new DisplayFactoryImpl<LaserScanDisplay>() );
+  manager->registerFactory( RobotModelDisplay::getTypeStatic(), RobotModelDisplay::getDescription(), new DisplayFactoryImpl<RobotModelDisplay>() );
+  manager->registerFactory( MarkerDisplay::getTypeStatic(), MarkerDisplay::getDescription(), new DisplayFactoryImpl<MarkerDisplay>() );
+  manager->registerFactory( OctreeDisplay::getTypeStatic(), OctreeDisplay::getDescription(), new DisplayFactoryImpl<OctreeDisplay>() );
+  manager->registerFactory( PlanningDisplay::getTypeStatic(), PlanningDisplay::getDescription(), new DisplayFactoryImpl<PlanningDisplay>() );
+  manager->registerFactory( RobotBase2DPoseDisplay::getTypeStatic(), RobotBase2DPoseDisplay::getDescription(), new DisplayFactoryImpl<RobotBase2DPoseDisplay>() );
+  manager->registerFactory( ParticleCloud2DDisplay::getTypeStatic(), ParticleCloud2DDisplay::getDescription(), new DisplayFactoryImpl<ParticleCloud2DDisplay>() );
+  manager->registerFactory( PolyLine2DDisplay::getTypeStatic(), PolyLine2DDisplay::getDescription(), new DisplayFactoryImpl<PolyLine2DDisplay>() );
+  manager->registerFactory( MapDisplay::getTypeStatic(), MapDisplay::getDescription(), new DisplayFactoryImpl<MapDisplay>() );
+  manager->registerFactory( TFDisplay::getTypeStatic(), TFDisplay::getDescription(), new DisplayFactoryImpl<TFDisplay>() );
 }
 
 } //namespace ogre_vis

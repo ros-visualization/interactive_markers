@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "marker_visualizer.h"
+#include "marker_display.h"
 #include "common.h"
 #include "helpers/robot.h"
 
@@ -47,8 +47,8 @@
 namespace ogre_vis
 {
 
-MarkerVisualizer::MarkerVisualizer( const std::string& name, VisualizationManager* manager )
-: VisualizerBase( name, manager )
+MarkerDisplay::MarkerDisplay( const std::string& name, VisualizationManager* manager )
+: Display( name, manager )
 {
   scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
 
@@ -58,7 +58,7 @@ MarkerVisualizer::MarkerVisualizer( const std::string& name, VisualizationManage
   kinematic_model_->setVerbose( false );
 }
 
-MarkerVisualizer::~MarkerVisualizer()
+MarkerDisplay::~MarkerDisplay()
 {
   unsubscribe();
 
@@ -68,7 +68,7 @@ MarkerVisualizer::~MarkerVisualizer()
   clearMarkers();
 }
 
-void MarkerVisualizer::clearMarkers()
+void MarkerDisplay::clearMarkers()
 {
   M_IDToMarker::iterator marker_it = markers_.begin();
   M_IDToMarker::iterator marker_end = markers_.end();
@@ -80,7 +80,7 @@ void MarkerVisualizer::clearMarkers()
   markers_.clear();
 }
 
-void MarkerVisualizer::onEnable()
+void MarkerDisplay::onEnable()
 {
   subscribe();
 
@@ -95,7 +95,7 @@ void MarkerVisualizer::onEnable()
   kinematic_model_->defaultState();
 }
 
-void MarkerVisualizer::onDisable()
+void MarkerDisplay::onDisable()
 {
   unsubscribe();
 
@@ -104,27 +104,27 @@ void MarkerVisualizer::onDisable()
   scene_node_->setVisible( false );
 }
 
-void MarkerVisualizer::subscribe()
+void MarkerDisplay::subscribe()
 {
   if ( !isEnabled() )
   {
     return;
   }
 
-  ros_node_->subscribe("visualizationMarker", current_message_, &MarkerVisualizer::incomingMarker, this, 0);
+  ros_node_->subscribe("visualizationMarker", current_message_, &MarkerDisplay::incomingMarker, this, 0);
 }
 
-void MarkerVisualizer::unsubscribe()
+void MarkerDisplay::unsubscribe()
 {
-  ros_node_->unsubscribe( "visualizationMarker", &MarkerVisualizer::incomingMarker, this );
+  ros_node_->unsubscribe( "visualizationMarker", &MarkerDisplay::incomingMarker, this );
 }
 
-void MarkerVisualizer::incomingMarker()
+void MarkerDisplay::incomingMarker()
 {
   message_queue_.push_back( current_message_ );
 }
 
-void MarkerVisualizer::processMessage( const std_msgs::VisualizationMarker& message )
+void MarkerDisplay::processMessage( const std_msgs::VisualizationMarker& message )
 {
   switch ( message.action )
   {
@@ -145,7 +145,7 @@ void MarkerVisualizer::processMessage( const std_msgs::VisualizationMarker& mess
   }
 }
 
-void MarkerVisualizer::processAdd( const std_msgs::VisualizationMarker& message )
+void MarkerDisplay::processAdd( const std_msgs::VisualizationMarker& message )
 {
   ogre_tools::Object* object = NULL;
   bool create = true;
@@ -224,7 +224,7 @@ void MarkerVisualizer::processAdd( const std_msgs::VisualizationMarker& message 
   }
 }
 
-void MarkerVisualizer::processModify( const std_msgs::VisualizationMarker& message )
+void MarkerDisplay::processModify( const std_msgs::VisualizationMarker& message )
 {
   M_IDToMarker::iterator it = markers_.find( message.id );
   if ( it == markers_.end() )
@@ -240,7 +240,7 @@ void MarkerVisualizer::processModify( const std_msgs::VisualizationMarker& messa
   causeRender();
 }
 
-void MarkerVisualizer::processDelete( const std_msgs::VisualizationMarker& message )
+void MarkerDisplay::processDelete( const std_msgs::VisualizationMarker& message )
 {
   M_IDToMarker::iterator it = markers_.find( message.id );
   if ( it != markers_.end() )
@@ -252,7 +252,7 @@ void MarkerVisualizer::processDelete( const std_msgs::VisualizationMarker& messa
   causeRender();
 }
 
-void MarkerVisualizer::setCommonValues( const std_msgs::VisualizationMarker& message, ogre_tools::Object* object )
+void MarkerDisplay::setCommonValues( const std_msgs::VisualizationMarker& message, ogre_tools::Object* object )
 {
   std::string frame_id = message.header.frame_id;
   if ( frame_id.empty() )
@@ -291,7 +291,7 @@ void MarkerVisualizer::setCommonValues( const std_msgs::VisualizationMarker& mes
   object->setUserData( Ogre::Any( (void*)this ) );
 }
 
-void MarkerVisualizer::update( float dt )
+void MarkerDisplay::update( float dt )
 {
   current_message_.lock();
 
@@ -314,7 +314,7 @@ void MarkerVisualizer::update( float dt )
 }
 
 #if 0
-void MarkerVisualizer::targetFrameChanged();
+void MarkerDisplay::targetFrameChanged();
 {
   M_IDToMarker::iterator marker_it = markers_.begin();
   M_IDToMarker::iterator marker_end = markers_.end();
@@ -329,17 +329,17 @@ void MarkerVisualizer::targetFrameChanged();
 }
 #endif
 
-void MarkerVisualizer::fixedFrameChanged()
+void MarkerDisplay::fixedFrameChanged()
 {
   clearMarkers();
 }
 
-void MarkerVisualizer::reset()
+void MarkerDisplay::reset()
 {
   clearMarkers();
 }
 
-const char* MarkerVisualizer::getDescription()
+const char* MarkerDisplay::getDescription()
 {
   return "Displays visualization markers sent over the visualizationMarker topic.";
 }

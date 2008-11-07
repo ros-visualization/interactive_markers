@@ -27,10 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_VISUALIZER_MAP_VISUALIZER_H
-#define OGRE_VISUALIZER_MAP_VISUALIZER_H
+#ifndef OGRE_VISUALIZER_MAP_DISPLAY_H
+#define OGRE_VISUALIZER_MAP_DISPLAY_H
 
-#include "visualizer_base.h"
+#include "display.h"
 
 #include <OgreTexture.h>
 #include <OgreMaterial.h>
@@ -51,15 +51,15 @@ class StringProperty;
 class FloatProperty;
 
 /**
- * \class MapVisualizer
+ * \class MapDisplay
  * \brief Displays a map along the XZ plane (XY in robot space)
  *
  */
-class MapVisualizer : public VisualizerBase
+class MapDisplay : public Display
 {
 public:
-  MapVisualizer( const std::string& name, VisualizationManager* manager );
-  virtual ~MapVisualizer();
+  MapDisplay( const std::string& name, VisualizationManager* manager );
+  virtual ~MapDisplay();
 
   void setService( const std::string& service );
   const std::string& getService() { return service_; }
@@ -71,7 +71,7 @@ public:
   float getAlpha() { return alpha_; }
   void setAlpha( float alpha );
 
-  // Overrides from VisualizerBase
+  // Overrides from Display
   virtual void targetFrameChanged() {}
   virtual void fixedFrameChanged();
   virtual void createProperties();
@@ -83,7 +83,7 @@ public:
   static const char* getDescription();
 
 protected:
-  // overrides from VisualizerBase
+  // overrides from Display
   virtual void onEnable();
   virtual void onDisable();
 

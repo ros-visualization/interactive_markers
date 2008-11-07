@@ -45,20 +45,20 @@ class node;
 namespace ogre_vis
 {
 
-class VisualizerBase;
+class Display;
 class VisualizationManager;
 
-class VisualizerFactory
+class DisplayFactory
 {
 public:
-  virtual VisualizerBase* create(const std::string& name, VisualizationManager* manager) = 0;
+  virtual Display* create(const std::string& name, VisualizationManager* manager) = 0;
 };
 
 template<typename T>
-class VisualizerFactoryImpl : public VisualizerFactory
+class DisplayFactoryImpl : public DisplayFactory
 {
 public:
-  virtual VisualizerBase* create(const std::string& name, VisualizationManager* manager)
+  virtual Display* create(const std::string& name, VisualizationManager* manager)
   {
     return new T(name, manager);
   }

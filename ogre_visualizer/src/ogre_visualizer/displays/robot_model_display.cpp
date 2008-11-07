@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "robot_model_visualizer.h"
+#include "robot_model_display.h"
 #include "common.h"
 #include "helpers/robot.h"
 #include "properties/property.h"
@@ -42,8 +42,8 @@
 namespace ogre_vis
 {
 
-RobotModelVisualizer::RobotModelVisualizer( const std::string& name, VisualizationManager* manager )
-: VisualizerBase( name, manager )
+RobotModelDisplay::RobotModelDisplay( const std::string& name, VisualizationManager* manager )
+: Display( name, manager )
 , mechanism_topic_( "mechanism_state" )
 , has_new_transforms_( false )
 , has_new_mechanism_state_( false )
@@ -64,7 +64,7 @@ RobotModelVisualizer::RobotModelVisualizer( const std::string& name, Visualizati
   urdf_ = new robot_desc::URDF();
 }
 
-RobotModelVisualizer::~RobotModelVisualizer()
+RobotModelDisplay::~RobotModelDisplay()
 {
   unsubscribe();
 
@@ -72,7 +72,7 @@ RobotModelVisualizer::~RobotModelVisualizer()
   delete urdf_;
 }
 
-void RobotModelVisualizer::setRobotDescription( const std::string& description_param )
+void RobotModelDisplay::setRobotDescription( const std::string& description_param )
 {
   description_param_ = description_param;
 
@@ -88,7 +88,7 @@ void RobotModelVisualizer::setRobotDescription( const std::string& description_p
   }
 }
 
-void RobotModelVisualizer::setMechanismTopic( const std::string& topic )
+void RobotModelDisplay::setMechanismTopic( const std::string& topic )
 {
   unsubscribe();
 
@@ -102,7 +102,7 @@ void RobotModelVisualizer::setMechanismTopic( const std::string& topic )
   }
 }
 
-void RobotModelVisualizer::subscribe()
+void RobotModelDisplay::subscribe()
 {
   if ( !isEnabled() )
   {
@@ -111,19 +111,19 @@ void RobotModelVisualizer::subscribe()
 
   if ( !mechanism_topic_.empty() )
   {
-    ros_node_->subscribe( mechanism_topic_, mechanism_message_, &RobotModelVisualizer::incomingMechanismState, this, 1 );
+    ros_node_->subscribe( mechanism_topic_, mechanism_message_, &RobotModelDisplay::incomingMechanismState, this, 1 );
   }
 }
 
-void RobotModelVisualizer::unsubscribe()
+void RobotModelDisplay::unsubscribe()
 {
   if ( !mechanism_topic_.empty() )
   {
-    ros_node_->unsubscribe( mechanism_topic_, &RobotModelVisualizer::incomingMechanismState, this );
+    ros_node_->unsubscribe( mechanism_topic_, &RobotModelDisplay::incomingMechanismState, this );
   }
 }
 
-void RobotModelVisualizer::setVisualVisible( bool visible )
+void RobotModelDisplay::setVisualVisible( bool visible )
 {
   robot_->setVisualVisible( visible );
 
@@ -135,7 +135,7 @@ void RobotModelVisualizer::setVisualVisible( bool visible )
   causeRender();
 }
 
-void RobotModelVisualizer::setCollisionVisible( bool visible )
+void RobotModelDisplay::setCollisionVisible( bool visible )
 {
   robot_->setCollisionVisible( visible );
 
@@ -147,7 +147,7 @@ void RobotModelVisualizer::setCollisionVisible( bool visible )
   causeRender();
 }
 
-void RobotModelVisualizer::setUpdateRate( float rate )
+void RobotModelDisplay::setUpdateRate( float rate )
 {
   update_rate_ = rate;
 
@@ -159,17 +159,17 @@ void RobotModelVisualizer::setUpdateRate( float rate )
   causeRender();
 }
 
-bool RobotModelVisualizer::isVisualVisible()
+bool RobotModelDisplay::isVisualVisible()
 {
   return robot_->isVisualVisible();
 }
 
-bool RobotModelVisualizer::isCollisionVisible()
+bool RobotModelDisplay::isCollisionVisible()
 {
   return robot_->isCollisionVisible();
 }
 
-void RobotModelVisualizer::load()
+void RobotModelDisplay::load()
 {
   std::string content;
   ros_node_->get_param(description_param_, content);
@@ -188,7 +188,7 @@ void RobotModelVisualizer::load()
   robot_->update( tf_, target_frame_ );
 }
 
-void RobotModelVisualizer::onEnable()
+void RobotModelDisplay::onEnable()
 {
   load();
   robot_->setVisible( true );
@@ -196,14 +196,14 @@ void RobotModelVisualizer::onEnable()
   subscribe();
 }
 
-void RobotModelVisualizer::onDisable()
+void RobotModelDisplay::onDisable()
 {
   unsubscribe();
 
   robot_->setVisible( false );
 }
 
-void RobotModelVisualizer::update( float dt )
+void RobotModelDisplay::update( float dt )
 {
   time_since_last_transform_ += dt;
 
@@ -227,40 +227,40 @@ void RobotModelVisualizer::update( float dt )
   mechanism_message_.unlock();
 }
 
-void RobotModelVisualizer::incomingMechanismState()
+void RobotModelDisplay::incomingMechanismState()
 {
   has_new_mechanism_state_ = true;
 }
 
-void RobotModelVisualizer::targetFrameChanged()
+void RobotModelDisplay::targetFrameChanged()
 {
   has_new_transforms_ = true;
 }
 
-void RobotModelVisualizer::createProperties()
+void RobotModelDisplay::createProperties()
 {
-  visual_enabled_property_ = property_manager_->createProperty<BoolProperty>( "Visual Enabled", property_prefix_, boost::bind( &RobotModelVisualizer::isVisualVisible, this ),
-                                                                               boost::bind( &RobotModelVisualizer::setVisualVisible, this, _1 ), parent_category_, this );
-  collision_enabled_property_ = property_manager_->createProperty<BoolProperty>( "Collision Enabled", property_prefix_, boost::bind( &RobotModelVisualizer::isCollisionVisible, this ),
-                                                                                 boost::bind( &RobotModelVisualizer::setCollisionVisible, this, _1 ), parent_category_, this );
-  update_rate_property_ = property_manager_->createProperty<FloatProperty>( "Update Rate", property_prefix_, boost::bind( &RobotModelVisualizer::getUpdateRate, this ),
-                                                                                  boost::bind( &RobotModelVisualizer::setUpdateRate, this, _1 ), parent_category_, this );
+  visual_enabled_property_ = property_manager_->createProperty<BoolProperty>( "Visual Enabled", property_prefix_, boost::bind( &RobotModelDisplay::isVisualVisible, this ),
+                                                                               boost::bind( &RobotModelDisplay::setVisualVisible, this, _1 ), parent_category_, this );
+  collision_enabled_property_ = property_manager_->createProperty<BoolProperty>( "Collision Enabled", property_prefix_, boost::bind( &RobotModelDisplay::isCollisionVisible, this ),
+                                                                                 boost::bind( &RobotModelDisplay::setCollisionVisible, this, _1 ), parent_category_, this );
+  update_rate_property_ = property_manager_->createProperty<FloatProperty>( "Update Rate", property_prefix_, boost::bind( &RobotModelDisplay::getUpdateRate, this ),
+                                                                                  boost::bind( &RobotModelDisplay::setUpdateRate, this, _1 ), parent_category_, this );
   update_rate_property_->setMin( 0.0 );
 
-  robot_description_property_ = property_manager_->createProperty<StringProperty>( "Robot Description", property_prefix_, boost::bind( &RobotModelVisualizer::getRobotDescription, this ),
-                                                                                   boost::bind( &RobotModelVisualizer::setRobotDescription, this, _1 ), parent_category_, this );
+  robot_description_property_ = property_manager_->createProperty<StringProperty>( "Robot Description", property_prefix_, boost::bind( &RobotModelDisplay::getRobotDescription, this ),
+                                                                                   boost::bind( &RobotModelDisplay::setRobotDescription, this, _1 ), parent_category_, this );
 
-  mechanism_topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Mechanism Topic", property_prefix_, boost::bind( &RobotModelVisualizer::getMechanismTopic, this ),
-                                                                                         boost::bind( &RobotModelVisualizer::setMechanismTopic, this, _1 ), parent_category_, this );
+  mechanism_topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Mechanism Topic", property_prefix_, boost::bind( &RobotModelDisplay::getMechanismTopic, this ),
+                                                                                         boost::bind( &RobotModelDisplay::setMechanismTopic, this, _1 ), parent_category_, this );
   robot_->setPropertyManager( property_manager_, parent_category_ );
 }
 
-void RobotModelVisualizer::reset()
+void RobotModelDisplay::reset()
 {
   has_new_transforms_ = true;
 }
 
-const char* RobotModelVisualizer::getDescription()
+const char* RobotModelDisplay::getDescription()
 {
   return "Displays a visual representation of a robot in the correct pose (as defined by the current TF transforms).";
 }

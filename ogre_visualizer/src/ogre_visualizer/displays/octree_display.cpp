@@ -28,13 +28,13 @@
  */
 
 /*
- * octree_visualizer.cpp
+ * octree_display.cpp
  *
  *  Created on: Aug 20, 2008
  *      Author: Matthew Piccoli and Matei Ciocarlie
  */
 
-#include "octree_visualizer.h"
+#include "octree_display.h"
 #include "ros_topic_property.h"
 #include "properties/property.h"
 #include "properties/property_manager.h"
@@ -55,8 +55,8 @@
 namespace ogre_vis
 {
 
-OctreeVisualizer::OctreeVisualizer(const std::string& name, VisualizationManager* manager)
-: VisualizerBase(name, manager)
+OctreeDisplay::OctreeDisplay(const std::string& name, VisualizationManager* manager)
+: Display(name, manager)
 , color_( 1.0f, 1.0f, 1.0f )
 , new_message_(false)
 , color_property_( NULL )
@@ -80,7 +80,7 @@ OctreeVisualizer::OctreeVisualizer(const std::string& name, VisualizationManager
   setColor( color_ );
 }
 
-OctreeVisualizer::~OctreeVisualizer()
+OctreeDisplay::~OctreeDisplay()
 {
   unsubscribe();
 
@@ -89,19 +89,19 @@ OctreeVisualizer::~OctreeVisualizer()
   scene_manager_->destroyManualObject(manual_object_);
 }
 
-void OctreeVisualizer::onEnable()
+void OctreeDisplay::onEnable()
 {
   manual_object_->setVisible(true);
   subscribe();
 }
 
-void OctreeVisualizer::onDisable()
+void OctreeDisplay::onDisable()
 {
   manual_object_->setVisible(false);
   unsubscribe();
 }
 
-void OctreeVisualizer::subscribe()
+void OctreeDisplay::subscribe()
 {
   if (!isEnabled())
   {
@@ -110,19 +110,19 @@ void OctreeVisualizer::subscribe()
 
   if (!octree_topic_.empty())
   {
-    ros_node_->subscribe(octree_topic_, octree_message_, &OctreeVisualizer::incomingOctreeCallback, this, 10);
+    ros_node_->subscribe(octree_topic_, octree_message_, &OctreeDisplay::incomingOctreeCallback, this, 10);
   }
 }
 
-void OctreeVisualizer::unsubscribe()
+void OctreeDisplay::unsubscribe()
 {
   if (!octree_topic_.empty())
   {
-    ros_node_->unsubscribe(octree_topic_, &OctreeVisualizer::incomingOctreeCallback, this);
+    ros_node_->unsubscribe(octree_topic_, &OctreeDisplay::incomingOctreeCallback, this);
   }
 }
 
-void OctreeVisualizer::update(float dt)
+void OctreeDisplay::update(float dt)
 {
   triangles_mutex_.lock();
 
@@ -162,7 +162,7 @@ void OctreeVisualizer::update(float dt)
   triangles_mutex_.unlock();
 }
 
-void OctreeVisualizer::incomingOctreeCallback()
+void OctreeDisplay::incomingOctreeCallback()
 {
   scan_utils::Octree<char> octree(0, 0, 0, 0, 0, 0, 1, 0);
   octree.setFromMsg(octree_message_);
@@ -209,7 +209,7 @@ void OctreeVisualizer::incomingOctreeCallback()
   triangles_mutex_.unlock();
 }
 
-void OctreeVisualizer::setOctreeTopic(const std::string& topic)
+void OctreeDisplay::setOctreeTopic(const std::string& topic)
 {
   unsubscribe();
 
@@ -225,7 +225,7 @@ void OctreeVisualizer::setOctreeTopic(const std::string& topic)
   causeRender();
 }
 
-void OctreeVisualizer::setColor( const Color& color )
+void OctreeDisplay::setColor( const Color& color )
 {
   material_->setAmbient( color.r_ * 0.5, color.g_ * 0.5, color.b_ * 0.5 );
   material_->setDiffuse( color.r_, color.g_, color.b_, 1.0f );
@@ -240,26 +240,26 @@ void OctreeVisualizer::setColor( const Color& color )
   causeRender();
 }
 
-void OctreeVisualizer::targetFrameChanged()
+void OctreeDisplay::targetFrameChanged()
 {
   ROS_WARN( "Warning: octree is always in the global frame\n" );
 }
 
-void OctreeVisualizer::createProperties()
+void OctreeDisplay::createProperties()
 {
-  color_property_ = property_manager_->createProperty<ColorProperty>( "Color", property_prefix_, boost::bind( &OctreeVisualizer::getColor, this ),
-                                                                      boost::bind( &OctreeVisualizer::setColor, this, _1 ), parent_category_, this );
+  color_property_ = property_manager_->createProperty<ColorProperty>( "Color", property_prefix_, boost::bind( &OctreeDisplay::getColor, this ),
+                                                                      boost::bind( &OctreeDisplay::setColor, this, _1 ), parent_category_, this );
 
-  topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &OctreeVisualizer::getOctreeTopic, this ),
-                                                                              boost::bind( &OctreeVisualizer::setOctreeTopic, this, _1 ), parent_category_, this );
+  topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &OctreeDisplay::getOctreeTopic, this ),
+                                                                              boost::bind( &OctreeDisplay::setOctreeTopic, this, _1 ), parent_category_, this );
 }
 
-void OctreeVisualizer::reset()
+void OctreeDisplay::reset()
 {
   manual_object_->clear();
 }
 
-const char* OctreeVisualizer::getDescription()
+const char* OctreeDisplay::getDescription()
 {
   return "Displays the data from a scan_utils::OctreeMsg message.";
 }

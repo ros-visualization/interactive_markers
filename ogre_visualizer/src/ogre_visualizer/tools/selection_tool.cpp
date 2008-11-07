@@ -30,7 +30,7 @@
 #include "selection_tool.h"
 #include "visualization_manager.h"
 #include "visualization_panel.h"
-#include "visualizer_base.h"
+#include "display.h"
 
 #include "ogre_tools/camera_base.h"
 #include "ogre_tools/wx_ogre_render_window.h"
@@ -95,11 +95,11 @@ Ogre::MovableObject* SelectionTool::pick( int mouse_x, int mouse_y )
       continue;
     }
 
-    // ugh -- can't just any_cast to VisualizerBase because it's abstract
+    // ugh -- can't just any_cast to Display because it's abstract
     /// @todo This is dangerous, should find a better way
-    const VisualizerBase* visualizer = reinterpret_cast<const VisualizerBase*>( Ogre::any_cast<void*>( user_any ) );
+    const Display* display = reinterpret_cast<const Display*>( Ogre::any_cast<void*>( user_any ) );
 
-    if ( visualizer && visualizer->isObjectPickable( entry.movable ) )
+    if ( display && display->isObjectPickable( entry.movable ) )
     {
       if ( entry.distance < closest_distance )
       {

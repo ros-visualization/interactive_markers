@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "map_visualizer.h"
+#include "map_display.h"
 #include "properties/property.h"
 #include "properties/property_manager.h"
 #include "common.h"
@@ -50,8 +50,8 @@
 namespace ogre_vis
 {
 
-MapVisualizer::MapVisualizer( const std::string& name, VisualizationManager* manager )
-: VisualizerBase( name, manager )
+MapDisplay::MapDisplay( const std::string& name, VisualizationManager* manager )
+: Display( name, manager )
 , manual_object_( NULL )
 , loaded_( false )
 , service_( "static_map" )
@@ -81,21 +81,21 @@ MapVisualizer::MapVisualizer( const std::string& name, VisualizationManager* man
   setAlpha( 0.7f );
 }
 
-MapVisualizer::~MapVisualizer()
+MapDisplay::~MapDisplay()
 {
   unsubscribe();
 
   clear();
 }
 
-void MapVisualizer::onEnable()
+void MapDisplay::onEnable()
 {
   subscribe();
 
   scene_node_->setVisible( true );
 }
 
-void MapVisualizer::onDisable()
+void MapDisplay::onDisable()
 {
   unsubscribe();
 
@@ -103,22 +103,22 @@ void MapVisualizer::onDisable()
   clear();
 }
 
-void MapVisualizer::subscribe()
+void MapDisplay::subscribe()
 {
   if ( !isEnabled() )
   {
     return;
   }
 
-  ros_node_->subscribe( "map_metadata", metadata_message_, &MapVisualizer::incomingMetaData, this, 1 );
+  ros_node_->subscribe( "map_metadata", metadata_message_, &MapDisplay::incomingMetaData, this, 1 );
 }
 
-void MapVisualizer::unsubscribe()
+void MapDisplay::unsubscribe()
 {
-  ros_node_->unsubscribe( "map_metadata", &MapVisualizer::incomingMetaData, this );
+  ros_node_->unsubscribe( "map_metadata", &MapDisplay::incomingMetaData, this );
 }
 
-void MapVisualizer::setAlpha( float alpha )
+void MapDisplay::setAlpha( float alpha )
 {
   alpha_ = alpha;
 
@@ -150,7 +150,7 @@ void MapVisualizer::setAlpha( float alpha )
   }
 }
 
-void MapVisualizer::setService( const std::string& service )
+void MapDisplay::setService( const std::string& service )
 {
   service_ = service;
   clear();
@@ -161,7 +161,7 @@ void MapVisualizer::setService( const std::string& service )
   }
 }
 
-void MapVisualizer::clear()
+void MapDisplay::clear()
 {
   if ( !loaded_ )
   {
@@ -179,7 +179,7 @@ void MapVisualizer::clear()
   loaded_ = false;
 }
 
-void MapVisualizer::load()
+void MapDisplay::load()
 {
   std_srvs::StaticMap::request  req;
   std_srvs::StaticMap::response resp;
@@ -322,7 +322,7 @@ void MapVisualizer::load()
   causeRender();
 }
 
-void MapVisualizer::transformMap()
+void MapDisplay::transformMap()
 {
   tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time(0ULL), "map" );
 
@@ -346,7 +346,7 @@ void MapVisualizer::transformMap()
   scene_node_->setOrientation( orientation );
 }
 
-void MapVisualizer::update( float dt )
+void MapDisplay::update( float dt )
 {
   if ( new_metadata_ )
   {
@@ -371,38 +371,38 @@ void MapVisualizer::update( float dt )
   }
 }
 
-void MapVisualizer::createProperties()
+void MapDisplay::createProperties()
 {
-  service_property_ = property_manager_->createProperty<StringProperty>( "Service", property_prefix_, boost::bind( &MapVisualizer::getService, this ),
-                                                                         boost::bind( &MapVisualizer::setService, this, _1 ), parent_category_, this );
+  service_property_ = property_manager_->createProperty<StringProperty>( "Service", property_prefix_, boost::bind( &MapDisplay::getService, this ),
+                                                                         boost::bind( &MapDisplay::setService, this, _1 ), parent_category_, this );
 
-  alpha_property_ = property_manager_->createProperty<FloatProperty>( "Alpha", property_prefix_, boost::bind( &MapVisualizer::getAlpha, this ),
-                                                                      boost::bind( &MapVisualizer::setAlpha, this, _1 ), parent_category_, this );
+  alpha_property_ = property_manager_->createProperty<FloatProperty>( "Alpha", property_prefix_, boost::bind( &MapDisplay::getAlpha, this ),
+                                                                      boost::bind( &MapDisplay::setAlpha, this, _1 ), parent_category_, this );
 
-  resolution_property_ = property_manager_->createProperty<FloatProperty>( "Resolution", property_prefix_, boost::bind( &MapVisualizer::getResolution, this ),
+  resolution_property_ = property_manager_->createProperty<FloatProperty>( "Resolution", property_prefix_, boost::bind( &MapDisplay::getResolution, this ),
                                                                             FloatProperty::Setter(), parent_category_, this );
-  width_property_ = property_manager_->createProperty<FloatProperty>( "Width", property_prefix_, boost::bind( &MapVisualizer::getWidth, this ),
+  width_property_ = property_manager_->createProperty<FloatProperty>( "Width", property_prefix_, boost::bind( &MapDisplay::getWidth, this ),
                                                                        FloatProperty::Setter(), parent_category_, this );
-  height_property_ = property_manager_->createProperty<FloatProperty>( "Height", property_prefix_, boost::bind( &MapVisualizer::getHeight, this ),
+  height_property_ = property_manager_->createProperty<FloatProperty>( "Height", property_prefix_, boost::bind( &MapDisplay::getHeight, this ),
                                                                         FloatProperty::Setter(), parent_category_, this );
 }
 
-void MapVisualizer::fixedFrameChanged()
+void MapDisplay::fixedFrameChanged()
 {
   transformMap();
 }
 
-void MapVisualizer::reset()
+void MapDisplay::reset()
 {
   clear();
 }
 
-void MapVisualizer::incomingMetaData()
+void MapDisplay::incomingMetaData()
 {
   new_metadata_ = true;
 }
 
-const char* MapVisualizer::getDescription()
+const char* MapDisplay::getDescription()
 {
   return "Displays an image of a map gotten through a std_srvs::StaticMap service.";
 }

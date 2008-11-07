@@ -27,10 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_VISUALIZER_AXES_VISUALIZER_H
-#define OGRE_VISUALIZER_AXES_VISUALIZER_H
+#ifndef OGRE_VISUALIZER_AXES_DISPLAY_H
+#define OGRE_VISUALIZER_AXES_DISPLAY_H
 
-#include "visualizer_base.h"
+#include "display.h"
 
 namespace ogre_tools
 {
@@ -43,14 +43,14 @@ namespace ogre_vis
 class FloatProperty;
 
 /**
- * \class AxesVisualizer
+ * \class AxesDisplay
  * \brief Displays a set of XYZ axes at the origin
  */
-class AxesVisualizer : public VisualizerBase
+class AxesDisplay : public Display
 {
 public:
-  AxesVisualizer( const std::string& name, VisualizationManager* manager );
-  virtual ~AxesVisualizer();
+  AxesDisplay( const std::string& name, VisualizationManager* manager );
+  virtual ~AxesDisplay();
 
   /**
    * \brief Set the parameters for the axes
@@ -64,7 +64,7 @@ public:
   void setRadius( float radius );
   float getRadius() { return radius_; }
 
-  // Overrides from VisualizerBase
+  // Overrides from Display
   virtual void targetFrameChanged() {}
   virtual void fixedFrameChanged() {}
   virtual void createProperties();
@@ -79,7 +79,7 @@ protected:
    */
   void create();
 
-  // overrides from VisualizerBase
+  // overrides from Display
   virtual void onEnable();
   virtual void onDisable();
 

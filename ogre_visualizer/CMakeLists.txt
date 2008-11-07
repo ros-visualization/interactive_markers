@@ -36,27 +36,27 @@ add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE}
                             ${SWIG_OUTPUT_PYTHON_FILE}
                    COMMAND  ${WXSWIG_EXECUTABLE} ${SWIG_FLAGS} -o ${SWIG_OUTPUT_CPP_FILE} -outdir ../lib -module ${PROJECT_NAME} ${SWIG_INTERFACE_FILE}
                    DEPENDS  ${SWIG_INTERFACE_FILE}
-                            src/ogre_visualizer/visualizer_base.i
+                            src/ogre_visualizer/display.i
                             src/ogre_visualizer/visualization_panel.i
                             src/ogre_visualizer/visualization_manager.i
                             src/ogre_visualizer/helpers/color.i
                             src/ogre_visualizer/visualization_panel.h
                             src/ogre_visualizer/visualization_manager.h  
                             src/ogre_visualizer/generated/visualization_panel_generated.h
-                            src/ogre_visualizer/visualizer_base.h
-                            src/ogre_visualizer/visualizers/axes_visualizer.h
-                            src/ogre_visualizer/visualizers/grid_visualizer.h
-                            src/ogre_visualizer/visualizers/laser_scan_visualizer.h
-                            src/ogre_visualizer/visualizers/marker_visualizer.h
-                            src/ogre_visualizer/visualizers/octree_visualizer.h
-                            src/ogre_visualizer/visualizers/planning_visualizer.h
-                            src/ogre_visualizer/visualizers/point_cloud_visualizer.h
-                            src/ogre_visualizer/visualizers/robot_model_visualizer.h
-                            src/ogre_visualizer/visualizers/robot_base2d_pose_visualizer.h
-                            src/ogre_visualizer/visualizers/particle_cloud_2d_visualizer.h
-                            src/ogre_visualizer/visualizers/poly_line_2d_visualizer.h
-                            src/ogre_visualizer/visualizers/map_visualizer.h
-                            src/ogre_visualizer/visualizers/tf_visualizer.h
+                            src/ogre_visualizer/display.h
+                            src/ogre_visualizer/displays/axes_display.h
+                            src/ogre_visualizer/displays/grid_display.h
+                            src/ogre_visualizer/displays/laser_scan_display.h
+                            src/ogre_visualizer/displays/marker_display.h
+                            src/ogre_visualizer/displays/octree_display.h
+                            src/ogre_visualizer/displays/planning_display.h
+                            src/ogre_visualizer/displays/point_cloud_display.h
+                            src/ogre_visualizer/displays/robot_model_display.h
+                            src/ogre_visualizer/displays/robot_base2d_pose_display.h
+                            src/ogre_visualizer/displays/particle_cloud_2d_display.h
+                            src/ogre_visualizer/displays/poly_line_2d_display.h
+                            src/ogre_visualizer/displays/map_display.h
+                            src/ogre_visualizer/displays/tf_display.h
                             src/ogre_visualizer/helpers/color.h)
 
 rospack_add_library(${PROJECT_NAME}  src/ogre_visualizer/properties/property.cpp
@@ -67,25 +67,25 @@ rospack_add_library(${PROJECT_NAME}  src/ogre_visualizer/properties/property.cpp
                                      src/ogre_visualizer/tools/selection_tool.cpp
                                      src/ogre_visualizer/visualization_panel.cpp
                                      src/ogre_visualizer/visualization_manager.cpp
-  				   												 src/ogre_visualizer/visualizer_base.cpp
+  				   					 src/ogre_visualizer/display.cpp
                                      src/ogre_visualizer/common.cpp
                                      src/ogre_visualizer/factory.cpp
                                      src/ogre_visualizer/ros_topic_property.cpp
                                      src/ogre_visualizer/new_display_dialog.cpp
                                      src/ogre_visualizer/helpers/robot.cpp
-                                     src/ogre_visualizer/visualizers/marker_visualizer.cpp
-                                     src/ogre_visualizer/visualizers/axes_visualizer.cpp
-  				   												 src/ogre_visualizer/visualizers/grid_visualizer.cpp
-  				   												 src/ogre_visualizer/visualizers/point_cloud_visualizer.cpp
-  				   												 src/ogre_visualizer/visualizers/laser_scan_visualizer.cpp
-  				   												 src/ogre_visualizer/visualizers/robot_model_visualizer.cpp
-  				   												 src/ogre_visualizer/visualizers/planning_visualizer.cpp
-  				   												 src/ogre_visualizer/visualizers/octree_visualizer.cpp
-  				   												 src/ogre_visualizer/visualizers/robot_base2d_pose_visualizer.cpp
-  				   												 src/ogre_visualizer/visualizers/particle_cloud_2d_visualizer.cpp
-  				   												 src/ogre_visualizer/visualizers/poly_line_2d_visualizer.cpp
-  				   												 src/ogre_visualizer/visualizers/map_visualizer.cpp
-  				   												 src/ogre_visualizer/visualizers/tf_visualizer.cpp
+                                     src/ogre_visualizer/displays/marker_display.cpp
+                                     src/ogre_visualizer/displays/axes_display.cpp
+  				   												 src/ogre_visualizer/displays/grid_display.cpp
+  				   												 src/ogre_visualizer/displays/point_cloud_display.cpp
+  				   												 src/ogre_visualizer/displays/laser_scan_display.cpp
+  				   												 src/ogre_visualizer/displays/robot_model_display.cpp
+  				   												 src/ogre_visualizer/displays/planning_display.cpp
+  				   												 src/ogre_visualizer/displays/octree_display.cpp
+  				   												 src/ogre_visualizer/displays/robot_base2d_pose_display.cpp
+  				   												 src/ogre_visualizer/displays/particle_cloud_2d_display.cpp
+  				   												 src/ogre_visualizer/displays/poly_line_2d_display.cpp
+  				   												 src/ogre_visualizer/displays/map_display.cpp
+  				   												 src/ogre_visualizer/displays/tf_display.cpp
    				   												 src/ogre_visualizer/generated/visualization_panel_generated.cpp
  				   												   ${SWIG_OUTPUT_CPP_FILE})
 target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} boost_signals ${OGRE_LIBRARIES})

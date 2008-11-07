@@ -27,8 +27,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_VISUALIZER_VISUALIZER_BASE
-#define OGRE_VISUALIZER_VISUALIZER_BASE
+#ifndef OGRE_VISUALIZER_DISPLAY_H
+#define OGRE_VISUALIZER_DISPLAY_H
 
 #include <string>
 #include <boost/function.hpp>
@@ -69,26 +69,26 @@ class BoolProperty;
 class VisualizationManager;
 
 /**
- * \class VisualizerBase
- * \brief Abstract base class for all visualizers.
+ * \class Display
+ * \brief Abstract base class for all displays.
  *
  * Provides a common interface for the visualization panel to interact with,
- * so that new visualizers can be added without the visualization panel knowing anything about them.
+ * so that new displays can be added without the visualization panel knowing anything about them.
  */
-class VisualizerBase
+class Display
 {
 public:
-  VisualizerBase( const std::string& name, VisualizationManager* manager );
-  virtual ~VisualizerBase();
+  Display( const std::string& name, VisualizationManager* manager );
+  virtual ~Display();
 
   /**
-   * \brief Enable this visualizer
-   * @param force If false, does not re-enable if this visualizer is already enabled.  If true, it does.
+   * \brief Enable this display
+   * @param force If false, does not re-enable if this display is already enabled.  If true, it does.
    */
   void enable( bool force = false );
   /**
-   * \brief Disable this visualizer
-   * @param force If false, does not re-disable if this visualizer is already disabled.  If true, it does.
+   * \brief Disable this display
+   * @param force If false, does not re-disable if this display is already disabled.  If true, it does.
    */
   void disable( bool force = false );
 
@@ -114,20 +114,20 @@ public:
   void setUnlockRenderCallback( boost::function<void ()> func );
 
   /**
-   * \brief Sets the property manager and parent category for this visualizer
+   * \brief Sets the property manager and parent category for this display
    * @param manager The property manager
    * @param parent The parent category
    */
   void setPropertyManager( PropertyManager* manager, CategoryProperty* parent );
 
   /**
-   * \brief Called from setPropertyManager, gives the visualizer a chance to create some properties immediately.
+   * \brief Called from setPropertyManager, gives the display a chance to create some properties immediately.
    *
    * Once this function is called, the property_manager_ member is valid and will stay valid
    */
   virtual void createProperties() {}
 
-  /// Set the target frame of this visualizer. This is a frame id which should match something being broadcast through TF.
+  /// Set the target frame of this display. This is a frame id which should match something being broadcast through TF.
   void setTargetFrame( const std::string& frame );
 
   /**
@@ -136,7 +136,7 @@ public:
   virtual void targetFrameChanged() = 0;
 
   /**
-   * \brief Set the fixed frame of this visualizer.  This is a frame id which should generally be the top-level frame being broadcast through TF
+   * \brief Set the fixed frame of this display.  This is a frame id which should generally be the top-level frame being broadcast through TF
    * @param frame The fixed frame
    */
   void setFixedFrame( const std::string& frame );
@@ -147,19 +147,19 @@ public:
   virtual void fixedFrameChanged() = 0;
 
   /**
-   * \brief Returns whether an object owned by this visualizer is pickable/mouse selectable
+   * \brief Returns whether an object owned by this display is pickable/mouse selectable
    * @param object The Ogre::MovableObject to check
    */
   virtual bool isObjectPickable( const Ogre::MovableObject* object ) const { return false; }
 
   /**
-   * \brief Returns the type name of this visualizer.  Does not need to be exactly the same as the class name.  Can contains spaces/punctuation, etc.
+   * \brief Returns the type name of this display.  Does not need to be exactly the same as the class name.  Can contains spaces/punctuation, etc.
    * @return The type name
    */
   virtual const char* getType() = 0;
 
   /**
-   * \brief Called to tell the visualizer to clear its state
+   * \brief Called to tell the display to clear its state
    */
   virtual void reset() {}
 
@@ -184,7 +184,7 @@ protected:
   VisualizationManager* vis_manager_;
 
   Ogre::SceneManager* scene_manager_;                 ///< The scene manager we're associated with
-  std::string name_;                                  ///< The name of this visualizer
+  std::string name_;                                  ///< The name of this display
   bool enabled_;                                      ///< Are we enabled?
 
   std::string target_frame_;                          ///< The frame we should transform all periodically-updated data into
@@ -210,25 +210,25 @@ protected:
  * \class RenderAutoLock
  * \brief A scoped lock on the renderer
  *
- * Constructor calls VisualizerBase::lockRender<br>
- * Destructor calls VisualizerBase::unlockRender
+ * Constructor calls Display::lockRender<br>
+ * Destructor calls Display::unlockRender
  */
 class RenderAutoLock
 {
 public:
-  RenderAutoLock( VisualizerBase* visualizer )
-  : visualizer_( visualizer )
+  RenderAutoLock( Display* display )
+  : display_( display )
   {
-    visualizer_->lockRender();
+    display_->lockRender();
   }
 
   ~RenderAutoLock()
   {
-    visualizer_->unlockRender();
+    display_->unlockRender();
   }
 
 private:
-  VisualizerBase* visualizer_;
+  Display* display_;
 };
 
 } // namespace ogre_vis

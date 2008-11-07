@@ -27,10 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_VISUALIZER_POINT_CLOUD_VISUALIZER_H
-#define OGRE_VISUALIZER_POINT_CLOUD_VISUALIZER_H
+#ifndef OGRE_VISUALIZER_POINT_CLOUD_DISPLAY_H
+#define OGRE_VISUALIZER_POINT_CLOUD_DISPLAY_H
 
-#include "visualizer_base.h"
+#include "display.h"
 #include "helpers/color.h"
 #include "ogre_tools/point_cloud.h"
 
@@ -52,14 +52,14 @@ class ColorProperty;
 class EnumProperty;
 
 /**
- * \class PointCloudVisualizer
+ * \class PointCloudDisplay
  * \brief Displays a point cloud of type std_msgs::PointCloud
  *
  * By default it will assume channel 0 of the cloud is an intensity value, and will color them by intensity.
  * If you set the channel's name to "rgb", it will interpret the channel as an integer rgb value, with r, g and b
  * all being 8 bits.
  */
-class PointCloudVisualizer : public VisualizerBase
+class PointCloudDisplay : public Display
 {
 public:
   /**
@@ -74,8 +74,8 @@ public:
     StyleCount,
   };
 
-  PointCloudVisualizer( const std::string& name, VisualizationManager* manager );
-  ~PointCloudVisualizer();
+  PointCloudDisplay( const std::string& name, VisualizationManager* manager );
+  ~PointCloudDisplay();
 
   /**
    * Set the incoming PointCloud topic
@@ -104,7 +104,7 @@ public:
   const Color& getColor() { return color_; }
   int getStyle() { return style_; }
 
-  // Overrides from VisualizerBase
+  // Overrides from Display
   virtual void targetFrameChanged() {}
   virtual void fixedFrameChanged();
   virtual void createProperties();

@@ -85,23 +85,23 @@ class StringProperty;
 class DoubleProperty;
 class CategoryProperty;
 
-class VisualizerBase;
-class VisualizerFactory;
+class Display;
+class DisplayFactory;
 
 class Tool;
 
-typedef boost::signal<void (VisualizerBase*)> VisualizerSignal;
+typedef boost::signal<void (Display*)> DisplaySignal;
 
-struct VisualizerInfo
+struct DisplayInfo
 {
-  VisualizerInfo()
-  : visualizer_(NULL)
+  DisplayInfo()
+  : display_(NULL)
   {}
-  VisualizerBase* visualizer_;
+  Display* display_;
   CategoryProperty* category_;
   uint32_t index_;
 };
-typedef std::vector< VisualizerInfo* > V_VisualizerInfo;
+typedef std::vector< DisplayInfo* > V_DisplayInfo;
 
 class VisualizationManager : public wxEvtHandler
 {
@@ -118,49 +118,49 @@ public:
   void initialize();
 
   /**
-   * \brief Create and then add a visualizer to this panel.
-   * @param name Display name of the visualizer
+   * \brief Create and then add a display to this panel.
+   * @param name Display name of the display
    * @param enabled Whether to start enabled
-   * @return A pointer to the new visualizer
+   * @return A pointer to the new display
    */
   template< class T >
-  T* createVisualizer( const std::string& name, bool enabled )
+  T* createDisplay( const std::string& name, bool enabled )
   {
-    VisualizerBase* current_vis = getVisualizer( name );
+    Display* current_vis = getDisplay( name );
     if ( current_vis )
     {
       return NULL;
     }
 
-    T* visualizer = new T( name, this );
-    addVisualizer( visualizer, enabled );
+    T* display = new T( name, this );
+    addDisplay( display, enabled );
 
-    return visualizer;
+    return display;
   }
 
   /**
-   * \brief Create and add a visualizer to this panel, by type name
-   * @param type Type name of the visualizer
-   * @param name Display name of the visualizer
+   * \brief Create and add a display to this panel, by type name
+   * @param type Type name of the display
+   * @param name Display name of the display
    * @param enabled Whether to start enabled
-   * @return A pointer to the new visualizer
+   * @return A pointer to the new display
    */
-  VisualizerBase* createVisualizer( const std::string& type, const std::string& name, bool enabled );
+  Display* createDisplay( const std::string& type, const std::string& name, bool enabled );
 
   /**
-   * \brief Remove a visualizer
-   * @param visualizer The visualizer to remove
+   * \brief Remove a display
+   * @param display The display to remove
    */
-  void removeVisualizer( VisualizerBase* visualizer );
+  void removeDisplay( Display* display );
   /**
-   * \brief Remove a visualizer by name
-   * @param name The name of the visualizer to remove
+   * \brief Remove a display by name
+   * @param name The name of the display to remove
    */
-  void removeVisualizer( const std::string& name );
+  void removeDisplay( const std::string& name );
   /**
-   * \brief Remove all visualizers
+   * \brief Remove all displays
    */
-  void removeAllVisualizers();
+  void removeAllDisplays();
 
   template< class T >
   T* createTool( const std::string& name, char shortcut_key )
@@ -190,12 +190,12 @@ public:
   void saveConfig( wxConfigBase* config );
 
   /**
-   * \brief Register a visualizer factory with the panel.  Allows you to create a visualizer by type.
-   * @param type Type of the visualizer.  Must be unique.
-   * @param factory The factory which will create this type of visualizer
+   * \brief Register a display factory with the panel.  Allows you to create a display by type.
+   * @param type Type of the display.  Must be unique.
+   * @param factory The factory which will create this type of display
    * @return Whether or not the registration succeeded.  The only failure condition is a non-unique type.
    */
-  bool registerFactory( const std::string& type, const std::string& description, VisualizerFactory* factory );
+  bool registerFactory( const std::string& type, const std::string& description, DisplayFactory* factory );
 
   /**
    * \brief Set the coordinate frame we should be displaying in
@@ -212,21 +212,21 @@ public:
   const std::string& getFixedFrame() { return fixed_frame_; }
 
   /**
-   * \brief Performs a linear search to find a visualizer based on its name
-   * @param name Name of the visualizer to search for
+   * \brief Performs a linear search to find a display based on its name
+   * @param name Name of the display to search for
    */
-  VisualizerBase* getVisualizer( const std::string& name );
+  Display* getDisplay( const std::string& name );
 
   /**
-   * \brief Enables/disables a visualizer.  Raises the signal retrieved through getVisualizerStateSignal()
-   * @param visualizer The visualizer to act on
+   * \brief Enables/disables a display.  Raises the signal retrieved through getDisplayStateSignal()
+   * @param display The display to act on
    * @param enabled Whether or not it should be enabled
    */
-  void setVisualizerEnabled( VisualizerBase* visualizer, bool enabled );
+  void setDisplayEnabled( Display* display, bool enabled );
 
   PropertyManager* getPropertyManager() { return property_manager_; }
 
-  bool isValidVisualizer( VisualizerBase* visualizer );
+  bool isValidDisplay( Display* display );
 
   ros::node* getROSNode() { return ros_node_; }
   tf::TransformListener* getTFClient() { return tf_; }
@@ -234,13 +234,13 @@ public:
 
   void getRegisteredTypes( std::vector<std::string>& types, std::vector<std::string>& descriptions );
 
-  VisualizerSignal& getVisualizerStateSignal() { return visualizer_state_; }
+  DisplaySignal& getDisplayStateSignal() { return display_state_; }
 
   Ogre::SceneNode* getTargetRelativeNode() { return target_relative_node_; }
 
   VisualizationPanel* getVisualizationPanel() { return vis_panel_; }
 
-  void resetVisualizers();
+  void resetDisplays();
 
   double getWallClock();
   double getROSTime();
@@ -250,20 +250,20 @@ public:
   void handleChar( wxKeyEvent& event );
 
   /**
-   * \brief Performs a linear search to find a VisualizerInfo struct based on the visualizer contained inside it
-   * @param visualizer The visualizer to find the info for
+   * \brief Performs a linear search to find a DisplayInfo struct based on the display contained inside it
+   * @param display The display to find the info for
    */
-  VisualizerInfo* getVisualizerInfo( const VisualizerBase* visualizer );
-  void moveVisualizerUp( VisualizerBase* visualizer );
-  void moveVisualizerDown( VisualizerBase* visualizer );
-  void resetVisualizerIndices();
+  DisplayInfo* getDisplayInfo( const Display* display );
+  void moveDisplayUp( Display* display );
+  void moveDisplayDown( Display* display );
+  void resetDisplayIndices();
 
 protected:
   /**
-   * \brief Add a visualizer to be managed by this panel
-   * @param visualizer The visualizer to be added
+   * \brief Add a display to be managed by this panel
+   * @param display The display to be added
    */
-  void addVisualizer( VisualizerBase* visualizer, bool enabled );
+  void addDisplay( Display* display, bool enabled );
 
   /// Called from the update timer
   void onUpdate( wxTimerEvent& event );
@@ -275,18 +275,18 @@ protected:
   Ogre::Root* ogre_root_;                                 ///< Ogre Root
   Ogre::SceneManager* scene_manager_;                     ///< Ogre scene manager associated with this panel
 
-  wxTimer* update_timer_;                                 ///< Update timer.  VisualizerBase::update is called on each visualizer whenever this timer fires
+  wxTimer* update_timer_;                                 ///< Update timer.  Display::update is called on each display whenever this timer fires
   wxStopWatch update_stopwatch_;                          ///< Update stopwatch.  Stores how long it's been since the last update
 
   ros::node* ros_node_;                                   ///< Our ros::node
   tf::TransformListener* tf_;                             ///< Our rosTF client
 
 
-  V_VisualizerInfo visualizers_;                          ///< Our list of visualizers
+  V_DisplayInfo displays_;                          ///< Our list of displays
 
   struct FactoryInfo
   {
-    FactoryInfo(const std::string& name, const std::string& description, VisualizerFactory* factory)
+    FactoryInfo(const std::string& name, const std::string& description, DisplayFactory* factory)
     : name_( name )
     , description_( description )
     , factory_( factory )
@@ -294,10 +294,10 @@ protected:
 
     std::string name_;
     std::string description_;
-    VisualizerFactory* factory_;
+    DisplayFactory* factory_;
   };
   typedef std::map<std::string, FactoryInfo> M_FactoryInfo;
-  M_FactoryInfo factories_;                                   ///< Factories by visualizer type name
+  M_FactoryInfo factories_;                                   ///< Factories by display type name
 
   typedef std::vector< Tool* > V_Tool;
   V_Tool tools_;
@@ -313,7 +313,7 @@ protected:
 
   VisualizationPanel* vis_panel_;
 
-  VisualizerSignal visualizer_state_;
+  DisplaySignal display_state_;
 
   Ogre::SceneNode* target_relative_node_;
 

@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "laser_scan_visualizer.h"
+#include "laser_scan_display.h"
 #include "properties/property.h"
 #include "properties/property_manager.h"
 #include "common.h"
@@ -45,8 +45,8 @@
 namespace ogre_vis
 {
 
-LaserScanVisualizer::LaserScanVisualizer( const std::string& name, VisualizationManager* manager )
-: VisualizerBase( name, manager )
+LaserScanDisplay::LaserScanDisplay( const std::string& name, VisualizationManager* manager )
+: Display( name, manager )
 , color_( 1.0f, 0.0f, 0.0f )
 , intensity_min_( 999999.0f )
 , intensity_max_( -999999.0f )
@@ -66,14 +66,14 @@ LaserScanVisualizer::LaserScanVisualizer( const std::string& name, Visualization
   setBillboardSize( billboard_size_ );
 }
 
-LaserScanVisualizer::~LaserScanVisualizer()
+LaserScanDisplay::~LaserScanDisplay()
 {
   unsubscribe();
 
   delete cloud_;
 }
 
-void LaserScanVisualizer::setCloudTopic( const std::string& topic )
+void LaserScanDisplay::setCloudTopic( const std::string& topic )
 {
   unsubscribe();
 
@@ -89,7 +89,7 @@ void LaserScanVisualizer::setCloudTopic( const std::string& topic )
   causeRender();
 }
 
-void LaserScanVisualizer::setScanTopic( const std::string& topic )
+void LaserScanDisplay::setScanTopic( const std::string& topic )
 {
   unsubscribe();
 
@@ -105,7 +105,7 @@ void LaserScanVisualizer::setScanTopic( const std::string& topic )
   causeRender();
 }
 
-void LaserScanVisualizer::setColor( const Color& color )
+void LaserScanDisplay::setColor( const Color& color )
 {
   color_ = color;
 
@@ -117,7 +117,7 @@ void LaserScanVisualizer::setColor( const Color& color )
   causeRender();
 }
 
-void LaserScanVisualizer::setStyle( int style )
+void LaserScanDisplay::setStyle( int style )
 {
   {
     RenderAutoLock render_lock( this );
@@ -138,7 +138,7 @@ void LaserScanVisualizer::setStyle( int style )
   causeRender();
 }
 
-void LaserScanVisualizer::setBillboardSize( float size )
+void LaserScanDisplay::setBillboardSize( float size )
 {
   {
     RenderAutoLock render_lock( this );
@@ -157,7 +157,7 @@ void LaserScanVisualizer::setBillboardSize( float size )
   causeRender();
 }
 
-void LaserScanVisualizer::setDecayTime( float time )
+void LaserScanDisplay::setDecayTime( float time )
 {
   point_decay_time_ = time;
 
@@ -169,7 +169,7 @@ void LaserScanVisualizer::setDecayTime( float time )
   causeRender();
 }
 
-void LaserScanVisualizer::clear()
+void LaserScanDisplay::clear()
 {
   RenderAutoLock renderLock( this );
 
@@ -182,13 +182,13 @@ void LaserScanVisualizer::clear()
   intensity_max_ = -9999999.0f;
 }
 
-void LaserScanVisualizer::onEnable()
+void LaserScanDisplay::onEnable()
 {
   cloud_->setCloudVisible( true );
   subscribe();
 }
 
-void LaserScanVisualizer::onDisable()
+void LaserScanDisplay::onDisable()
 {
   unsubscribe();
 
@@ -197,7 +197,7 @@ void LaserScanVisualizer::onDisable()
   cloud_->setCloudVisible( false );
 }
 
-void LaserScanVisualizer::subscribe()
+void LaserScanDisplay::subscribe()
 {
   if ( !isEnabled() )
   {
@@ -206,29 +206,29 @@ void LaserScanVisualizer::subscribe()
 
   if ( !cloud_topic_.empty() )
   {
-    ros_node_->subscribe( cloud_topic_, cloud_message_, &LaserScanVisualizer::incomingCloudCallback, this, 1 );
+    ros_node_->subscribe( cloud_topic_, cloud_message_, &LaserScanDisplay::incomingCloudCallback, this, 1 );
   }
 
   if ( !scan_topic_.empty() )
   {
-    ros_node_->subscribe( scan_topic_, scan_message_, &LaserScanVisualizer::incomingScanCallback, this, 1 );
+    ros_node_->subscribe( scan_topic_, scan_message_, &LaserScanDisplay::incomingScanCallback, this, 1 );
   }
 }
 
-void LaserScanVisualizer::unsubscribe()
+void LaserScanDisplay::unsubscribe()
 {
   if ( !cloud_topic_.empty() )
   {
-    ros_node_->unsubscribe( cloud_topic_, &LaserScanVisualizer::incomingCloudCallback, this );
+    ros_node_->unsubscribe( cloud_topic_, &LaserScanDisplay::incomingCloudCallback, this );
   }
 
   if ( !scan_topic_.empty() )
   {
-    ros_node_->unsubscribe( scan_topic_, &LaserScanVisualizer::incomingScanCallback, this );
+    ros_node_->unsubscribe( scan_topic_, &LaserScanDisplay::incomingScanCallback, this );
   }
 }
 
-void LaserScanVisualizer::update( float dt )
+void LaserScanDisplay::update( float dt )
 {
   cloud_message_.lock();
 
@@ -244,7 +244,7 @@ void LaserScanVisualizer::update( float dt )
   cloud_message_.unlock();
 }
 
-void LaserScanVisualizer::cullPoints()
+void LaserScanDisplay::cullPoints()
 {
   if ( point_decay_time_ == 0.0f )
   {
@@ -267,7 +267,7 @@ void LaserScanVisualizer::cullPoints()
   }
 }
 
-void LaserScanVisualizer::transformCloud( std_msgs::PointCloud& message )
+void LaserScanDisplay::transformCloud( std_msgs::PointCloud& message )
 {
   if ( point_decay_time_ == 0.0f )
   {
@@ -335,7 +335,7 @@ void LaserScanVisualizer::transformCloud( std_msgs::PointCloud& message )
   updateCloud();
 }
 
-void LaserScanVisualizer::updateCloud()
+void LaserScanDisplay::updateCloud()
 {
   {
     RenderAutoLock render_lock( this );
@@ -361,12 +361,12 @@ void LaserScanVisualizer::updateCloud()
   causeRender();
 }
 
-void LaserScanVisualizer::incomingCloudCallback()
+void LaserScanDisplay::incomingCloudCallback()
 {
   transformCloud( cloud_message_ );
 }
 
-void LaserScanVisualizer::incomingScanCallback()
+void LaserScanDisplay::incomingScanCallback()
 {
   cloud_message_.lock();
 
@@ -383,7 +383,7 @@ void LaserScanVisualizer::incomingScanCallback()
 }
 
 #if 0
-void LaserScanVisualizer::targetFrameChanged()
+void LaserScanDisplay::targetFrameChanged()
 {
   cloud_message_.lock();
 
@@ -404,40 +404,40 @@ void LaserScanVisualizer::targetFrameChanged()
 }
 #endif
 
-void LaserScanVisualizer::fixedFrameChanged()
+void LaserScanDisplay::fixedFrameChanged()
 {
   clear();
 }
 
-void LaserScanVisualizer::createProperties()
+void LaserScanDisplay::createProperties()
 {
-  style_property_ = property_manager_->createProperty<EnumProperty>( "Style", property_prefix_, boost::bind( &LaserScanVisualizer::getStyle, this ),
-                                                                     boost::bind( &LaserScanVisualizer::setStyle, this, _1 ), parent_category_, this );
+  style_property_ = property_manager_->createProperty<EnumProperty>( "Style", property_prefix_, boost::bind( &LaserScanDisplay::getStyle, this ),
+                                                                     boost::bind( &LaserScanDisplay::setStyle, this, _1 ), parent_category_, this );
   style_property_->addOption( "Billboards", Billboards );
   style_property_->addOption( "Points", Points );
 
-  color_property_ = property_manager_->createProperty<ColorProperty>( "Color", property_prefix_, boost::bind( &LaserScanVisualizer::getColor, this ),
-                                                                        boost::bind( &LaserScanVisualizer::setColor, this, _1 ), parent_category_, this );
+  color_property_ = property_manager_->createProperty<ColorProperty>( "Color", property_prefix_, boost::bind( &LaserScanDisplay::getColor, this ),
+                                                                        boost::bind( &LaserScanDisplay::setColor, this, _1 ), parent_category_, this );
 
-  billboard_size_property_ = property_manager_->createProperty<FloatProperty>( "Billboard Size", property_prefix_, boost::bind( &LaserScanVisualizer::getBillboardSize, this ),
-                                                                                boost::bind( &LaserScanVisualizer::setBillboardSize, this, _1 ), parent_category_, this );
+  billboard_size_property_ = property_manager_->createProperty<FloatProperty>( "Billboard Size", property_prefix_, boost::bind( &LaserScanDisplay::getBillboardSize, this ),
+                                                                                boost::bind( &LaserScanDisplay::setBillboardSize, this, _1 ), parent_category_, this );
   billboard_size_property_->setMin( 0.0001 );
-  decay_time_property_ = property_manager_->createProperty<FloatProperty>( "Decay Time", property_prefix_, boost::bind( &LaserScanVisualizer::getDecayTime, this ),
-                                                                                  boost::bind( &LaserScanVisualizer::setDecayTime, this, _1 ), parent_category_, this );
+  decay_time_property_ = property_manager_->createProperty<FloatProperty>( "Decay Time", property_prefix_, boost::bind( &LaserScanDisplay::getDecayTime, this ),
+                                                                                  boost::bind( &LaserScanDisplay::setDecayTime, this, _1 ), parent_category_, this );
   billboard_size_property_->setMin( 0.0 );
 
-  scan_topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Scan Topic", property_prefix_, boost::bind( &LaserScanVisualizer::getScanTopic, this ),
-                                                                            boost::bind( &LaserScanVisualizer::setScanTopic, this, _1 ), parent_category_, this );
-  cloud_topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Cloud Topic", property_prefix_, boost::bind( &LaserScanVisualizer::getCloudTopic, this ),
-                                                                              boost::bind( &LaserScanVisualizer::setCloudTopic, this, _1 ), parent_category_, this );
+  scan_topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Scan Topic", property_prefix_, boost::bind( &LaserScanDisplay::getScanTopic, this ),
+                                                                            boost::bind( &LaserScanDisplay::setScanTopic, this, _1 ), parent_category_, this );
+  cloud_topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Cloud Topic", property_prefix_, boost::bind( &LaserScanDisplay::getCloudTopic, this ),
+                                                                              boost::bind( &LaserScanDisplay::setCloudTopic, this, _1 ), parent_category_, this );
 }
 
-void LaserScanVisualizer::reset()
+void LaserScanDisplay::reset()
 {
   clear();
 }
 
-const char* LaserScanVisualizer::getDescription()
+const char* LaserScanDisplay::getDescription()
 {
   return "Displays the data from either a std_msgs::PointCloud or std_msgs::LaserScan message, accumulated over a period of time.";
 }

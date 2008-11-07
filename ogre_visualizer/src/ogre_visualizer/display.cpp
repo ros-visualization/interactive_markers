@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "visualizer_base.h"
+#include "display.h"
 #include "visualization_manager.h"
 #include "properties/property_manager.h"
 #include "properties/property.h"
@@ -35,7 +35,7 @@
 namespace ogre_vis
 {
 
-VisualizerBase::VisualizerBase( const std::string& name, VisualizationManager* manager )
+Display::Display( const std::string& name, VisualizationManager* manager )
 : vis_manager_( manager )
 , scene_manager_( manager->getSceneManager() )
 , name_( name )
@@ -49,7 +49,7 @@ VisualizerBase::VisualizerBase( const std::string& name, VisualizationManager* m
 {
 }
 
-VisualizerBase::~VisualizerBase()
+Display::~Display()
 {
   if ( property_manager_ )
   {
@@ -57,7 +57,7 @@ VisualizerBase::~VisualizerBase()
   }
 }
 
-void VisualizerBase::enable( bool force )
+void Display::enable( bool force )
 {
   if ( enabled_ && !force )
   {
@@ -69,7 +69,7 @@ void VisualizerBase::enable( bool force )
   onEnable();
 }
 
-void VisualizerBase::disable( bool force )
+void Display::disable( bool force )
 {
   if ( !enabled_ && !force )
   {
@@ -81,23 +81,23 @@ void VisualizerBase::disable( bool force )
   onDisable();
 }
 
-void VisualizerBase::setRenderCallback( boost::function<void ()> func )
+void Display::setRenderCallback( boost::function<void ()> func )
 {
   render_callback_ = func;
 }
 
-void VisualizerBase::setLockRenderCallback( boost::function<void ()> func )
+void Display::setLockRenderCallback( boost::function<void ()> func )
 {
   render_lock_ = func;
 }
 
-void VisualizerBase::setUnlockRenderCallback( boost::function<void ()> func )
+void Display::setUnlockRenderCallback( boost::function<void ()> func )
 {
   render_unlock_ = func;
 }
 
 
-void VisualizerBase::causeRender()
+void Display::causeRender()
 {
   if ( render_callback_ )
   {
@@ -105,7 +105,7 @@ void VisualizerBase::causeRender()
   }
 }
 
-void VisualizerBase::lockRender()
+void Display::lockRender()
 {
   if ( render_lock_ )
   {
@@ -113,7 +113,7 @@ void VisualizerBase::lockRender()
   }
 }
 
-void VisualizerBase::unlockRender()
+void Display::unlockRender()
 {
   if ( render_unlock_ )
   {
@@ -121,7 +121,7 @@ void VisualizerBase::unlockRender()
   }
 }
 
-void VisualizerBase::setTargetFrame( const std::string& frame )
+void Display::setTargetFrame( const std::string& frame )
 {
   target_frame_ = frame;
 
@@ -131,7 +131,7 @@ void VisualizerBase::setTargetFrame( const std::string& frame )
   }
 }
 
-void VisualizerBase::setFixedFrame( const std::string& frame )
+void Display::setFixedFrame( const std::string& frame )
 {
   fixed_frame_ = frame;
 
@@ -141,13 +141,13 @@ void VisualizerBase::setFixedFrame( const std::string& frame )
   }
 }
 
-void VisualizerBase::setPropertyManager( PropertyManager* manager, CategoryProperty* parent )
+void Display::setPropertyManager( PropertyManager* manager, CategoryProperty* parent )
 {
   property_manager_ = manager;
   parent_category_ = parent;
 
-  property_manager_->createProperty<BoolProperty>( "Enabled", property_prefix_, boost::bind( &VisualizerBase::isEnabled, this ),
-                                                   boost::bind( &VisualizationManager::setVisualizerEnabled, vis_manager_, this, _1 ), parent, this );
+  property_manager_->createProperty<BoolProperty>( "Enabled", property_prefix_, boost::bind( &Display::isEnabled, this ),
+                                                   boost::bind( &VisualizationManager::setDisplayEnabled, vis_manager_, this, _1 ), parent, this );
 
   createProperties();
 }

@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "poly_line_2d_visualizer.h"
+#include "poly_line_2d_display.h"
 #include "properties/property.h"
 #include "properties/property_manager.h"
 #include "common.h"
@@ -49,8 +49,8 @@
 namespace ogre_vis
 {
 
-PolyLine2DVisualizer::PolyLine2DVisualizer( const std::string& name, VisualizationManager* manager )
-: VisualizerBase( name, manager )
+PolyLine2DDisplay::PolyLine2DDisplay( const std::string& name, VisualizationManager* manager )
+: Display( name, manager )
 , color_( 0.1f, 1.0f, 0.0f )
 , render_operation_( poly_line_render_ops::Lines )
 , loop_( false )
@@ -84,7 +84,7 @@ PolyLine2DVisualizer::PolyLine2DVisualizer( const std::string& name, Visualizati
   setZPosition( 0.0f );
 }
 
-PolyLine2DVisualizer::~PolyLine2DVisualizer()
+PolyLine2DDisplay::~PolyLine2DDisplay()
 {
   unsubscribe();
   clear();
@@ -94,13 +94,13 @@ PolyLine2DVisualizer::~PolyLine2DVisualizer()
   delete cloud_;
 }
 
-void PolyLine2DVisualizer::clear()
+void PolyLine2DDisplay::clear()
 {
   manual_object_->clear();
   cloud_->clear();
 }
 
-void PolyLine2DVisualizer::setTopic( const std::string& topic )
+void PolyLine2DDisplay::setTopic( const std::string& topic )
 {
   unsubscribe();
 
@@ -116,7 +116,7 @@ void PolyLine2DVisualizer::setTopic( const std::string& topic )
   causeRender();
 }
 
-void PolyLine2DVisualizer::setColor( const Color& color )
+void PolyLine2DDisplay::setColor( const Color& color )
 {
   color_ = color;
 
@@ -129,7 +129,7 @@ void PolyLine2DVisualizer::setColor( const Color& color )
   causeRender();
 }
 
-void PolyLine2DVisualizer::setOverrideColor( bool override )
+void PolyLine2DDisplay::setOverrideColor( bool override )
 {
   override_color_ = override;
 
@@ -142,7 +142,7 @@ void PolyLine2DVisualizer::setOverrideColor( bool override )
   causeRender();
 }
 
-void PolyLine2DVisualizer::setRenderOperation( int op )
+void PolyLine2DDisplay::setRenderOperation( int op )
 {
   render_operation_ = op;
 
@@ -155,7 +155,7 @@ void PolyLine2DVisualizer::setRenderOperation( int op )
   causeRender();
 }
 
-void PolyLine2DVisualizer::setLoop( bool loop )
+void PolyLine2DDisplay::setLoop( bool loop )
 {
   loop_ = loop;
 
@@ -168,7 +168,7 @@ void PolyLine2DVisualizer::setLoop( bool loop )
   causeRender();
 }
 
-void PolyLine2DVisualizer::setPointSize( float size )
+void PolyLine2DDisplay::setPointSize( float size )
 {
   point_size_ = size;
 
@@ -181,7 +181,7 @@ void PolyLine2DVisualizer::setPointSize( float size )
   causeRender();
 }
 
-void PolyLine2DVisualizer::setZPosition( float z )
+void PolyLine2DDisplay::setZPosition( float z )
 {
   z_position_ = z;
 
@@ -194,7 +194,7 @@ void PolyLine2DVisualizer::setZPosition( float z )
   causeRender();
 }
 
-void PolyLine2DVisualizer::setAlpha( float alpha )
+void PolyLine2DDisplay::setAlpha( float alpha )
 {
   alpha_ = alpha;
 
@@ -209,7 +209,7 @@ void PolyLine2DVisualizer::setAlpha( float alpha )
   causeRender();
 }
 
-void PolyLine2DVisualizer::subscribe()
+void PolyLine2DDisplay::subscribe()
 {
   if ( !isEnabled() )
   {
@@ -218,41 +218,41 @@ void PolyLine2DVisualizer::subscribe()
 
   if ( !topic_.empty() )
   {
-    ros_node_->subscribe( topic_, message_, &PolyLine2DVisualizer::incomingMessage, this, 1 );
+    ros_node_->subscribe( topic_, message_, &PolyLine2DDisplay::incomingMessage, this, 1 );
   }
 
-  ros_node_->subscribe( "map_metadata", metadata_message_, &PolyLine2DVisualizer::incomingMetadataMessage, this, 1 );
+  ros_node_->subscribe( "map_metadata", metadata_message_, &PolyLine2DDisplay::incomingMetadataMessage, this, 1 );
 }
 
-void PolyLine2DVisualizer::unsubscribe()
+void PolyLine2DDisplay::unsubscribe()
 {
   if ( !topic_.empty() )
   {
-    ros_node_->unsubscribe( topic_, &PolyLine2DVisualizer::incomingMessage, this );
+    ros_node_->unsubscribe( topic_, &PolyLine2DDisplay::incomingMessage, this );
   }
 
-  ros_node_->unsubscribe( "map_metadata", &PolyLine2DVisualizer::incomingMetadataMessage, this );
+  ros_node_->unsubscribe( "map_metadata", &PolyLine2DDisplay::incomingMetadataMessage, this );
 }
 
-void PolyLine2DVisualizer::onEnable()
+void PolyLine2DDisplay::onEnable()
 {
   scene_node_->setVisible( true );
   subscribe();
 }
 
-void PolyLine2DVisualizer::onDisable()
+void PolyLine2DDisplay::onDisable()
 {
   unsubscribe();
   clear();
   scene_node_->setVisible( false );
 }
 
-void PolyLine2DVisualizer::fixedFrameChanged()
+void PolyLine2DDisplay::fixedFrameChanged()
 {
   clear();
 }
 
-void PolyLine2DVisualizer::update( float dt )
+void PolyLine2DDisplay::update( float dt )
 {
   if ( new_message_ )
   {
@@ -269,7 +269,7 @@ void PolyLine2DVisualizer::update( float dt )
   }
 }
 
-void PolyLine2DVisualizer::processMessage()
+void PolyLine2DDisplay::processMessage()
 {
   message_.lock();
 
@@ -361,49 +361,49 @@ void PolyLine2DVisualizer::processMessage()
   message_.unlock();
 }
 
-void PolyLine2DVisualizer::incomingMessage()
+void PolyLine2DDisplay::incomingMessage()
 {
   new_message_ = true;
 }
 
-void PolyLine2DVisualizer::incomingMetadataMessage()
+void PolyLine2DDisplay::incomingMetadataMessage()
 {
   new_metadata_ = true;
 }
 
 
-void PolyLine2DVisualizer::reset()
+void PolyLine2DDisplay::reset()
 {
   clear();
 }
 
-void PolyLine2DVisualizer::createProperties()
+void PolyLine2DDisplay::createProperties()
 {
-  override_color_property_ = property_manager_->createProperty<BoolProperty>( "Override Color", property_prefix_, boost::bind( &PolyLine2DVisualizer::getOverrideColor, this ),
-                                                                              boost::bind( &PolyLine2DVisualizer::setOverrideColor, this, _1 ), parent_category_, this );
-  color_property_ = property_manager_->createProperty<ColorProperty>( "Color", property_prefix_, boost::bind( &PolyLine2DVisualizer::getColor, this ),
-                                                                      boost::bind( &PolyLine2DVisualizer::setColor, this, _1 ), parent_category_, this );
+  override_color_property_ = property_manager_->createProperty<BoolProperty>( "Override Color", property_prefix_, boost::bind( &PolyLine2DDisplay::getOverrideColor, this ),
+                                                                              boost::bind( &PolyLine2DDisplay::setOverrideColor, this, _1 ), parent_category_, this );
+  color_property_ = property_manager_->createProperty<ColorProperty>( "Color", property_prefix_, boost::bind( &PolyLine2DDisplay::getColor, this ),
+                                                                      boost::bind( &PolyLine2DDisplay::setColor, this, _1 ), parent_category_, this );
 
-  loop_property_ = property_manager_->createProperty<BoolProperty>( "Loop", property_prefix_, boost::bind( &PolyLine2DVisualizer::getLoop, this ),
-                                                                    boost::bind( &PolyLine2DVisualizer::setLoop, this, _1 ), parent_category_, this );
+  loop_property_ = property_manager_->createProperty<BoolProperty>( "Loop", property_prefix_, boost::bind( &PolyLine2DDisplay::getLoop, this ),
+                                                                    boost::bind( &PolyLine2DDisplay::setLoop, this, _1 ), parent_category_, this );
 
-  render_operation_property_ = property_manager_->createProperty<EnumProperty>( "Render Operation", property_prefix_, boost::bind( &PolyLine2DVisualizer::getRenderOperation, this ),
-                                                                                boost::bind( &PolyLine2DVisualizer::setRenderOperation, this, _1 ), parent_category_, this );
+  render_operation_property_ = property_manager_->createProperty<EnumProperty>( "Render Operation", property_prefix_, boost::bind( &PolyLine2DDisplay::getRenderOperation, this ),
+                                                                                boost::bind( &PolyLine2DDisplay::setRenderOperation, this, _1 ), parent_category_, this );
   render_operation_property_->addOption( "Lines", poly_line_render_ops::Lines );
   render_operation_property_->addOption( "Points", poly_line_render_ops::Points );
 
-  /*point_size_property_ = property_manager_->createProperty<FloatProperty>( "Point Size", property_prefix_, boost::bind( &PolyLine2DVisualizer::getPointSize, this ),
-                                                                      boost::bind( &PolyLine2DVisualizer::setPointSize, this, _1 ), parent_category_, this );*/
-  z_position_property_ = property_manager_->createProperty<FloatProperty>( "Z Position", property_prefix_, boost::bind( &PolyLine2DVisualizer::getZPosition, this ),
-                                                                        boost::bind( &PolyLine2DVisualizer::setZPosition, this, _1 ), parent_category_, this );
-  alpha_property_ = property_manager_->createProperty<FloatProperty>( "Alpha", property_prefix_, boost::bind( &PolyLine2DVisualizer::getAlpha, this ),
-                                                                       boost::bind( &PolyLine2DVisualizer::setAlpha, this, _1 ), parent_category_, this );
+  /*point_size_property_ = property_manager_->createProperty<FloatProperty>( "Point Size", property_prefix_, boost::bind( &PolyLine2DDisplay::getPointSize, this ),
+                                                                      boost::bind( &PolyLine2DDisplay::setPointSize, this, _1 ), parent_category_, this );*/
+  z_position_property_ = property_manager_->createProperty<FloatProperty>( "Z Position", property_prefix_, boost::bind( &PolyLine2DDisplay::getZPosition, this ),
+                                                                        boost::bind( &PolyLine2DDisplay::setZPosition, this, _1 ), parent_category_, this );
+  alpha_property_ = property_manager_->createProperty<FloatProperty>( "Alpha", property_prefix_, boost::bind( &PolyLine2DDisplay::getAlpha, this ),
+                                                                       boost::bind( &PolyLine2DDisplay::setAlpha, this, _1 ), parent_category_, this );
 
-  topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &PolyLine2DVisualizer::getTopic, this ),
-                                                                                boost::bind( &PolyLine2DVisualizer::setTopic, this, _1 ), parent_category_, this );
+  topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &PolyLine2DDisplay::getTopic, this ),
+                                                                                boost::bind( &PolyLine2DDisplay::setTopic, this, _1 ), parent_category_, this );
 }
 
-const char* PolyLine2DVisualizer::getDescription()
+const char* PolyLine2DDisplay::getDescription()
 {
   return "Displays data from a std_msgs::Polyline2D message as either points or lines.";
 }

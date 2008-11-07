@@ -27,10 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_VISUALIZER_ROBOT_MODEL_VISUALIZER_H
-#define OGRE_VISUALIZER_ROBOT_MODEL_VISUALIZER_H
+#ifndef OGRE_VISUALIZER_ROBOT_MODEL_DISPLAY_H
+#define OGRE_VISUALIZER_ROBOT_MODEL_DISPLAY_H
 
-#include "visualizer_base.h"
+#include "display.h"
 
 #include <robot_msgs/MechanismState.h>
 
@@ -65,14 +65,14 @@ class ROSTopicStringProperty;
 class Robot;
 
 /**
- * \class RobotModelVisualizer
+ * \class RobotModelDisplay
  * \brief Uses a robot xml description to display the pieces of a robot at the transforms broadcast by rosTF
  */
-class RobotModelVisualizer : public VisualizerBase
+class RobotModelDisplay : public Display
 {
 public:
-  RobotModelVisualizer( const std::string& name, VisualizationManager* manager );
-  virtual ~RobotModelVisualizer();
+  RobotModelDisplay( const std::string& name, VisualizationManager* manager );
+  virtual ~RobotModelDisplay();
 
   /**
    * \brief Set the robot description parameter
@@ -108,7 +108,7 @@ public:
   void setMechanismTopic( const std::string& topic );
   const std::string& getMechanismTopic() { return mechanism_topic_; }
 
-  // Overrides from VisualizerBase
+  // Overrides from Display
   virtual void targetFrameChanged();
   virtual void fixedFrameChanged() {}
   virtual void createProperties();
@@ -126,7 +126,7 @@ protected:
    */
   void load();
 
-  // overrides from VisualizerBase
+  // overrides from Display
   virtual void onEnable();
   virtual void onDisable();
 

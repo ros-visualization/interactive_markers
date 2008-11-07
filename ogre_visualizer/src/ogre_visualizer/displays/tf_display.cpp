@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "tf_visualizer.h"
+#include "tf_display.h"
 #include "common.h"
 #include "properties/property.h"
 #include "properties/property_manager.h"
@@ -61,8 +61,8 @@ FrameInfo::FrameInfo()
 
 typedef std::set<FrameInfo*> S_FrameInfo;
 
-TFVisualizer::TFVisualizer( const std::string& name, VisualizationManager* manager )
-: VisualizerBase( name, manager )
+TFDisplay::TFDisplay( const std::string& name, VisualizationManager* manager )
+: Display( name, manager )
 , update_timer_( 0.0f )
 , update_rate_( 1.0f )
 , show_names_( true )
@@ -82,7 +82,7 @@ TFVisualizer::TFVisualizer( const std::string& name, VisualizationManager* manag
   axes_node_ = root_node_->createChildSceneNode();
 }
 
-TFVisualizer::~TFVisualizer()
+TFDisplay::~TFDisplay()
 {
   clear();
 
@@ -90,7 +90,7 @@ TFVisualizer::~TFVisualizer()
   scene_manager_->destroySceneNode( root_node_->getName() );
 }
 
-void TFVisualizer::clear()
+void TFDisplay::clear()
 {
   S_FrameInfo to_delete;
   M_FrameInfo::iterator frame_it = frames_.begin();
@@ -114,7 +114,7 @@ void TFVisualizer::clear()
   update_timer_ = 0.0f;
 }
 
-void TFVisualizer::onEnable()
+void TFDisplay::onEnable()
 {
   root_node_->setVisible( true );
 
@@ -123,13 +123,13 @@ void TFVisualizer::onEnable()
   axes_node_->setVisible( show_axes_ );
 }
 
-void TFVisualizer::onDisable()
+void TFDisplay::onDisable()
 {
   root_node_->setVisible( false );
   clear();
 }
 
-void TFVisualizer::setShowNames( bool show )
+void TFDisplay::setShowNames( bool show )
 {
   show_names_ = show;
 
@@ -141,7 +141,7 @@ void TFVisualizer::setShowNames( bool show )
   }
 }
 
-void TFVisualizer::setShowAxes( bool show )
+void TFDisplay::setShowAxes( bool show )
 {
   show_axes_ = show;
 
@@ -153,7 +153,7 @@ void TFVisualizer::setShowAxes( bool show )
   }
 }
 
-void TFVisualizer::setShowArrows( bool show )
+void TFDisplay::setShowArrows( bool show )
 {
   show_arrows_ = show;
 
@@ -165,7 +165,7 @@ void TFVisualizer::setShowArrows( bool show )
   }
 }
 
-void TFVisualizer::setUpdateRate( float rate )
+void TFDisplay::setUpdateRate( float rate )
 {
   update_rate_ = rate;
 
@@ -175,7 +175,7 @@ void TFVisualizer::setUpdateRate( float rate )
   }
 }
 
-void TFVisualizer::update( float dt )
+void TFDisplay::update( float dt )
 {
   update_timer_ += dt;
   if ( update_timer_ > update_rate_ )
@@ -186,7 +186,7 @@ void TFVisualizer::update( float dt )
   }
 }
 
-FrameInfo* TFVisualizer::getFrameInfo( const std::string& frame )
+FrameInfo* TFDisplay::getFrameInfo( const std::string& frame )
 {
   M_FrameInfo::iterator it = frames_.find( frame );
   if ( it == frames_.end() )
@@ -197,7 +197,7 @@ FrameInfo* TFVisualizer::getFrameInfo( const std::string& frame )
   return it->second;
 }
 
-void TFVisualizer::updateFrames()
+void TFDisplay::updateFrames()
 {
   typedef std::vector<std::string> V_string;
   V_string frames;
@@ -254,7 +254,7 @@ void TFVisualizer::updateFrames()
   causeRender();
 }
 
-FrameInfo* TFVisualizer::createFrame(const std::string& frame)
+FrameInfo* TFDisplay::createFrame(const std::string& frame)
 {
   FrameInfo* info = new FrameInfo;
   frames_.insert( std::make_pair( frame, info ) );
@@ -285,7 +285,7 @@ FrameInfo* TFVisualizer::createFrame(const std::string& frame)
   return info;
 }
 
-void TFVisualizer::updateFrame(FrameInfo* frame)
+void TFDisplay::updateFrame(FrameInfo* frame)
 {
   tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time(0ULL), frame->name_ );
 
@@ -406,7 +406,7 @@ void TFVisualizer::updateFrame(FrameInfo* frame)
   frame->parent_property_->changed();
 }
 
-void TFVisualizer::deleteFrame(FrameInfo* frame)
+void TFDisplay::deleteFrame(FrameInfo* frame)
 {
   M_FrameInfo::iterator it = frames_.find( frame->name_ );
   ROS_ASSERT( it != frames_.end() );
@@ -421,33 +421,33 @@ void TFVisualizer::deleteFrame(FrameInfo* frame)
   delete frame;
 }
 
-void TFVisualizer::createProperties()
+void TFDisplay::createProperties()
 {
-  show_names_property_ = property_manager_->createProperty<BoolProperty>( "Show Names", property_prefix_, boost::bind( &TFVisualizer::getShowNames, this ),
-                                                                          boost::bind( &TFVisualizer::setShowNames, this, _1 ), parent_category_, this );
-  show_axes_property_ = property_manager_->createProperty<BoolProperty>( "Show Axes", property_prefix_, boost::bind( &TFVisualizer::getShowAxes, this ),
-                                                                          boost::bind( &TFVisualizer::setShowAxes, this, _1 ), parent_category_, this );
-  show_arrows_property_ = property_manager_->createProperty<BoolProperty>( "Show Arrows", property_prefix_, boost::bind( &TFVisualizer::getShowArrows, this ),
-                                                                           boost::bind( &TFVisualizer::setShowArrows, this, _1 ), parent_category_, this );
-  update_rate_property_ = property_manager_->createProperty<FloatProperty>( "Update Rate", property_prefix_, boost::bind( &TFVisualizer::getUpdateRate, this ),
-                                                                            boost::bind( &TFVisualizer::setUpdateRate, this, _1 ), parent_category_, this );
+  show_names_property_ = property_manager_->createProperty<BoolProperty>( "Show Names", property_prefix_, boost::bind( &TFDisplay::getShowNames, this ),
+                                                                          boost::bind( &TFDisplay::setShowNames, this, _1 ), parent_category_, this );
+  show_axes_property_ = property_manager_->createProperty<BoolProperty>( "Show Axes", property_prefix_, boost::bind( &TFDisplay::getShowAxes, this ),
+                                                                          boost::bind( &TFDisplay::setShowAxes, this, _1 ), parent_category_, this );
+  show_arrows_property_ = property_manager_->createProperty<BoolProperty>( "Show Arrows", property_prefix_, boost::bind( &TFDisplay::getShowArrows, this ),
+                                                                           boost::bind( &TFDisplay::setShowArrows, this, _1 ), parent_category_, this );
+  update_rate_property_ = property_manager_->createProperty<FloatProperty>( "Update Rate", property_prefix_, boost::bind( &TFDisplay::getUpdateRate, this ),
+                                                                            boost::bind( &TFDisplay::setUpdateRate, this, _1 ), parent_category_, this );
   update_rate_property_->setMin( 0.05 );
 
   frames_category_ = property_manager_->createCategory( "Frames", property_prefix_, parent_category_, this );
   tree_category_ = property_manager_->createCategory( "Tree", property_prefix_, parent_category_, this );
 }
 
-void TFVisualizer::targetFrameChanged()
+void TFDisplay::targetFrameChanged()
 {
   update_timer_ = update_rate_;
 }
 
-void TFVisualizer::reset()
+void TFDisplay::reset()
 {
   clear();
 }
 
-const char* TFVisualizer::getDescription()
+const char* TFDisplay::getDescription()
 {
   return "Displays the TF transform hierarchy.";
 }

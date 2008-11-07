@@ -27,10 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_VISUALIZER_TF_VISUALIZER_H
-#define OGRE_VISUALIZER_TF_VISUALIZER_H
+#ifndef OGRE_VISUALIZER_TF_DISPLAY_H
+#define OGRE_VISUALIZER_TF_DISPLAY_H
 
-#include "visualizer_base.h"
+#include "display.h"
 
 #include <OgreVector3.h>
 #include <OgreQuaternion.h>
@@ -91,14 +91,14 @@ struct FrameInfo
 };
 
 /**
- * \class TFVisualizerthis
+ * \class TFDisplay
  * \brief Displays a visual representation of the TF hierarchy
  */
-class TFVisualizer : public VisualizerBase
+class TFDisplay : public Display
 {
 public:
-  TFVisualizer( const std::string& name, VisualizationManager* manager );
-  virtual ~TFVisualizer();
+  TFDisplay( const std::string& name, VisualizationManager* manager );
+  virtual ~TFDisplay();
 
   bool getShowNames() { return show_names_; }
   void setShowNames( bool show );
@@ -112,7 +112,7 @@ public:
   float getUpdateRate() { return update_rate_; }
   void setUpdateRate( float rate );
 
-  // Overrides from VisualizerBase
+  // Overrides from Display
   virtual void update( float dt );
   virtual void targetFrameChanged();
   virtual void fixedFrameChanged() {}
@@ -134,7 +134,7 @@ protected:
 
   void clear();
 
-  // overrides from VisualizerBase
+  // overrides from Display
   virtual void onEnable();
   virtual void onDisable();
 

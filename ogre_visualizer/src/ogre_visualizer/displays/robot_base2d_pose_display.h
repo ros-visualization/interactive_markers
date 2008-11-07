@@ -28,10 +28,10 @@
  */
 
 
-#ifndef OGRE_VISUALIZER_ROBOT_BASE2D_POSE_VISUALIZER_H_
-#define OGRE_VISUALIZER_ROBOT_BASE2D_POSE_VISUALIZER_H_
+#ifndef OGRE_VISUALIZER_ROBOT_BASE2D_POSE_DISPLAY_H_
+#define OGRE_VISUALIZER_ROBOT_BASE2D_POSE_DISPLAY_H_
 
-#include "visualizer_base.h"
+#include "display.h"
 #include "helpers/color.h"
 
 #include <std_msgs/RobotBase2DOdom.h>
@@ -55,14 +55,14 @@ class ColorProperty;
 class FloatProperty;
 
 /**
- * \class RobotBase2DPoseVisualizer
+ * \class RobotBase2DPoseDisplay
  * \brief Accumulates and displays the pose from a std_msgs::RobotBase2DOdom message
  */
-class RobotBase2DPoseVisualizer : public VisualizerBase
+class RobotBase2DPoseDisplay : public Display
 {
 public:
-  RobotBase2DPoseVisualizer( const std::string& name, VisualizationManager* manager );
-  virtual ~RobotBase2DPoseVisualizer();
+  RobotBase2DPoseDisplay( const std::string& name, VisualizationManager* manager );
+  virtual ~RobotBase2DPoseDisplay();
 
   void setTopic( const std::string& topic );
   const std::string& getTopic() { return topic_; }
@@ -76,7 +76,7 @@ public:
   void setAngleTolerance( float tol );
   float getAngleTolerance() { return angle_tolerance_; }
 
-  // Overrides from VisualizerBase
+  // Overrides from Display
   virtual void targetFrameChanged() {}
   virtual void fixedFrameChanged();
   virtual void createProperties();
@@ -96,7 +96,7 @@ protected:
   void processMessage( const std_msgs::RobotBase2DOdom& message );
   void transformArrow( const std_msgs::RobotBase2DOdom& message, ogre_tools::Arrow* arrow );
 
-  // overrides from VisualizerBase
+  // overrides from Display
   virtual void onEnable();
   virtual void onDisable();
 
@@ -126,4 +126,4 @@ protected:
 
 } // namespace ogre_vis
 
-#endif /* OGRE_VISUALIZER_ROBOT_BASE2D_POSE_VISUALIZER_H_ */
+#endif /* OGRE_VISUALIZER_ROBOT_BASE2D_POSE_DISPLAY_H_ */

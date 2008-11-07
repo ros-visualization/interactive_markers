@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "grid_visualizer.h"
+#include "grid_display.h"
 #include "common.h"
 #include "visualization_manager.h"
 #include "properties/property.h"
@@ -43,8 +43,8 @@
 namespace ogre_vis
 {
 
-GridVisualizer::GridVisualizer( const std::string& name, VisualizationManager* manager )
-: VisualizerBase( name, manager )
+GridDisplay::GridDisplay( const std::string& name, VisualizationManager* manager )
+: Display( name, manager )
 , cell_size_( 1.0f )
 , cell_count_( 10 )
 , color_( 0.5, 0.5, 0.5 )
@@ -59,29 +59,29 @@ GridVisualizer::GridVisualizer( const std::string& name, VisualizationManager* m
   grid_->getSceneNode()->setOrientation( orient );*/
 }
 
-GridVisualizer::~GridVisualizer()
+GridDisplay::~GridDisplay()
 {
   delete grid_;
 }
 
-void GridVisualizer::onEnable()
+void GridDisplay::onEnable()
 {
   grid_->getSceneNode()->setVisible( true );
 }
 
-void GridVisualizer::onDisable()
+void GridDisplay::onDisable()
 {
   grid_->getSceneNode()->setVisible( false );
 }
 
-void GridVisualizer::create()
+void GridDisplay::create()
 {
   grid_->set( cell_count_, cell_size_, color_.r_, color_.g_, color_.b_ );
 
   causeRender();
 }
 
-void GridVisualizer::set( uint32_t cell_count, float cell_size, const Color& color )
+void GridDisplay::set( uint32_t cell_count, float cell_size, const Color& color )
 {
   cell_count_ = cell_count;
   cell_size_ = cell_size;
@@ -105,36 +105,36 @@ void GridVisualizer::set( uint32_t cell_count, float cell_size, const Color& col
   }
 }
 
-void GridVisualizer::setCellSize( float size )
+void GridDisplay::setCellSize( float size )
 {
   set( cell_count_, size, color_ );
 }
 
-void GridVisualizer::setCellCount( uint32_t count )
+void GridDisplay::setCellCount( uint32_t count )
 {
   set( count, cell_size_, color_ );
 }
 
-void GridVisualizer::setColor( const Color& color )
+void GridDisplay::setColor( const Color& color )
 {
   set( cell_count_, cell_size_, color );
 }
 
-void GridVisualizer::createProperties()
+void GridDisplay::createProperties()
 {
-  cellcount_property_ = property_manager_->createProperty<IntProperty>( "Cell Count", property_prefix_, boost::bind( &GridVisualizer::getCellCount, this ),
-                                                           boost::bind( &GridVisualizer::setCellCount, this, _1 ), parent_category_, this );
+  cellcount_property_ = property_manager_->createProperty<IntProperty>( "Cell Count", property_prefix_, boost::bind( &GridDisplay::getCellCount, this ),
+                                                           boost::bind( &GridDisplay::setCellCount, this, _1 ), parent_category_, this );
   cellcount_property_->setMin( 1 );
 
-  cellsize_property_ = property_manager_->createProperty<FloatProperty>( "Cell Size", property_prefix_, boost::bind( &GridVisualizer::getCellSize, this ),
-                                                             boost::bind( &GridVisualizer::setCellSize, this, _1 ), parent_category_, this );
+  cellsize_property_ = property_manager_->createProperty<FloatProperty>( "Cell Size", property_prefix_, boost::bind( &GridDisplay::getCellSize, this ),
+                                                             boost::bind( &GridDisplay::setCellSize, this, _1 ), parent_category_, this );
   cellsize_property_->setMin( 0.0001 );
 
-  color_property_ = property_manager_->createProperty<ColorProperty>( "Color", property_prefix_, boost::bind( &GridVisualizer::getColor, this ),
-                                                                      boost::bind( &GridVisualizer::setColor, this, _1 ), parent_category_, this );
+  color_property_ = property_manager_->createProperty<ColorProperty>( "Color", property_prefix_, boost::bind( &GridDisplay::getColor, this ),
+                                                                      boost::bind( &GridDisplay::setColor, this, _1 ), parent_category_, this );
 }
 
-const char* GridVisualizer::getDescription()
+const char* GridDisplay::getDescription()
 {
   return "Displays a grid along the ground plane, centered at the origin of the target frame of reference.";
 }

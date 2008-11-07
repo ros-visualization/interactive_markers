@@ -28,16 +28,14 @@
  */
 
 /*
- * octree_visualizer.h
- *
  *  Created on: Aug 20, 2008
  *      Author: Matthew Piccoli and Matei Ciocarlie
  */
 
-#ifndef OCTREE_VISUALIZER_H_
-#define OCTREE_VISUALIZER_H_
+#ifndef OCTREE_DISPLAY_H_
+#define OCTREE_DISPLAY_H_
 
-#include "visualizer_base.h"
+#include "display.h"
 #include "helpers/color.h"
 #include <scan_utils/OctreeMsg.h>
 
@@ -51,14 +49,14 @@ class ColorProperty;
 class ROSTopicStringProperty;
 
 /**
- * \class OctreeVisualizer
+ * \class OctreeDisplay
  * \brief Visualizes a scan_utils::Octree, using its triangulation
  */
-class OctreeVisualizer : public VisualizerBase
+class OctreeDisplay : public Display
 {
 public:
-  OctreeVisualizer( const std::string& name, VisualizationManager* manager );
-  virtual ~OctreeVisualizer();
+  OctreeDisplay( const std::string& name, VisualizationManager* manager );
+  virtual ~OctreeDisplay();
 
   /**
    * \brief Set the ROS topic to listen on for Octree messages
@@ -73,7 +71,7 @@ public:
   const Color& getColor() { return color_; }
   const std::string& getOctreeTopic() { return octree_topic_; }
 
-  // Overrides from VisualizerBase
+  // Overrides from Display
   virtual void targetFrameChanged();
   virtual void fixedFrameChanged() {}
   virtual void createProperties();
@@ -86,7 +84,7 @@ public:
   static const char* getDescription();
 
 protected:
-  // overrides from VisualizerBase
+  // overrides from Display
   virtual void onEnable();
   virtual void onDisable();
 
@@ -129,4 +127,4 @@ protected:
 };
 
 }
-#endif /* OCTREE_VISUALIZER_H_ */
+#endif /* OCTREE_DISPLAY_H_ */

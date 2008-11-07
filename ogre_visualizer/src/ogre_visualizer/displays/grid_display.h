@@ -27,10 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_VISUALIZER_GRID_VISUALIZER_H
-#define OGRE_VISUALIZER_GRID_VISUALIZER_H
+#ifndef OGRE_VISUALIZER_GRID_DISPLAY_H
+#define OGRE_VISUALIZER_GRID_DISPLAY_H
 
-#include "visualizer_base.h"
+#include "display.h"
 #include "helpers/color.h"
 
 namespace ogre_tools
@@ -51,16 +51,16 @@ class FloatProperty;
 class ColorProperty;
 
 /**
- * \class GridVisualizer
+ * \class GridDisplay
  * \brief Displays a grid along the XZ plane (XY in robot space)
  *
  * For more information see ogre_tools::Grid
  */
-class GridVisualizer : public VisualizerBase
+class GridDisplay : public Display
 {
 public:
-  GridVisualizer( const std::string& name, VisualizationManager* manager );
-  virtual ~GridVisualizer();
+  GridDisplay( const std::string& name, VisualizationManager* manager );
+  virtual ~GridDisplay();
 
   /**
    * @return The cell count for this grid
@@ -94,7 +94,7 @@ public:
   void setColor( const Color& color );
   const Color& getColor() { return color_; }
 
-  // Overrides from VisualizerBase
+  // Overrides from Display
   virtual void targetFrameChanged() {}
   virtual void fixedFrameChanged() {}
   virtual void createProperties();
@@ -109,7 +109,7 @@ protected:
    */
   void create();
 
-  // overrides from VisualizerBase
+  // overrides from Display
   virtual void onEnable();
   virtual void onDisable();
 

@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "axes_visualizer.h"
+#include "axes_display.h"
 #include "visualization_manager.h"
 #include "properties/property.h"
 #include "properties/property_manager.h"
@@ -43,8 +43,8 @@
 namespace ogre_vis
 {
 
-AxesVisualizer::AxesVisualizer( const std::string& name, VisualizationManager* manager )
-: VisualizerBase( name, manager )
+AxesDisplay::AxesDisplay( const std::string& name, VisualizationManager* manager )
+: Display( name, manager )
 , length_( 1.0 )
 , radius_( 0.1 )
 {
@@ -58,29 +58,29 @@ AxesVisualizer::AxesVisualizer( const std::string& name, VisualizationManager* m
   axes_->setUserData( Ogre::Any( (void*)this ) );
 }
 
-AxesVisualizer::~AxesVisualizer()
+AxesDisplay::~AxesDisplay()
 {
   delete axes_;
 }
 
-void AxesVisualizer::onEnable()
+void AxesDisplay::onEnable()
 {
   axes_->getSceneNode()->setVisible( true );
 }
 
-void AxesVisualizer::onDisable()
+void AxesDisplay::onDisable()
 {
   axes_->getSceneNode()->setVisible( false );
 }
 
-void AxesVisualizer::create()
+void AxesDisplay::create()
 {
   axes_->set( length_, radius_ );
 
   causeRender();
 }
 
-void AxesVisualizer::set( float length, float radius )
+void AxesDisplay::set( float length, float radius )
 {
   length_ = length;
   radius_ = radius;
@@ -98,28 +98,28 @@ void AxesVisualizer::set( float length, float radius )
   }
 }
 
-void AxesVisualizer::setLength( float length )
+void AxesDisplay::setLength( float length )
 {
   set( length, radius_ );
 }
 
-void AxesVisualizer::setRadius( float radius )
+void AxesDisplay::setRadius( float radius )
 {
   set( length_, radius );
 }
 
-void AxesVisualizer::createProperties()
+void AxesDisplay::createProperties()
 {
-  length_property_ = property_manager_->createProperty<FloatProperty>( "Length", property_prefix_, boost::bind( &AxesVisualizer::getLength, this ),
-                                                                     boost::bind( &AxesVisualizer::setLength, this, _1 ), parent_category_, this );
+  length_property_ = property_manager_->createProperty<FloatProperty>( "Length", property_prefix_, boost::bind( &AxesDisplay::getLength, this ),
+                                                                     boost::bind( &AxesDisplay::setLength, this, _1 ), parent_category_, this );
   length_property_->setMin( 0.0001 );
 
-  radius_property_ = property_manager_->createProperty<FloatProperty>( "Radius", property_prefix_, boost::bind( &AxesVisualizer::getRadius, this ),
-                                                                       boost::bind( &AxesVisualizer::setRadius, this, _1 ), parent_category_, this );
+  radius_property_ = property_manager_->createProperty<FloatProperty>( "Radius", property_prefix_, boost::bind( &AxesDisplay::getRadius, this ),
+                                                                       boost::bind( &AxesDisplay::setRadius, this, _1 ), parent_category_, this );
   radius_property_->setMin( 0.0001 );
 }
 
-const char* AxesVisualizer::getDescription()
+const char* AxesDisplay::getDescription()
 {
   return "Displays a set of Axes at the origin of the target frame of reference.";
 }

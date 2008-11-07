@@ -28,10 +28,10 @@
  */
 
 
-#ifndef OGRE_VISUALIZER_PARTICLE_CLOUD_2D_VISUALIZER_H_
-#define OGRE_VISUALIZER_PARTICLE_CLOUD_2D_VISUALIZER_H_
+#ifndef OGRE_VISUALIZER_PARTICLE_CLOUD_2D_DISPLAY_H_
+#define OGRE_VISUALIZER_PARTICLE_CLOUD_2D_DISPLAY_H_
 
-#include "visualizer_base.h"
+#include "display.h"
 #include "helpers/color.h"
 
 #include <std_msgs/ParticleCloud2D.h>
@@ -55,14 +55,14 @@ class ColorProperty;
 class FloatProperty;
 
 /**
- * \class ParticleCloud2DVisualizer
+ * \class ParticleCloud2DDisplay
  * \brief Displays a std_msgs::ParticleCloud2D message
  */
-class ParticleCloud2DVisualizer : public VisualizerBase
+class ParticleCloud2DDisplay : public Display
 {
 public:
-  ParticleCloud2DVisualizer( const std::string& name, VisualizationManager* manager );
-  virtual ~ParticleCloud2DVisualizer();
+  ParticleCloud2DDisplay( const std::string& name, VisualizationManager* manager );
+  virtual ~ParticleCloud2DDisplay();
 
   void setTopic( const std::string& topic );
   const std::string& getTopic() { return topic_; }
@@ -70,7 +70,7 @@ public:
   void setColor( const Color& color );
   const Color& getColor() { return color_; }
 
-  // Overrides from VisualizerBase
+  // Overrides from Display
   virtual void targetFrameChanged() {}
   virtual void fixedFrameChanged();
   virtual void createProperties();
@@ -89,7 +89,7 @@ protected:
   void incomingMessage();
   void processMessage();
 
-  // overrides from VisualizerBase
+  // overrides from Display
   virtual void onEnable();
   virtual void onDisable();
 
@@ -114,5 +114,5 @@ protected:
 
 } // namespace ogre_vis
 
-#endif /* OGRE_VISUALIZER_PARTICLE_CLOUD_2D_VISUALIZER_H_ */
+#endif /* OGRE_VISUALIZER_PARTICLE_CLOUD_2D_DISPLAY_H_ */
 

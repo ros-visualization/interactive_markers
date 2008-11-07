@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "robot_base2d_pose_visualizer.h"
+#include "robot_base2d_pose_display.h"
 #include "properties/property.h"
 #include "properties/property_manager.h"
 #include "common.h"
@@ -45,8 +45,8 @@
 namespace ogre_vis
 {
 
-RobotBase2DPoseVisualizer::RobotBase2DPoseVisualizer( const std::string& name, VisualizationManager* manager )
-: VisualizerBase( name, manager )
+RobotBase2DPoseDisplay::RobotBase2DPoseDisplay( const std::string& name, VisualizationManager* manager )
+: Display( name, manager )
 , topic_( "odom" )
 , color_( 1.0f, 0.1f, 0.0f )
 , position_tolerance_( 0.1 )
@@ -59,13 +59,13 @@ RobotBase2DPoseVisualizer::RobotBase2DPoseVisualizer( const std::string& name, V
   scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
 }
 
-RobotBase2DPoseVisualizer::~RobotBase2DPoseVisualizer()
+RobotBase2DPoseDisplay::~RobotBase2DPoseDisplay()
 {
   unsubscribe();
   clear();
 }
 
-void RobotBase2DPoseVisualizer::clear()
+void RobotBase2DPoseDisplay::clear()
 {
   V_Arrow::iterator it = arrows_.begin();
   V_Arrow::iterator end = arrows_.end();
@@ -77,7 +77,7 @@ void RobotBase2DPoseVisualizer::clear()
   messages_.clear();
 }
 
-void RobotBase2DPoseVisualizer::setTopic( const std::string& topic )
+void RobotBase2DPoseDisplay::setTopic( const std::string& topic )
 {
   unsubscribe();
 
@@ -93,7 +93,7 @@ void RobotBase2DPoseVisualizer::setTopic( const std::string& topic )
   causeRender();
 }
 
-void RobotBase2DPoseVisualizer::setColor( const Color& color )
+void RobotBase2DPoseDisplay::setColor( const Color& color )
 {
   color_ = color;
 
@@ -113,7 +113,7 @@ void RobotBase2DPoseVisualizer::setColor( const Color& color )
   causeRender();
 }
 
-void RobotBase2DPoseVisualizer::setPositionTolerance( float tol )
+void RobotBase2DPoseDisplay::setPositionTolerance( float tol )
 {
   position_tolerance_ = tol;
 
@@ -123,7 +123,7 @@ void RobotBase2DPoseVisualizer::setPositionTolerance( float tol )
   }
 }
 
-void RobotBase2DPoseVisualizer::setAngleTolerance( float tol )
+void RobotBase2DPoseDisplay::setAngleTolerance( float tol )
 {
   angle_tolerance_ = tol;
 
@@ -133,7 +133,7 @@ void RobotBase2DPoseVisualizer::setAngleTolerance( float tol )
   }
 }
 
-void RobotBase2DPoseVisualizer::subscribe()
+void RobotBase2DPoseDisplay::subscribe()
 {
   if ( !isEnabled() )
   {
@@ -142,45 +142,45 @@ void RobotBase2DPoseVisualizer::subscribe()
 
   if ( !topic_.empty() )
   {
-    ros_node_->subscribe( topic_, message_, &RobotBase2DPoseVisualizer::incomingMessage, this, 1 );
+    ros_node_->subscribe( topic_, message_, &RobotBase2DPoseDisplay::incomingMessage, this, 1 );
   }
 }
 
-void RobotBase2DPoseVisualizer::unsubscribe()
+void RobotBase2DPoseDisplay::unsubscribe()
 {
   if ( !topic_.empty() )
   {
-    ros_node_->unsubscribe( topic_, &RobotBase2DPoseVisualizer::incomingMessage, this );
+    ros_node_->unsubscribe( topic_, &RobotBase2DPoseDisplay::incomingMessage, this );
   }
 }
 
-void RobotBase2DPoseVisualizer::onEnable()
+void RobotBase2DPoseDisplay::onEnable()
 {
   scene_node_->setVisible( true );
   subscribe();
 }
 
-void RobotBase2DPoseVisualizer::onDisable()
+void RobotBase2DPoseDisplay::onDisable()
 {
   unsubscribe();
   clear();
   scene_node_->setVisible( false );
 }
 
-void RobotBase2DPoseVisualizer::createProperties()
+void RobotBase2DPoseDisplay::createProperties()
 {
-  color_property_ = property_manager_->createProperty<ColorProperty>( "Color", property_prefix_, boost::bind( &RobotBase2DPoseVisualizer::getColor, this ),
-                                                                          boost::bind( &RobotBase2DPoseVisualizer::setColor, this, _1 ), parent_category_, this );
-  topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &RobotBase2DPoseVisualizer::getTopic, this ),
-                                                                                boost::bind( &RobotBase2DPoseVisualizer::setTopic, this, _1 ), parent_category_, this );
+  color_property_ = property_manager_->createProperty<ColorProperty>( "Color", property_prefix_, boost::bind( &RobotBase2DPoseDisplay::getColor, this ),
+                                                                          boost::bind( &RobotBase2DPoseDisplay::setColor, this, _1 ), parent_category_, this );
+  topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &RobotBase2DPoseDisplay::getTopic, this ),
+                                                                                boost::bind( &RobotBase2DPoseDisplay::setTopic, this, _1 ), parent_category_, this );
 
-  position_tolerance_property_ = property_manager_->createProperty<FloatProperty>( "Position Tolerance", property_prefix_, boost::bind( &RobotBase2DPoseVisualizer::getPositionTolerance, this ),
-                                                                               boost::bind( &RobotBase2DPoseVisualizer::setPositionTolerance, this, _1 ), parent_category_, this );
-  angle_tolerance_property_ = property_manager_->createProperty<FloatProperty>( "Angle Tolerance", property_prefix_, boost::bind( &RobotBase2DPoseVisualizer::getAngleTolerance, this ),
-                                                                                 boost::bind( &RobotBase2DPoseVisualizer::setAngleTolerance, this, _1 ), parent_category_, this );
+  position_tolerance_property_ = property_manager_->createProperty<FloatProperty>( "Position Tolerance", property_prefix_, boost::bind( &RobotBase2DPoseDisplay::getPositionTolerance, this ),
+                                                                               boost::bind( &RobotBase2DPoseDisplay::setPositionTolerance, this, _1 ), parent_category_, this );
+  angle_tolerance_property_ = property_manager_->createProperty<FloatProperty>( "Angle Tolerance", property_prefix_, boost::bind( &RobotBase2DPoseDisplay::getAngleTolerance, this ),
+                                                                                 boost::bind( &RobotBase2DPoseDisplay::setAngleTolerance, this, _1 ), parent_category_, this );
 }
 
-void RobotBase2DPoseVisualizer::processMessage( const std_msgs::RobotBase2DOdom& message )
+void RobotBase2DPoseDisplay::processMessage( const std_msgs::RobotBase2DOdom& message )
 {
   if ( !messages_.empty() )
   {
@@ -204,7 +204,7 @@ void RobotBase2DPoseVisualizer::processMessage( const std_msgs::RobotBase2DOdom&
   messages_.push_back( message );
 }
 
-void RobotBase2DPoseVisualizer::transformArrow( const std_msgs::RobotBase2DOdom& message, ogre_tools::Arrow* arrow )
+void RobotBase2DPoseDisplay::transformArrow( const std_msgs::RobotBase2DOdom& message, ogre_tools::Arrow* arrow )
 {
   std::string frame_id = message.header.frame_id;
   if ( frame_id.empty() )
@@ -236,7 +236,7 @@ void RobotBase2DPoseVisualizer::transformArrow( const std_msgs::RobotBase2DOdom&
 }
 
 #if 0
-void RobotBase2DPoseVisualizer::targetFrameChanged()
+void RobotBase2DPoseDisplay::targetFrameChanged()
 {
   ROS_ASSERT( messages_.size() == arrows_.size() );
   V_RobotBase2DOdom::iterator msg_it = messages_.begin();
@@ -249,12 +249,12 @@ void RobotBase2DPoseVisualizer::targetFrameChanged()
 }
 #endif
 
-void RobotBase2DPoseVisualizer::fixedFrameChanged()
+void RobotBase2DPoseDisplay::fixedFrameChanged()
 {
   clear();
 }
 
-void RobotBase2DPoseVisualizer::update( float dt )
+void RobotBase2DPoseDisplay::update( float dt )
 {
   V_RobotBase2DOdom local_queue;
   queue_mutex_.lock();
@@ -276,7 +276,7 @@ void RobotBase2DPoseVisualizer::update( float dt )
   }
 }
 
-void RobotBase2DPoseVisualizer::incomingMessage()
+void RobotBase2DPoseDisplay::incomingMessage()
 {
   queue_mutex_.lock();
 
@@ -285,12 +285,12 @@ void RobotBase2DPoseVisualizer::incomingMessage()
   queue_mutex_.unlock();
 }
 
-void RobotBase2DPoseVisualizer::reset()
+void RobotBase2DPoseDisplay::reset()
 {
   clear();
 }
 
-const char* RobotBase2DPoseVisualizer::getDescription()
+const char* RobotBase2DPoseDisplay::getDescription()
 {
   return "Accumulates and displays poses from a std_msgs::RobotBase2DOdom message.";
 }
