@@ -43,45 +43,7 @@ class DefaultVisualizationPanel(ogre_visualizer.VisualizationPanel):
     def createDefaultVisualizers(self):
         manager = self.getManager();
         
-        manager.createGridVisualizer( "Grid", True )
-        manager.createAxesVisualizer( "Origin Axes", False )
-        manager.createMarkerVisualizer( "Visualization Markers", True )
-        
-        robot_vis = manager.createRobotModelVisualizer( "Robot Model", False )
-        robot_vis.setRobotDescription( "robotdesc/pr2" )
-        
-        manager.createRobotBase2DPoseVisualizer( "2D Pose: Odom", True )
-        localized_pose = manager.createRobotBase2DPoseVisualizer("2D Pose: Localized", True)
-        localized_pose.setTopic("localizedpose")
-        localized_pose.setColor(ogre_visualizer.Color(0.0, 0.1, 0.8))
-        
-        manager.createMapVisualizer("Map", True)
-        
-        planning = manager.createPlanningVisualizer( "Planning", False )
-        planning.initialize( "robotdesc/pr2", "display_kinematic_path" )
-        
-        point_cloud = manager.createPointCloudVisualizer( "Stereo Full Cloud", True )
-        point_cloud.setTopic( "videre/cloud" )
-        point_cloud.setColor( ogre_visualizer.Color(1.0, 1.0, 1.0) )
-        
-        point_cloud = manager.createPointCloudVisualizer( "Head Full Cloud", True )
-        point_cloud.setTopic( "full_cloud" )
-        point_cloud.setColor( ogre_visualizer.Color(1.0, 1.0, 0.0) )
-        
-        point_cloud = manager.createPointCloudVisualizer( "World 3D Map", True )
-        point_cloud.setTopic( "world_3d_map" )
-        point_cloud.setColor( ogre_visualizer.Color(1.0, 0.0, 0.0) )
-        point_cloud.setBillboardSize( 0.01 )
-        
-        laser_scan = manager.createLaserScanVisualizer( "Head Scan", True )
-        laser_scan.setScanTopic( "tilt_scan" )
-        laser_scan.setColor( ogre_visualizer.Color(1.0, 0.0, 0.0) )
-        laser_scan.setDecayTime( 30.0 )
-        
-        laser_scan = manager.createLaserScanVisualizer( "Floor Scan", True )
-        laser_scan.setScanTopic( "base_scan" )
-        laser_scan.setColor( ogre_visualizer.Color(0.0, 1.0, 0.0) )
-        laser_scan.setDecayTime( 0.0 )
-        
-        manager.createOctreeVisualizer( "Octree", True ).setOctreeTopic( "full_octree" )
+        config_path = rostools.packspec.get_pkg_dir( "ogre_visualizer" ) + "/configs/pr2.vcg"
+        config = wx.FileConfig(localFilename=config_path)
+        manager.loadConfig(config)
         
