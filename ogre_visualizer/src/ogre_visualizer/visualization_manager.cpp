@@ -69,8 +69,8 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
 , vis_panel_( panel )
 , needs_reset_( false )
 , new_ros_time_( false )
-, wall_clock_begin_( 0 )
-, ros_time_begin_( 0 )
+, wall_clock_begin_( 0.0 )
+, ros_time_begin_( 0.0 )
 {
   initializeCommon();
   registerFactories( this );
@@ -235,8 +235,8 @@ void VisualizationManager::onUpdate( wxTimerEvent& event )
     resetVisualizers();
     tf_->clear();
 
-    ros_time_begin_ = ros::Time( 0 );
-    wall_clock_begin_ = ros::Time( 0 );
+    ros_time_begin_ = ros::Time( 0.0 );
+    wall_clock_begin_ = ros::Time( 0.0 );
   }
 
   static float time_update_timer = 0.0f;

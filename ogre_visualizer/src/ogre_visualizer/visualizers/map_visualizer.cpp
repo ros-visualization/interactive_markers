@@ -60,7 +60,7 @@ MapVisualizer::MapVisualizer( const std::string& name, VisualizationManager* man
 , height_( 0.0f )
 , load_timer_( 2.0f )
 , new_metadata_( false )
-, last_loaded_map_time_( 0 )
+, last_loaded_map_time_( 0.0 )
 , service_property_( NULL )
 , resolution_property_( NULL )
 , width_property_( NULL )

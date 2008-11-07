@@ -12,7 +12,7 @@ void SceneLabelerStereo::loadMsgsFromFile(string file) {
 
 
   cout << "Loading messages... "; flush(cout);
-  lp.open(file, ros::Time(0));
+  lp.open(file, ros::Time(0.0));
   lp.addHandler<std_msgs::ImageArray>(string("videre/images"), &copyMsg<std_msgs::ImageArray>, (void*)(&images_msg_), true);
   lp.addHandler<std_msgs::ImageArray>(string("labeled_images"), &copyMsg<std_msgs::ImageArray>, (void*)(&labeled_images_msg_), true);
   lp.addHandler<std_msgs::PointCloud>(ptcld_topic_, &copyMsg<std_msgs::PointCloud>, (void*)(&cloud_), true);
