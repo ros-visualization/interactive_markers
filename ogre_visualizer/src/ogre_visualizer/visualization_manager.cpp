@@ -86,7 +86,8 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
   }
   ROS_ASSERT( ros_node_ );
 
-  tf_ = new tf::TransformListener( *ros_node_, true, 10000000000ULL, 1000000000ULL );
+  tf_ = new tf::TransformListener( *ros_node_, true, 10000000000ULL);
+  tf_->setExtrapolationLimit( ros::Duration((int64_t)1000000000ULL) );
 
   scene_manager_ = ogre_root_->createSceneManager( Ogre::ST_GENERIC );
 
