@@ -324,7 +324,7 @@ void MapDisplay::load()
 
 void MapDisplay::transformMap()
 {
-  tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time(0ULL), "map" );
+  tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time((uint64_t)0ULL), "map" );
 
   try
   {

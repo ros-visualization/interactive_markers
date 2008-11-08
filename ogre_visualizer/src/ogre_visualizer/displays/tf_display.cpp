@@ -287,7 +287,7 @@ FrameInfo* TFDisplay::createFrame(const std::string& frame)
 
 void TFDisplay::updateFrame(FrameInfo* frame)
 {
-  tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time(0ULL), frame->name_ );
+  tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time((uint64_t)0ULL), frame->name_ );
 
   try
   {
@@ -318,7 +318,7 @@ void TFDisplay::updateFrame(FrameInfo* frame)
 
   std::string old_parent = frame->parent_;
   frame->parent_.clear();
-  bool has_parent = tf_->getParent( frame->name_, ros::Time(0ULL), frame->parent_ );
+  bool has_parent = tf_->getParent( frame->name_, ros::Time((uint64_t)0ULL), frame->parent_ );
   if ( has_parent )
   {
     if ( !frame->tree_property_ || old_parent != frame->parent_ )
@@ -339,7 +339,7 @@ void TFDisplay::updateFrame(FrameInfo* frame)
 
     if ( show_arrows_ )
     {
-      tf::Stamped<tf::Pose> parent_pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time(0ULL), frame->parent_ );
+      tf::Stamped<tf::Pose> parent_pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time((uint64_t)0ULL), frame->parent_ );
 
       try
       {

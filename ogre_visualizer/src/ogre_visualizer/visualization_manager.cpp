@@ -86,7 +86,7 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
   }
   ROS_ASSERT( ros_node_ );
 
-  tf_ = new tf::TransformListener( *ros_node_, true, 10000000000ULL);
+  tf_ = new tf::TransformListener( *ros_node_, true, (uint64_t)10000000000ULL);
   tf_->setExtrapolationLimit( ros::Duration((int64_t)1000000000ULL) );
 
   scene_manager_ = ogre_root_->createSceneManager( Ogre::ST_GENERIC );
@@ -660,7 +660,7 @@ void VisualizationManager::getRegisteredTypes( std::vector<std::string>& types, 
 void VisualizationManager::updateRelativeNode()
 {
   tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0.0f, 0.0f, 0.0f ), btVector3( 0.0f, 0.0f, 0.0f ) ),
-                              ros::Time(0ULL), target_frame_ );
+                              ros::Time((uint64_t)0ULL), target_frame_ );
 
   try
   {
@@ -707,7 +707,7 @@ double VisualizationManager::getROSTimeElapsed()
 
 void VisualizationManager::incomingROSTime()
 {
-  static ros::Time last_time = ros::Time(0ULL);
+  static ros::Time last_time = ros::Time((uint64_t)0ULL);
 
   if ( time_message_.rostime < last_time )
   {
