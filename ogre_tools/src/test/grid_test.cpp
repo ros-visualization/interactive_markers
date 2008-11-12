@@ -39,6 +39,7 @@
 #include "../ogre_tools/arrow.h"
 #include "../ogre_tools/point_cloud.h"
 #include "../ogre_tools/super_ellipsoid.h"
+#include "../ogre_tools/billboard_line.h"
 #include "../ogre_tools/initialization.h"
 
 #include <OgreRoot.h>
@@ -77,6 +78,20 @@ public:
         ogre_tools::Grid* grid = new ogre_tools::Grid( scene_manager_, NULL, 10, 1.0f, 1.0f, 0.0f, 0.0f );
         //grid->getSceneNode()->pitch( Ogre::Degree( 90 ) );
 
+        ogre_tools::BillboardLine* line = new ogre_tools::BillboardLine( scene_manager_, NULL );
+        for ( int i = 0; i < 5; ++i )
+        {
+          line->addPoint( Ogre::Vector3( i, 0.0f, 0.0f ) );
+        }
+
+        for ( int i = 0; i < 5; ++i )
+        {
+          line->addPoint( Ogre::Vector3( 4.0f, 0.0f, i ) );
+        }
+
+        line->setLineWidth( 0.05 );
+        line->setColor( 0.0f, 1.0f, 0.0f, 0.5f );
+
         //ogre_tools::Axes* axes = new ogre_tools::Axes( scene_manager_ );
         //axes->setScale( Ogre::Vector3( 2.0f, 2.0f, 2.0f ) );
 
@@ -110,8 +125,8 @@ public:
 
         pointCloud->AddPoints( &points.front(), 1000000 );*/
 
-        ogre_tools::SuperEllipsoid* se = new ogre_tools::SuperEllipsoid( scene_manager_ );
-        se->create( ogre_tools::SuperEllipsoid::Cube, 60, Ogre::Vector3( 1.0f, 5.0f, 1.0f ) );
+        /*ogre_tools::SuperEllipsoid* se = new ogre_tools::SuperEllipsoid( scene_manager_ );
+        se->create( ogre_tools::SuperEllipsoid::Cube, 60, Ogre::Vector3( 1.0f, 5.0f, 1.0f ) );*/
     }
     catch ( Ogre::Exception& e )
     {
