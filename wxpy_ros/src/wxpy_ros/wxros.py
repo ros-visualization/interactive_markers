@@ -31,26 +31,13 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-
 #Some utilities for launching a ROS listener process
-#To be deprecated soon with a new implementation of rospy
 
 PKG = 'wxpy_ros'
-# LOADER #####################
-import sys, os, subprocess
-try:
-    rostoolsDir = (subprocess.Popen(['rospack', 'find', 'rostools'], stdout=subprocess.PIPE).communicate()[0] or '').strip()
-    sys.path.append(os.path.join(rostoolsDir,'src'))
-    import rostools.launcher
-    rostools.launcher.updateSysPath(sys.argv[0], PKG, bootstrapVersion="0.6")
-except ImportError:
-    print >> sys.stderr, "\nERROR: Cannot locate rostools"
-    sys.exit(1)  
-# END LOADER #################
+import rostools; rostools.update_path(PKG)
 
-import rostools, rospy
+import rospy
 from threading import Thread
-
 
 class ROSListener(Thread):
   """Creates a thread that handles ros communications."""
@@ -60,11 +47,4 @@ class ROSListener(Thread):
     self.name = name
     
   def run(self):
-   #pass
-   print('xx')
    rospy.init_node(self.name,anonymous=True)
-   print('xx')
-   #rospy.ready(self.name, anonymous=True)
-   rospy.spin()
-
-    
