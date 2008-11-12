@@ -11,17 +11,17 @@ include_directories(${wxWidgets_INCLUDE_DIRS})
 
 find_program(WXFORMBUILDER NAMES wxformbuilder)
 
-if(WXFORMBUILDER)
-  add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/src/wx_topic_display/GenTopicDisplay.cpp
-                            ${PROJECT_SOURCE_DIR}/src/wx_topic_display/GenTopicDisplay.h
-                     COMMAND ${WXFORMBUILDER} -g ${PROJECT_SOURCE_DIR}/src/wx_topic_display/topic_display.fbp
-                     DEPENDS src/wx_topic_display/topic_display.fbp)
-
-  add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/src/test/GenTestTopicDisplay.cpp
-                            ${PROJECT_SOURCE_DIR}/src/test/GenTestTopicDisplay.h
-                     COMMAND ${WXFORMBUILDER} -g ${PROJECT_SOURCE_DIR}/src/test/test_topic_display.fbp
-                     DEPENDS src/test/test_topic_display.fbp)
-endif(WXFORMBUILDER)
+#if(WXFORMBUILDER)
+#  add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/src/wx_topic_display/GenTopicDisplay.cpp
+#                            ${PROJECT_SOURCE_DIR}/src/wx_topic_display/GenTopicDisplay.h
+#                     COMMAND ${WXFORMBUILDER} -g ${PROJECT_SOURCE_DIR}/src/wx_topic_display/topic_display.fbp
+#                     DEPENDS src/wx_topic_display/topic_display.fbp)
+#
+#  add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/src/test/GenTestTopicDisplay.cpp
+#                            ${PROJECT_SOURCE_DIR}/src/test/GenTestTopicDisplay.h
+#                     COMMAND ${WXFORMBUILDER} -g ${PROJECT_SOURCE_DIR}/src/test/test_topic_display.fbp
+#                     DEPENDS src/test/test_topic_display.fbp)
+#endif(WXFORMBUILDER)
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
