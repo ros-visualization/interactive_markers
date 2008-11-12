@@ -270,6 +270,11 @@ void Robot::createCollisionForLink( LinkInfo* info, robot_desc::URDF::Link* link
 
 void Robot::createVisualForLink( LinkInfo* info, robot_desc::URDF::Link* link )
 {
+	if (!link->visual || !link->visual->geometry || !link->visual->geometry->shape)
+	{
+		return;
+	}
+
   robot_desc::URDF::Link::Geometry::Mesh* mesh = static_cast<robot_desc::URDF::Link::Geometry::Mesh*>(link->visual->geometry->shape);
   if ( mesh->filename.empty() )
   {
