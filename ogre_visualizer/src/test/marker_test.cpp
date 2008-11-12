@@ -20,9 +20,10 @@ int main( int argc, char** argv )
   for ( int i = -50; i < 50; ++i )
   {
     std_msgs::VisualizationMarker marker;
-    marker.header.frame_id = "base";
+    marker.header.frame_id = "map";
+    marker.header.stamp = ros::Time((uint64_t)0ULL);
     marker.id = i;
-    marker.type = 3;
+    marker.type = 1;
     marker.action = 0;
     marker.x = 1;
     marker.y = (i*2);

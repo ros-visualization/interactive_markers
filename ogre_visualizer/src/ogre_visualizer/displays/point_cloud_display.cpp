@@ -38,6 +38,7 @@
 #include "ogre_tools/point_cloud.h"
 
 #include <tf/transform_listener.h>
+#include <tf/message_notifier.h>
 
 #include <OgreSceneNode.h>
 #include <OgreSceneManager.h>
@@ -60,22 +61,26 @@ PointCloudDisplay::PointCloudDisplay( const std::string& name, VisualizationMana
 
   setStyle( style_ );
   setBillboardSize( billboard_size_ );
+
+  notifier_ = new tf::MessageNotifier<std_msgs::PointCloud>(tf_, ros_node_, boost::bind(&PointCloudDisplay::incomingCloudCallback, this, _1), "", "", 1);
 }
 
 PointCloudDisplay::~PointCloudDisplay()
 {
   unsubscribe();
 
+  delete notifier_;
   delete cloud_;
 }
 
 void PointCloudDisplay::setTopic( const std::string& topic )
 {
-  unsubscribe();
-
   topic_ = topic;
 
-  subscribe();
+  if ( isEnabled() )
+  {
+    notifier_->setTopic( topic );
+  }
 
   if ( topic_property_ )
   {
@@ -146,6 +151,7 @@ void PointCloudDisplay::onEnable()
 void PointCloudDisplay::onDisable()
 {
   unsubscribe();
+  notifier_->clear();
 
   cloud_->clear();
   cloud_->setCloudVisible( false );
@@ -158,18 +164,12 @@ void PointCloudDisplay::subscribe()
     return;
   }
 
-  if ( !topic_.empty() )
-  {
-    ros_node_->subscribe( topic_, message_, &PointCloudDisplay::incomingCloudCallback, this, 1 );
-  }
+  notifier_->setTopic( topic_ );
 }
 
 void PointCloudDisplay::unsubscribe()
 {
-  if ( !topic_.empty() )
-  {
-    ros_node_->unsubscribe( topic_, &PointCloudDisplay::incomingCloudCallback, this );
-  }
+  notifier_->setTopic( "" );
 }
 
 void transformIntensity( float val, ogre_tools::PointCloud::Point& point, float min_intensity, float max_intensity, float diff_intensity )
@@ -203,14 +203,15 @@ void transformB( float val, ogre_tools::PointCloud::Point& point, float, float, 
   point.b_ = val;
 }
 
-void PointCloudDisplay::transformCloud()
+void PointCloudDisplay::transformCloud(const boost::shared_ptr<std_msgs::PointCloud>& cloud)
 {
-  if ( message_.header.frame_id.empty() )
+  std::string frame_id = cloud->header.frame_id;
+  if ( frame_id.empty() )
   {
-    message_.header.frame_id = fixed_frame_;
+    frame_id = fixed_frame_;
   }
 
-  tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), message_.header.stamp, message_.header.frame_id );
+  tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), cloud->header.stamp, frame_id );
 
   try
   {
@@ -218,7 +219,7 @@ void PointCloudDisplay::transformCloud()
   }
   catch(tf::TransformException& e)
   {
-    ROS_ERROR( "Error transforming point cloud '%s' from frame '%s' to frame '%s'\n", name_.c_str(), message_.header.frame_id.c_str(), fixed_frame_.c_str() );
+    ROS_ERROR( "Error transforming point cloud '%s' from frame '%s' to frame '%s'\n", name_.c_str(), frame_id.c_str(), fixed_frame_.c_str() );
   }
 
   Ogre::Vector3 position( pose.getOrigin().x(), pose.getOrigin().y(), pose.getOrigin().z() );
@@ -236,10 +237,10 @@ void PointCloudDisplay::transformCloud()
   typedef std::vector<std_msgs::ChannelFloat32> V_Chan;
   typedef std::vector<bool> V_bool;
 
-  V_bool valid_channels(message_.chan.size());
-  uint32_t point_count = message_.get_pts_size();
-  V_Chan::iterator chan_it = message_.chan.begin();
-  V_Chan::iterator chan_end = message_.chan.end();
+  V_bool valid_channels(cloud->chan.size());
+  uint32_t point_count = cloud->get_pts_size();
+  V_Chan::iterator chan_it = cloud->chan.begin();
+  V_Chan::iterator chan_end = cloud->chan.end();
   uint32_t index = 0;
   for ( ; chan_it != chan_end; ++chan_it, ++index )
   {
@@ -273,15 +274,15 @@ void PointCloudDisplay::transformCloud()
     Ogre::Vector3 color( color_.r_, color_.g_, color_.b_ );
     ogre_tools::PointCloud::Point& current_point = points[ i ];
 
-    current_point.x_ = message_.pts[i].x;
-    current_point.y_ = message_.pts[i].y;
-    current_point.z_ = message_.pts[i].z;
+    current_point.x_ = cloud->pts[i].x;
+    current_point.y_ = cloud->pts[i].y;
+    current_point.z_ = cloud->pts[i].z;
     current_point.r_ = color.x;
     current_point.g_ = color.y;
     current_point.b_ = color.z;
   }
 
-  chan_it = message_.chan.begin();
+  chan_it = cloud->chan.begin();
   index = 0;
   for ( ; chan_it != chan_end; ++chan_it, ++index )
   {
@@ -355,21 +356,15 @@ void PointCloudDisplay::transformCloud()
 
 }
 
-void PointCloudDisplay::incomingCloudCallback()
+void PointCloudDisplay::incomingCloudCallback(const boost::shared_ptr<std_msgs::PointCloud>& cloud)
 {
-  transformCloud();
+  transformCloud( cloud );
 }
 
-#if 0
 void PointCloudDisplay::targetFrameChanged()
 {
-  message_.lock();
-
-  transformCloud();
-
-  message_.unlock();
+  notifier_->setTargetFrame( target_frame_ );
 }
-#endif
 
 void PointCloudDisplay::fixedFrameChanged()
 {

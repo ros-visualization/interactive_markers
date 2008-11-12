@@ -35,6 +35,8 @@
 #include <map>
 
 #include <std_msgs/VisualizationMarker.h>
+#include <boost/thread/mutex.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace Ogre
 {
@@ -60,6 +62,11 @@ class URDF;
 namespace planning_models
 {
 class KinematicModel;
+}
+
+namespace tf
+{
+template<class Message> class MessageNotifier;
 }
 
 namespace ogre_vis
@@ -104,7 +111,7 @@ public:
 
   virtual bool isObjectPickable( const Ogre::MovableObject* object ) const { return true; }
 
-  virtual void targetFrameChanged() {}
+  virtual void targetFrameChanged();
   virtual void fixedFrameChanged();
   virtual void reset();
 
@@ -130,61 +137,64 @@ protected:
    */
   void clearMarkers();
 
+  typedef boost::shared_ptr<std_msgs::VisualizationMarker> MarkerPtr;
+
   /**
    * \brief Processes a marker message
    * @param message The message to process
    */
-  void processMessage( const std_msgs::VisualizationMarker& message );
+  void processMessage( const MarkerPtr& message );
   /**
    * \brief Processes an "Add" marker message
    * @param message The message to process
    */
-  void processAdd( const std_msgs::VisualizationMarker& message );
+  void processAdd( const MarkerPtr& message );
   /**
    * \brief Processes a "Modify" marker message
    * @param message The message to process
    */
-  void processModify( const std_msgs::VisualizationMarker& message );
+  void processModify( const MarkerPtr& message );
   /**
    * \brief Processes a "Delete" marker message
    * @param message The message to process
    */
-  void processDelete( const std_msgs::VisualizationMarker& message );
+  void processDelete( const MarkerPtr& message );
   /**
    * \brief Set common values (position, orientation, scale, color) on a marker's object
    * @param message The message to get the values from
    * @param object The object to set the values on
    */
-  void setCommonValues( const std_msgs::VisualizationMarker& message, ogre_tools::Object* object );
+  void setCommonValues( const MarkerPtr& message, ogre_tools::Object* object );
 
   /**
    * \brief ROS callback notifying us of a new marker
    */
-  void incomingMarker();
+  void incomingMarker(const MarkerPtr& marker);
 
   struct MarkerInfo
   {
-    MarkerInfo( ogre_tools::Object* object, const std_msgs::VisualizationMarker& message )
+    MarkerInfo( ogre_tools::Object* object, const MarkerPtr& message )
     : object_(object)
     , message_(message)
     {}
     ogre_tools::Object* object_;
-    std_msgs::VisualizationMarker message_;
+    boost::shared_ptr<std_msgs::VisualizationMarker> message_;
   };
 
   typedef std::map<int, MarkerInfo> M_IDToMarker;
   M_IDToMarker markers_;                                ///< Map of marker id to the marker info structure
 
-  std_msgs::VisualizationMarker current_message_;       ///< Incoming marker message
-
-  typedef std::vector< std_msgs::VisualizationMarker > V_MarkerMessage;
+  typedef std::vector<MarkerPtr> V_MarkerMessage;
   V_MarkerMessage message_queue_;                       ///< Marker message queue.  Messages are added to this as they are received, and then processed
                                                         ///< in our update() function
+  boost::mutex queue_mutex_;
 
   Ogre::SceneNode* scene_node_;                         ///< Scene node all the marker objects are parented to
 
   robot_desc::URDF* urdf_;
   planning_models::KinematicModel* kinematic_model_;
+
+  tf::MessageNotifier<std_msgs::VisualizationMarker>* notifier_;
 };
 
 } // namespace ogre_vis

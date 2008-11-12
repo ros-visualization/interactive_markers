@@ -36,9 +36,16 @@
 
 #include "std_msgs/PointCloud.h"
 
+#include <boost/shared_ptr.hpp>
+
 namespace ros
 {
   class node;
+}
+
+namespace tf
+{
+template<class Message> class MessageNotifier;
 }
 
 namespace ogre_vis
@@ -105,7 +112,7 @@ public:
   int getStyle() { return style_; }
 
   // Overrides from Display
-  virtual void targetFrameChanged() {}
+  virtual void targetFrameChanged();
   virtual void fixedFrameChanged();
   virtual void createProperties();
   virtual void reset();
@@ -130,12 +137,12 @@ protected:
   /**
    * \brief ROS callback for an incoming point cloud message
    */
-  void incomingCloudCallback();
+  void incomingCloudCallback(const boost::shared_ptr<std_msgs::PointCloud>& cloud);
 
   /**
    * \brief Transforms the cloud into the correct frame, and sets up our renderable cloud
    */
-  void transformCloud();
+  void transformCloud(const boost::shared_ptr<std_msgs::PointCloud>& cloud);
 
 
 
@@ -143,7 +150,6 @@ protected:
   Ogre::SceneNode* scene_node_;
 
   std::string topic_;                         ///< The PointCloud topic set by setTopic()
-  std_msgs::PointCloud message_;       ///< Our point cloud message
 
   Color color_;
 
@@ -154,6 +160,8 @@ protected:
   FloatProperty* billboard_size_property_;
   ColorProperty* color_property_;
   EnumProperty* style_property_;
+
+  tf::MessageNotifier<std_msgs::PointCloud>* notifier_;
 };
 
 } // namespace ogre_vis

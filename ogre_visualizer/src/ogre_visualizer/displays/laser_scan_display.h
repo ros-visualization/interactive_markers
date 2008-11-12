@@ -38,11 +38,19 @@
 #include "std_msgs/PointCloud.h"
 #include "std_msgs/Empty.h"
 
+#include <boost/shared_ptr.hpp>
+#include <boost/thread/mutex.hpp>
+
 #include <deque>
 
 namespace ros
 {
   class node;
+}
+
+namespace tf
+{
+template<class Message> class MessageNotifier;
 }
 
 namespace ogre_vis
@@ -122,7 +130,7 @@ public:
   virtual void update( float dt );
 
   // Overrides from Display
-  virtual void targetFrameChanged() {}
+  virtual void targetFrameChanged();
   virtual void fixedFrameChanged();
   virtual void createProperties();
   virtual void reset();
@@ -149,7 +157,7 @@ protected:
   /**
    * \brief Transforms a point cloud into the correct frame, adds it to our point list
    */
-  void transformCloud( std_msgs::PointCloud& message );
+  void transformCloud( const std_msgs::PointCloud& message );
   /**
    * \brief Culls points that have been around for longer than the decay time
    */
@@ -158,11 +166,11 @@ protected:
   /**
    * \brief Callback for incoming PointCloud messages
    */
-  void incomingCloudCallback();
+  void incomingCloudCallback(const boost::shared_ptr<std_msgs::PointCloud>& cloud);
   /**
    * \brief Callback for incoming LaserScan messages
    */
-  void incomingScanCallback();
+  void incomingScanCallback(const boost::shared_ptr<std_msgs::LaserScan>& scan);
 
   void updateCloud();
 
@@ -170,10 +178,6 @@ protected:
 
   std::string cloud_topic_;                       ///< The PointCloud topic we're listening on
   std::string scan_topic_;                        ///< The LaserScan topic we're listening on
-  std_msgs::PointCloud cloud_message_;     ///< The cloud message
-  std_msgs::LaserScan scan_message_;              ///< The laser scan message
-  typedef std::deque<std_msgs::PointCloud> D_CloudMessage;
-  D_CloudMessage cloud_messages_;                 ///< The cloud messages we have received.  Required for target frame changes
 
   Color color_;
 
@@ -188,6 +192,8 @@ protected:
   D_float point_times_;                           ///< A running time of how long each scan's points have been around
   float point_decay_time_;                        ///< How long scans should stick around for before they are culled
 
+  boost::mutex points_mutex_;
+
   int style_;                                     ///< Our rendering style
   float billboard_size_;                          ///< Size to draw our billboards
 
@@ -197,6 +203,9 @@ protected:
   FloatProperty* decay_time_property_;
   ColorProperty* color_property_;
   EnumProperty* style_property_;
+
+  tf::MessageNotifier<std_msgs::PointCloud>* cloud_notifier_;
+  tf::MessageNotifier<std_msgs::LaserScan>* scan_notifier_;
 };
 
 } // namespace ogre_vis

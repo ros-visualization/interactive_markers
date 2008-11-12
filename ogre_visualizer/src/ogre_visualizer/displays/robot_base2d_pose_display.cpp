@@ -36,6 +36,7 @@
 
 #include <ros/node.h>
 #include <tf/transform_listener.h>
+#include <tf/message_notifier.h>
 
 #include <boost/bind.hpp>
 
@@ -57,11 +58,16 @@ RobotBase2DPoseDisplay::RobotBase2DPoseDisplay( const std::string& name, Visuali
 , angle_tolerance_property_( NULL )
 {
   scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
+
+  notifier_ = new tf::MessageNotifier<std_msgs::RobotBase2DOdom>(tf_, ros_node_, boost::bind(&RobotBase2DPoseDisplay::incomingMessage, this, _1), "", "", 5);
 }
 
 RobotBase2DPoseDisplay::~RobotBase2DPoseDisplay()
 {
   unsubscribe();
+
+  delete notifier_;
+
   clear();
 }
 
@@ -74,16 +80,20 @@ void RobotBase2DPoseDisplay::clear()
     delete *it;
   }
   arrows_.clear();
-  messages_.clear();
+
+  last_used_message_.reset();
+
+  notifier_->clear();
 }
 
 void RobotBase2DPoseDisplay::setTopic( const std::string& topic )
 {
-  unsubscribe();
-
   topic_ = topic;
 
-  subscribe();
+  if ( isEnabled() )
+  {
+    notifier_->setTopic( topic );
+  }
 
   if ( topic_property_ )
   {
@@ -140,18 +150,12 @@ void RobotBase2DPoseDisplay::subscribe()
     return;
   }
 
-  if ( !topic_.empty() )
-  {
-    ros_node_->subscribe( topic_, message_, &RobotBase2DPoseDisplay::incomingMessage, this, 1 );
-  }
+  notifier_->setTopic( topic_ );
 }
 
 void RobotBase2DPoseDisplay::unsubscribe()
 {
-  if ( !topic_.empty() )
-  {
-    ros_node_->unsubscribe( topic_, &RobotBase2DPoseDisplay::incomingMessage, this );
-  }
+  notifier_->setTopic( "" );
 }
 
 void RobotBase2DPoseDisplay::onEnable()
@@ -180,14 +184,13 @@ void RobotBase2DPoseDisplay::createProperties()
                                                                                  boost::bind( &RobotBase2DPoseDisplay::setAngleTolerance, this, _1 ), parent_category_, this );
 }
 
-void RobotBase2DPoseDisplay::processMessage( const std_msgs::RobotBase2DOdom& message )
+void RobotBase2DPoseDisplay::processMessage( const MessagePtr& message )
 {
-  if ( !messages_.empty() )
+  if ( last_used_message_ )
   {
-    const std_msgs::RobotBase2DOdom& last_message = messages_.back();
-    if ( abs(last_message.pos.x - message.pos.x) < position_tolerance_
-      && abs(last_message.pos.y - message.pos.y) < position_tolerance_
-      && abs(last_message.pos.th - message.pos.th) < angle_tolerance_ )
+    if ( abs(last_used_message_->pos.x - message->pos.x) < position_tolerance_
+      && abs(last_used_message_->pos.y - message->pos.y) < position_tolerance_
+      && abs(last_used_message_->pos.th - message->pos.th) < angle_tolerance_ )
     {
       return;
     }
@@ -201,19 +204,19 @@ void RobotBase2DPoseDisplay::processMessage( const std_msgs::RobotBase2DOdom& me
   arrow->setUserData( Ogre::Any((void*)this) );
 
   arrows_.push_back( arrow );
-  messages_.push_back( message );
+  last_used_message_ = message;
 }
 
-void RobotBase2DPoseDisplay::transformArrow( const std_msgs::RobotBase2DOdom& message, ogre_tools::Arrow* arrow )
+void RobotBase2DPoseDisplay::transformArrow( const MessagePtr& message, ogre_tools::Arrow* arrow )
 {
-  std::string frame_id = message.header.frame_id;
+  std::string frame_id = message->header.frame_id;
   if ( frame_id.empty() )
   {
     frame_id = fixed_frame_;
   }
 
-  tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( message.pos.th, 0.0f, 0.0f ), btVector3( message.pos.x, message.pos.y, 0.0f ) ),
-                              message.header.stamp, message_.header.frame_id );
+  tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( message->pos.th, 0.0f, 0.0f ), btVector3( message->pos.x, message->pos.y, 0.0f ) ),
+                              message->header.stamp, frame_id );
 
   try
   {
@@ -221,7 +224,7 @@ void RobotBase2DPoseDisplay::transformArrow( const std_msgs::RobotBase2DOdom& me
   }
   catch(tf::TransformException& e)
   {
-    ROS_ERROR( "Error transforming 2d base pose '%s' from frame '%s' to frame '%s'\n", name_.c_str(), message.header.frame_id.c_str(), fixed_frame_.c_str() );
+    ROS_ERROR( "Error transforming 2d base pose '%s' from frame '%s' to frame '%s'\n", name_.c_str(), message->header.frame_id.c_str(), fixed_frame_.c_str() );
   }
 
   btScalar yaw, pitch, roll;
@@ -235,19 +238,10 @@ void RobotBase2DPoseDisplay::transformArrow( const std_msgs::RobotBase2DOdom& me
   arrow->setPosition( pos );
 }
 
-#if 0
 void RobotBase2DPoseDisplay::targetFrameChanged()
 {
-  ROS_ASSERT( messages_.size() == arrows_.size() );
-  V_RobotBase2DOdom::iterator msg_it = messages_.begin();
-  V_Arrow::iterator arrow_it = arrows_.begin();
-  V_RobotBase2DOdom::iterator msg_end = messages_.end();
-  for ( ; msg_it != msg_end; ++msg_it, ++arrow_it )
-  {
-    transformArrow( *msg_it, *arrow_it );
-  }
+  notifier_->setTargetFrame( target_frame_ );
 }
-#endif
 
 void RobotBase2DPoseDisplay::fixedFrameChanged()
 {
@@ -257,11 +251,12 @@ void RobotBase2DPoseDisplay::fixedFrameChanged()
 void RobotBase2DPoseDisplay::update( float dt )
 {
   V_RobotBase2DOdom local_queue;
-  queue_mutex_.lock();
 
-  local_queue.swap( message_queue_ );
+  {
+    boost::mutex::scoped_lock lock(queue_mutex_);
 
-  queue_mutex_.unlock();
+    local_queue.swap( message_queue_ );
+  }
 
   if ( !local_queue.empty() )
   {
@@ -276,13 +271,11 @@ void RobotBase2DPoseDisplay::update( float dt )
   }
 }
 
-void RobotBase2DPoseDisplay::incomingMessage()
+void RobotBase2DPoseDisplay::incomingMessage( const MessagePtr& message )
 {
-  queue_mutex_.lock();
+  boost::mutex::scoped_lock lock(queue_mutex_);
 
-  message_queue_.push_back( message_ );
-
-  queue_mutex_.unlock();
+  message_queue_.push_back( message );
 }
 
 void RobotBase2DPoseDisplay::reset()

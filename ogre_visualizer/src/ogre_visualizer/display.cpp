@@ -125,20 +125,14 @@ void Display::setTargetFrame( const std::string& frame )
 {
   target_frame_ = frame;
 
-  if ( isEnabled() )
-  {
-    targetFrameChanged();
-  }
+  targetFrameChanged();
 }
 
 void Display::setFixedFrame( const std::string& frame )
 {
   fixed_frame_ = frame;
 
-  if ( isEnabled() )
-  {
-    fixedFrameChanged();
-  }
+  fixedFrameChanged();
 }
 
 void Display::setPropertyManager( PropertyManager* manager, CategoryProperty* parent )

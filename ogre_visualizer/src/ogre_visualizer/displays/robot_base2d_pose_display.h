@@ -35,7 +35,9 @@
 #include "helpers/color.h"
 
 #include <std_msgs/RobotBase2DOdom.h>
-#include <rosthread/mutex.h>
+
+#include <boost/shared_ptr.hpp>
+#include <boost/thread/mutex.hpp>
 
 namespace ogre_tools
 {
@@ -45,6 +47,11 @@ class Arrow;
 namespace Ogre
 {
 class SceneNode;
+}
+
+namespace tf
+{
+template<class Message> class MessageNotifier;
 }
 
 namespace ogre_vis
@@ -77,7 +84,7 @@ public:
   float getAngleTolerance() { return angle_tolerance_; }
 
   // Overrides from Display
-  virtual void targetFrameChanged() {}
+  virtual void targetFrameChanged();
   virtual void fixedFrameChanged();
   virtual void createProperties();
   virtual void update( float dt );
@@ -92,9 +99,12 @@ protected:
   void subscribe();
   void unsubscribe();
   void clear();
-  void incomingMessage();
-  void processMessage( const std_msgs::RobotBase2DOdom& message );
-  void transformArrow( const std_msgs::RobotBase2DOdom& message, ogre_tools::Arrow* arrow );
+
+  typedef boost::shared_ptr<std_msgs::RobotBase2DOdom> MessagePtr;
+
+  void incomingMessage( const MessagePtr& message );
+  void processMessage( const MessagePtr& message );
+  void transformArrow( const MessagePtr& message, ogre_tools::Arrow* arrow );
 
   // overrides from Display
   virtual void onEnable();
@@ -108,11 +118,10 @@ protected:
 
   Ogre::SceneNode* scene_node_;
 
-  typedef std::vector<std_msgs::RobotBase2DOdom> V_RobotBase2DOdom;
-  std_msgs::RobotBase2DOdom message_;
+  typedef std::vector<MessagePtr> V_RobotBase2DOdom;
   V_RobotBase2DOdom message_queue_;
-  V_RobotBase2DOdom messages_;
-  ros::thread::mutex queue_mutex_;
+  boost::mutex queue_mutex_;
+  MessagePtr last_used_message_;
 
 
   float position_tolerance_;
@@ -122,6 +131,8 @@ protected:
   ROSTopicStringProperty* topic_property_;
   FloatProperty* position_tolerance_property_;
   FloatProperty* angle_tolerance_property_;
+
+  tf::MessageNotifier<std_msgs::RobotBase2DOdom>* notifier_;
 };
 
 } // namespace ogre_vis

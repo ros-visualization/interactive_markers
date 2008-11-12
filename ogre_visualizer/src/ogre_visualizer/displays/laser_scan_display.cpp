@@ -37,6 +37,7 @@
 #include "ogre_tools/point_cloud.h"
 
 #include <tf/transform_listener.h>
+#include <tf/message_notifier.h>
 #include <std_msgs/PointCloud.h>
 
 #include <OgreSceneNode.h>
@@ -64,22 +65,27 @@ LaserScanDisplay::LaserScanDisplay( const std::string& name, VisualizationManage
 
   setStyle( style_ );
   setBillboardSize( billboard_size_ );
+
+  scan_notifier_ = new tf::MessageNotifier<std_msgs::LaserScan>(tf_, ros_node_, boost::bind(&LaserScanDisplay::incomingScanCallback, this, _1), "", "", 1);
+  cloud_notifier_ = new tf::MessageNotifier<std_msgs::PointCloud>(tf_, ros_node_, boost::bind(&LaserScanDisplay::incomingCloudCallback, this, _1), "", "", 1);
 }
 
 LaserScanDisplay::~LaserScanDisplay()
 {
-  unsubscribe();
+  delete scan_notifier_;
+  delete cloud_notifier_;
 
   delete cloud_;
 }
 
 void LaserScanDisplay::setCloudTopic( const std::string& topic )
 {
-  unsubscribe();
-
   cloud_topic_ = topic;
 
-  subscribe();
+  if ( isEnabled() )
+  {
+    cloud_notifier_->setTopic( topic );
+  }
 
   if ( cloud_topic_property_ )
   {
@@ -91,11 +97,12 @@ void LaserScanDisplay::setCloudTopic( const std::string& topic )
 
 void LaserScanDisplay::setScanTopic( const std::string& topic )
 {
-  unsubscribe();
-
   scan_topic_ = topic;
 
-  subscribe();
+  if ( isEnabled() )
+  {
+    scan_notifier_->setTopic( topic );
+  }
 
   if ( scan_topic_property_ )
   {
@@ -173,10 +180,11 @@ void LaserScanDisplay::clear()
 {
   RenderAutoLock renderLock( this );
 
+  cloud_notifier_->clear();
+  scan_notifier_->clear();
   cloud_->clear();
   points_.clear();
   point_times_.clear();
-  cloud_messages_.clear();
 
   intensity_min_ = 9999999.0f;
   intensity_max_ = -9999999.0f;
@@ -204,33 +212,21 @@ void LaserScanDisplay::subscribe()
     return;
   }
 
-  if ( !cloud_topic_.empty() )
-  {
-    ros_node_->subscribe( cloud_topic_, cloud_message_, &LaserScanDisplay::incomingCloudCallback, this, 1 );
-  }
-
-  if ( !scan_topic_.empty() )
-  {
-    ros_node_->subscribe( scan_topic_, scan_message_, &LaserScanDisplay::incomingScanCallback, this, 1 );
-  }
+  cloud_notifier_->setTopic( cloud_topic_ );
+  scan_notifier_->setTopic( scan_topic_ );
 }
 
 void LaserScanDisplay::unsubscribe()
 {
-  if ( !cloud_topic_.empty() )
-  {
-    ros_node_->unsubscribe( cloud_topic_, &LaserScanDisplay::incomingCloudCallback, this );
-  }
-
-  if ( !scan_topic_.empty() )
-  {
-    ros_node_->unsubscribe( scan_topic_, &LaserScanDisplay::incomingScanCallback, this );
-  }
+  cloud_notifier_->setTopic( "" );
+  cloud_notifier_->clear();
+  scan_notifier_->setTopic( "" );
+  scan_notifier_->clear();
 }
 
 void LaserScanDisplay::update( float dt )
 {
-  cloud_message_.lock();
+  boost::mutex::scoped_lock lock(points_mutex_);
 
   D_float::iterator it = point_times_.begin();
   D_float::iterator end = point_times_.end();
@@ -240,8 +236,6 @@ void LaserScanDisplay::update( float dt )
   }
 
   cullPoints();
-
-  cloud_message_.unlock();
 }
 
 void LaserScanDisplay::cullPoints()
@@ -256,7 +250,6 @@ void LaserScanDisplay::cullPoints()
   {
     point_times_.pop_front();
     points_.pop_front();
-    cloud_messages_.pop_front();
 
     removed = true;
   }
@@ -267,37 +260,28 @@ void LaserScanDisplay::cullPoints()
   }
 }
 
-void LaserScanDisplay::transformCloud( std_msgs::PointCloud& message )
+void LaserScanDisplay::transformCloud( const std_msgs::PointCloud& message )
 {
-  if ( point_decay_time_ == 0.0f )
+  std::string frame_id = message.header.frame_id;
+  if ( frame_id.empty() )
   {
-    points_.clear();
-    point_times_.clear();
-    cloud_messages_.clear();
+    frame_id = fixed_frame_;
   }
 
-  // Push back before transforming.  This will perform a full copy.
-  cloud_messages_.push_back( message );
-
-  if ( message.header.frame_id.empty() )
-  {
-    message.header.frame_id = fixed_frame_;
-  }
-
+  std_msgs::PointCloud transformed_cloud;
   try
   {
-    std_msgs::PointCloud* casted_message = reinterpret_cast<std_msgs::PointCloud*>(&message);
-    tf_->transformPointCloud(fixed_frame_, *casted_message, *casted_message);
+    tf_->transformPointCloud(fixed_frame_, message, transformed_cloud);
   }
   catch(tf::TransformException& e)
   {
-    ROS_ERROR( "Error transforming laser scan '%s', frame '%s' to frame '%s'\n", name_.c_str(), message.header.frame_id.c_str(), fixed_frame_.c_str() );
+    ROS_ERROR( "Error transforming laser scan '%s', frame '%s' to frame '%s'\n", name_.c_str(), frame_id.c_str(), fixed_frame_.c_str() );
   }
 
-  uint32_t point_count_ = message.get_pts_size();
+  uint32_t point_count_ = transformed_cloud.get_pts_size();
   for(uint32_t i = 0; i < point_count_; i++)
   {
-    float& intensity = message.chan[0].vals[i];
+    float& intensity = transformed_cloud.chan[0].vals[i];
     // arbitrarily cap to 4096 for now
     intensity = std::min( intensity, 4096.0f );
     intensity_min_ = std::min( intensity_min_, intensity );
@@ -306,6 +290,14 @@ void LaserScanDisplay::transformCloud( std_msgs::PointCloud& message )
 
   float diff_intensity = intensity_max_ - intensity_min_;
 
+  boost::mutex::scoped_lock lock(points_mutex_);
+
+  if ( point_decay_time_ == 0.0f )
+	{
+		points_.clear();
+		point_times_.clear();
+	}
+
   points_.push_back( V_Point() );
   V_Point& points = points_.back();
   points.resize( point_count_ );
@@ -313,10 +305,10 @@ void LaserScanDisplay::transformCloud( std_msgs::PointCloud& message )
   point_times_.push_back( 0.0f );
   for(uint32_t i = 0; i < point_count_; i++)
   {
-    Ogre::Vector3 point( message.pts[i].x, message.pts[i].y, message.pts[i].z );
+    Ogre::Vector3 point( transformed_cloud.pts[i].x, transformed_cloud.pts[i].y, transformed_cloud.pts[i].z );
     robotToOgre( point );
 
-    float intensity = message.chan[0].vals[i];
+    float intensity = transformed_cloud.chan[0].vals[i];
 
     float normalized_intensity = (diff_intensity > 0.0f) ? ( intensity - intensity_min_ ) / diff_intensity : 1.0f;
 
@@ -361,48 +353,30 @@ void LaserScanDisplay::updateCloud()
   causeRender();
 }
 
-void LaserScanDisplay::incomingCloudCallback()
+void LaserScanDisplay::incomingCloudCallback(const boost::shared_ptr<std_msgs::PointCloud>& cloud)
 {
-  transformCloud( cloud_message_ );
+  transformCloud( *cloud );
 }
 
-void LaserScanDisplay::incomingScanCallback()
+void LaserScanDisplay::incomingScanCallback(const boost::shared_ptr<std_msgs::LaserScan>& scan)
 {
-  cloud_message_.lock();
+  std_msgs::PointCloud cloud;
 
-  if ( scan_message_.header.frame_id.empty() )
+  std::string frame_id = scan->header.frame_id;
+  if ( frame_id.empty() )
   {
-    scan_message_.header.frame_id = fixed_frame_;
+  	frame_id = fixed_frame_;
   }
 
-  std_msgs::PointCloud* casted_message = reinterpret_cast<std_msgs::PointCloud*>(&cloud_message_);
-  tf_->transformLaserScanToPointCloud( scan_message_.header.frame_id, *casted_message, scan_message_ );
-  transformCloud( cloud_message_ );
-
-  cloud_message_.unlock();
+  tf_->transformLaserScanToPointCloud( scan->header.frame_id, cloud, *scan );
+  transformCloud( cloud );
 }
 
-#if 0
 void LaserScanDisplay::targetFrameChanged()
 {
-  cloud_message_.lock();
-
-  D_CloudMessage messages;
-  messages.swap( cloud_messages_ );
-  points_.clear();
-  point_times_.clear();
-  cloud_messages_.clear();
-
-  D_CloudMessage::iterator it = messages.begin();
-  D_CloudMessage::iterator end = messages.end();
-  for ( ; it != end; ++it )
-  {
-    transformCloud( *it );
-  }
-
-  cloud_message_.unlock();
+  cloud_notifier_->setTargetFrame( target_frame_ );
+  scan_notifier_->setTargetFrame( target_frame_ );
 }
-#endif
 
 void LaserScanDisplay::fixedFrameChanged()
 {
