@@ -78,7 +78,7 @@ public:
     paths.push_back( mediaPath + "materials/programs" );
     paths.push_back( mediaPath + "materials/textures" );
     paths.push_back( mediaPath + "models" );
-    paths.push_back( mediaPath + "models/pr2_new" );
+    paths.push_back( mediaPath + "models/pr2" );
 
     ogre_tools::initializeResources( paths );
 
