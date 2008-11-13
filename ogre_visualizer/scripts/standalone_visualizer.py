@@ -41,7 +41,7 @@ class VisualizerFrame(wx.Frame):
         media_paths.append( media_path + "materials/programs" )
         media_paths.append( media_path + "materials/textures" )
         media_paths.append( media_path + "models" )
-        media_paths.append( media_path + "models/pr2" )
+        media_paths.append( media_path + "models/pr2_new" )
         
         ogre_tools.initializeResources( media_paths )
         
@@ -75,7 +75,7 @@ class VisualizerFrame(wx.Frame):
         
     def load_config_from_path(self, path):
         manager = self._visualizer_panel.getManager()
-        manager.removeAllVisualizers()
+        manager.removeAllDisplays()
         config = wx.FileConfig(localFilename=path)
         manager.loadConfig(config)
         
@@ -102,7 +102,7 @@ class VisualizerFrame(wx.Frame):
             
     def on_global_config(self, event):
         item = self._menubar.FindItemById(event.GetId())
-        filename = item.GetItemLabelText();
+        filename = item.GetLabel() #item.GetItemLabelText();
         #for some reason all underscores get doubled up
         filename = filename.replace('__', '_')
         path = os.path.join(self._global_config_path, filename + "." + self._CONFIG_EXTENSION)
@@ -110,7 +110,7 @@ class VisualizerFrame(wx.Frame):
         
     def on_local_config(self, event):
         item = self._menubar.FindItemById(event.GetId())
-        filename = item.GetItemLabelText();
+        filename = item.GetLabel() #item.GetItemLabelText();
         #for some reason all underscores get doubled up
         filename = filename.replace('__', '_')
         path = os.path.join(self._save_location, filename + "." + self._CONFIG_EXTENSION)
