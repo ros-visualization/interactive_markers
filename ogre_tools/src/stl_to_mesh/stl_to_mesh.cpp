@@ -199,10 +199,11 @@ int main( int argc, char** argv )
         float v3Z = *(float*)pos;
         pos += 4;
 
-        unsigned short attributeByteCount = *(unsigned short*)pos;
+        // Blender was writing a large number into this short... am I misinterpreting what the attribute byte count is supposed to do?
+        //unsigned short attributeByteCount = *(unsigned short*)pos;
         pos += 2;
 
-        pos += attributeByteCount;
+        //pos += attributeByteCount;
 
         float u, v;
 
