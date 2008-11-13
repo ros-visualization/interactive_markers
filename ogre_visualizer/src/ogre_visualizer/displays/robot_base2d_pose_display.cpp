@@ -66,9 +66,9 @@ RobotBase2DPoseDisplay::~RobotBase2DPoseDisplay()
 {
   unsubscribe();
 
-  delete notifier_;
-
   clear();
+
+  delete notifier_;
 }
 
 void RobotBase2DPoseDisplay::clear()
@@ -81,7 +81,10 @@ void RobotBase2DPoseDisplay::clear()
   }
   arrows_.clear();
 
-  last_used_message_.reset();
+  if (last_used_message_)
+  {
+    last_used_message_.reset();
+  }
 
   notifier_->clear();
 }

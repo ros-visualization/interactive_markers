@@ -256,13 +256,16 @@ void PlanningDisplay::calculateRobotPosition()
 {
   tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time((uint64_t)0ULL), displaying_kinematic_path_message_.frame_id );
 
-  try
+  if (tf_->canTransform(target_frame_, displaying_kinematic_path_message_.frame_id, ros::Time((uint64_t)0ULL)))
   {
-    tf_->transformPose( target_frame_, pose, pose );
-  }
-  catch(tf::TransformException& e)
-  {
-    ROS_ERROR( "Error transforming from frame '%s' to frame '%s'\n", pose.frame_id_.c_str(), target_frame_.c_str() );
+    try
+    {
+      tf_->transformPose( target_frame_, pose, pose );
+    }
+    catch(tf::TransformException& e)
+    {
+      ROS_ERROR( "Error transforming from frame '%s' to frame '%s'\n", pose.frame_id_.c_str(), target_frame_.c_str() );
+    }
   }
 
   Ogre::Vector3 position( pose.getOrigin().x(), pose.getOrigin().y(), pose.getOrigin().z() );

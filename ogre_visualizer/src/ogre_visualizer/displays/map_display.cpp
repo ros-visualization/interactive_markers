@@ -326,13 +326,16 @@ void MapDisplay::transformMap()
 {
   tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time((uint64_t)0ULL), "map" );
 
-  try
+  if ( tf_->canTransform(fixed_frame_, "map", ros::Time((uint64_t)0ULL)))
   {
-    tf_->transformPose( fixed_frame_, pose, pose );
-  }
-  catch(tf::TransformException& e)
-  {
-    ROS_ERROR( "Error transforming map '%s' to frame '%s'\n", name_.c_str(), fixed_frame_.c_str() );
+    try
+    {
+      tf_->transformPose( fixed_frame_, pose, pose );
+    }
+    catch(tf::TransformException& e)
+    {
+      ROS_ERROR( "Error transforming map '%s' to frame '%s'\n", name_.c_str(), fixed_frame_.c_str() );
+    }
   }
 
   Ogre::Vector3 position( pose.getOrigin().x(), pose.getOrigin().y(), pose.getOrigin().z() );

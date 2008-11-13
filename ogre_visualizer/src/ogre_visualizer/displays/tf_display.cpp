@@ -289,13 +289,16 @@ void TFDisplay::updateFrame(FrameInfo* frame)
 {
   tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time((uint64_t)0ULL), frame->name_ );
 
-  try
+  if (tf_->canTransform(fixed_frame_, frame->name_, ros::Time((uint64_t)0ULL)))
   {
-    tf_->transformPose( fixed_frame_, pose, pose );
-  }
-  catch(tf::TransformException& e)
-  {
-    ROS_ERROR( "Error transforming frame '%s' to frame '%s'\n", frame->name_.c_str(), fixed_frame_.c_str() );
+    try
+    {
+      tf_->transformPose( fixed_frame_, pose, pose );
+    }
+    catch(tf::TransformException& e)
+    {
+      ROS_ERROR( "Error transforming frame '%s' to frame '%s'\n", frame->name_.c_str(), fixed_frame_.c_str() );
+    }
   }
 
   frame->position_ = Ogre::Vector3( pose.getOrigin().x(), pose.getOrigin().y(), pose.getOrigin().z() );
@@ -341,13 +344,16 @@ void TFDisplay::updateFrame(FrameInfo* frame)
     {
       tf::Stamped<tf::Pose> parent_pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time((uint64_t)0ULL), frame->parent_ );
 
-      try
+      if (tf_->canTransform(fixed_frame_, frame->parent_, ros::Time((uint64_t)0ULL)))
       {
-        tf_->transformPose( fixed_frame_, parent_pose, parent_pose );
-      }
-      catch(tf::TransformException& e)
-      {
-        ROS_ERROR( "Error transforming frame '%s' to frame '%s'\n", frame->parent_.c_str(), fixed_frame_.c_str() );
+        try
+        {
+          tf_->transformPose( fixed_frame_, parent_pose, parent_pose );
+        }
+        catch(tf::TransformException& e)
+        {
+          ROS_ERROR( "Error transforming frame '%s' to frame '%s'\n", frame->parent_.c_str(), fixed_frame_.c_str() );
+        }
       }
 
       Ogre::Vector3 parent_position = Ogre::Vector3( parent_pose.getOrigin().x(), parent_pose.getOrigin().y(), parent_pose.getOrigin().z() );

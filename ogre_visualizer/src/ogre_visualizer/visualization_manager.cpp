@@ -661,27 +661,30 @@ void VisualizationManager::updateRelativeNode()
   tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0.0f, 0.0f, 0.0f ), btVector3( 0.0f, 0.0f, 0.0f ) ),
                               ros::Time((uint64_t)0ULL), target_frame_ );
 
-  try
+  if (tf_->canTransform(fixed_frame_, target_frame_, ros::Time((uint64_t)0ULL)))
   {
-    tf_->transformPose( fixed_frame_, pose, pose );
+    try
+    {
+      tf_->transformPose( fixed_frame_, pose, pose );
+    }
+    catch(tf::TransformException& e)
+    {
+      ROS_ERROR( "Error transforming from frame '%s' to frame '%s'\n", target_frame_.c_str(), fixed_frame_.c_str() );
+    }
+
+    Ogre::Vector3 position = Ogre::Vector3( pose.getOrigin().x(), pose.getOrigin().y(), pose.getOrigin().z() );
+    robotToOgre( position );
+
+    btQuaternion quat;
+    pose.getBasis().getRotation( quat );
+    Ogre::Quaternion orientation( Ogre::Quaternion::IDENTITY );
+    ogreToRobot( orientation );
+    orientation = Ogre::Quaternion( quat.w(), quat.x(), quat.y(), quat.z() ) * orientation;
+    robotToOgre( orientation );
+
+    target_relative_node_->setPosition( position );
+    target_relative_node_->setOrientation( orientation );
   }
-  catch(tf::TransformException& e)
-  {
-    ROS_ERROR( "Error transforming from frame '%s' to frame '%s'\n", target_frame_.c_str(), fixed_frame_.c_str() );
-  }
-
-  Ogre::Vector3 position = Ogre::Vector3( pose.getOrigin().x(), pose.getOrigin().y(), pose.getOrigin().z() );
-  robotToOgre( position );
-
-  btQuaternion quat;
-  pose.getBasis().getRotation( quat );
-  Ogre::Quaternion orientation( Ogre::Quaternion::IDENTITY );
-  ogreToRobot( orientation );
-  orientation = Ogre::Quaternion( quat.w(), quat.x(), quat.y(), quat.z() ) * orientation;
-  robotToOgre( orientation );
-
-  target_relative_node_->setPosition( position );
-  target_relative_node_->setOrientation( orientation );
 }
 
 double VisualizationManager::getWallClock()

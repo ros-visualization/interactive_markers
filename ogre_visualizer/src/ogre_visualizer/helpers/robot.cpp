@@ -623,13 +623,16 @@ void Robot::update( tf::TransformListener* tf, const std::string& target_frame )
 
     tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time((uint64_t)0ULL), name );
 
-    try
+    if (tf->canTransform(target_frame, name, ros::Time((uint64_t)0ULL)))
     {
-      tf->transformPose( target_frame, pose, pose );
-    }
-    catch(tf::TransformException& e)
-    {
-      ROS_ERROR( "Error transforming from frame '%s' to frame '%s'\n", name.c_str(), target_frame.c_str() );
+      try
+      {
+        tf->transformPose( target_frame, pose, pose );
+      }
+      catch(tf::TransformException& e)
+      {
+        ROS_ERROR( "Error transforming from frame '%s' to frame '%s'\n", name.c_str(), target_frame.c_str() );
+      }
     }
 
     //printf( "Link %s:\npose: %6f %6f %6f,\t%6f %6f %6f\n", name.c_str(), pose.data_.getOrigin().x(), pose.data_.getOrigin().y(), pose.data_.getOrigin().z(), pose.data_.getOrigin().y()aw, pose.pitch, pose.roll );
