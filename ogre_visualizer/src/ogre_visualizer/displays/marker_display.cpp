@@ -33,6 +33,7 @@
 
 #include <ogre_tools/arrow.h>
 #include <ogre_tools/super_ellipsoid.h>
+#include <ogre_tools/billboard_line.h>
 
 #include <ros/node.h>
 #include <tf/transform_listener.h>
@@ -137,15 +138,11 @@ void MarkerDisplay::processMessage( const MarkerPtr& message )
 {
   switch ( message->action )
   {
-  case MarkerActions::Add:
+  case std_msgs::VisualizationMarker::ADD:
     processAdd( message );
     break;
 
-  case MarkerActions::Modify:
-    processModify( message );
-    break;
-
-  case MarkerActions::Delete:
+  case std_msgs::VisualizationMarker::DELETE:
     processDelete( message );
     break;
 
@@ -181,7 +178,7 @@ void MarkerDisplay::processAdd( const MarkerPtr& message )
   {
     switch ( message->type )
     {
-    case MarkerTypes::Cube:
+    case std_msgs::VisualizationMarker::CUBE:
       {
         ogre_tools::SuperEllipsoid* cube = new ogre_tools::SuperEllipsoid( scene_manager_, scene_node_ );
         cube->create( ogre_tools::SuperEllipsoid::Cube, 10, Ogre::Vector3( 1.0f, 1.0f, 1.0f ) );
@@ -190,7 +187,7 @@ void MarkerDisplay::processAdd( const MarkerPtr& message )
       }
       break;
 
-    case MarkerTypes::Sphere:
+    case std_msgs::VisualizationMarker::SPHERE:
       {
         ogre_tools::SuperEllipsoid* sphere = new ogre_tools::SuperEllipsoid( scene_manager_, scene_node_ );
         sphere->create( ogre_tools::SuperEllipsoid::Sphere, 20, Ogre::Vector3( 1.0f, 1.0f, 1.0f ) );
@@ -199,13 +196,13 @@ void MarkerDisplay::processAdd( const MarkerPtr& message )
       }
       break;
 
-    case MarkerTypes::Arrow:
+    case std_msgs::VisualizationMarker::ARROW:
       {
         object = new ogre_tools::Arrow( scene_manager_, scene_node_, 0.8, 0.5, 0.2, 1.0 );
       }
       break;
 
-    case MarkerTypes::Robot:
+    case std_msgs::VisualizationMarker::ROBOT:
       {
         Robot* robot = new Robot( scene_manager_ );
         robot->load( urdf_, false, true );
@@ -215,6 +212,12 @@ void MarkerDisplay::processAdd( const MarkerPtr& message )
       }
       break;
 
+    case std_msgs::VisualizationMarker::LINE_STRIP:
+      {
+        ogre_tools::BillboardLine* line = new ogre_tools::BillboardLine( scene_manager_, scene_node_ );
+        object = line;
+      }
+      break;
     default:
       ROS_ERROR( "Unknown marker type: %d\n", message->type );
     }
@@ -227,26 +230,10 @@ void MarkerDisplay::processAdd( const MarkerPtr& message )
 
   if ( object )
   {
-    setCommonValues( message, object );
+    setValues( message, object );
 
     causeRender();
   }
-}
-
-void MarkerDisplay::processModify( const MarkerPtr& message )
-{
-  M_IDToMarker::iterator it = markers_.find( message->id );
-  if ( it == markers_.end() )
-  {
-    ROS_ERROR( "Tried to modify marker with id %d that does not exist\n", message->id );
-    return;
-  }
-
-  MarkerInfo& info = it->second;
-  info.message_ = message;
-  setCommonValues( message, info.object_ );
-
-  causeRender();
 }
 
 void MarkerDisplay::processDelete( const MarkerPtr& message )
@@ -261,7 +248,7 @@ void MarkerDisplay::processDelete( const MarkerPtr& message )
   causeRender();
 }
 
-void MarkerDisplay::setCommonValues( const MarkerPtr& message, ogre_tools::Object* object )
+void MarkerDisplay::setValues( const MarkerPtr& message, ogre_tools::Object* object )
 {
   std::string frame_id = message->header.frame_id;
   if ( frame_id.empty() )
@@ -298,6 +285,27 @@ void MarkerDisplay::setCommonValues( const MarkerPtr& message, ogre_tools::Objec
   object->setScale( scale );
   object->setColor( message->r / 255.0f, message->g / 255.0f, message->b / 255.0f, message->alpha / 255.0f );
   object->setUserData( Ogre::Any( (void*)this ) );
+
+  if ( message->type == std_msgs::VisualizationMarker::LINE_STRIP )
+  {
+    ogre_tools::BillboardLine* line = dynamic_cast<ogre_tools::BillboardLine*>(object);
+    ROS_ASSERT( line );
+
+    line->clear();
+    line->setLineWidth( message->xScale );
+
+    std::vector<std_msgs::Position>::iterator it = message->points.begin();
+    std::vector<std_msgs::Position>::iterator end = message->points.end();
+    for ( ; it != end; ++it )
+    {
+      std_msgs::Position& p = *it;
+
+      Ogre::Vector3 v( p.x, p.y, p.z );
+      robotToOgre( v );
+
+      line->addPoint( v );
+    }
+  }
 }
 
 void MarkerDisplay::update( float dt )

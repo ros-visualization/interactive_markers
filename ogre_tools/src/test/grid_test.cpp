@@ -79,9 +79,9 @@ public:
         //grid->getSceneNode()->pitch( Ogre::Degree( 90 ) );
 
         ogre_tools::BillboardLine* line = new ogre_tools::BillboardLine( scene_manager_, NULL );
-        for ( int i = 0; i < 5; ++i )
+        for ( int i = -50; i < 50; ++i )
         {
-          line->addPoint( Ogre::Vector3( i, 0.0f, 0.0f ) );
+          line->addPoint( Ogre::Vector3( i*2, 0.0f, -1.0f ) );
         }
 
         for ( int i = 0; i < 5; ++i )

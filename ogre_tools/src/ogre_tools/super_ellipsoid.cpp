@@ -198,10 +198,12 @@ void SuperEllipsoid::setColor( float r, float g, float b, float a )
   if ( a < 0.9998 )
   {
     material_->setSceneBlending( Ogre::SBT_TRANSPARENT_ALPHA );
+    material_->setDepthWriteEnabled( false );
   }
   else
   {
     material_->setSceneBlending( Ogre::SBT_REPLACE );
+    material_->setDepthWriteEnabled( true );
   }
 }
 

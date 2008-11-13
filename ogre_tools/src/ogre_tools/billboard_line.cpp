@@ -130,7 +130,7 @@ void BillboardLine::setOrientation( const Ogre::Quaternion& orientation )
 
 void BillboardLine::setScale( const Ogre::Vector3& scale )
 {
-  scene_node_->setScale( scale );
+  // Setting scale doesn't really make sense here
 }
 
 void BillboardLine::setColor( float r, float g, float b, float a )
@@ -148,7 +148,7 @@ void BillboardLine::setColor( float r, float g, float b, float a )
 
   color_ = Ogre::ColourValue( r, g, b, a );
 
-  uint32_t element_count = chain_->getMaxChainElements();
+  uint32_t element_count = points_.size();
   for ( uint32_t i = 0; i < element_count; ++i )
   {
     Ogre::BillboardChain::Element e = chain_->getChainElement(0, i);

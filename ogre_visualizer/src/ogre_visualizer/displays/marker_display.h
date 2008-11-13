@@ -72,29 +72,6 @@ template<class Message> class MessageNotifier;
 namespace ogre_vis
 {
 
-namespace MarkerTypes
-{
-enum MarkerType
-{
-  Arrow,
-  Cube,
-  Sphere,
-  Robot,
-};
-}
-typedef MarkerTypes::MarkerType MarkerType;
-
-namespace MarkerActions
-{
-enum MarkerAction
-{
-  Add,
-  Modify,
-  Delete,
-};
-}
-typedef MarkerActions::MarkerAction MarkerAction;
-
 /**
  * \class MarkerDisplay
  * \brief Displays "markers" sent in by other ROS nodes on the "visualizationMarker" topic
@@ -150,21 +127,16 @@ protected:
    */
   void processAdd( const MarkerPtr& message );
   /**
-   * \brief Processes a "Modify" marker message
-   * @param message The message to process
-   */
-  void processModify( const MarkerPtr& message );
-  /**
    * \brief Processes a "Delete" marker message
    * @param message The message to process
    */
   void processDelete( const MarkerPtr& message );
   /**
-   * \brief Set common values (position, orientation, scale, color) on a marker's object
+   * \brief Set any necessary values (ie. position, orientation, scale, color, etc.) on a marker's object
    * @param message The message to get the values from
    * @param object The object to set the values on
    */
-  void setCommonValues( const MarkerPtr& message, ogre_tools::Object* object );
+  void setValues( const MarkerPtr& message, ogre_tools::Object* object );
 
   /**
    * \brief ROS callback notifying us of a new marker
