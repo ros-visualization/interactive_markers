@@ -6,6 +6,7 @@
     </description>
     <author>Josh Faust</author>
     <license>BSD</license>
+    <review status="unreviewed" notes=""/>
     <url>http://pr.willowgarage.com/wiki/ROS</url>
     <depend package="wxswig"/>
     <depend package="ogre"/>

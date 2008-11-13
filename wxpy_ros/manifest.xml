@@ -6,6 +6,7 @@
   </description>
   <author>Timothy Hunter/tjhunter@willowgarage.com</author>
   <license>BSD</license>
+  <review status="unreviewed" notes=""/>
   <url>http://pr.willowgarage.com/wiki/rospy_wx</url>
   <depend package="rospy" />
   <depend package="std_msgs" />

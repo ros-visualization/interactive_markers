@@ -6,6 +6,7 @@ expect to use it to log video over a wireless link.
 </description>
 <author>Eric Berger berger@willowgarage.com, Morgan Quigley mquigley@willowgarage.com</author>
 <license>BSD</license>
+<review status="unreviewed" notes=""/>
 <url>http://pr.willowgarage.com</url>
 <depend package="roscpp"/>
 <depend package="std_msgs"/>
