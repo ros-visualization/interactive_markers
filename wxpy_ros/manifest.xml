@@ -13,4 +13,8 @@
   <depend package="matplotlib"/>
   <depend package="numpy"/>
   <depend package="scipy"/>
+  <depend package="joy" />
+
+  <sysdepend os="ubuntu" version="8.04-hardy" package="lapack3-dev" />
+
 </package>
