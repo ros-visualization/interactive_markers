@@ -77,7 +77,7 @@ class PR2Frame(wx.Frame):
         media_paths.append(media_path + "materials/programs")
         media_paths.append(media_path + "materials/textures")
         media_paths.append(media_path + "models")
-        media_paths.append(media_path + "models/pr2_new")
+        media_paths.append(media_path + "models/pr2")
         
         ogre_tools.initializeResources( media_paths )
         self._visualizer_panel.createDefaultVisualizers()

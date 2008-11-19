@@ -15,6 +15,7 @@
     <depend package="std_msgs"/>
     <depend package="rosthread"/>
     <depend package="tf"/>
+    <depend package="wg_robot_description"/>
     <depend package="wg_robot_description_parser"/>
     <depend package="scan_utils" />
     <depend package="wxpropgrid"/>
