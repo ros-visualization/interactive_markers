@@ -7,7 +7,7 @@
 <url></url>
 <depend package="roscpp"/>
 <depend package="std_msgs"/>
-<depend package="megamaid"/>
+<depend package="rosrecord"/>
 <depend package="scan_utils"/>
 <depend package="opencv_latest"/>
 <depend package="ffmpeg"/>

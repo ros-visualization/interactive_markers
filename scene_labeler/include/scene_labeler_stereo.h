@@ -44,7 +44,7 @@ http://pr.willowgarage.com/wiki/DataCollection
 #include <ros/node.h>
 #include <std_msgs/Empty.h>
 #include <std_msgs/VisualizationMarker.h>
-#include "logging/LogPlayer.h"
+#include "rosrecord/Player.h"
 #include <newmat10/newmat.h>
 #include <newmat10/newmatio.h>
 
@@ -137,7 +137,7 @@ public:
   void extractObjectsFromCloud();
 
  private:
-  LogPlayer lp;
+  ros::record::Player lp;
   CvBridge<std_msgs::Image> *bridge_mask_, *bridge_left_, *bridge_right_;  
   //! The 3d points projected into the image.
   NEWMAT::Matrix projected_; 
