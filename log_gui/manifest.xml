@@ -10,7 +10,7 @@ expect to use it to log video over a wireless link.
 <url>http://pr.willowgarage.com</url>
 <depend package="roscpp"/>
 <depend package="std_msgs"/>
-<depend package="logging"/>
+<depend package="rosrecord"/>
 <depend package="wx_topic_display"/>
 </package>
 
