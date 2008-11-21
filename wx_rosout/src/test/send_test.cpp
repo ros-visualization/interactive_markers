@@ -19,6 +19,7 @@ int main( int argc, char** argv )
       ROS_WARN("Warn%d", count);
       ROS_ERROR("Error%d", count);
       ROS_FATAL("Fatal%d", count);
+      ROS_INFO("Newline\nTest\nblah\nblah\nblah\nblah\nblah\n");
 
       usleep( 10000 );
 

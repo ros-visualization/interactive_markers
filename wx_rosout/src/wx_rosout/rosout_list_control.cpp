@@ -191,7 +191,29 @@ wxString RosoutListControl::OnGetItemText(long item, long column) const
     }
   case columns::Message:
     {
-      return wxString::FromAscii( message.msg.c_str() );
+      std::string msg = message.msg;
+      size_t pos = std::string::npos;
+      while (true)
+      {
+        pos = msg.find('\n');
+        if (pos == std::string::npos)
+        {
+          break;
+        }
+
+        msg.replace(pos, 1, "\\n");
+      }
+      while (true)
+      {
+        pos = msg.find('\r');
+        if (pos == std::string::npos)
+        {
+          break;
+        }
+
+        msg.replace(pos, 1, "\\r");
+      }
+      return wxString::FromAscii( msg.c_str() );
     }
   case columns::Topics:
     {
