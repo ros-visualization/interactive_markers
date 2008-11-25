@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <scene_labeler_stereo.h>
+#include <limits>
 
 using namespace std;
 
