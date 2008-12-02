@@ -196,7 +196,7 @@ void FPSCamera::mouseLeftDrag( int diff_x, int diff_y )
 
 void FPSCamera::mouseMiddleDrag( int diff_x, int diff_y )
 {
-  move( -diff_x*0.01, diff_y*0.01, 0.0f );
+  move( diff_x*0.01, -diff_y*0.01, 0.0f );
 }
 
 void FPSCamera::mouseRightDrag( int diff_x, int diff_y )
