@@ -205,9 +205,9 @@ void ParticleCloud2DDisplay::processMessage()
   clear();
 
   tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0.0f, 0.0f, 0.0f ), btVector3( 0.0f, 0.0f, 0.0f ) ),
-                                ros::Time((uint64_t)0ULL), "map" );
+                                ros::Time(), "map" );
 
-  if (tf_->canTransform(fixed_frame_, "map", ros::Time((uint64_t)0ULL)))
+  if (tf_->canTransform(fixed_frame_, "map", ros::Time()))
   {
     try
     {

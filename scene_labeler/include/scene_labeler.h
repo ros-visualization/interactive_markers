@@ -11,7 +11,6 @@
 #include <ros/node.h>
 #include <std_msgs/Empty.h>
 #include <std_msgs/VisualizationMarker.h>
-#include "logging/LogPlayer.h"
 #include <rosTF/rosTF.h>
 #include <newmat10/newmat.h>
 #include <newmat10/newmatio.h>

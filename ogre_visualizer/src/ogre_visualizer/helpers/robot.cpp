@@ -621,9 +621,9 @@ void Robot::update( tf::TransformListener* tf, const std::string& target_frame )
       continue;
     }
 
-    tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time((uint64_t)0ULL), name );
+    tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time(), name );
 
-    if (tf->canTransform(target_frame, name, ros::Time((uint64_t)0ULL)))
+    if (tf->canTransform(target_frame, name, ros::Time()))
     {
       try
       {

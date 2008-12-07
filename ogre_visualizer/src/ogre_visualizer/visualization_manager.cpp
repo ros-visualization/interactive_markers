@@ -69,8 +69,8 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
 , vis_panel_( panel )
 , needs_reset_( false )
 , new_ros_time_( false )
-, wall_clock_begin_( 0 )
-, ros_time_begin_( 0 )
+, wall_clock_begin_( ros::Time() )
+, ros_time_begin_( ros::Time() )
 {
   initializeCommon();
   registerFactories( this );
@@ -234,8 +234,8 @@ void VisualizationManager::onUpdate( wxTimerEvent& event )
     resetDisplays();
     tf_->clear();
 
-    ros_time_begin_ = ros::Time( 0 );
-    wall_clock_begin_ = ros::Time( 0 );
+    ros_time_begin_ = ros::Time();
+    wall_clock_begin_ = ros::Time();
   }
 
   static float time_update_timer = 0.0f;
@@ -659,9 +659,9 @@ void VisualizationManager::getRegisteredTypes( std::vector<std::string>& types, 
 void VisualizationManager::updateRelativeNode()
 {
   tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0.0f, 0.0f, 0.0f ), btVector3( 0.0f, 0.0f, 0.0f ) ),
-                              ros::Time((uint64_t)0ULL), target_frame_ );
+                              ros::Time(), target_frame_ );
 
-  if (tf_->canTransform(fixed_frame_, target_frame_, ros::Time((uint64_t)0ULL)))
+  if (tf_->canTransform(fixed_frame_, target_frame_, ros::Time()))
   {
     try
     {
@@ -709,7 +709,7 @@ double VisualizationManager::getROSTimeElapsed()
 
 void VisualizationManager::incomingROSTime()
 {
-  static ros::Time last_time = ros::Time((uint64_t)0ULL);
+  static ros::Time last_time = ros::Time();
 
   if ( time_message_.rostime < last_time )
   {

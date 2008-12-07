@@ -144,8 +144,8 @@ int PoseTool::processMouseEvent( wxMouseEvent& event, int last_x, int last_y )
       ogreToRobot( robot_pos );
 
       const std::string& fixed_frame = manager_->getFixedFrame();
-      tf::Stamped<tf::Point> cur_pos_transformed( tf::Point(cur_pos.x, cur_pos.y, cur_pos.z), ros::Time((uint64_t)0ULL), fixed_frame );
-      tf::Stamped<tf::Point> robot_pos_transformed( tf::Point(robot_pos.x, robot_pos.y, robot_pos.z), ros::Time((uint64_t)0ULL), fixed_frame );
+      tf::Stamped<tf::Point> cur_pos_transformed( tf::Point(cur_pos.x, cur_pos.y, cur_pos.z), ros::Time(), fixed_frame );
+      tf::Stamped<tf::Point> robot_pos_transformed( tf::Point(robot_pos.x, robot_pos.y, robot_pos.z), ros::Time(), fixed_frame );
 
       tf::TransformListener* tf = manager_->getTFClient();
       try

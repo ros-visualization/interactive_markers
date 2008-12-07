@@ -254,9 +254,9 @@ void PlanningDisplay::update( float dt )
 
 void PlanningDisplay::calculateRobotPosition()
 {
-  tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time((uint64_t)0ULL), displaying_kinematic_path_message_.frame_id );
+  tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time(), displaying_kinematic_path_message_.frame_id );
 
-  if (tf_->canTransform(target_frame_, displaying_kinematic_path_message_.frame_id, ros::Time((uint64_t)0ULL)))
+  if (tf_->canTransform(target_frame_, displaying_kinematic_path_message_.frame_id, ros::Time()))
   {
     try
     {

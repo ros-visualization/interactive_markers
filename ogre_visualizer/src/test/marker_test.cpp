@@ -21,7 +21,7 @@ int main( int argc, char** argv )
   {
     std_msgs::VisualizationMarker marker;
     marker.header.frame_id = "map";
-    marker.header.stamp = ros::Time((uint64_t)0ULL);
+    marker.header.stamp = ros::Time();
     marker.id = i;
     marker.type = std_msgs::VisualizationMarker::CUBE;
     marker.action = 0;
@@ -43,7 +43,7 @@ int main( int argc, char** argv )
 
   std_msgs::VisualizationMarker line_marker;
   line_marker.header.frame_id = "map";
-  line_marker.header.stamp = ros::Time((uint64_t)0ULL);
+  line_marker.header.stamp = ros::Time();
   line_marker.id = 1000;
   line_marker.type = std_msgs::VisualizationMarker::LINE_STRIP;
   line_marker.action = 0;
