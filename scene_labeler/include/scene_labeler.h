@@ -11,7 +11,7 @@
 #include <ros/node.h>
 #include <std_msgs/Empty.h>
 #include <std_msgs/VisualizationMarker.h>
-#include <rosTF/rosTF.h>
+#include <tf/transform_listener.h>
 #include <newmat10/newmat.h>
 #include <newmat10/newmatio.h>
 
@@ -72,15 +72,13 @@ public:
     int nWaits = 0;
     cout << "Waiting for transformations from rosTF/frameServer... "; flush(cout);
     while(true) {
-      try {
-	rtf.getMatrix("FRAMEID_SMALLV", "FRAMEID_TILT_BASE", ros::Time::now().to_ull());
-	break;
-      }
-      catch (libTF::TransformReference::LookupException & ex) {
-	cout << "Waiting " << nWaits++ << endl;
-	usleep(500000);
-      }
+      if(rtf.canTransform("FRAMEID_SMALLV", "FRAMEID_TILT_BASE", ros::Time()))
+        break;
+
+      cout << "Waiting " << nWaits++ << endl;
+      usleep(500000);
     }
+    
     cout << "Done." << endl; 
   }
 
@@ -163,7 +161,7 @@ public:
 
  private:
 
-  rosTFClient rtf;
+  tf::TransformClient rtf;
   CvBridge<std_msgs::Image> *bridge;
   LogPlayer lp;
   

@@ -11,7 +11,7 @@
 <depend package="scan_utils"/>
 <depend package="opencv_latest"/>
 <depend package="image_utils"/>
-<depend package="rosTF"/>
+<depend package="tf"/>
 <depend package="newmat10"/>
 <export>
   <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -lscene_labeler"/>
