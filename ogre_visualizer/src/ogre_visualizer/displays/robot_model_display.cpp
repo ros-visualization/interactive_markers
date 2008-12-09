@@ -33,8 +33,8 @@
 #include "properties/property.h"
 #include "properties/property_manager.h"
 
+#include "ros/node.h"
 #include "urdf/URDF.h"
-#include "rosTF/rosTF.h"
 
 #include <OgreSceneNode.h>
 #include <OgreSceneManager.h>
