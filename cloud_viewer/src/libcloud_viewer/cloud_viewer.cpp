@@ -38,7 +38,8 @@ CloudViewer::CloudViewer() :
 	cam_azi(-M_PI/2), cam_ele(0), cam_rho(1),
 	look_tgt_x(0), look_tgt_y(0), look_tgt_z(0),
 	left_button_down(false), right_button_down(false),
-  hide_axes(false), postrender_cb(NULL)
+  hide_axes(false), postrender_cb(NULL),
+  state(UNINIT), points_list(0)
 {
 }
 
@@ -98,14 +99,22 @@ void CloudViewer::render()
   	glEnd();
   }
 
-
-	glBegin(GL_POINTS);
-	for (size_t i = 0; i < points.size(); i++)
-	{
-		glColor3ub(points[i].r, points[i].g, points[i].b);
-		glVertex3f(points[i].x, points[i].y, points[i].z);
-	}
-	glEnd();
+  //if (state == UNINIT)
+  //{
+    //points_list = glGenLists(1);
+    //glNewList(points_list, GL_COMPILE_AND_EXECUTE);
+	  glBegin(GL_POINTS);
+  	for (size_t i = 0; i < points.size(); i++)
+  	{
+  		glColor3ub(points[i].r, points[i].g, points[i].b);
+  		glVertex3f(points[i].x, points[i].y, points[i].z);
+  	}
+  	glEnd();
+    //glEndList();
+    //state = LIST_GENERATED;
+ // }
+  //else
+  //  glCallList(points_list); // video ram is so cool
 
   if (postrender_cb)
     postrender_cb();

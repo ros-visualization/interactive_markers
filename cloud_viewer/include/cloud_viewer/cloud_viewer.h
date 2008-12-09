@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <GL/gl.h>
 
 class CloudViewerPoint
 {
@@ -66,14 +67,19 @@ public:
   { look_tgt_x = x; look_tgt_y = y; look_tgt_z = z; }
   bool write_file(const std::string &filename);
   void set_postrender_cb(void(*cb)()) { postrender_cb = cb; }
-
-private:
 	std::vector<CloudViewerPoint> points;
 	float cam_x, cam_y, cam_z, cam_azi, cam_ele, cam_rho;
+
+private:
 	float look_tgt_x, look_tgt_y, look_tgt_z;
 	bool left_button_down, right_button_down;
   bool hide_axes;
   void (*postrender_cb)();
+  enum { UNINIT, LIST_GENERATED } state;
+  bool points_list_compiled; // flag to imply that initialization is not done
+  GLuint points_list; // drastically speeds up rendering. need to add a way
+                      // to re-generate the list sometime if the points vector
+                      // is modified...
 };
 
 #endif
