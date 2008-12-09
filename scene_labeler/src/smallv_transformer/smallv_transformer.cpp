@@ -1,6 +1,6 @@
 #include <std_msgs/PointCloud.h>
 #include <ros/node.h>
-#include <rosTF/rosTF.h>
+#include <tf/transform_listener.h>
 
 using namespace std;
 
@@ -14,14 +14,11 @@ public:
     int nWaits = 0;
     cout << "Waiting for transformations from rosTF/frameServer... "; flush(cout);
     while(true) {
-      try {
-	rtf_.getMatrix("FRAMEID_SMALLV", "FRAMEID_TILT_BASE", ros::Time::now().to_ull());
-	break;
-      }
-      catch (libTF::TransformReference::LookupException & ex) {
-	cout << "Waiting " << nWaits++ << endl;
-	usleep(500000);
-      }
+      if (!rtf_.canTransform("FRAMEID_SMALLV", "FRAMEID_TILT_BASE", ros::Time::now()))
+        {
+          cout << "Waiting " << nWaits++ << endl;
+          usleep(500000);
+        }
     }
     cout << "Done." << endl; 
 
@@ -34,7 +31,7 @@ public:
   }
 
 private:
-  rosTFClient rtf_;
+  tf/TransformListener rtf_;
   std_msgs::PointCloud full_cloud_;
   std_msgs::PointCloud videre_cloud_;
   std_msgs::PointCloud full_cloud_smallv_;
@@ -46,7 +43,7 @@ private:
       publish("full_cloud_smallv", full_cloud_smallv_);
       //cout << "Sent a full_cloud_smallv" << endl;
     }
-    catch (libTF::TransformReference::ExtrapolateException & ex) {
+    catch (tf::ExtrapolationException & ex) {
       cerr << "Extrapolation exception.  Why?   ex.what: " << ex.what() << endl;
     }
   }
