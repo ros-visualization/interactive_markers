@@ -67,7 +67,7 @@ LaserScanDisplay::LaserScanDisplay( const std::string& name, VisualizationManage
   setBillboardSize( billboard_size_ );
 
   scan_notifier_ = new tf::MessageNotifier<std_msgs::LaserScan>(tf_, ros_node_, boost::bind(&LaserScanDisplay::incomingScanCallback, this, _1), "", "", 10);
-  cloud_notifier_ = new tf::MessageNotifier<std_msgs::PointCloud>(tf_, ros_node_, boost::bind(&LaserScanDisplay::incomingCloudCallback, this, _1), "", "", 1);
+  cloud_notifier_ = new tf::MessageNotifier<std_msgs::PointCloud>(tf_, ros_node_, boost::bind(&LaserScanDisplay::incomingCloudCallback, this, _1), "", "", 10);
 }
 
 LaserScanDisplay::~LaserScanDisplay()
