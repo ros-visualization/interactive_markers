@@ -34,6 +34,8 @@
 #include "ogre_tools/point_cloud.h"
 #include "helpers/color.h"
 
+#include "laser_scan/laser_scan.h"
+
 #include "std_msgs/LaserScan.h"
 #include "std_msgs/PointCloud.h"
 #include "std_msgs/Empty.h"
@@ -203,6 +205,8 @@ protected:
   FloatProperty* decay_time_property_;
   ColorProperty* color_property_;
   EnumProperty* style_property_;
+
+  laser_scan::LaserProjection* projector_;                      ///< A Helper class to project laser scans
 
   tf::MessageNotifier<std_msgs::PointCloud>* cloud_notifier_;
   tf::MessageNotifier<std_msgs::LaserScan>* scan_notifier_;
