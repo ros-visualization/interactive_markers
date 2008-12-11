@@ -16,5 +16,6 @@
   <depend package="joy" />
 
   <sysdepend os="ubuntu" version="8.04-hardy" package="lapack3-dev" />
+  <sysdepend os="ubuntu" version="8.10-intrepid" package="liblapack-dev" />
 
 </package>
