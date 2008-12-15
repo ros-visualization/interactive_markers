@@ -264,7 +264,7 @@ void MarkerDisplay::setValues( const MarkerPtr& message, ogre_tools::Object* obj
   }
   catch(tf::TransformException& e)
   {
-    ROS_ERROR( "Error transforming marker '%d' from frame '%s' to frame '%s'\n", message->id, frame_id.c_str(), fixed_frame_.c_str() );
+    ROS_ERROR( "Error transforming marker '%d' from frame '%s' to frame '%s': %s\n", message->id, frame_id.c_str(), fixed_frame_.c_str(), e.what() );
   }
 
   Ogre::Vector3 position( pose.getOrigin().x(), pose.getOrigin().y(), pose.getOrigin().z() );
