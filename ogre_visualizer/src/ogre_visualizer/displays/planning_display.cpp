@@ -307,7 +307,7 @@ void PlanningDisplay::createProperties()
 
 const char* PlanningDisplay::getDescription()
 {
-  return "Displays a planned path given my a robot_msgs::DisplayKinematicPath message.";
+  return "Displays a planned path given by a robot_msgs::DisplayKinematicPath message.";
 }
 
 } // namespace ogre_vis
