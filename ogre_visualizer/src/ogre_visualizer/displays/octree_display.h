@@ -38,6 +38,7 @@
 #include "display.h"
 #include "helpers/color.h"
 #include <scan_utils/OctreeMsg.h>
+#include <rosthread/mutex.h>
 
 #include <OgreVector3.h>
 #include <OgreMaterial.h>
