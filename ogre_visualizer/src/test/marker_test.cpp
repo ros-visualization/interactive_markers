@@ -23,7 +23,7 @@ int main( int argc, char** argv )
     marker.header.frame_id = "map";
     marker.header.stamp = ros::Time();
     marker.id = i;
-    marker.type = std_msgs::VisualizationMarker::CUBE;
+    marker.type = std_msgs::VisualizationMarker::CYLINDER;
     marker.action = 0;
     marker.x = 1;
     marker.y = (i*2);

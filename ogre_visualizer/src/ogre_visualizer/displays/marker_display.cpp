@@ -187,6 +187,15 @@ void MarkerDisplay::processAdd( const MarkerPtr& message )
       }
       break;
 
+    case std_msgs::VisualizationMarker::CYLINDER:
+      {
+        ogre_tools::SuperEllipsoid* cube = new ogre_tools::SuperEllipsoid( scene_manager_, scene_node_ );
+        cube->create( ogre_tools::SuperEllipsoid::Cylinder, 10, Ogre::Vector3( 1.0f, 1.0f, 1.0f ) );
+
+        object = cube;
+      }
+      break;
+
     case std_msgs::VisualizationMarker::SPHERE:
       {
         ogre_tools::SuperEllipsoid* sphere = new ogre_tools::SuperEllipsoid( scene_manager_, scene_node_ );
