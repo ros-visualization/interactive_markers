@@ -48,14 +48,21 @@ namespace ogre_vis
 
 PointCloudDisplay::PointCloudDisplay( const std::string& name, VisualizationManager* manager )
 : Display( name, manager )
-, max_color_( 1.0f, 1.0f, 1.0f )
 , min_color_( 0.0f, 0.0f, 0.0f )
+, max_color_( 1.0f, 1.0f, 1.0f )
+, min_intensity_(0.0f)
+, max_intensity_(4096.0f)
+, auto_compute_intensity_bounds_(true)
+, intensity_bounds_changed_(false)
 , style_( Billboards )
 , billboard_size_( 0.01 )
 , topic_property_( NULL )
 , billboard_size_property_( NULL )
-, max_color_property_( NULL )
 , min_color_property_( NULL )
+, max_color_property_( NULL )
+, auto_compute_intensity_bounds_property_( NULL )
+, min_intensity_property_( NULL )
+, max_intensity_property_( NULL )
 , style_property_( NULL )
 {
   scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
@@ -111,6 +118,50 @@ void PointCloudDisplay::setMinColor( const Color& color )
   if ( min_color_property_ )
   {
     min_color_property_->changed();
+  }
+
+  causeRender();
+}
+
+void PointCloudDisplay::setMinIntensity( float val )
+{
+  min_intensity_ = val;
+  if (min_intensity_ > max_intensity_)
+  {
+    min_intensity_ = max_intensity_;
+  }
+
+  if (min_intensity_property_)
+  {
+    min_intensity_property_->changed();
+  }
+
+  causeRender();
+}
+
+void PointCloudDisplay::setMaxIntensity( float val )
+{
+  max_intensity_ = val;
+  if (max_intensity_ < min_intensity_)
+  {
+    max_intensity_ = min_intensity_;
+  }
+
+  if (max_intensity_property_)
+  {
+    max_intensity_property_->changed();
+  }
+
+  causeRender();
+}
+
+void PointCloudDisplay::setAutoComputeIntensityBounds(bool compute)
+{
+  auto_compute_intensity_bounds_ = compute;
+
+  if (auto_compute_intensity_bounds_property_)
+  {
+    auto_compute_intensity_bounds_property_->changed();
   }
 
   causeRender();
@@ -186,9 +237,20 @@ void PointCloudDisplay::unsubscribe()
   notifier_->setTopic( "" );
 }
 
+void PointCloudDisplay::update(float dt)
+{
+  if (intensity_bounds_changed_)
+  {
+    setMinIntensity(min_intensity_);
+    setMaxIntensity(max_intensity_);
+    intensity_bounds_changed_ = false;
+  }
+}
+
 void transformIntensity( float val, ogre_tools::PointCloud::Point& point, const Color& min_color, float min_intensity, float max_intensity, float diff_intensity )
 {
   float normalized_intensity = diff_intensity > 0.0f ? ( val - min_intensity ) / diff_intensity : 1.0f;
+  normalized_intensity = std::min(1.0f, std::max(0.0f, normalized_intensity));
   point.r_ = point.r_*normalized_intensity + min_color.r_*(1.0f - normalized_intensity);
   point.g_ = point.g_*normalized_intensity + min_color.g_*(1.0f - normalized_intensity);
   point.b_ = point.b_*normalized_intensity + min_color.b_*(1.0f - normalized_intensity);
@@ -244,10 +306,6 @@ void PointCloudDisplay::transformCloud(const boost::shared_ptr<std_msgs::PointCl
 
   Ogre::Matrix3 orientation( ogreMatrixFromRobotEulers( yaw, pitch, roll ) );
 
-  // First find the min/max intensity values
-  float min_intensity = 999999.0f;
-  float max_intensity = -999999.0f;
-
   typedef std::vector<std_msgs::ChannelFloat32> V_Chan;
   typedef std::vector<bool> V_bool;
 
@@ -265,20 +323,24 @@ void PointCloudDisplay::transformCloud(const boost::shared_ptr<std_msgs::PointCl
 
     valid_channels[index] = channel_size_correct;
 
-    if ( channel_size_correct && ( chan.name.empty() || chan.name == "intensity" || chan.name == "intensities" ) )
+    if ( auto_compute_intensity_bounds_ && channel_size_correct && ( chan.name.empty() || chan.name == "intensity" || chan.name == "intensities" ) )
     {
+      min_intensity_ = 999999.0f;
+      max_intensity_ = -999999.0f;
       for(uint32_t i = 0; i < point_count; i++)
       {
         float& intensity = chan.vals[i];
         // arbitrarily cap to 4096 for now
         intensity = std::min( intensity, 4096.0f );
-        min_intensity = std::min( min_intensity, intensity );
-        max_intensity = std::max( max_intensity, intensity );
+        min_intensity_ = std::min( min_intensity_, intensity );
+        max_intensity_ = std::max( max_intensity_, intensity );
       }
+
+      intensity_bounds_changed_ = true;
     }
   }
 
-  float diff_intensity = max_intensity - min_intensity;
+  float diff_intensity = max_intensity_ - min_intensity_;
 
   typedef std::vector< ogre_tools::PointCloud::Point > V_Point;
   V_Point points;
@@ -347,7 +409,7 @@ void PointCloudDisplay::transformCloud(const boost::shared_ptr<std_msgs::PointCl
     for(uint32_t i = 0; i < point_count; i++)
     {
       ogre_tools::PointCloud::Point& current_point = points[ i ];
-      funcs[type]( chan.vals[i], current_point, min_color_, min_intensity, max_intensity, diff_intensity );
+      funcs[type]( chan.vals[i], current_point, min_color_, min_intensity_, max_intensity_, diff_intensity );
     }
   }
 
@@ -403,6 +465,13 @@ void PointCloudDisplay::createProperties()
   billboard_size_property_ = property_manager_->createProperty<FloatProperty>( "Billboard Size", property_prefix_, boost::bind( &PointCloudDisplay::getBillboardSize, this ),
                                                                                 boost::bind( &PointCloudDisplay::setBillboardSize, this, _1 ), parent_category_, this );
   billboard_size_property_->setMin( 0.0001 );
+
+  auto_compute_intensity_bounds_property_ = property_manager_->createProperty<BoolProperty>( "Autocompute Intensity Bounds", property_prefix_, boost::bind( &PointCloudDisplay::getAutoComputeIntensityBounds, this ),
+                                                                            boost::bind( &PointCloudDisplay::setAutoComputeIntensityBounds, this, _1 ), parent_category_, this );
+  max_intensity_property_ = property_manager_->createProperty<FloatProperty>( "Max Intensity", property_prefix_, boost::bind( &PointCloudDisplay::getMaxIntensity, this ),
+                                                                          boost::bind( &PointCloudDisplay::setMaxIntensity, this, _1 ), parent_category_, this );
+  min_intensity_property_ = property_manager_->createProperty<FloatProperty>( "Min Intensity", property_prefix_, boost::bind( &PointCloudDisplay::getMinIntensity, this ),
+                                                                          boost::bind( &PointCloudDisplay::setMinIntensity, this, _1 ), parent_category_, this );
 
   topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &PointCloudDisplay::getTopic, this ),
                                                                               boost::bind( &PointCloudDisplay::setTopic, this, _1 ), parent_category_, this );

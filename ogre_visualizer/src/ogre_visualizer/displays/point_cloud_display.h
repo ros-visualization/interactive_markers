@@ -57,6 +57,7 @@ class StringProperty;
 class ROSTopicStringProperty;
 class ColorProperty;
 class EnumProperty;
+class BoolProperty;
 
 /**
  * \class PointCloudDisplay
@@ -111,6 +112,13 @@ public:
    */
   void setBillboardSize( float size );
 
+  void setMinIntensity(float val);
+  void setMaxIntensity(float val);
+  float getMinIntensity() { return min_intensity_; }
+  float getMaxIntensity() { return max_intensity_; }
+  void setAutoComputeIntensityBounds(bool compute);
+  bool getAutoComputeIntensityBounds() { return auto_compute_intensity_bounds_; }
+
   const std::string& getTopic() { return topic_; }
   float getBillboardSize() { return billboard_size_; }
   const Color& getMaxColor() { return max_color_; }
@@ -122,6 +130,7 @@ public:
   virtual void fixedFrameChanged();
   virtual void createProperties();
   virtual void reset();
+  virtual void update(float dt);
 
   static const char* getTypeStatic() { return "Point Cloud"; }
   virtual const char* getType() { return getTypeStatic(); }
@@ -157,16 +166,23 @@ protected:
 
   std::string topic_;                         ///< The PointCloud topic set by setTopic()
 
-  Color max_color_;
   Color min_color_;
+  Color max_color_;
+  float min_intensity_;
+  float max_intensity_;
+  bool auto_compute_intensity_bounds_;
+  bool intensity_bounds_changed_;
 
   int style_;                                 ///< Our rendering style
   float billboard_size_;                      ///< Size to draw our billboards
 
   ROSTopicStringProperty* topic_property_;
   FloatProperty* billboard_size_property_;
-  ColorProperty* max_color_property_;
   ColorProperty* min_color_property_;
+  ColorProperty* max_color_property_;
+  BoolProperty* auto_compute_intensity_bounds_property_;
+  FloatProperty* min_intensity_property_;
+  FloatProperty* max_intensity_property_;
   EnumProperty* style_property_;
 
   tf::MessageNotifier<std_msgs::PointCloud>* notifier_;
