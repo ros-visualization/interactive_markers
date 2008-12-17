@@ -31,6 +31,8 @@
 #ifndef OGRE_VISUALIZER_VISUALIZATION_MANAGER_H_
 #define OGRE_VISUALIZER_VISUALIZATION_MANAGER_H_
 
+#include "helpers/color.h"
+
 #include <wx/event.h>
 #include <wx/stopwatch.h>
 
@@ -83,6 +85,7 @@ class VisualizationPanel;
 class PropertyManager;
 class StringProperty;
 class DoubleProperty;
+class ColorProperty;
 class CategoryProperty;
 
 class Display;
@@ -258,6 +261,9 @@ public:
   void moveDisplayDown( Display* display );
   void resetDisplayIndices();
 
+  void setBackgroundColor(const Color& c);
+  Color getBackgroundColor();
+
 protected:
   /**
    * \brief Add a display to be managed by this panel
@@ -329,6 +335,9 @@ protected:
   DoubleProperty* ros_time_elapsed_property_;
   DoubleProperty* wall_clock_property_;
   DoubleProperty* ros_time_property_;
+
+  Color background_color_;
+  ColorProperty* background_color_property_;
 };
 
 }

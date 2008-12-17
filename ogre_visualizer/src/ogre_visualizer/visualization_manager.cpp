@@ -59,6 +59,7 @@
 #include <OgreSceneManager.h>
 #include <OgreSceneNode.h>
 #include <OgreLight.h>
+#include <OgreViewport.h>
 
 namespace ogre_vis
 {
@@ -120,12 +121,15 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
   target_frame_property_ = property_manager_->createProperty<StringProperty>( "Target Frame", "", boost::bind( &VisualizationManager::getTargetFrame, this ),
                                                                               boost::bind( &VisualizationManager::setTargetFrame, this, _1 ), options_category );
   fixed_frame_property_ = property_manager_->createProperty<StringProperty>( "Fixed Frame", "", boost::bind( &VisualizationManager::getFixedFrame, this ),
-                                                                                boost::bind( &VisualizationManager::setFixedFrame, this, _1 ), options_category );
+                                                                             boost::bind( &VisualizationManager::setFixedFrame, this, _1 ), options_category );
+  background_color_property_ = property_manager_->createProperty<ColorProperty>( "Background Color", "", boost::bind( &VisualizationManager::getBackgroundColor, this ),
+                                                                             boost::bind( &VisualizationManager::setBackgroundColor, this, _1 ), options_category );
 
   options_category->collapse();
 
   setTargetFrame( "base_link" );
   setFixedFrame( "map" );
+  setBackgroundColor(Color(0.0f, 0.0f, 0.0f));
 
   ros_node_->subscribe( "/time", time_message_, &VisualizationManager::incomingROSTime, this, 1 );
 }
@@ -719,6 +723,25 @@ void VisualizationManager::incomingROSTime()
   last_time = time_message_.rostime;
 
   new_ros_time_ = true;
+}
+
+void VisualizationManager::setBackgroundColor(const Color& c)
+{
+  background_color_ = c;
+
+  vis_panel_->getRenderPanel()->getViewport()->setBackgroundColour(Ogre::ColourValue(c.r_, c.g_, c.b_, 1.0f));
+
+  if (background_color_property_)
+  {
+    background_color_property_->changed();
+  }
+
+  vis_panel_->queueRender();
+}
+
+Color VisualizationManager::getBackgroundColor()
+{
+  return background_color_;
 }
 
 void VisualizationManager::handleChar( wxKeyEvent& event )
