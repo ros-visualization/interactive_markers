@@ -124,7 +124,7 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
 
   options_category->collapse();
 
-  setTargetFrame( "base" );
+  setTargetFrame( "base_link" );
   setFixedFrame( "map" );
 
   ros_node_->subscribe( "/time", time_message_, &VisualizationManager::incomingROSTime, this, 1 );
