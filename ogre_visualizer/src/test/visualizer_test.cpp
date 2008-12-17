@@ -95,15 +95,15 @@ public:
 
     PointCloudDisplay* pointCloud = manager->createDisplay<PointCloudDisplay>( "Stereo Full Cloud", false );
     pointCloud->setTopic( "videre/cloud" );
-    pointCloud->setColor( Color( 1.0, 1.0, 1.0 ) );
+    pointCloud->setMaxColor( Color( 1.0, 1.0, 1.0 ) );
 
     pointCloud = manager->createDisplay<PointCloudDisplay>( "Head Full Cloud", false );
     pointCloud->setTopic( "full_cloud" );
-    pointCloud->setColor( Color( 1.0, 1.0, 0.0 ) );
+    pointCloud->setMaxColor( Color( 1.0, 1.0, 0.0 ) );
 
     pointCloud = manager->createDisplay<PointCloudDisplay>( "World 3D Map", false );
     pointCloud->setTopic( "world_3d_map" );
-    pointCloud->setColor( Color( 1.0f, 0.0f, 0.0f ) );
+    pointCloud->setMaxColor( Color( 1.0f, 0.0f, 0.0f ) );
     pointCloud->setBillboardSize( 0.01 );
 
     LaserScanDisplay* laserScan = manager->createDisplay<LaserScanDisplay>( "Head Scan", false );

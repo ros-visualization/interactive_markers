@@ -262,7 +262,7 @@ public:
   void resetDisplayIndices();
 
   void setBackgroundColor(const Color& c);
-  Color getBackgroundColor();
+  const Color& getBackgroundColor();
 
 protected:
   /**

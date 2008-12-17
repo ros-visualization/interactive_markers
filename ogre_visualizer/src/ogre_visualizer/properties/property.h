@@ -44,6 +44,9 @@
 
 #include "helpers/color.h"
 
+#include <string>
+#include <vector>
+
 class wxConfigBase;
 
 namespace ogre_vis
@@ -72,6 +75,8 @@ public:
   virtual wxPGProperty* getPGProperty() = 0;
 
   virtual CategoryProperty* getParent() = 0;
+
+  virtual void addLegacyName(const std::string& name) = 0;
 };
 
 /**
@@ -214,6 +219,11 @@ public:
 
   virtual CategoryProperty* getParent() { return parent_; }
 
+  virtual void addLegacyName(const std::string& name)
+  {
+    legacy_names_.push_back(wxString::FromAscii(name.c_str()));
+  }
+
 protected:
   wxString name_;
   wxString prefix_;
@@ -224,6 +234,9 @@ protected:
   bool save_;
 
   void* user_data_;
+
+  typedef std::vector<wxString> V_wxString;
+  V_wxString legacy_names_;
 
 private:
   Getter getter_;

@@ -739,7 +739,7 @@ void VisualizationManager::setBackgroundColor(const Color& c)
   vis_panel_->queueRender();
 }
 
-Color VisualizationManager::getBackgroundColor()
+const Color& VisualizationManager::getBackgroundColor()
 {
   return background_color_;
 }

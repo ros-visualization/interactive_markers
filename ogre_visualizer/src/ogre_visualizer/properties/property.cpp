@@ -72,7 +72,18 @@ void BoolProperty::saveToConfig( wxConfigBase* config )
 void BoolProperty::loadFromConfig( wxConfigBase* config )
 {
   bool val;
-  config->Read( prefix_ + name_, &val, get() );
+  if (!config->Read( prefix_ + name_, &val, get() ))
+  {
+    V_wxString::iterator it = legacy_names_.begin();
+    V_wxString::iterator end = legacy_names_.end();
+    for (; it != end; ++it)
+    {
+      if (config->Read( prefix_ + *it, &val, get() ))
+      {
+        break;
+      }
+    }
+  }
 
   set( val );
 }
@@ -118,7 +129,18 @@ void IntProperty::saveToConfig( wxConfigBase* config )
 void IntProperty::loadFromConfig( wxConfigBase* config )
 {
   long val;
-  config->Read( prefix_ + name_, &val, get() );
+  if (!config->Read( prefix_ + name_, &val, get() ))
+  {
+    V_wxString::iterator it = legacy_names_.begin();
+    V_wxString::iterator end = legacy_names_.end();
+    for (; it != end; ++it)
+    {
+      if (config->Read( prefix_ + *it, &val, get() ))
+      {
+        break;
+      }
+    }
+  }
 
   set( val );
 }
@@ -165,7 +187,18 @@ void FloatProperty::saveToConfig( wxConfigBase* config )
 void FloatProperty::loadFromConfig( wxConfigBase* config )
 {
   double val;
-  config->Read( prefix_ + name_, &val, get() );
+  if (!config->Read( prefix_ + name_, &val, get() ))
+  {
+    V_wxString::iterator it = legacy_names_.begin();
+    V_wxString::iterator end = legacy_names_.end();
+    for (; it != end; ++it)
+    {
+      if (config->Read( prefix_ + *it, &val, get() ))
+      {
+        break;
+      }
+    }
+  }
 
   set( val );
 }
@@ -212,7 +245,18 @@ void DoubleProperty::saveToConfig( wxConfigBase* config )
 void DoubleProperty::loadFromConfig( wxConfigBase* config )
 {
   double val;
-  config->Read( prefix_ + name_, &val, get() );
+  if (!config->Read( prefix_ + name_, &val, get() ))
+  {
+    V_wxString::iterator it = legacy_names_.begin();
+    V_wxString::iterator end = legacy_names_.end();
+    for (; it != end; ++it)
+    {
+      if (config->Read( prefix_ + *it, &val, get() ))
+      {
+        break;
+      }
+    }
+  }
 
   set( val );
 }
@@ -248,7 +292,18 @@ void StringProperty::saveToConfig( wxConfigBase* config )
 void StringProperty::loadFromConfig( wxConfigBase* config )
 {
   wxString val;
-  config->Read( prefix_ + name_, &val, wxString::FromAscii( get().c_str() ) );
+  if (!config->Read( prefix_ + name_, &val, wxString::FromAscii( get().c_str() ) ))
+  {
+    V_wxString::iterator it = legacy_names_.begin();
+    V_wxString::iterator end = legacy_names_.end();
+    for (; it != end; ++it)
+    {
+      if (config->Read( prefix_ + *it, &val, wxString::FromAscii( get().c_str() ) ))
+      {
+        break;
+      }
+    }
+  }
 
   set( (const char*)val.mb_str() );
 }
@@ -312,9 +367,28 @@ void ColorProperty::loadFromConfig( wxConfigBase* config )
 {
   Color c = get();
   double r, g, b;
-  config->Read( prefix_ + name_ + wxT("R"), &r, c.r_ );
-  config->Read( prefix_ + name_ + wxT("G"), &g, c.g_ );
-  config->Read( prefix_ + name_ + wxT("B"), &b, c.b_ );
+  bool found = true;
+  found &= config->Read( prefix_ + name_ + wxT("R"), &r, c.r_ );
+  found &= config->Read( prefix_ + name_ + wxT("G"), &g, c.g_ );
+  found &= config->Read( prefix_ + name_ + wxT("B"), &b, c.b_ );
+
+  if (!found)
+  {
+    V_wxString::iterator it = legacy_names_.begin();
+    V_wxString::iterator end = legacy_names_.end();
+    for (; it != end; ++it)
+    {
+      found = true;
+      found &= config->Read( prefix_ + *it + wxT("R"), &r, c.r_ );
+      found &= config->Read( prefix_ + *it + wxT("G"), &g, c.g_ );
+      found &= config->Read( prefix_ + *it + wxT("B"), &b, c.b_ );
+
+      if (found)
+      {
+        break;
+      }
+    }
+  }
 
   set( Color( r, g, b ) );
 }
@@ -358,7 +432,18 @@ void EnumProperty::saveToConfig( wxConfigBase* config )
 void EnumProperty::loadFromConfig( wxConfigBase* config )
 {
   long val;
-  config->Read( prefix_ + name_, &val, get() );
+  if (!config->Read( prefix_ + name_, &val, get() ))
+  {
+    V_wxString::iterator it = legacy_names_.begin();
+    V_wxString::iterator end = legacy_names_.end();
+    for (; it != end; ++it)
+    {
+      if (config->Read( prefix_ + *it, &val, get() ))
+      {
+        break;
+      }
+    }
+  }
 
   set( val );
 }
@@ -458,9 +543,28 @@ void Vector3Property::loadFromConfig( wxConfigBase* config )
 {
   Ogre::Vector3 v = get();
   double x, y, z;
-  config->Read( prefix_ + name_ + wxT("X"), &x, v.x );
-  config->Read( prefix_ + name_ + wxT("Y"), &y, v.y );
-  config->Read( prefix_ + name_ + wxT("Z"), &z, v.z );
+  bool found = true;
+  found &= config->Read( prefix_ + name_ + wxT("X"), &x, v.x );
+  found &= config->Read( prefix_ + name_ + wxT("Y"), &y, v.y );
+  found &= config->Read( prefix_ + name_ + wxT("Z"), &z, v.z );
+
+  if (!found)
+  {
+    V_wxString::iterator it = legacy_names_.begin();
+    V_wxString::iterator end = legacy_names_.end();
+    for (; it != end; ++it)
+    {
+      found = true;
+      found &= config->Read( prefix_ + *it + wxT("X"), &x, v.x );
+      found &= config->Read( prefix_ + *it + wxT("Y"), &y, v.y );
+      found &= config->Read( prefix_ + *it + wxT("Z"), &z, v.z );
+
+      if (found)
+      {
+        break;
+      }
+    }
+  }
 
   set( Ogre::Vector3( x, y, z ) );
 }
@@ -535,10 +639,30 @@ void QuaternionProperty::loadFromConfig( wxConfigBase* config )
 {
   Ogre::Quaternion q = get();
   double x, y, z, w;
-  config->Read( prefix_ + name_ + wxT("X"), &x, q.x );
-  config->Read( prefix_ + name_ + wxT("Y"), &y, q.y );
-  config->Read( prefix_ + name_ + wxT("Z"), &z, q.z );
-  config->Read( prefix_ + name_ + wxT("W"), &w, q.w );
+  bool found = true;
+  found &= config->Read( prefix_ + name_ + wxT("X"), &x, q.x );
+  found &= config->Read( prefix_ + name_ + wxT("Y"), &y, q.y );
+  found &= config->Read( prefix_ + name_ + wxT("Z"), &z, q.z );
+  found &= config->Read( prefix_ + name_ + wxT("W"), &w, q.w );
+
+  if (!found)
+  {
+    V_wxString::iterator it = legacy_names_.begin();
+    V_wxString::iterator end = legacy_names_.end();
+    for (; it != end; ++it)
+    {
+      found = true;
+      found &= config->Read( prefix_ + *it + wxT("X"), &x, q.x );
+      found &= config->Read( prefix_ + *it + wxT("Y"), &y, q.y );
+      found &= config->Read( prefix_ + *it + wxT("Z"), &z, q.z );
+      found &= config->Read( prefix_ + *it + wxT("W"), &w, q.w );
+
+      if (found)
+      {
+        break;
+      }
+    }
+  }
 
   set( Ogre::Quaternion( x, y, z, w ) );
 }

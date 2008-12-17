@@ -90,10 +90,15 @@ public:
    */
   void setTopic( const std::string& topic );
   /**
-   * Set the primary color of this point cloud.  This color is used verbatim for the highest intensity points, and interpolates
-   * down to black for the lowest intensity points
+   * Set the primary color of this point cloud.  This color is used verbatim for the highest intensity points, and linearly interpolates
+   * down to the min color for the lowest intensity points
    */
-  void setColor( const Color& color );
+  void setMaxColor( const Color& color );
+  /**
+   * Set the primary color of this point cloud.  This color is used verbatim for the highest intensity points, and linearly interpolates
+   * down to the min color for the lowest intensity points
+   */
+  void setMinColor( const Color& color );
   /**
    * \brief Set the rendering style
    * @param style The rendering style
@@ -108,7 +113,8 @@ public:
 
   const std::string& getTopic() { return topic_; }
   float getBillboardSize() { return billboard_size_; }
-  const Color& getColor() { return color_; }
+  const Color& getMaxColor() { return max_color_; }
+  const Color& getMinColor() { return min_color_; }
   int getStyle() { return style_; }
 
   // Overrides from Display
@@ -151,14 +157,16 @@ protected:
 
   std::string topic_;                         ///< The PointCloud topic set by setTopic()
 
-  Color color_;
+  Color max_color_;
+  Color min_color_;
 
   int style_;                                 ///< Our rendering style
   float billboard_size_;                      ///< Size to draw our billboards
 
   ROSTopicStringProperty* topic_property_;
   FloatProperty* billboard_size_property_;
-  ColorProperty* color_property_;
+  ColorProperty* max_color_property_;
+  ColorProperty* min_color_property_;
   EnumProperty* style_property_;
 
   tf::MessageNotifier<std_msgs::PointCloud>* notifier_;

@@ -48,12 +48,14 @@ namespace ogre_vis
 
 PointCloudDisplay::PointCloudDisplay( const std::string& name, VisualizationManager* manager )
 : Display( name, manager )
-, color_( 1.0f, 1.0f, 1.0f )
+, max_color_( 1.0f, 1.0f, 1.0f )
+, min_color_( 0.0f, 0.0f, 0.0f )
 , style_( Billboards )
 , billboard_size_( 0.01 )
 , topic_property_( NULL )
 , billboard_size_property_( NULL )
-, color_property_( NULL )
+, max_color_property_( NULL )
+, min_color_property_( NULL )
 , style_property_( NULL )
 {
   scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
@@ -90,13 +92,25 @@ void PointCloudDisplay::setTopic( const std::string& topic )
   causeRender();
 }
 
-void PointCloudDisplay::setColor( const Color& color )
+void PointCloudDisplay::setMaxColor( const Color& color )
 {
-  color_ = color;
+  max_color_ = color;
 
-  if ( color_property_ )
+  if ( max_color_property_ )
   {
-    color_property_->changed();
+    max_color_property_->changed();
+  }
+
+  causeRender();
+}
+
+void PointCloudDisplay::setMinColor( const Color& color )
+{
+  min_color_ = color;
+
+  if ( min_color_property_ )
+  {
+    min_color_property_->changed();
   }
 
   causeRender();
@@ -172,15 +186,15 @@ void PointCloudDisplay::unsubscribe()
   notifier_->setTopic( "" );
 }
 
-void transformIntensity( float val, ogre_tools::PointCloud::Point& point, float min_intensity, float max_intensity, float diff_intensity )
+void transformIntensity( float val, ogre_tools::PointCloud::Point& point, const Color& min_color, float min_intensity, float max_intensity, float diff_intensity )
 {
   float normalized_intensity = diff_intensity > 0.0f ? ( val - min_intensity ) / diff_intensity : 1.0f;
-  point.r_ *= normalized_intensity;
-  point.g_ *= normalized_intensity;
-  point.b_ *= normalized_intensity;
+  point.r_ = point.r_*normalized_intensity + min_color.r_*(1.0f - normalized_intensity);
+  point.g_ = point.g_*normalized_intensity + min_color.g_*(1.0f - normalized_intensity);
+  point.b_ = point.b_*normalized_intensity + min_color.b_*(1.0f - normalized_intensity);
 }
 
-void transformRGB( float val, ogre_tools::PointCloud::Point& point, float, float, float )
+void transformRGB( float val, ogre_tools::PointCloud::Point& point, const Color&, float, float, float )
 {
   int rgb = *reinterpret_cast<int*>(&val);
   point.r_ = ((rgb >> 16) & 0xff) / 255.0f;
@@ -188,17 +202,17 @@ void transformRGB( float val, ogre_tools::PointCloud::Point& point, float, float
   point.b_ = (rgb & 0xff) / 255.0f;
 }
 
-void transformR( float val, ogre_tools::PointCloud::Point& point, float, float, float )
+void transformR( float val, ogre_tools::PointCloud::Point& point, const Color&, float, float, float )
 {
   point.r_ = val;
 }
 
-void transformG( float val, ogre_tools::PointCloud::Point& point, float, float, float )
+void transformG( float val, ogre_tools::PointCloud::Point& point, const Color&, float, float, float )
 {
   point.g_ = val;
 }
 
-void transformB( float val, ogre_tools::PointCloud::Point& point, float, float, float )
+void transformB( float val, ogre_tools::PointCloud::Point& point, const Color&, float, float, float )
 {
   point.b_ = val;
 }
@@ -271,15 +285,14 @@ void PointCloudDisplay::transformCloud(const boost::shared_ptr<std_msgs::PointCl
   points.resize( point_count );
   for(uint32_t i = 0; i < point_count; i++)
   {
-    Ogre::Vector3 color( color_.r_, color_.g_, color_.b_ );
     ogre_tools::PointCloud::Point& current_point = points[ i ];
 
     current_point.x_ = cloud->pts[i].x;
     current_point.y_ = cloud->pts[i].y;
     current_point.z_ = cloud->pts[i].z;
-    current_point.r_ = color.x;
-    current_point.g_ = color.y;
-    current_point.b_ = color.z;
+    current_point.r_ = max_color_.r_;
+    current_point.g_ = max_color_.g_;
+    current_point.b_ = max_color_.b_;
   }
 
   chan_it = cloud->chan.begin();
@@ -321,7 +334,7 @@ void PointCloudDisplay::transformCloud(const boost::shared_ptr<std_msgs::PointCl
       type = CT_B;
     }
 
-    typedef void (*TransformFunc)(float, ogre_tools::PointCloud::Point&, float, float, float);
+    typedef void (*TransformFunc)(float, ogre_tools::PointCloud::Point&, const Color&, float, float, float);
     TransformFunc funcs[CT_COUNT] =
     {
       transformIntensity,
@@ -334,7 +347,7 @@ void PointCloudDisplay::transformCloud(const boost::shared_ptr<std_msgs::PointCl
     for(uint32_t i = 0; i < point_count; i++)
     {
       ogre_tools::PointCloud::Point& current_point = points[ i ];
-      funcs[type]( chan.vals[i], current_point, min_intensity, max_intensity, diff_intensity );
+      funcs[type]( chan.vals[i], current_point, min_color_, min_intensity, max_intensity, diff_intensity );
     }
   }
 
@@ -380,8 +393,12 @@ void PointCloudDisplay::createProperties()
   style_property_->addOption( "Billboards", Billboards );
   style_property_->addOption( "Points", Points );
 
-  color_property_ = property_manager_->createProperty<ColorProperty>( "Color", property_prefix_, boost::bind( &PointCloudDisplay::getColor, this ),
-                                                                        boost::bind( &PointCloudDisplay::setColor, this, _1 ), parent_category_, this );
+  max_color_property_ = property_manager_->createProperty<ColorProperty>( "Max Color", property_prefix_, boost::bind( &PointCloudDisplay::getMaxColor, this ),
+                                                                        boost::bind( &PointCloudDisplay::setMaxColor, this, _1 ), parent_category_, this );
+  min_color_property_ = property_manager_->createProperty<ColorProperty>( "Min Color", property_prefix_, boost::bind( &PointCloudDisplay::getMinColor, this ),
+                                                                          boost::bind( &PointCloudDisplay::setMinColor, this, _1 ), parent_category_, this );
+  // legacy "Color" support... convert it to max color
+  max_color_property_->addLegacyName("Color");
 
   billboard_size_property_ = property_manager_->createProperty<FloatProperty>( "Billboard Size", property_prefix_, boost::bind( &PointCloudDisplay::getBillboardSize, this ),
                                                                                 boost::bind( &PointCloudDisplay::setBillboardSize, this, _1 ), parent_category_, this );
