@@ -313,7 +313,7 @@ void PointCloudDisplay::update(float dt)
   V_PointCloud::iterator message_end = messages.end();
   for (; message_it != message_end; ++message_it)
   {
-    addMessage(*message_it);
+    processMessage(*message_it);
   }
   messages.clear();
 
@@ -376,7 +376,7 @@ void transformB( float val, ogre_tools::PointCloud::Point& point, const Color&, 
   point.b_ = val;
 }
 
-void PointCloudDisplay::addMessage(const boost::shared_ptr<std_msgs::PointCloud>& cloud)
+void PointCloudDisplay::processMessage(const boost::shared_ptr<std_msgs::PointCloud>& cloud)
 {
   CloudInfoPtr info;
 
@@ -610,10 +610,15 @@ void PointCloudDisplay::transformCloud(const CloudInfoPtr& info)
 
 }
 
-void PointCloudDisplay::incomingCloudCallback(const boost::shared_ptr<std_msgs::PointCloud>& cloud)
+void PointCloudDisplay::addMessage(const boost::shared_ptr<std_msgs::PointCloud>& cloud)
 {
   boost::mutex::scoped_lock lock(message_queue_mutex_);
   message_queue_.push_back(cloud);
+}
+
+void PointCloudDisplay::incomingCloudCallback(const boost::shared_ptr<std_msgs::PointCloud>& cloud)
+{
+  addMessage(cloud);
 }
 
 void PointCloudDisplay::targetFrameChanged()

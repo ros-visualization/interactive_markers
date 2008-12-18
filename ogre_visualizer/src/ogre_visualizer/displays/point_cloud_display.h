@@ -188,6 +188,7 @@ protected:
   void transformCloud(const CloudInfoPtr& cloud);
   void transformThreadFunc();
 
+  void processMessage(const boost::shared_ptr<std_msgs::PointCloud>& cloud);
   void addMessage(const boost::shared_ptr<std_msgs::PointCloud>& cloud);
 
   D_CloudInfo clouds_;

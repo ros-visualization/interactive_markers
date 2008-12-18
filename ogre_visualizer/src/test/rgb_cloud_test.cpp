@@ -31,6 +31,28 @@ int main( int argc, char** argv )
     tf::Transform t;
     t.setIdentity();
     tf_broadcaster.sendTransform(tf::Stamped<tf::Transform>(t, tm, "base", "map"));
+
+    {
+      std_msgs::PointCloud cloud;
+      cloud.header.stamp = tm;
+      cloud.header.frame_id = "map";
+
+      cloud.pts.resize(100000);
+      cloud.chan.resize(1);
+      cloud.chan[0].name = "intensities";
+      cloud.chan[0].vals.resize(100000);
+      for ( int j = 0; j < 100000; ++j )
+      {
+        cloud.pts[j].x = j;
+        cloud.pts[j].y = 3.0f;
+        cloud.pts[j].z = i % 10;
+
+        cloud.chan[0].vals[j] = 1000.0f;
+      }
+
+      node->publish( "million_points_cloud_test", cloud );
+    }
+
     {
       std_msgs::PointCloud cloud;
       cloud.header.stamp = tm;
@@ -130,27 +152,6 @@ int main( int argc, char** argv )
       cloud.chan[0].vals[4] = 4000.0f;
 
       node->publish( "intensity_cloud_test", cloud );
-    }
-
-    {
-      std_msgs::PointCloud cloud;
-      cloud.header.stamp = tm;
-      cloud.header.frame_id = "map";
-
-      cloud.pts.resize(100000);
-      cloud.chan.resize(1);
-      cloud.chan[0].name = "intensities";
-      cloud.chan[0].vals.resize(100000);
-      for ( int j = 0; j < 100000; ++j )
-      {
-        cloud.pts[j].x = j;
-        cloud.pts[j].y = 3.0f;
-        cloud.pts[j].z = i % 10;
-
-        cloud.chan[0].vals[j] = 1000.0f;
-      }
-
-      node->publish( "million_points_cloud_test", cloud );
     }
 
     ++i;
