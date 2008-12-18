@@ -50,6 +50,7 @@ add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE}
                             src/ogre_visualizer/displays/marker_display.h
                             src/ogre_visualizer/displays/octree_display.h
                             src/ogre_visualizer/displays/planning_display.h
+                            src/ogre_visualizer/displays/point_cloud_base.h
                             src/ogre_visualizer/displays/point_cloud_display.h
                             src/ogre_visualizer/displays/robot_model_display.h
                             src/ogre_visualizer/displays/robot_base2d_pose_display.h
@@ -67,7 +68,7 @@ rospack_add_library(${PROJECT_NAME}  src/ogre_visualizer/properties/property.cpp
                                      src/ogre_visualizer/tools/selection_tool.cpp
                                      src/ogre_visualizer/visualization_panel.cpp
                                      src/ogre_visualizer/visualization_manager.cpp
-  				   					 src/ogre_visualizer/display.cpp
+  				   					               src/ogre_visualizer/display.cpp
                                      src/ogre_visualizer/common.cpp
                                      src/ogre_visualizer/factory.cpp
                                      src/ogre_visualizer/ros_topic_property.cpp
@@ -76,6 +77,7 @@ rospack_add_library(${PROJECT_NAME}  src/ogre_visualizer/properties/property.cpp
                                      src/ogre_visualizer/displays/marker_display.cpp
                                      src/ogre_visualizer/displays/axes_display.cpp
   				   												 src/ogre_visualizer/displays/grid_display.cpp
+  				   												 src/ogre_visualizer/displays/point_cloud_base.cpp
   				   												 src/ogre_visualizer/displays/point_cloud_display.cpp
   				   												 src/ogre_visualizer/displays/laser_scan_display.cpp
   				   												 src/ogre_visualizer/displays/robot_model_display.cpp

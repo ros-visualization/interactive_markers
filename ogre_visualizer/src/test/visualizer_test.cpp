@@ -107,13 +107,13 @@ public:
     pointCloud->setBillboardSize( 0.01 );
 
     LaserScanDisplay* laserScan = manager->createDisplay<LaserScanDisplay>( "Head Scan", false );
-    laserScan->setScanTopic( "tilt_scan" );
-    laserScan->setColor( Color( 1.0, 0.0, 0.0 ) );
+    laserScan->setTopic( "tilt_scan" );
+    laserScan->setMaxColor( Color( 1.0, 0.0, 0.0 ) );
     laserScan->setDecayTime( 30.0f );
 
     laserScan = manager->createDisplay<LaserScanDisplay>( "Floor Scan", false );
-    laserScan->setScanTopic( "base_scan" );
-    laserScan->setColor( Color( 0.0f, 1.0f, 0.0f ) );
+    laserScan->setTopic( "base_scan" );
+    laserScan->setMaxColor( Color( 0.0f, 1.0f, 0.0f ) );
     laserScan->setDecayTime( 0.0f );
 
     manager->createDisplay<OctreeDisplay>( "Octree", false )->setOctreeTopic( "full_octree" );
