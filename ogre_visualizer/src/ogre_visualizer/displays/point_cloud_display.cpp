@@ -46,6 +46,23 @@
 namespace ogre_vis
 {
 
+PointCloudDisplay::CloudInfo::CloudInfo(Ogre::SceneManager* scene_manager)
+: cloud_(NULL)
+, scene_node_(NULL)
+, scene_manager_(scene_manager)
+, time_(0.0f)
+{}
+
+PointCloudDisplay::CloudInfo::~CloudInfo()
+{
+  delete cloud_;
+
+  if (scene_node_)
+  {
+    scene_manager_->destroySceneNode(scene_node_->getName());
+  }
+}
+
 PointCloudDisplay::PointCloudDisplay( const std::string& name, VisualizationManager* manager )
 : Display( name, manager )
 , min_color_( 0.0f, 0.0f, 0.0f )
@@ -56,6 +73,7 @@ PointCloudDisplay::PointCloudDisplay( const std::string& name, VisualizationMana
 , intensity_bounds_changed_(false)
 , style_( Billboards )
 , billboard_size_( 0.01 )
+, point_decay_time_(0.0f)
 , topic_property_( NULL )
 , billboard_size_property_( NULL )
 , min_color_property_( NULL )
@@ -64,10 +82,8 @@ PointCloudDisplay::PointCloudDisplay( const std::string& name, VisualizationMana
 , min_intensity_property_( NULL )
 , max_intensity_property_( NULL )
 , style_property_( NULL )
+, decay_time_property_( NULL )
 {
-  scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
-  cloud_ = new ogre_tools::PointCloud( scene_manager_, scene_node_ );
-
   setStyle( style_ );
   setBillboardSize( billboard_size_ );
 
@@ -78,8 +94,11 @@ PointCloudDisplay::~PointCloudDisplay()
 {
   unsubscribe();
 
+  transform_thread_destroy_ = true;
+  transform_cond_.notify_all();
+  transform_thread_.join();
+
   delete notifier_;
-  delete cloud_;
 }
 
 void PointCloudDisplay::setTopic( const std::string& topic )
@@ -155,6 +174,18 @@ void PointCloudDisplay::setMaxIntensity( float val )
   causeRender();
 }
 
+void PointCloudDisplay::setDecayTime( float time )
+{
+  point_decay_time_ = time;
+
+  if ( decay_time_property_ )
+  {
+    decay_time_property_->changed();
+  }
+
+  causeRender();
+}
+
 void PointCloudDisplay::setAutoComputeIntensityBounds(bool compute)
 {
   auto_compute_intensity_bounds_ = compute;
@@ -175,7 +206,14 @@ void PointCloudDisplay::setStyle( int style )
     RenderAutoLock renderLock( this );
 
     style_ = style;
-    cloud_->setUsePoints( style == Points );
+
+    boost::mutex::scoped_lock lock(clouds_mutex_);
+    D_CloudInfo::iterator it = clouds_.begin();
+    D_CloudInfo::iterator end = clouds_.end();
+    for (; it != end; ++it)
+    {
+      (*it)->cloud_->setUsePoints(style == Points);
+    }
   }
 
   causeRender();
@@ -194,7 +232,14 @@ void PointCloudDisplay::setBillboardSize( float size )
     RenderAutoLock renderLock( this );
 
     billboard_size_ = size;
-    cloud_->setBillboardDimensions( size, size );
+
+    boost::mutex::scoped_lock lock(clouds_mutex_);
+    D_CloudInfo::iterator it = clouds_.begin();
+    D_CloudInfo::iterator end = clouds_.end();
+    for (; it != end; ++it)
+    {
+      (*it)->cloud_->setBillboardDimensions( size, size );
+    }
   }
 
   causeRender();
@@ -209,7 +254,9 @@ void PointCloudDisplay::setBillboardSize( float size )
 
 void PointCloudDisplay::onEnable()
 {
-  cloud_->setCloudVisible( true );
+  transform_thread_destroy_ = false;
+  transform_thread_ = boost::thread(boost::bind(&PointCloudDisplay::transformThreadFunc, this));
+
   subscribe();
 }
 
@@ -218,8 +265,18 @@ void PointCloudDisplay::onDisable()
   unsubscribe();
   notifier_->clear();
 
-  cloud_->clear();
-  cloud_->setCloudVisible( false );
+  transform_thread_destroy_ = true;
+  transform_cond_.notify_all();
+  transform_thread_.join();
+
+  clouds_.clear();
+  message_queue_.clear();
+  clouds_to_delete_.clear();
+
+  while (!transform_queue_.empty())
+  {
+    transform_queue_.pop();
+  }
 }
 
 void PointCloudDisplay::subscribe()
@@ -244,6 +301,46 @@ void PointCloudDisplay::update(float dt)
     setMinIntensity(min_intensity_);
     setMaxIntensity(max_intensity_);
     intensity_bounds_changed_ = false;
+  }
+
+  V_PointCloud messages;
+  {
+    boost::mutex::scoped_lock lock(message_queue_mutex_);
+    messages.swap(message_queue_);
+  }
+
+  V_PointCloud::iterator message_it = messages.begin();
+  V_PointCloud::iterator message_end = messages.end();
+  for (; message_it != message_end; ++message_it)
+  {
+    addMessage(*message_it);
+  }
+  messages.clear();
+
+  {
+    boost::mutex::scoped_lock lock(clouds_mutex_);
+
+    D_CloudInfo::iterator cloud_it = clouds_.begin();
+    D_CloudInfo::iterator cloud_end = clouds_.end();
+    for (;cloud_it != cloud_end; ++cloud_it)
+    {
+      const CloudInfoPtr& info = *cloud_it;
+
+      info->time_ += dt;
+    }
+
+    if (point_decay_time_ > 0.0f)
+    {
+      while (!clouds_.empty() && clouds_.front()->time_ > point_decay_time_)
+      {
+        clouds_.pop_front();
+      }
+    }
+  }
+
+  {
+    boost::mutex::scoped_lock lock(clouds_to_delete_mutex_);
+    clouds_to_delete_.clear();
   }
 }
 
@@ -279,8 +376,90 @@ void transformB( float val, ogre_tools::PointCloud::Point& point, const Color&, 
   point.b_ = val;
 }
 
-void PointCloudDisplay::transformCloud(const boost::shared_ptr<std_msgs::PointCloud>& cloud)
+void PointCloudDisplay::addMessage(const boost::shared_ptr<std_msgs::PointCloud>& cloud)
 {
+  CloudInfoPtr info;
+
+  if (point_decay_time_ == 0.0f) // reuse old cloud
+  {
+    if (clouds_.size() == 1)
+    {
+      info = clouds_.front();
+    }
+    else
+    {
+      info = CloudInfoPtr(new CloudInfo(scene_manager_));
+    }
+
+    clouds_.clear();
+  }
+  else
+  {
+    info = CloudInfoPtr(new CloudInfo(scene_manager_));
+  }
+
+  info->message_ = cloud;
+  info->time_ = 0;
+  if (!info->scene_node_)
+  {
+    ROS_ASSERT(!info->cloud_);
+    info->scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
+    info->cloud_ = new ogre_tools::PointCloud( scene_manager_, info->scene_node_ );
+  }
+  // TODO: these two should actually happen after the cloud has been transformed, back in the main thread
+  info->cloud_->setUsePoints( style_ == Points );
+  info->cloud_->setBillboardDimensions( billboard_size_, billboard_size_ );
+
+  boost::mutex::scoped_lock lock(transform_queue_mutex_);
+  transform_queue_.push(info);
+  transform_cond_.notify_all();
+}
+
+void PointCloudDisplay::transformThreadFunc()
+{
+  while (!transform_thread_destroy_)
+  {
+    CloudInfoPtr info;
+
+    {
+      boost::mutex::scoped_lock lock(transform_queue_mutex_);
+
+      while (!transform_thread_destroy_ && transform_queue_.empty())
+      {
+        transform_cond_.wait(lock);
+      }
+
+      if (transform_thread_destroy_)
+      {
+        return;
+      }
+
+      info = transform_queue_.front();
+      transform_queue_.pop();
+    }
+
+    transformCloud(info);
+
+    {
+      boost::mutex::scoped_lock lock(clouds_mutex_);
+
+      if (point_decay_time_ == 0.0f)
+      {
+        boost::mutex::scoped_lock lock(clouds_to_delete_mutex_);
+        clouds_to_delete_.insert(clouds_to_delete_.begin(), clouds_.begin(), clouds_.end());
+        clouds_.clear();
+      }
+
+      clouds_.push_back(info);
+      causeRender();
+    }
+  }
+}
+
+void PointCloudDisplay::transformCloud(const CloudInfoPtr& info)
+{
+  const boost::shared_ptr<std_msgs::PointCloud>& cloud = info->message_;
+
   std::string frame_id = cloud->header.frame_id;
   if ( frame_id.empty() )
   {
@@ -416,14 +595,14 @@ void PointCloudDisplay::transformCloud(const boost::shared_ptr<std_msgs::PointCl
   {
     RenderAutoLock renderLock( this );
 
-    scene_node_->setPosition( position );
-    scene_node_->setOrientation( orientation );
+    info->scene_node_->setPosition( position );
+    info->scene_node_->setOrientation( orientation );
 
-    cloud_->clear();
+    info->cloud_->clear();
 
     if ( !points.empty() )
     {
-      cloud_->addPoints( &points.front(), points.size() );
+      info->cloud_->addPoints( &points.front(), points.size() );
     }
   }
 
@@ -433,7 +612,8 @@ void PointCloudDisplay::transformCloud(const boost::shared_ptr<std_msgs::PointCl
 
 void PointCloudDisplay::incomingCloudCallback(const boost::shared_ptr<std_msgs::PointCloud>& cloud)
 {
-  transformCloud( cloud );
+  boost::mutex::scoped_lock lock(message_queue_mutex_);
+  message_queue_.push_back(cloud);
 }
 
 void PointCloudDisplay::targetFrameChanged()
@@ -443,9 +623,7 @@ void PointCloudDisplay::targetFrameChanged()
 
 void PointCloudDisplay::fixedFrameChanged()
 {
-  RenderAutoLock renderLock( this );
-
-  cloud_->clear();
+  reset();
 }
 
 void PointCloudDisplay::createProperties()
@@ -473,15 +651,38 @@ void PointCloudDisplay::createProperties()
   min_intensity_property_ = property_manager_->createProperty<FloatProperty>( "Min Intensity", property_prefix_, boost::bind( &PointCloudDisplay::getMinIntensity, this ),
                                                                           boost::bind( &PointCloudDisplay::setMinIntensity, this, _1 ), parent_category_, this );
 
+  decay_time_property_ = property_manager_->createProperty<FloatProperty>( "Decay Time", property_prefix_, boost::bind( &PointCloudDisplay::getDecayTime, this ),
+                                                                           boost::bind( &PointCloudDisplay::setDecayTime, this, _1 ), parent_category_, this );
+
+
   topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &PointCloudDisplay::getTopic, this ),
                                                                               boost::bind( &PointCloudDisplay::setTopic, this, _1 ), parent_category_, this );
 }
 
 void PointCloudDisplay::reset()
 {
-  RenderAutoLock renderLock( this );
+  transform_thread_destroy_ = true;
+  transform_cond_.notify_all();
+  transform_thread_.join();
 
-  cloud_->clear();
+  {
+    // transform thread should no longer be running, so no need to lock the mutex
+    while (!transform_queue_.empty())
+    {
+      transform_queue_.pop();
+    }
+
+    RenderAutoLock renderLock( this );
+
+    boost::mutex::scoped_lock clouds_lock(clouds_mutex_);
+    clouds_.clear();
+
+    boost::mutex::scoped_lock message_lock(message_queue_mutex_);
+    message_queue_.clear();
+  }
+
+  transform_thread_destroy_ = false;
+  transform_thread_ = boost::thread(boost::bind(&PointCloudDisplay::transformThreadFunc, this));
 }
 
 const char* PointCloudDisplay::getDescription()

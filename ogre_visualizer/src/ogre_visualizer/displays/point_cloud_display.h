@@ -37,6 +37,11 @@
 #include "std_msgs/PointCloud.h"
 
 #include <boost/shared_ptr.hpp>
+#include <boost/thread.hpp>
+
+#include <deque>
+#include <queue>
+#include <vector>
 
 namespace ros
 {
@@ -69,6 +74,23 @@ class BoolProperty;
  */
 class PointCloudDisplay : public Display
 {
+private:
+  struct CloudInfo
+  {
+    CloudInfo(Ogre::SceneManager* scene_manager);
+    ~CloudInfo();
+
+    ogre_tools::PointCloud* cloud_;
+    Ogre::SceneNode* scene_node_;
+    Ogre::SceneManager* scene_manager_;
+    float time_;
+
+    boost::shared_ptr<std_msgs::PointCloud> message_;
+  };
+  typedef boost::shared_ptr<CloudInfo> CloudInfoPtr;
+  typedef std::deque<CloudInfoPtr> D_CloudInfo;
+  typedef std::queue<CloudInfoPtr> Q_CloudInfo;
+
 public:
   /**
    * \enum Style
@@ -111,6 +133,11 @@ public:
    * @param size The size
    */
   void setBillboardSize( float size );
+  /**
+   * \brief Set the amount of time each cloud should stick around for
+   * @param time Decay time, in seconds
+   */
+  void setDecayTime( float time );
 
   void setMinIntensity(float val);
   void setMaxIntensity(float val);
@@ -124,6 +151,7 @@ public:
   const Color& getMaxColor() { return max_color_; }
   const Color& getMinColor() { return min_color_; }
   int getStyle() { return style_; }
+  float getDecayTime() { return point_decay_time_; }
 
   // Overrides from Display
   virtual void targetFrameChanged();
@@ -157,12 +185,25 @@ protected:
   /**
    * \brief Transforms the cloud into the correct frame, and sets up our renderable cloud
    */
-  void transformCloud(const boost::shared_ptr<std_msgs::PointCloud>& cloud);
+  void transformCloud(const CloudInfoPtr& cloud);
+  void transformThreadFunc();
 
+  void addMessage(const boost::shared_ptr<std_msgs::PointCloud>& cloud);
 
+  D_CloudInfo clouds_;
+  boost::mutex clouds_mutex_;
+  D_CloudInfo clouds_to_delete_;
+  boost::mutex clouds_to_delete_mutex_;
 
-  ogre_tools::PointCloud* cloud_;             ///< Handles actually drawing the point cloud
-  Ogre::SceneNode* scene_node_;
+  typedef std::vector<boost::shared_ptr<std_msgs::PointCloud> > V_PointCloud;
+  V_PointCloud message_queue_;
+  boost::mutex message_queue_mutex_;
+
+  Q_CloudInfo transform_queue_;
+  boost::mutex transform_queue_mutex_;
+  boost::condition_variable transform_cond_;
+  bool transform_thread_destroy_;
+  boost::thread transform_thread_;
 
   std::string topic_;                         ///< The PointCloud topic set by setTopic()
 
@@ -175,6 +216,7 @@ protected:
 
   int style_;                                 ///< Our rendering style
   float billboard_size_;                      ///< Size to draw our billboards
+  float point_decay_time_;                    ///< How long clouds should stick around for before they are culled
 
   ROSTopicStringProperty* topic_property_;
   FloatProperty* billboard_size_property_;
@@ -184,6 +226,7 @@ protected:
   FloatProperty* min_intensity_property_;
   FloatProperty* max_intensity_property_;
   EnumProperty* style_property_;
+  FloatProperty* decay_time_property_;
 
   tf::MessageNotifier<std_msgs::PointCloud>* notifier_;
 };
