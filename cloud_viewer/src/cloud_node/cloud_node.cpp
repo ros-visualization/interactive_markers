@@ -1,13 +1,13 @@
 /*********************************************************************
 * Software License Agreement (BSD License)
-* 
+*
 *  Copyright (c) 2008, Willow Garage, Inc.
 *  All rights reserved.
-* 
+*
 *  Redistribution and use in source and binary forms, with or without
 *  modification, are permitted provided that the following conditions
 *  are met:
-* 
+*
 *   * Redistributions of source code must retain the above copyright
 *     notice, this list of conditions and the following disclaimer.
 *   * Redistributions in binary form must reproduce the above
@@ -17,7 +17,7 @@
 *   * Neither the name of the Willow Garage nor the names of its
 *     contributors may be used to endorse or promote products derived
 *     from this software without specific prior written permission.
-* 
+*
 *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -74,7 +74,7 @@ public:
   int cloud_cnt;
 
   bool made_dir;
-  
+
   ros::thread::mutex cloud_mutex;
 
   Cloud_Node() : ros::node("cloud_viewer"), level(20), spread(400), buf_read_ind(0), buf_use_ind(1), cloud_cnt(0), made_dir(false)
@@ -91,13 +91,13 @@ public:
     struct tm* timeinfo;
     time(&rawtime);
     timeinfo = localtime(&rawtime);
-    
+
     sprintf(dir_name, "clouds_%.2d%.2d%.2d_%.2d%.2d%.2d", timeinfo->tm_mon + 1, timeinfo->tm_mday,timeinfo->tm_year - 100,timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
-    
+
   }
 
   virtual ~Cloud_Node()
-  { 
+  {
   }
 
   virtual void render()
@@ -214,19 +214,19 @@ public:
     refill_cloud();
   }
 
-  void refill_cloud() 
+  void refill_cloud()
   {
     cloud_mutex.lock();
 
     cloud_viewer.clear_cloud();
-    
+
     double val = 0.0;
     double valsq = 0.0;
     int cnt = 0;
 
     for (int i = 0; i < buf[buf_use_ind].size(); i++) {
       val += buf[buf_use_ind][i].i;
-      valsq += pow(buf[buf_use_ind][i].i, 2.0);
+      valsq += pow((double)buf[buf_use_ind][i].i, 2.0);
       cnt++;
     }
     double mean = val / cnt;
@@ -234,12 +234,12 @@ public:
 
     for (int i = 0; i < buf[buf_use_ind].size(); i++) {
       float intensity = level + spread * (buf[buf_use_ind][i].i - mean) / (2*std);
-      
+
       if (intensity > 255)
 	intensity = 255;
       else if (intensity < 0)
 	intensity = 0;
-      
+
       cloud_viewer.add_point(-buf[buf_use_ind][i].y, -buf[buf_use_ind][i].z, buf[buf_use_ind][i].x,
 			     intensity, intensity, intensity);
     }
@@ -250,7 +250,7 @@ public:
   }
 
   void save_VRML() {
-    
+
     printf("Trying to save..\n");
 
     if (!made_dir) {
@@ -265,7 +265,7 @@ public:
     std::ostringstream oss;
     oss << dir_name << "/Cloud" << cloud_cnt++ << ".wrl";
     ofstream out(oss.str().c_str());
-    
+
     out.setf(ios::fixed, ios::floatfield);
     out.setf(ios::showpoint);
     out.precision(4);
@@ -273,10 +273,10 @@ public:
     double val = 0.0;
     double valsq = 0.0;
     int cnt = 0;
-    
+
     for (int i = 0; i < buf[buf_use_ind].size(); i++) {
       val += buf[buf_use_ind][i].i;
-      valsq += pow(buf[buf_use_ind][i].i, 2.0);
+      valsq += pow((double)buf[buf_use_ind][i].i, 2.0);
       cnt++;
     }
     double mean = val / cnt;
@@ -316,7 +316,7 @@ public:
 
     for (int i = 0; i < buf[buf_use_ind].size(); i++) {
       float intensity = (level + spread * (buf[buf_use_ind][i].i - mean) / (2*std)) / 255;
-      
+
       if (intensity > 255)
 	intensity = 255;
       else if (intensity < 0)
@@ -339,7 +339,7 @@ public:
 
 
   void save_dat() {
-    
+
     printf("Trying to save..\n");
 
     if (!made_dir) {
@@ -354,7 +354,7 @@ public:
     std::ostringstream oss;
     oss << dir_name << "/Cloud" << cloud_cnt++ << ".dat";
     ofstream out(oss.str().c_str());
-    
+
     out.setf(ios::fixed, ios::floatfield);
     out.setf(ios::showpoint);
     out.precision(5);
@@ -364,9 +364,9 @@ public:
     out << "#Points: " << buf[buf_use_ind].size() << endl;
 
     for (int i = 0; i < buf[buf_use_ind].size(); i++) {
-      out << buf[buf_use_ind][i].x << " " 
+      out << buf[buf_use_ind][i].x << " "
 	  << buf[buf_use_ind][i].y << " "
-	  << buf[buf_use_ind][i].z << " " 
+	  << buf[buf_use_ind][i].z << " "
 	  << buf[buf_use_ind][i].i << endl;
     }
 
@@ -374,7 +374,7 @@ public:
 
   }
 
-    
+
 };
 
 
