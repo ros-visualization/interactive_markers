@@ -35,16 +35,17 @@
 #include "../ogre_tools/fps_camera.h"
 #include "../ogre_tools/orbit_camera.h"
 #include "../ogre_tools/axes.h"
-#include "../ogre_tools/cone.h"
+#include "../ogre_tools/shape.h"
 #include "../ogre_tools/arrow.h"
 #include "../ogre_tools/point_cloud.h"
-#include "../ogre_tools/super_ellipsoid.h"
 #include "../ogre_tools/billboard_line.h"
 #include "../ogre_tools/initialization.h"
 
 #include <OgreRoot.h>
 #include <OgreSceneManager.h>
 #include <OgreViewport.h>
+
+using namespace ogre_tools;
 
 class MyFrame : public wxFrame
 {
@@ -75,8 +76,7 @@ public:
 
         m_WXRenderWindow->getViewport()->setCamera( camera_->getOgreCamera() );
 
-        ogre_tools::Grid* grid = new ogre_tools::Grid( scene_manager_, NULL, 10, 1.0f, 1.0f, 0.0f, 0.0f );
-        //grid->getSceneNode()->pitch( Ogre::Degree( 90 ) );
+        new ogre_tools::Grid( scene_manager_, NULL, 10, 1.0f, 1.0f, 0.0f, 0.0f );
 
         ogre_tools::BillboardLine* line = new ogre_tools::BillboardLine( scene_manager_, NULL );
         for ( int i = -50; i < 50; ++i )
@@ -92,16 +92,29 @@ public:
         line->setLineWidth( 0.05 );
         line->setColor( 0.0f, 1.0f, 0.0f, 0.5f );
 
-        //ogre_tools::Axes* axes = new ogre_tools::Axes( scene_manager_ );
+        Shape* sphere = new Shape(Shape::Sphere, scene_manager_);
+        sphere->setPosition(Ogre::Vector3(0.0f, 0.0f, 2.0f));
+        sphere->setColor(0.0f, 1.0f, 2.0f, 1.0f);
+        Shape* cube = new Shape(Shape::Cube, scene_manager_);
+        cube->setPosition(Ogre::Vector3(0.0f, 1.0f, 2.0f));
+        cube->setColor(1.0f, 0.0f, 0.0f, 1.0f);
+        Shape* cylinder = new Shape(Shape::Cylinder, scene_manager_);
+        cylinder->setPosition(Ogre::Vector3(0.0f, 2.0f, 2.0f));
+        cylinder->setColor(1.0f, 1.0f, 0.0f, 1.0f);
+        Shape* cone = new Shape(Shape::Cone, scene_manager_);
+        cone->setPosition(Ogre::Vector3(0.0f, 3.0f, 2.0f));
+        cone->setColor(0.0f, 0.0f, 1.0f, 1.0f);
+
+        ogre_tools::Axes* axes = new ogre_tools::Axes( scene_manager_ );
         //axes->setScale( Ogre::Vector3( 2.0f, 2.0f, 2.0f ) );
 
         /*ogre_tools::Cone* cone = new ogre_tools::Cone( scene_manager_, NULL );
         cone->setScale( Ogre::Vector3( 0.3f, 2.0f, 0.3f ) );*/
 
-        /*ogre_tools::Arrow* arrow = new ogre_tools::Arrow( scene_manager_ );
-        arrow->SetHeadColor( 1.0f, 0.0f, 0.0f );
-        arrow->SetShaftColor( 0.0f, 0.0f, 1.0f );
-        arrow->setOrientation( Ogre::Quaternion::IDENTITY );*/
+        ogre_tools::Arrow* arrow = new ogre_tools::Arrow( scene_manager_ );
+        arrow->setHeadColor( 1.0f, 0.0f, 0.0f );
+        arrow->setShaftColor( 0.0f, 0.0f, 1.0f );
+        arrow->setOrientation( Ogre::Quaternion::IDENTITY );
         //arrow->setOrientation( Ogre::Quaternion( Ogre::Degree( 45 ), Ogre::Vector3::UNIT_X ) );
         //arrow->setScale( Ogre::Vector3( 1.0f, 1.0f, 3.0f ) );
 
@@ -124,9 +137,6 @@ public:
         }
 
         pointCloud->AddPoints( &points.front(), 1000000 );*/
-
-        /*ogre_tools::SuperEllipsoid* se = new ogre_tools::SuperEllipsoid( scene_manager_ );
-        se->create( ogre_tools::SuperEllipsoid::Cube, 60, Ogre::Vector3( 1.0f, 5.0f, 1.0f ) );*/
     }
     catch ( Ogre::Exception& e )
     {

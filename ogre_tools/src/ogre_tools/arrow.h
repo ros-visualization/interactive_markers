@@ -43,8 +43,7 @@ class Any;
 
 namespace ogre_tools
 {
-class SuperEllipsoid;
-class Cone;
+class Shape;
 
 /**
  * \class Arrow
@@ -123,8 +122,8 @@ public:
 private:
   Ogre::SceneNode* scene_node_;
 
-  SuperEllipsoid* shaft_;   ///< Cylinder used for the shaft of the arrow
-  Cone* head_;              ///< Cone used for the head of the arrow
+  Shape* shaft_;   ///< Cylinder used for the shaft of the arrow
+  Shape* head_;    ///< Cone used for the head of the arrow
 };
 
 } // namespace ogre_tools

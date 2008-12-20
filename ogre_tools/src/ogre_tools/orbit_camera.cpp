@@ -28,7 +28,7 @@
  */
 
 #include "orbit_camera.h"
-#include "super_ellipsoid.h"
+#include "shape.h"
 
 #include <OgreCamera.h>
 #include <OgreSceneManager.h>
@@ -57,8 +57,8 @@ OrbitCamera::OrbitCamera( Ogre::SceneManager* scene_manager )
 , pitch_( PITCH_START )
 , distance_( 10.0f )
 {
-  focal_point_object_ = new SuperEllipsoid( scene_manager );
-  focal_point_object_->create( SuperEllipsoid::Sphere, 10, Ogre::Vector3( 0.1f, 0.02f, 0.1f ) );
+  focal_point_object_ = new Shape( Shape::Sphere, scene_manager );
+  focal_point_object_->setScale( Ogre::Vector3( 0.1f, 0.02f, 0.1f ) );
   focal_point_object_->setColor( 1.0f, 1.0f, 0.0f, 0.8f );
   focal_point_object_->getRootNode()->setVisible( false );
 

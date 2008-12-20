@@ -21,7 +21,7 @@ int main( int argc, char** argv )
       ROS_FATAL("Fatal%d", count);
       ROS_INFO("Newline\nTest\nblah\nblah\nblah\nblah\nblah\n");
 
-      //usleep( 10000 );
+      usleep( 1000000 );
 
       ++count;
     }

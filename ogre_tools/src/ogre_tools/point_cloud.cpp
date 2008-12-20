@@ -95,6 +95,7 @@ PointCloud::~PointCloud()
   }
   billboard_sets_.clear();
 
+  scene_node_->detachObject(this);
   scene_manager_->destroySceneNode( scene_node_->getName() );
 }
 

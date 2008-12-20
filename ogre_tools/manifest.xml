@@ -12,6 +12,7 @@
     <depend package="ogre"/>
     <depend package="rosconsole"/>
     <depend package="boost"/>
+    <depend package="roscpp"/> <!--Only need roscpp for the get_package_path function.  TODO: move that into rostools -->
     <export> 
         <cpp cflags="-I${prefix}/src/" lflags="-Wl,-rpath,${prefix}/lib ${prefix}/lib/_ogre_tools.so"/>
         <python path="${prefix}/lib/"/>

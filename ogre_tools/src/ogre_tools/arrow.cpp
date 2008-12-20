@@ -28,8 +28,7 @@
  */
 
 #include "arrow.h"
-#include "super_ellipsoid.h"
-#include "cone.h"
+#include "shape.h"
 
 #include <OgreSceneManager.h>
 #include <OgreSceneNode.h>
@@ -52,8 +51,9 @@ Arrow::Arrow( Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node, f
 
   scene_node_ = parent_node->createChildSceneNode();
 
-  shaft_ = new SuperEllipsoid( scene_manager_, scene_node_ );
-  head_ = new Cone( scene_manager_, scene_node_, 5, 5 );
+  shaft_ = new Shape( Shape::Cylinder, scene_manager_, scene_node_ );
+  head_ = new Shape( Shape::Cone, scene_manager_, scene_node_ );
+  head_->setOffset(Ogre::Vector3(0.0f, 0.5f, 0.0f));
 
   set( shaft_length, shaft_radius, head_length, head_radius );
 
@@ -70,7 +70,7 @@ Arrow::~Arrow()
 
 void Arrow::set( float shaft_length, float shaft_radius, float head_length, float head_radius )
 {
-  shaft_->create( SuperEllipsoid::Cylinder, 5, Ogre::Vector3( shaft_radius, shaft_length, shaft_radius ) );
+  shaft_->setScale(Ogre::Vector3(shaft_radius, shaft_length, shaft_radius));
   shaft_->setColor( 0.5f, 0.5f, 0.5f, 1.0f );
   shaft_->setPosition( Ogre::Vector3( 0.0f, shaft_length/2.0f, 0.0f ) );
 

@@ -27,98 +27,130 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "axes.h"
 #include "shape.h"
+#include <rosconsole/rosassert.h>
 
 #include <OgreSceneManager.h>
 #include <OgreSceneNode.h>
 #include <OgreVector3.h>
 #include <OgreQuaternion.h>
-
-#include <sstream>
+#include <OgreEntity.h>
+#include <OgreMaterialManager.h>
 
 namespace ogre_tools
 {
 
-Axes::Axes( Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node, float length, float radius )
-    : Object( scene_manager )
+Shape::Shape( Type type, Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node )
+: Object( scene_manager )
 {
+  static uint32_t count = 0;
+  std::stringstream ss;
+  ss << "ogre_tools::Shape" << count++;
+
+  std::string mesh_name;
+  switch (type)
+  {
+  case Cone:
+    mesh_name = "ogre_tools_cone.mesh";
+    break;
+
+  case Cube:
+    mesh_name = "ogre_tools_cube.mesh";
+    break;
+
+  case Cylinder:
+    mesh_name = "ogre_tools_cylinder.mesh";
+    break;
+
+  case Sphere:
+    mesh_name = "ogre_tools_sphere.mesh";
+    break;
+
+  default:
+    ROS_BREAK();
+  }
+
+  entity_ = scene_manager_->createEntity(ss.str(), mesh_name);
+
   if ( !parent_node )
   {
     parent_node = scene_manager_->getRootSceneNode();
   }
 
   scene_node_ = parent_node->createChildSceneNode();
+  offset_node_ = scene_node_->createChildSceneNode();
+  offset_node_->attachObject( entity_ );
 
-  x_axis_ = new Shape( Shape::Cylinder, scene_manager_, scene_node_ );
-  y_axis_ = new Shape( Shape::Cylinder, scene_manager_, scene_node_ );
-  z_axis_ = new Shape( Shape::Cylinder, scene_manager_, scene_node_ );
+  ss << "Material";
+  material_name_ = ss.str();
+  material_ = Ogre::MaterialManager::getSingleton().create( material_name_, ROS_PACKAGE_NAME );
+  material_->setReceiveShadows(false);
+  material_->getTechnique(0)->setLightingEnabled(true);
+  material_->getTechnique(0)->setAmbient( 0.5, 0.5, 0.5 );
 
-  set( length, radius );
+  entity_->setMaterialName(material_name_);
 }
 
-Axes::~Axes()
+Shape::~Shape()
 {
-  delete x_axis_;
-  delete y_axis_;
-  delete z_axis_;
-
   scene_manager_->destroySceneNode( scene_node_->getName() );
+  scene_manager_->destroySceneNode( offset_node_->getName() );
+
+  scene_manager_->destroyEntity( entity_ );
+
+  material_.setNull();
 }
 
-void Axes::set( float length, float radius )
+void Shape::setColor( float r, float g, float b, float a )
 {
-  x_axis_->setScale(Ogre::Vector3( radius, length, radius ));
-  y_axis_->setScale(Ogre::Vector3( radius, length, radius ));
-  z_axis_->setScale(Ogre::Vector3( radius, length, radius ));
+  material_->getTechnique(0)->setAmbient( r*0.5, g*0.5, b*0.5 );
+  material_->getTechnique(0)->setDiffuse( r, g, b, a );
 
-  x_axis_->setPosition( Ogre::Vector3( length/2.0f, 0.0f, 0.0f ) );
-  x_axis_->setOrientation( Ogre::Quaternion( Ogre::Degree( -90 ), Ogre::Vector3::UNIT_Z ) );
-  y_axis_->setPosition( Ogre::Vector3( 0.0f, length/2.0f, 0.0f ) );
-  z_axis_->setPosition( Ogre::Vector3( 0.0, 0.0f, length/2.0f ) );
-  z_axis_->setOrientation( Ogre::Quaternion( Ogre::Degree( 90 ), Ogre::Vector3::UNIT_X ) );
-
-  x_axis_->setColor( 1.0f, 0.0f, 0.0f, 1.0f );
-  y_axis_->setColor( 0.0f, 1.0f, 0.0f, 1.0f );
-  z_axis_->setColor( 0.0f, 0.0f, 1.0f, 1.0f );
+  if ( a < 0.9998 )
+  {
+    material_->setSceneBlending( Ogre::SBT_TRANSPARENT_ALPHA );
+    material_->setDepthWriteEnabled( false );
+  }
+  else
+  {
+    material_->setSceneBlending( Ogre::SBT_REPLACE );
+    material_->setDepthWriteEnabled( true );
+  }
 }
 
-void Axes::setPosition( const Ogre::Vector3& position )
+void Shape::setOffset( const Ogre::Vector3& offset )
+{
+  offset_node_->setPosition( offset );
+}
+
+void Shape::setPosition( const Ogre::Vector3& position )
 {
   scene_node_->setPosition( position );
 }
 
-void Axes::setOrientation( const Ogre::Quaternion& orientation )
+void Shape::setOrientation( const Ogre::Quaternion& orientation )
 {
   scene_node_->setOrientation( orientation );
 }
 
-void Axes::setScale( const Ogre::Vector3& scale )
+void Shape::setScale( const Ogre::Vector3& scale )
 {
   scene_node_->setScale( scale );
 }
 
-void Axes::setColor( float r, float g, float b, float a )
-{
-  // for now, do nothing
-  /// \todo should anything be done here?
-}
-
-const Ogre::Vector3& Axes::getPosition()
+const Ogre::Vector3& Shape::getPosition()
 {
   return scene_node_->getPosition();
 }
 
-const Ogre::Quaternion& Axes::getOrientation()
+const Ogre::Quaternion& Shape::getOrientation()
 {
   return scene_node_->getOrientation();
 }
 
-void Axes::setUserData( const Ogre::Any& data )
+void Shape::setUserData( const Ogre::Any& data )
 {
-  x_axis_->setUserData( data );
-  y_axis_->setUserData( data );
-  z_axis_->setUserData( data );
+  entity_->setUserAny( data );
 }
 
 } // namespace ogre_tools

@@ -27,8 +27,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OGRE_TOOLS_SUPER_ELLIPSOID_H
-#define OGRE_TOOLS_SUPER_ELLIPSOID_H
+#ifndef OGRE_TOOLS_SHAPE_H
+#define OGRE_TOOLS_SHAPE_H
 
 #include "object.h"
 
@@ -40,23 +40,21 @@ namespace Ogre
 class SceneManager;
 class SceneNode;
 class Any;
+class Entity;
 }
 
 namespace ogre_tools
 {
 
 /**
- * \brief Adapted from http://www.ogre3d.org/wiki/index.php/SuperEllipsoid
- *
- * For a good explanation, see http://en.wikipedia.org/wiki/Superellipse#Superellipsoid
  */
-class SuperEllipsoid : public Object
+class Shape : public Object
 {
 public:
-  enum Shape
+  enum Type
   {
+    Cone,
     Cube,
-    RoundedCube,
     Cylinder,
     Sphere,
   };
@@ -67,24 +65,8 @@ public:
    * @param scene_manager The scene manager this object is associated with
    * @param parent_node A scene node to use as the parent of this object.  If NULL, uses the root scene node.
    */
-  SuperEllipsoid(Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node = NULL);
-  virtual ~SuperEllipsoid();
-
-  /**
-   * \brief Create a shape
-   * @param samples Number of samples to use
-   * @param n1
-   * @param n2
-   * @param scale The scale of the object
-   */
-  void create(int samples, float n1, float n2, const Ogre::Vector3& scale = Ogre::Vector3( 1.0f, 1.0f, 1.0f ));
-  /**
-   * \brief Create an object from one of the pre-defined shapes
-   * @param shape The shape to use
-   * @param samples The number of samples to use
-   * @param scale The scale of the object
-   */
-  void create(Shape shape, int samples = 60, const Ogre::Vector3& scale = Ogre::Vector3( 1.0f, 1.0f, 1.0f ));
+  Shape(Type shape_type, Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node = NULL);
+  virtual ~Shape();
 
   /**
    * \brief Set the offset for this shape
@@ -115,14 +97,9 @@ public:
   void setUserData( const Ogre::Any& data );
 
 private:
-  Ogre::Vector3 Sample(float phi, float beta, float n1, float n2,
-                                     float scaleX = 1.0, float scaleY = 1.0, float scaleZ = 1.0);
-  Ogre::Vector3 CalculateNormal(float phi, float beta, float n1, float n2,
-                                float scaleX, float scaleY, float scaleZ);
-
   Ogre::SceneNode* scene_node_;
   Ogre::SceneNode* offset_node_;
-  Ogre::ManualObject* manual_object_;
+  Ogre::Entity* entity_;
   Ogre::MaterialPtr material_;
   std::string material_name_;
 };
@@ -130,3 +107,4 @@ private:
 } // namespace ogre_tools
 
 #endif
+

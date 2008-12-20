@@ -207,6 +207,18 @@ int main( int argc, char** argv )
 
         float u, v;
 
+        Ogre::Vector3 normal(nX, nY, nZ);
+        if (normal.squaredLength() < 0.001)
+        {
+          Ogre::Vector3 side1 = Ogre::Vector3(v1X, v1Y, v1Z) - Ogre::Vector3(v2X, v2Y, v2Z);
+          Ogre::Vector3 side2 = Ogre::Vector3(v2X, v2Y, v2Z) - Ogre::Vector3(v3X, v3Y, v3Z);
+          normal = side1.crossProduct(side2);
+          normal.normalise();
+          nX = normal.x;
+          nY = normal.y;
+          nZ = normal.z;
+        }
+
         object->position( v1X, v1Y, v1Z );
         object->normal( nX, nY, nZ );
         calculateUV( v1X, v1Y, v1Z, u, v );

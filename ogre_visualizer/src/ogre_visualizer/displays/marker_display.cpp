@@ -32,7 +32,7 @@
 #include "helpers/robot.h"
 
 #include <ogre_tools/arrow.h>
-#include <ogre_tools/super_ellipsoid.h>
+#include <ogre_tools/shape.h>
 #include <ogre_tools/billboard_line.h>
 
 #include <ros/node.h>
@@ -180,8 +180,7 @@ void MarkerDisplay::processAdd( const MarkerPtr& message )
     {
     case std_msgs::VisualizationMarker::CUBE:
       {
-        ogre_tools::SuperEllipsoid* cube = new ogre_tools::SuperEllipsoid( scene_manager_, scene_node_ );
-        cube->create( ogre_tools::SuperEllipsoid::Cube, 10, Ogre::Vector3( 1.0f, 1.0f, 1.0f ) );
+        ogre_tools::Shape* cube = new ogre_tools::Shape( ogre_tools::Shape::Cube, scene_manager_, scene_node_ );
 
         object = cube;
       }
@@ -189,17 +188,15 @@ void MarkerDisplay::processAdd( const MarkerPtr& message )
 
     case std_msgs::VisualizationMarker::CYLINDER:
       {
-        ogre_tools::SuperEllipsoid* cube = new ogre_tools::SuperEllipsoid( scene_manager_, scene_node_ );
-        cube->create( ogre_tools::SuperEllipsoid::Cylinder, 10, Ogre::Vector3( 1.0f, 1.0f, 1.0f ) );
+        ogre_tools::Shape* cylinder = new ogre_tools::Shape( ogre_tools::Shape::Cylinder, scene_manager_, scene_node_ );
 
-        object = cube;
+        object = cylinder;
       }
       break;
 
     case std_msgs::VisualizationMarker::SPHERE:
       {
-        ogre_tools::SuperEllipsoid* sphere = new ogre_tools::SuperEllipsoid( scene_manager_, scene_node_ );
-        sphere->create( ogre_tools::SuperEllipsoid::Sphere, 20, Ogre::Vector3( 1.0f, 1.0f, 1.0f ) );
+        ogre_tools::Shape* sphere = new ogre_tools::Shape( ogre_tools::Shape::Sphere, scene_manager_, scene_node_ );
 
         object = sphere;
       }

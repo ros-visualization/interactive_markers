@@ -47,7 +47,7 @@ class Any;
 
 namespace ogre_tools
 {
-class SuperEllipsoid;
+class Shape;
 
 /**
  * \class Axes
@@ -95,9 +95,9 @@ public:
 private:
   Ogre::SceneNode* scene_node_;
 
-  SuperEllipsoid* x_axis_;      ///< Cylinder for the X-axis
-  SuperEllipsoid* y_axis_;      ///< Cylinder for the Y-axis
-  SuperEllipsoid* z_axis_;      ///< Cylinder for the Z-axis
+  Shape* x_axis_;      ///< Cylinder for the X-axis
+  Shape* y_axis_;      ///< Cylinder for the Y-axis
+  Shape* z_axis_;      ///< Cylinder for the Z-axis
 };
 
 } // namespace ogre_tools

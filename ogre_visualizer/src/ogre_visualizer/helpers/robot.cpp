@@ -33,7 +33,7 @@
 #include "properties/property_manager.h"
 
 #include "ogre_tools/object.h"
-#include "ogre_tools/super_ellipsoid.h"
+#include "ogre_tools/shape.h"
 #include "ogre_tools/axes.h"
 
 #include <tf/transform_listener.h>
@@ -209,12 +209,12 @@ void Robot::createCollisionForLink( LinkInfo* info, robot_desc::URDF::Link* link
     {
       robot_desc::URDF::Link::Geometry::Box* box = static_cast<robot_desc::URDF::Link::Geometry::Box*>( geometry->shape );
 
-      ogre_tools::SuperEllipsoid* obj = new ogre_tools::SuperEllipsoid( scene_manager_, info->collision_node_ );
+      ogre_tools::Shape* obj = new ogre_tools::Shape( ogre_tools::Shape::Cube, scene_manager_, info->collision_node_ );
 
       Ogre::Vector3 scale( box->size[0], box->size[1], box->size[2] );
       robotToOgre( scale );
 
-      obj->create( ogre_tools::SuperEllipsoid::Cube, 10, scale );
+      obj->setScale( scale );
       info->collision_object_ = obj;
     }
     break;
@@ -223,12 +223,12 @@ void Robot::createCollisionForLink( LinkInfo* info, robot_desc::URDF::Link* link
     {
       robot_desc::URDF::Link::Geometry::Sphere* sphere = static_cast<robot_desc::URDF::Link::Geometry::Sphere*>( geometry->shape );
 
-      ogre_tools::SuperEllipsoid* obj = new ogre_tools::SuperEllipsoid( scene_manager_, info->collision_node_ );
+      ogre_tools::Shape* obj = new ogre_tools::Shape( ogre_tools::Shape::Sphere, scene_manager_, info->collision_node_ );
 
       Ogre::Vector3 scale( sphere->radius, sphere->radius, sphere->radius );
       // No need to convert robot->ogre because a sphere is uniform
 
-      obj->create( ogre_tools::SuperEllipsoid::Sphere, 10, scale );
+      obj->setScale( scale );
       info->collision_object_ = obj;
     }
     break;
@@ -237,17 +237,17 @@ void Robot::createCollisionForLink( LinkInfo* info, robot_desc::URDF::Link* link
     {
       robot_desc::URDF::Link::Geometry::Cylinder* cylinder = static_cast<robot_desc::URDF::Link::Geometry::Cylinder*>( geometry->shape );
 
-      ogre_tools::SuperEllipsoid* obj = new ogre_tools::SuperEllipsoid( scene_manager_, info->collision_node_ );
+      ogre_tools::Shape* obj = new ogre_tools::Shape( ogre_tools::Shape::Cylinder, scene_manager_, info->collision_node_ );
       Ogre::Vector3 scale( cylinder->radius*2, cylinder->length, cylinder->radius*2 );
 
-      obj->create( ogre_tools::SuperEllipsoid::Cylinder, 10, scale );
+      obj->setScale( scale );
 
       info->collision_object_ = obj;
     }
     break;
 
   default:
-    printf( "Unsupported collision shape type: %d\n", geometry->type );
+    ROS_WARN( "Unsupported collision shape type: %d\n", geometry->type );
   }
 
   if ( info->collision_object_ )
