@@ -37,8 +37,8 @@ import wx
 import wx.aui
 from wx import xrc
 import reset
-import IBPSBatteryInterface
-from IBPSBatteryInterface.ibps_panel import *
+import ocean_battery_driver
+from ocean_battery_driver.ibps_panel import *
 import pr2_power_board
 from pr2_power_board.pr2_power_board_panel import *
 

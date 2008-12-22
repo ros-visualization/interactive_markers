@@ -16,7 +16,7 @@
     <depend package="rospy"/>
     <depend package="rostools"/>
     <depend package="std_srvs"/>
-    <depend package="IBPSBatteryInterface"/>
+    <depend package="ocean_battery_driver"/>
     <depend package="pr2_power_board"/>
     
     <sysdepend os="ubuntu" version="7.04-feisty" package="libwxgtk2.8-dev"/>
