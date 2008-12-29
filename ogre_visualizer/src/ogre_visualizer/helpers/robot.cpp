@@ -281,7 +281,7 @@ void Robot::createVisualForLink( LinkInfo* info, robot_desc::URDF::Link* link )
     return;
   }
 
-  std::string model_name = mesh->filename + "_hi.mesh";
+  std::string model_name = mesh->filename + ".mesh";
 
   static int count = 0;
   std::stringstream ss;
