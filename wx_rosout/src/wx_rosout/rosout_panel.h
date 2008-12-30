@@ -49,8 +49,8 @@
 #include <vector>
 #include <map>
 #include <set>
-#include <rosthread/mutex.h>
 
+#include "boost/thread/mutex.hpp"
 #include <boost/regex.hpp>
 
 namespace ros
@@ -206,7 +206,7 @@ protected:
 
   typedef std::vector<rostools::Log> V_Log;
   V_Log message_queue_;                                     ///< Queue of messages we've received since the last time processMessages() was called
-  ros::thread::mutex queue_mutex_;                          ///< Mutex for locking the message queue
+  boost::mutex queue_mutex_;                                ///< Mutex for locking the message queue
 
   wxTimer* process_timer_;                                  ///< Timer used to periodically process messages
 

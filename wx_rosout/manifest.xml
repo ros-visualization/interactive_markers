@@ -10,7 +10,6 @@
     <url>http://pr.willowgarage.com/wiki/ROS</url>
     <depend package="roscpp"/>
     <depend package="wx_topic_display"/>
-    <depend package="rosthread"/>
     <depend package="wxswig"/>
     <depend package="wxPython_swig_interface"/>
     <depend package="boost"/>
