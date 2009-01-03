@@ -32,7 +32,7 @@
         <cpp cflags="-I${prefix}/src/" lflags="-Wl,-rpath,${prefix}/lib ${prefix}/lib/_ogre_visualizer.so"/>
         <python path="${prefix}/lib/"/>
     </export>
-    
+
     <sysdepend os="ubuntu" version="7.04-feisty" package="libwxgtk2.8-dev"/>
     <sysdepend os="ubuntu" version="8.04-hardy" package="libwxgtk2.8-dev"/>
     <!-- Note that the presence of python-wxgtk2.6 will cause a 

@@ -60,36 +60,37 @@ add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE}
                             src/ogre_visualizer/displays/tf_display.h
                             src/ogre_visualizer/helpers/color.h)
 
-rospack_add_library(${PROJECT_NAME}  src/ogre_visualizer/properties/property.cpp
-                                     src/ogre_visualizer/properties/property_manager.cpp
-                                     src/ogre_visualizer/tools/tool.cpp
-                                     src/ogre_visualizer/tools/move_tool.cpp
-                                     src/ogre_visualizer/tools/pose_tool.cpp
-                                     src/ogre_visualizer/tools/selection_tool.cpp
-                                     src/ogre_visualizer/visualization_panel.cpp
-                                     src/ogre_visualizer/visualization_manager.cpp
-  				   					               src/ogre_visualizer/display.cpp
-                                     src/ogre_visualizer/common.cpp
-                                     src/ogre_visualizer/factory.cpp
-                                     src/ogre_visualizer/ros_topic_property.cpp
-                                     src/ogre_visualizer/new_display_dialog.cpp
-                                     src/ogre_visualizer/helpers/robot.cpp
-                                     src/ogre_visualizer/displays/marker_display.cpp
-                                     src/ogre_visualizer/displays/axes_display.cpp
-  				   												 src/ogre_visualizer/displays/grid_display.cpp
-  				   												 src/ogre_visualizer/displays/point_cloud_base.cpp
-  				   												 src/ogre_visualizer/displays/point_cloud_display.cpp
-  				   												 src/ogre_visualizer/displays/laser_scan_display.cpp
-  				   												 src/ogre_visualizer/displays/robot_model_display.cpp
-  				   												 src/ogre_visualizer/displays/planning_display.cpp
-  				   												 src/ogre_visualizer/displays/octree_display.cpp
-  				   												 src/ogre_visualizer/displays/robot_base2d_pose_display.cpp
-  				   												 src/ogre_visualizer/displays/particle_cloud_2d_display.cpp
-  				   												 src/ogre_visualizer/displays/poly_line_2d_display.cpp
-  				   												 src/ogre_visualizer/displays/map_display.cpp
-  				   												 src/ogre_visualizer/displays/tf_display.cpp
-   				   												 src/ogre_visualizer/generated/visualization_panel_generated.cpp
- 				   												   ${SWIG_OUTPUT_CPP_FILE})
+rospack_add_library(${PROJECT_NAME} src/ogre_visualizer/properties/property.cpp
+                                    src/ogre_visualizer/properties/property_manager.cpp
+                                    src/ogre_visualizer/tools/tool.cpp
+                                    src/ogre_visualizer/tools/move_tool.cpp
+                                    src/ogre_visualizer/tools/pose_tool.cpp
+                                    src/ogre_visualizer/tools/selection_tool.cpp
+                                    src/ogre_visualizer/visualization_panel.cpp
+                                    src/ogre_visualizer/visualization_manager.cpp
+                                    src/ogre_visualizer/display.cpp
+                                    src/ogre_visualizer/common.cpp
+                                    src/ogre_visualizer/factory.cpp
+                                    src/ogre_visualizer/ros_topic_property.cpp
+                                    src/ogre_visualizer/new_display_dialog.cpp
+                                    src/ogre_visualizer/helpers/robot.cpp
+                                    src/ogre_visualizer/displays/marker_display.cpp
+                                    src/ogre_visualizer/displays/axes_display.cpp
+                                    src/ogre_visualizer/displays/grid_display.cpp
+                                    src/ogre_visualizer/displays/point_cloud_base.cpp
+                                    src/ogre_visualizer/displays/point_cloud_display.cpp
+                                    src/ogre_visualizer/displays/laser_scan_display.cpp
+                                    src/ogre_visualizer/displays/robot_model_display.cpp
+                                    src/ogre_visualizer/displays/planning_display.cpp
+                                    src/ogre_visualizer/displays/octree_display.cpp
+                                    src/ogre_visualizer/displays/robot_base2d_pose_display.cpp
+                                    src/ogre_visualizer/displays/particle_cloud_2d_display.cpp
+                                    src/ogre_visualizer/displays/poly_line_2d_display.cpp
+                                    src/ogre_visualizer/displays/polygonal_map_display.cpp
+                                    src/ogre_visualizer/displays/map_display.cpp
+                                    src/ogre_visualizer/displays/tf_display.cpp
+                                    src/ogre_visualizer/generated/visualization_panel_generated.cpp
+                                    ${SWIG_OUTPUT_CPP_FILE})
 target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} boost_signals ${OGRE_LIBRARIES})
 # swig python needs a shared library named _<modulename>.[so|dll|...]
 # this renames the output file to conform to that by prepending an underscore and removing the "lib" prefix

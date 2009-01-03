@@ -41,6 +41,7 @@
 #include "displays/robot_base2d_pose_display.h"
 #include "displays/particle_cloud_2d_display.h"
 #include "displays/poly_line_2d_display.h"
+#include "displays/polygonal_map_display.h"
 #include "displays/map_display.h"
 #include "displays/tf_display.h"
 
@@ -60,6 +61,7 @@ void registerFactories(VisualizationManager* manager)
   manager->registerFactory( RobotBase2DPoseDisplay::getTypeStatic(), RobotBase2DPoseDisplay::getDescription(), new DisplayFactoryImpl<RobotBase2DPoseDisplay>() );
   manager->registerFactory( ParticleCloud2DDisplay::getTypeStatic(), ParticleCloud2DDisplay::getDescription(), new DisplayFactoryImpl<ParticleCloud2DDisplay>() );
   manager->registerFactory( PolyLine2DDisplay::getTypeStatic(), PolyLine2DDisplay::getDescription(), new DisplayFactoryImpl<PolyLine2DDisplay>() );
+  manager->registerFactory( PolygonalMapDisplay::getTypeStatic(), PolygonalMapDisplay::getDescription(), new DisplayFactoryImpl<PolygonalMapDisplay>() );
   manager->registerFactory( MapDisplay::getTypeStatic(), MapDisplay::getDescription(), new DisplayFactoryImpl<MapDisplay>() );
   manager->registerFactory( TFDisplay::getTypeStatic(), TFDisplay::getDescription(), new DisplayFactoryImpl<TFDisplay>() );
 }
