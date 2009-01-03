@@ -55,7 +55,7 @@ namespace ogre_vis
   PolygonalMapDisplay::PolygonalMapDisplay (const std::string & name, VisualizationManager * manager) 
     : Display (name, manager)
     , color_ (0.1f, 1.0f, 0.0f)
-    , render_operation_ (polygon_render_ops::Lines)
+    , render_operation_ (polygon_render_ops::PLines)
     , override_color_ (false)
     , new_message_ (false)
     , new_metadata_ (false)
@@ -286,7 +286,7 @@ namespace ogre_vis
       num_total_points += message_.polygons[i].points.size ();
 
     // If we render points, we don't care about the order
-    if (render_operation_ == polygon_render_ops::Points)
+    if (render_operation_ == polygon_render_ops::PPoints)
     {
       typedef std::vector < ogre_tools::PointCloud::Point > V_Point;
       V_Point points;
@@ -375,8 +375,8 @@ namespace ogre_vis
                                                                                  boost::bind (&PolygonalMapDisplay::getRenderOperation, this),
                                                                                  boost::bind (&PolygonalMapDisplay::setRenderOperation, this, _1),
                                                                                  parent_category_, this);
-    render_operation_property_->addOption ("Lines", polygon_render_ops::Lines);
-    render_operation_property_->addOption ("Points", polygon_render_ops::Points);
+    render_operation_property_->addOption ("Lines", polygon_render_ops::PLines);
+    render_operation_property_->addOption ("Points", polygon_render_ops::PPoints);
 
     z_position_property_ = property_manager_->createProperty<FloatProperty>("Z Position", property_prefix_,
                                                                             boost::bind (&PolygonalMapDisplay::getZPosition, this),

@@ -63,9 +63,9 @@ namespace ogre_vis
   {
     enum PolygonRenderOp
     {
-      Lines,
-      Points,
-      Count,
+      PLines,
+      PPoints,
+      PCount,
     };
   }
   typedef polygon_render_ops::PolygonRenderOp PolygonRenderOp;
