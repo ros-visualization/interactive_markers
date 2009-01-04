@@ -58,13 +58,11 @@ namespace ogre_vis
     , render_operation_ (polygon_render_ops::PLines)
     , override_color_ (false)
     , new_message_ (false)
-    , new_metadata_ (false)
     , color_property_ (NULL)
     , topic_property_ (NULL)
     , override_color_property_ (NULL)
     , render_operation_property_ (NULL)
     , point_size_property_ (NULL)
-    , z_position_property_ (NULL)
     , alpha_property_ (NULL)
   {
     scene_node_ = scene_manager_->getRootSceneNode ()->createChildSceneNode ();
@@ -78,11 +76,8 @@ namespace ogre_vis
 
     cloud_ = new ogre_tools::PointCloud (scene_manager_, scene_node_);
     cloud_->setBillboardType (Ogre::BBT_PERPENDICULAR_COMMON);
-    cloud_->setCommonDirection (Ogre::Vector3::UNIT_Y);
-    cloud_->setCommonUpVector (Ogre::Vector3::NEGATIVE_UNIT_Z);
     setAlpha (1.0f);
     setPointSize (0.05f);
-    setZPosition (0.0f);
   }
 
   PolygonalMapDisplay::~PolygonalMapDisplay ()
@@ -164,18 +159,6 @@ namespace ogre_vis
   }
 
   void
-    PolygonalMapDisplay::setZPosition (float z)
-  {
-    z_position_ = z;
-
-    if (z_position_property_)
-      z_position_property_->changed ();
-
-    scene_node_->setPosition (0.0f, z, 0.0f);
-    causeRender ();
-  }
-
-  void
     PolygonalMapDisplay::setAlpha (float alpha)
   {
     alpha_ = alpha;
@@ -196,8 +179,6 @@ namespace ogre_vis
 
     if (!topic_.empty ())
       ros_node_->subscribe (topic_, message_, &PolygonalMapDisplay::incomingMessage, this, 1);
-
-    ros_node_->subscribe ("map_metadata", metadata_message_, &PolygonalMapDisplay::incomingMetadataMessage, this, 1);
   }
 
   void
@@ -205,8 +186,6 @@ namespace ogre_vis
   {
     if (!topic_.empty ())
       ros_node_->unsubscribe (topic_, &PolygonalMapDisplay::incomingMessage, this);
-
-    ros_node_->unsubscribe ("map_metadata", &PolygonalMapDisplay::incomingMetadataMessage, this);
   }
 
   void
@@ -239,9 +218,6 @@ namespace ogre_vis
       new_message_ = false;
       causeRender ();
     }
-
-    if (new_metadata_)
-      setPointSize (metadata_message_.resolution);
   }
 
   void
@@ -249,7 +225,7 @@ namespace ogre_vis
   {
     message_.lock ();
     clear ();
-    tf::Stamped < tf::Pose > pose (btTransform (btQuaternion (0.0f, 0.0f, 0.0f), btVector3 (0.0f, 0.0f, z_position_)), ros::Time (), "map");
+    tf::Stamped < tf::Pose > pose (btTransform (btQuaternion (0.0f, 0.0f, 0.0f), btVector3 (0.0f, 0.0f, 0.0f)), ros::Time (), "map");
 
     if (tf_->canTransform (fixed_frame_, "map", ros::Time ()))
     {
@@ -266,15 +242,17 @@ namespace ogre_vis
     Ogre::Vector3 position = Ogre::Vector3 (pose.getOrigin ().x (), pose.getOrigin ().y (), pose.getOrigin ().z ());
     robotToOgre (position);
 
-    btQuaternion quat;
+    btScalar yaw, pitch, roll;
+    pose.getBasis ().getEulerZYX (yaw, pitch, roll);
+
+    Ogre::Matrix3 orientation (ogreMatrixFromRobotEulers( yaw, pitch, roll));
+
+    /*btQuaternion quat;
     pose.getBasis ().getRotation (quat);
     Ogre::Quaternion orientation (Ogre::Quaternion::IDENTITY);
     ogreToRobot (orientation);
     orientation = Ogre::Quaternion (quat.w (), quat.x (), quat.y (), quat.z ()) * orientation;
-    robotToOgre (orientation);
-
-    scene_node_->setPosition (position);
-    scene_node_->setOrientation (orientation);
+    robotToOgre (orientation);*/
 
     manual_object_->clear ();
 
@@ -338,6 +316,9 @@ namespace ogre_vis
       }
     }
 
+    scene_node_->setPosition (position);
+    scene_node_->setOrientation (orientation);
+
     message_.unlock ();
   }
 
@@ -346,13 +327,6 @@ namespace ogre_vis
   {
     new_message_ = true;
   }
-
-  void
-    PolygonalMapDisplay::incomingMetadataMessage ()
-  {
-    new_metadata_ = true;
-  }
-
 
   void
     PolygonalMapDisplay::reset ()
@@ -378,10 +352,6 @@ namespace ogre_vis
     render_operation_property_->addOption ("Lines", polygon_render_ops::PLines);
     render_operation_property_->addOption ("Points", polygon_render_ops::PPoints);
 
-    z_position_property_ = property_manager_->createProperty<FloatProperty>("Z Position", property_prefix_,
-                                                                            boost::bind (&PolygonalMapDisplay::getZPosition, this),
-                                                                            boost::bind (&PolygonalMapDisplay::setZPosition, this, _1),
-                                                                            parent_category_, this);
     alpha_property_ = property_manager_->createProperty<FloatProperty>("Alpha", property_prefix_,
                                                                        boost::bind (&PolygonalMapDisplay::getAlpha, this),
                                                                        boost::bind (&PolygonalMapDisplay::setAlpha, this, _1),
