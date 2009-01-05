@@ -63,6 +63,7 @@ namespace ogre_vis
     , override_color_property_ (NULL)
     , render_operation_property_ (NULL)
     , point_size_property_ (NULL)
+    , z_position_property_ (NULL)
     , alpha_property_ (NULL)
   {
     scene_node_ = scene_manager_->getRootSceneNode ()->createChildSceneNode ();
@@ -78,6 +79,7 @@ namespace ogre_vis
     cloud_->setBillboardType (Ogre::BBT_PERPENDICULAR_COMMON);
     setAlpha (1.0f);
     setPointSize (0.05f);
+    setZPosition (0.0f);
   }
 
   PolygonalMapDisplay::~PolygonalMapDisplay ()
@@ -159,6 +161,18 @@ namespace ogre_vis
   }
 
   void
+    PolygonalMapDisplay::setZPosition (float z)
+  {
+    z_position_ = z;
+
+    if (z_position_property_)
+      z_position_property_->changed ();
+
+    scene_node_->setPosition (0.0f, z, 0.0f);
+    causeRender ();
+  }
+
+  void
     PolygonalMapDisplay::setAlpha (float alpha)
   {
     alpha_ = alpha;
@@ -225,7 +239,7 @@ namespace ogre_vis
   {
     message_.lock ();
     clear ();
-    tf::Stamped < tf::Pose > pose (btTransform (btQuaternion (0.0f, 0.0f, 0.0f), btVector3 (0.0f, 0.0f, 0.0f)), ros::Time (), "map");
+    tf::Stamped < tf::Pose > pose (btTransform (btQuaternion (0.0f, 0.0f, 0.0f), btVector3 (0.0f, 0.0f, z_position_)), ros::Time (), "map");
 
     if (tf_->canTransform (fixed_frame_, "map", ros::Time ()))
     {
@@ -352,6 +366,10 @@ namespace ogre_vis
     render_operation_property_->addOption ("Lines", polygon_render_ops::PLines);
     render_operation_property_->addOption ("Points", polygon_render_ops::PPoints);
 
+    z_position_property_ = property_manager_->createProperty<FloatProperty>("Z Position", property_prefix_, 
+                                                                            boost::bind (&PolygonalMapDisplay::getZPosition, this),
+                                                                            boost::bind (&PolygonalMapDisplay::setZPosition, this, _1),
+                                                                            parent_category_, this);
     alpha_property_ = property_manager_->createProperty<FloatProperty>("Alpha", property_prefix_,
                                                                        boost::bind (&PolygonalMapDisplay::getAlpha, this),
                                                                        boost::bind (&PolygonalMapDisplay::setAlpha, this, _1),

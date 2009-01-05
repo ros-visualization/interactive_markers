@@ -95,6 +95,9 @@ namespace ogre_vis
       void setPointSize (float size);
       float getPointSize () { return (point_size_); }
 
+      void setZPosition (float z);
+      float getZPosition () { return (z_position_); }
+      
       void setAlpha (float alpha);
       float getAlpha () { return (alpha_); }
 
@@ -126,6 +129,7 @@ namespace ogre_vis
       int render_operation_;
       bool override_color_;
       float point_size_;
+      float z_position_;
       float alpha_;
 
       Ogre::SceneNode* scene_node_;
@@ -140,6 +144,7 @@ namespace ogre_vis
       BoolProperty *override_color_property_;
       EnumProperty *render_operation_property_;
       FloatProperty *point_size_property_;
+      FloatProperty* z_position_property_;
       FloatProperty *alpha_property_;
   };
 
