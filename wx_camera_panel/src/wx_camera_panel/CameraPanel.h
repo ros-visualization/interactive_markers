@@ -34,12 +34,14 @@
 #include "CameraPanelsGenerated.h"
 
 // ROS includes
-#include <rosthread/mutex.h>
 #include <std_msgs/Image.h>
 #include <axis_cam/PTZActuatorState.h>
 #include <axis_cam/PTZActuatorCmd.h>
 
 #include "image_utils/image_codec.h"
+
+#include "boost/thread/mutex.hpp"
+
 
 // wx includes
 #include <wx/bitmap.h>
@@ -216,7 +218,7 @@ private:
   std_msgs::Image   image_message_;
   uint8_t*      image_data_;
   wxImage*      image_;
-  ros::thread::mutex  image_mutex_;
+  boost::mutex  image_mutex_;
   ImageCodec<std_msgs::Image> image_codec_;
   wxBitmap      bitmap_;
   bool        recreate_bitmap_;

@@ -10,7 +10,7 @@
     <url>http://pr.willowgarage.com/wiki/ROS</url>
     <depend package="image_utils"/>
     <depend package="roscpp"/>
-    <depend package="rosthread"/>
+    <depend package="boost"/>
     <depend package="std_msgs"/>
     <depend package="axis_cam"/>
     <depend package="wx_topic_display"/>
