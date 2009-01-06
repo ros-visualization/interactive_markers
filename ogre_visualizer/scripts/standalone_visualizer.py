@@ -1,15 +1,27 @@
 #!/usr/bin/python
 
+import os
+import sys
+
+WXVER = '2.8'
+import wxversion
+if wxversion.checkInstalled(WXVER):
+  wxversion.select(WXVER)
+else:
+  print >> sys.stderr, "This application requires wxPython version %s"%(WXVER)
+  sys.exit(1)
+
+import wx
+
 import rostools
 import rostools.packspec
 rostools.update_path('ogre_visualizer')
 
-import os
 import shutil
 import glob
-import wx
 import ogre_visualizer
 import ogre_tools
+
 
 class VisualizerFrame(wx.Frame):
     _CONFIG_WINDOW_X="/Window/X"
