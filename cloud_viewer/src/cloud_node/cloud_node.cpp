@@ -39,7 +39,7 @@
 #include <SDL/SDL.h>
 #include "math.h"
 #include "sdlgl/sdlgl.h"
-#include "rosthread/mutex.h"
+#include "boost/thread/mutex.hpp"
 #include <fstream>
 #include <sstream>
 #include <sys/stat.h>
@@ -75,7 +75,7 @@ public:
 
   bool made_dir;
 
-  ros::thread::mutex cloud_mutex;
+  boost::mutex cloud_mutex;
 
   Cloud_Node() : ros::node("cloud_viewer"), level(20), spread(400), buf_read_ind(0), buf_use_ind(1), cloud_cnt(0), made_dir(false)
   {
