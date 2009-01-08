@@ -127,7 +127,7 @@ void PointCloudDisplay::createProperties()
 
 const char* PointCloudDisplay::getDescription()
 {
-  return "Displays a point cloud from a std_msgs::PointCloud message.  Each message received clears the previous points.  More efficient than LaserScanDisplay.";
+  return "Displays a point cloud from a std_msgs::PointCloud message, with the option to accumulate over time.";
 }
 
 } // namespace ogre_vis

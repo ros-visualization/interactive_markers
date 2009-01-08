@@ -140,7 +140,7 @@ void LaserScanDisplay::createProperties()
 
 const char* LaserScanDisplay::getDescription()
 {
-  return "Displays the data from either a std_msgs::PointCloud or std_msgs::LaserScan message, accumulated over a period of time.";
+  return "Displays the data from a std_msgs::LaserScan message, with the option to accumulate over a period of time.";
 }
 
 } // namespace ogre_vis
