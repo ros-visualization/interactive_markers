@@ -340,6 +340,8 @@ void PointCloudBase::processMessage(const boost::shared_ptr<std_msgs::PointCloud
 
   if (point_decay_time_ == 0.0f) // reuse old cloud
   {
+    boost::mutex::scoped_lock lock(clouds_mutex_);
+
     if (clouds_.size() == 1)
     {
       info = clouds_.front();
