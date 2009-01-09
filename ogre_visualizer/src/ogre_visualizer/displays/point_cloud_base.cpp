@@ -411,6 +411,9 @@ void PointCloudBase::transformThreadFunc()
       }
 
       clouds_.push_back(info);
+      // Clear the info shared pointer while we still have the clouds mutex locked
+      // So that we will never delete it from this thread
+      info = CloudInfoPtr();
       causeRender();
     }
   }
