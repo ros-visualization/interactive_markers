@@ -36,8 +36,13 @@
 #include "display.h"
 #include "helpers/color.h"
 
+#include <rosthread/mutex.h>
+
+#include <boost/shared_ptr.hpp>
+
 #include <std_msgs/Polygon3D.h>
 #include <std_msgs/PolygonalMap.h>
+
 
 namespace ogre_tools
 {
@@ -48,6 +53,11 @@ namespace Ogre
 {
   class SceneNode;
   class ManualObject;
+}
+
+namespace tf
+{
+template<class Message> class MessageNotifier;
 }
 
 namespace ogre_vis
@@ -102,7 +112,7 @@ namespace ogre_vis
       float getAlpha () { return (alpha_); }
 
       // Overrides from Display
-      virtual void targetFrameChanged () { }
+      virtual void targetFrameChanged ();
       virtual void fixedFrameChanged ();
       virtual void createProperties ();
       virtual void update (float dt);
@@ -117,7 +127,8 @@ namespace ogre_vis
       void subscribe ();
       void unsubscribe ();
       void clear ();
-      void incomingMessage ();
+      typedef boost::shared_ptr<std_msgs::PolygonalMap> PolygonalMapPtr;
+      void incomingMessage (const PolygonalMapPtr& message);
       void processMessage ();
 
       // overrides from Display
@@ -135,9 +146,11 @@ namespace ogre_vis
       Ogre::SceneNode* scene_node_;
       Ogre::ManualObject* manual_object_;
       ogre_tools::PointCloud* cloud_;
-
-      bool new_message_;
-      std_msgs::PolygonalMap message_;
+      
+      ros::thread::mutex message_mutex_;
+      PolygonalMapPtr new_message_;
+      PolygonalMapPtr current_message_;
+      tf::MessageNotifier<std_msgs::PolygonalMap>* notifier_;
 
       ColorProperty *color_property_;
       ROSTopicStringProperty *topic_property_;

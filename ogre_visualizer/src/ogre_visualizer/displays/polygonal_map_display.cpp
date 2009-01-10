@@ -39,6 +39,7 @@
 
 #include <ros/node.h>
 #include <tf/transform_listener.h>
+#include <tf/message_notifier.h>
 
 #include <boost/bind.hpp>
 
@@ -57,7 +58,6 @@ namespace ogre_vis
     , color_ (0.1f, 1.0f, 0.0f)
     , render_operation_ (polygon_render_ops::PLines)
     , override_color_ (false)
-    , new_message_ (false)
     , color_property_ (NULL)
     , topic_property_ (NULL)
     , override_color_property_ (NULL)
@@ -80,12 +80,16 @@ namespace ogre_vis
     setAlpha (1.0f);
     setPointSize (0.05f);
     setZPosition (0.0f);
+
+   notifier_ = new tf::MessageNotifier<std_msgs::PolygonalMap>(tf_, ros_node_, boost::bind(&PolygonalMapDisplay::incomingMessage, this, _1), "", "", 1);
   }
 
   PolygonalMapDisplay::~PolygonalMapDisplay ()
   {
     unsubscribe ();
     clear ();
+
+    delete notifier_;
 
     scene_manager_->destroyManualObject (manual_object_);
 
@@ -120,7 +124,11 @@ namespace ogre_vis
     if (color_property_)
       color_property_->changed ();
 
+    message_mutex_.lock();
+    new_message_ = current_message_;
     processMessage ();
+    new_message_ = PolygonalMapPtr();
+    message_mutex_.unlock();
     causeRender ();
   }
 
@@ -132,7 +140,11 @@ namespace ogre_vis
     if (override_color_property_)
       override_color_property_->changed ();
 
+    message_mutex_.lock();
+    new_message_ = current_message_;
     processMessage ();
+    new_message_ = PolygonalMapPtr();
+    message_mutex_.unlock();
     causeRender ();
   }
 
@@ -144,7 +156,11 @@ namespace ogre_vis
     if (render_operation_property_)
       render_operation_property_->changed ();
 
+    message_mutex_.lock();
+    new_message_ = current_message_;
     processMessage ();
+    new_message_ = PolygonalMapPtr();
+    message_mutex_.unlock();
     causeRender ();
   }
 
@@ -181,7 +197,11 @@ namespace ogre_vis
     if (alpha_property_)
       alpha_property_->changed ();
 
+    message_mutex_.lock();
+    new_message_ = current_message_;
     processMessage ();
+    new_message_ = PolygonalMapPtr();
+    message_mutex_.unlock();
     causeRender ();
   }
 
@@ -191,15 +211,13 @@ namespace ogre_vis
     if (!isEnabled ())
       return;
 
-    if (!topic_.empty ())
-      ros_node_->subscribe (topic_, message_, &PolygonalMapDisplay::incomingMessage, this, 1);
+    notifier_->setTopic( topic_ );
   }
 
   void
     PolygonalMapDisplay::unsubscribe ()
   {
-    if (!topic_.empty ())
-      ros_node_->unsubscribe (topic_, &PolygonalMapDisplay::incomingMessage, this);
+    notifier_->setTopic( "" );
   }
 
   void
@@ -226,31 +244,36 @@ namespace ogre_vis
   void
     PolygonalMapDisplay::update (float dt)
   {
+    message_mutex_.lock();
     if (new_message_)
     {
       processMessage ();
-      new_message_ = false;
+      current_message_ = new_message_;
+      new_message_ = PolygonalMapPtr();
       causeRender ();
     }
+    message_mutex_.unlock();
   }
 
   void
     PolygonalMapDisplay::processMessage ()
   {
-    message_.lock ();
-    clear ();
-    tf::Stamped < tf::Pose > pose (btTransform (btQuaternion (0.0f, 0.0f, 0.0f), btVector3 (0.0f, 0.0f, z_position_)), ros::Time (), "map");
-
-    if (tf_->canTransform (fixed_frame_, "map", ros::Time ()))
+    if (!new_message_)
     {
-      try
-      {
-        tf_->transformPose (fixed_frame_, pose, pose);
-      }
-      catch (tf::TransformException & e)
-      {
-        ROS_ERROR ("Error transforming from frame 'map' to frame '%s'\n", fixed_frame_.c_str ());
-      }
+      return;
+    }
+
+    clear ();    
+
+    tf::Stamped < tf::Pose > pose (btTransform (btQuaternion (0.0f, 0.0f, 0.0f), btVector3 (0.0f, 0.0f, z_position_)), new_message_->header.stamp, new_message_->header.frame_id);
+
+    try
+    {
+      tf_->transformPose (fixed_frame_, pose, pose);
+    }
+    catch (tf::TransformException & e)
+    {
+      ROS_ERROR ("Error transforming from frame 'map' to frame '%s'\n", fixed_frame_.c_str ());
     }
 
     Ogre::Vector3 position = Ogre::Vector3 (pose.getOrigin ().x (), pose.getOrigin ().y (), pose.getOrigin ().z ());
@@ -272,10 +295,10 @@ namespace ogre_vis
 
     Ogre::ColourValue color;
 
-    uint32_t num_polygons = message_.get_polygons_size ();
+    uint32_t num_polygons = new_message_->get_polygons_size ();
     uint32_t num_total_points = 0;
     for (uint32_t i = 0; i < num_polygons; i++)
-      num_total_points += message_.polygons[i].points.size ();
+      num_total_points += new_message_->polygons[i].points.size ();
 
     // If we render points, we don't care about the order
     if (render_operation_ == polygon_render_ops::PPoints)
@@ -286,17 +309,17 @@ namespace ogre_vis
       uint32_t cnt_total_points = 0;
       for (uint32_t i = 0; i < num_polygons; i++)
       {
-        for (uint32_t j = 0; j < message_.polygons[i].points.size (); j++)
+        for (uint32_t j = 0; j < new_message_->polygons[i].points.size (); j++)
         {
           ogre_tools::PointCloud::Point & current_point = points[cnt_total_points];
 
-          current_point.x_ = message_.polygons[i].points[j].x;
-          current_point.y_ = message_.polygons[i].points[j].y;
-          current_point.z_ = message_.polygons[i].points[j].z;
+          current_point.x_ = new_message_->polygons[i].points[j].x;
+          current_point.y_ = new_message_->polygons[i].points[j].y;
+          current_point.z_ = new_message_->polygons[i].points[j].z;
           if (override_color_)
             color = Ogre::ColourValue (color_.r_, color_.g_, color_.b_, alpha_);
           else
-            color = Ogre::ColourValue (message_.polygons[i].color.r, message_.polygons[i].color.g, message_.polygons[i].color.b, alpha_);
+            color = Ogre::ColourValue (new_message_->polygons[i].color.r, new_message_->polygons[i].color.g, new_message_->polygons[i].color.b, alpha_);
           current_point.r_ = color.r;
           current_point.g_ = color.g;
           current_point.b_ = color.b;
@@ -313,17 +336,17 @@ namespace ogre_vis
     {
       for (uint32_t i = 0; i < num_polygons; i++)
       {
-        manual_object_->estimateVertexCount (message_.polygons[i].points.size ());
+        manual_object_->estimateVertexCount (new_message_->polygons[i].points.size ());
         manual_object_->begin ("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
-        for (uint32_t j = 0; j < message_.polygons[i].points.size (); j++)
+        for (uint32_t j = 0; j < new_message_->polygons[i].points.size (); j++)
         {
-          manual_object_->position (message_.polygons[i].points[j].x, 
-                                    message_.polygons[i].points[j].y,
-                                    message_.polygons[i].points[j].z);
+          manual_object_->position (new_message_->polygons[i].points[j].x, 
+                                    new_message_->polygons[i].points[j].y,
+                                    new_message_->polygons[i].points[j].z);
           if (override_color_)
             color = Ogre::ColourValue (color_.r_, color_.g_, color_.b_, alpha_);
           else
-            color = Ogre::ColourValue (message_.polygons[i].color.r, message_.polygons[i].color.g, message_.polygons[i].color.b, alpha_);
+            color = Ogre::ColourValue (new_message_->polygons[i].color.r, new_message_->polygons[i].color.g, new_message_->polygons[i].color.b, alpha_);
           manual_object_->colour (color);
         }
         manual_object_->end ();
@@ -332,20 +355,25 @@ namespace ogre_vis
 
     scene_node_->setPosition (position);
     scene_node_->setOrientation (orientation);
-
-    message_.unlock ();
   }
 
   void
-    PolygonalMapDisplay::incomingMessage ()
+    PolygonalMapDisplay::incomingMessage (const PolygonalMapPtr& message)
   {
-    new_message_ = true;
+    message_mutex_.lock();
+    new_message_ = message;
+    message_mutex_.unlock();
   }
 
   void
     PolygonalMapDisplay::reset ()
   {
     clear ();
+  }
+
+  void PolygonalMapDisplay::targetFrameChanged()
+  {
+    notifier_->setTargetFrame( target_frame_ );
   }
 
   void
