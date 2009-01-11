@@ -13,6 +13,7 @@
 #include "displays/particle_cloud_2d_display.h"
 #include "displays/poly_line_2d_display.h"
 #include "displays/polygonal_map_display.h"
+#include "displays/collision_map_display.h"
 #include "displays/map_display.h"
 #include "displays/tf_display.h"
 %}
@@ -31,6 +32,7 @@
 %include "displays/particle_cloud_2d_display.h"
 %include "displays/poly_line_2d_display.h"
 %include "displays/polygonal_map_display.h"
+%include "displays/collision_map_display.h"
 %include "displays/map_display.h"
 %include "displays/tf_display.h"
 
@@ -52,6 +54,7 @@
   %template(createParticleCloud2DDisplay) createDisplay<ogre_vis::ParticleCloud2DDisplay>;
   %template(createPolyLine2DDisplay) createDisplay<ogre_vis::PolyLine2DDisplay>;
   %template(createPolygonalMapDisplay) createDisplay<ogre_vis::PolygonalMapDisplay>;
+  %template(createCollisionMapDisplay) createDisplay<ogre_vis::CollisionMapDisplay>;
   %template(createMapDisplay) createDisplay<ogre_vis::MapDisplay>;
   %template(createTFDisplay) createDisplay<ogre_vis::TFDisplay>;
 };

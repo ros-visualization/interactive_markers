@@ -30,8 +30,8 @@
  *
  */
 
-#ifndef OGRE_VISUALIZER_POLYGONAL_MAP_DISPLAY_H_
-#define OGRE_VISUALIZER_POLYGONAL_MAP_DISPLAY_H_
+#ifndef OGRE_VISUALIZER_COLLISION_MAP_DISPLAY_H_
+#define OGRE_VISUALIZER_COLLISION_MAP_DISPLAY_H_
 
 #include "display.h"
 #include "helpers/color.h"
@@ -40,8 +40,8 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <std_msgs/Polygon3D.h>
-#include <std_msgs/PolygonalMap.h>
+#include <collision_map/Box3D.h>
+#include <collision_map/CollisionMap.h>
 
 
 namespace ogre_tools
@@ -68,27 +68,27 @@ namespace ogre_vis
   class BoolProperty;
   class EnumProperty;
 
-  namespace polygon_render_ops
+  namespace collision_render_ops
   {
-    enum PolygonRenderOp
+    enum CollisionRenderOp
     {
-      PLines,
-      PPoints,
-      PCount,
+      CBoxes,
+      CPoints,
+      CCount,
     };
   }
-  typedef polygon_render_ops::PolygonRenderOp PolygonRenderOp;
+  typedef collision_render_ops::CollisionRenderOp CollisionRenderOp;
 
   /**
-   * \class PolygonalMapDisplay
-   * \brief Displays a std_msgs::PolygonalMap message
+   * \class CollisionMapDisplay
+   * \brief Displays a collision_map::CollisionMap message
    */
-  class PolygonalMapDisplay:public Display
+  class CollisionMapDisplay:public Display
   {
     public:
-      PolygonalMapDisplay (const std::string& name, VisualizationManager* manager);
+      CollisionMapDisplay (const std::string& name, VisualizationManager* manager);
 
-      virtual ~PolygonalMapDisplay ();
+      virtual ~CollisionMapDisplay ();
 
       void setTopic (const std::string& topic);
       const std::string& getTopic () { return (topic_); }
@@ -119,7 +119,7 @@ namespace ogre_vis
       virtual bool isObjectPickable (const Ogre::MovableObject* object) const { return (true); }
       virtual void reset ();
 
-      static const char *getTypeStatic () { return ("PolygonalMap"); }
+      static const char *getTypeStatic () { return ("CollisionMap"); }
       virtual const char *getType () { return (getTypeStatic ()); }
       static const char *getDescription ();
 
@@ -127,8 +127,8 @@ namespace ogre_vis
       void subscribe ();
       void unsubscribe ();
       void clear ();
-      typedef boost::shared_ptr<std_msgs::PolygonalMap> PolygonalMapPtr;
-      void incomingMessage (const PolygonalMapPtr& message);
+      typedef boost::shared_ptr<collision_map::CollisionMap> CollisionMapPtr;
+      void incomingMessage (const CollisionMapPtr& message);
       void processMessage ();
 
       // overrides from Display
@@ -148,9 +148,9 @@ namespace ogre_vis
       ogre_tools::PointCloud* cloud_;
 
       ros::thread::mutex message_mutex_;
-      PolygonalMapPtr new_message_;
-      PolygonalMapPtr current_message_;
-      tf::MessageNotifier<std_msgs::PolygonalMap>* notifier_;
+      CollisionMapPtr new_message_;
+      CollisionMapPtr current_message_;
+      tf::MessageNotifier<collision_map::CollisionMap>* notifier_;
 
       ColorProperty *color_property_;
       ROSTopicStringProperty *topic_property_;
@@ -163,4 +163,4 @@ namespace ogre_vis
 
 } // namespace ogre_vis
 
-#endif /* OGRE_VISUALIZER_POLYGONAL_MAP_DISPLAY_H_ */
+#endif /* OGRE_VISUALIZER_COLLISION_MAP_DISPLAY_H_ */

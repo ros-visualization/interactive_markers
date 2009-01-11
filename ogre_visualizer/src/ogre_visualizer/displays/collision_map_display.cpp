@@ -30,12 +30,10 @@
  *
  */
 
-#include "polygonal_map_display.h"
+#include "collision_map_display.h"
 #include "properties/property.h"
 #include "properties/property_manager.h"
 #include "common.h"
-
-#include "ogre_tools/arrow.h"
 
 #include <ros/node.h>
 #include <tf/transform_listener.h>
@@ -53,10 +51,10 @@
 namespace ogre_vis
 {
 
-  PolygonalMapDisplay::PolygonalMapDisplay (const std::string & name, VisualizationManager * manager) 
+  CollisionMapDisplay::CollisionMapDisplay (const std::string & name, VisualizationManager * manager)
     : Display (name, manager)
     , color_ (0.1f, 1.0f, 0.0f)
-    , render_operation_ (polygon_render_ops::PLines)
+    , render_operation_ (collision_render_ops::CBoxes)
     , override_color_ (false)
     , color_property_ (NULL)
     , topic_property_ (NULL)
@@ -70,21 +68,20 @@ namespace ogre_vis
 
     static int count = 0;
     std::stringstream ss;
-    ss << "Polygonal Map" << count++;
+    ss << "Collision Map" << count++;
     manual_object_ = scene_manager_->createManualObject (ss.str ());
     manual_object_->setDynamic (true);
     scene_node_->attachObject (manual_object_);
 
     cloud_ = new ogre_tools::PointCloud (scene_manager_, scene_node_);
-    cloud_->setBillboardType (Ogre::BBT_PERPENDICULAR_COMMON);
     setAlpha (1.0f);
     setPointSize (0.05f);
     setZPosition (0.0f);
 
-   notifier_ = new tf::MessageNotifier<std_msgs::PolygonalMap>(tf_, ros_node_, boost::bind(&PolygonalMapDisplay::incomingMessage, this, _1), "", "", 1);
+   notifier_ = new tf::MessageNotifier<collision_map::CollisionMap> (tf_, ros_node_, boost::bind(&CollisionMapDisplay::incomingMessage, this, _1), "", "", 1);
   }
 
-  PolygonalMapDisplay::~PolygonalMapDisplay ()
+  CollisionMapDisplay::~CollisionMapDisplay ()
   {
     unsubscribe ();
     clear ();
@@ -97,14 +94,14 @@ namespace ogre_vis
   }
 
   void
-    PolygonalMapDisplay::clear ()
+    CollisionMapDisplay::clear ()
   {
     manual_object_->clear ();
     cloud_->clear ();
   }
 
   void
-    PolygonalMapDisplay::setTopic (const std::string & topic)
+    CollisionMapDisplay::setTopic (const std::string & topic)
   {
     unsubscribe ();
     topic_ = topic;
@@ -117,7 +114,7 @@ namespace ogre_vis
   }
 
   void
-    PolygonalMapDisplay::setColor (const Color & color)
+    CollisionMapDisplay::setColor (const Color & color)
   {
     color_ = color;
 
@@ -127,13 +124,13 @@ namespace ogre_vis
     message_mutex_.lock();
     new_message_ = current_message_;
     processMessage ();
-    new_message_ = PolygonalMapPtr();
+    new_message_ = CollisionMapPtr();
     message_mutex_.unlock();
     causeRender ();
   }
 
   void
-    PolygonalMapDisplay::setOverrideColor (bool override)
+    CollisionMapDisplay::setOverrideColor (bool override)
   {
     override_color_ = override;
 
@@ -143,13 +140,13 @@ namespace ogre_vis
     message_mutex_.lock();
     new_message_ = current_message_;
     processMessage ();
-    new_message_ = PolygonalMapPtr();
+    new_message_ = CollisionMapPtr();
     message_mutex_.unlock();
     causeRender ();
   }
 
   void
-    PolygonalMapDisplay::setRenderOperation (int op)
+    CollisionMapDisplay::setRenderOperation (int op)
   {
     render_operation_ = op;
 
@@ -159,13 +156,13 @@ namespace ogre_vis
     message_mutex_.lock();
     new_message_ = current_message_;
     processMessage ();
-    new_message_ = PolygonalMapPtr();
+    new_message_ = CollisionMapPtr();
     message_mutex_.unlock();
     causeRender ();
   }
 
   void
-    PolygonalMapDisplay::setPointSize (float size)
+    CollisionMapDisplay::setPointSize (float size)
   {
     point_size_ = size;
 
@@ -177,7 +174,7 @@ namespace ogre_vis
   }
 
   void
-    PolygonalMapDisplay::setZPosition (float z)
+    CollisionMapDisplay::setZPosition (float z)
   {
     z_position_ = z;
 
@@ -189,7 +186,7 @@ namespace ogre_vis
   }
 
   void
-    PolygonalMapDisplay::setAlpha (float alpha)
+    CollisionMapDisplay::setAlpha (float alpha)
   {
     alpha_ = alpha;
     cloud_->setAlpha (alpha);
@@ -200,13 +197,13 @@ namespace ogre_vis
     message_mutex_.lock();
     new_message_ = current_message_;
     processMessage ();
-    new_message_ = PolygonalMapPtr();
+    new_message_ = CollisionMapPtr();
     message_mutex_.unlock();
     causeRender ();
   }
 
   void
-    PolygonalMapDisplay::subscribe ()
+    CollisionMapDisplay::subscribe ()
   {
     if (!isEnabled ())
       return;
@@ -215,20 +212,20 @@ namespace ogre_vis
   }
 
   void
-    PolygonalMapDisplay::unsubscribe ()
+    CollisionMapDisplay::unsubscribe ()
   {
     notifier_->setTopic( "" );
   }
 
   void
-    PolygonalMapDisplay::onEnable ()
+    CollisionMapDisplay::onEnable ()
   {
     scene_node_->setVisible (true);
     subscribe ();
   }
 
   void
-    PolygonalMapDisplay::onDisable ()
+    CollisionMapDisplay::onDisable ()
   {
     unsubscribe ();
     clear ();
@@ -236,27 +233,27 @@ namespace ogre_vis
   }
 
   void
-    PolygonalMapDisplay::fixedFrameChanged ()
+    CollisionMapDisplay::fixedFrameChanged ()
   {
     clear ();
   }
 
   void
-    PolygonalMapDisplay::update (float dt)
+    CollisionMapDisplay::update (float dt)
   {
     message_mutex_.lock();
     if (new_message_)
     {
       processMessage ();
       current_message_ = new_message_;
-      new_message_ = PolygonalMapPtr();
+      new_message_ = CollisionMapPtr();
       causeRender ();
     }
     message_mutex_.unlock();
   }
 
   void
-    PolygonalMapDisplay::processMessage ()
+    CollisionMapDisplay::processMessage ()
   {
     if (!new_message_)
     {
@@ -284,47 +281,30 @@ namespace ogre_vis
 
     Ogre::Matrix3 orientation (ogreMatrixFromRobotEulers( yaw, pitch, roll));
 
-    /*btQuaternion quat;
-    pose.getBasis ().getRotation (quat);
-    Ogre::Quaternion orientation (Ogre::Quaternion::IDENTITY);
-    ogreToRobot (orientation);
-    orientation = Ogre::Quaternion (quat.w (), quat.x (), quat.y (), quat.z ()) * orientation;
-    robotToOgre (orientation);*/
-
     manual_object_->clear ();
 
     Ogre::ColourValue color;
 
-    uint32_t num_polygons = new_message_->get_polygons_size ();
-    uint32_t num_total_points = 0;
-    for (uint32_t i = 0; i < num_polygons; i++)
-      num_total_points += new_message_->polygons[i].points.size ();
+    uint32_t num_boxes = new_message_->get_boxes_size ();
+    ROS_INFO ("Collision map contains %d boxes.", num_boxes);
 
     // If we render points, we don't care about the order
-    if (render_operation_ == polygon_render_ops::PPoints)
+    if (render_operation_ == collision_render_ops::CPoints)
     {
       typedef std::vector < ogre_tools::PointCloud::Point > V_Point;
       V_Point points;
-      points.resize (num_total_points);
-      uint32_t cnt_total_points = 0;
-      for (uint32_t i = 0; i < num_polygons; i++)
+      points.resize (num_boxes);
+      for (uint32_t i = 0; i < num_boxes; i++)
       {
-        for (uint32_t j = 0; j < new_message_->polygons[i].points.size (); j++)
-        {
-          ogre_tools::PointCloud::Point & current_point = points[cnt_total_points];
+        ogre_tools::PointCloud::Point & current_point = points[i];
 
-          current_point.x_ = new_message_->polygons[i].points[j].x;
-          current_point.y_ = new_message_->polygons[i].points[j].y;
-          current_point.z_ = new_message_->polygons[i].points[j].z;
-          if (override_color_)
-            color = Ogre::ColourValue (color_.r_, color_.g_, color_.b_, alpha_);
-          else
-            color = Ogre::ColourValue (new_message_->polygons[i].color.r, new_message_->polygons[i].color.g, new_message_->polygons[i].color.b, alpha_);
-          current_point.r_ = color.r;
-          current_point.g_ = color.g;
-          current_point.b_ = color.b;
-          cnt_total_points++;
-        }
+        current_point.x_ = new_message_->boxes[i].center.x;
+        current_point.y_ = new_message_->boxes[i].center.y;
+        current_point.z_ = new_message_->boxes[i].center.z;
+        color = Ogre::ColourValue (color_.r_, color_.g_, color_.b_, alpha_);
+        current_point.r_ = color.r;
+        current_point.g_ = color.g;
+        current_point.b_ = color.b;
       }
 
       cloud_->clear ();
@@ -334,21 +314,35 @@ namespace ogre_vis
     }
     else
     {
-      for (uint32_t i = 0; i < num_polygons; i++)
+      std_msgs::Point32 center, extents;
+      color = Ogre::ColourValue (color_.r_, color_.g_, color_.b_, alpha_);
+      for (uint32_t i = 0; i < num_boxes; i++)
       {
-        manual_object_->estimateVertexCount (new_message_->polygons[i].points.size ());
+        manual_object_->estimateVertexCount (8);
         manual_object_->begin ("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
-        for (uint32_t j = 0; j < new_message_->polygons[i].points.size (); j++)
-        {
-          manual_object_->position (new_message_->polygons[i].points[j].x, 
-                                    new_message_->polygons[i].points[j].y,
-                                    new_message_->polygons[i].points[j].z);
-          if (override_color_)
-            color = Ogre::ColourValue (color_.r_, color_.g_, color_.b_, alpha_);
-          else
-            color = Ogre::ColourValue (new_message_->polygons[i].color.r, new_message_->polygons[i].color.g, new_message_->polygons[i].color.b, alpha_);
-          manual_object_->colour (color);
-        }
+        center.x = new_message_->boxes[i].center.x;
+        center.y = new_message_->boxes[i].center.y;
+        center.z = new_message_->boxes[i].center.z;
+        extents.x = new_message_->boxes[i].extents.x;
+        extents.y = new_message_->boxes[i].extents.y;
+        extents.z = new_message_->boxes[i].extents.z;
+
+        manual_object_->position (center.x - extents.x, center.y - extents.y, center.z - extents.z);
+        manual_object_->colour (color);
+        manual_object_->position (center.x - extents.x, center.y + extents.y, center.z - extents.z);
+        manual_object_->colour (color);
+        manual_object_->position (center.x + extents.x, center.y + extents.y, center.z - extents.z);
+        manual_object_->colour (color);
+        manual_object_->position (center.x + extents.x, center.y - extents.y, center.z - extents.z);
+        manual_object_->colour (color);
+        manual_object_->position (center.x + extents.x, center.y - extents.y, center.z + extents.z);
+        manual_object_->colour (color);
+        manual_object_->position (center.x + extents.x, center.y + extents.y, center.z + extents.z);
+        manual_object_->colour (color);
+        manual_object_->position (center.x - extents.x, center.y + extents.y, center.z + extents.z);
+        manual_object_->colour (color);
+        manual_object_->position (center.x - extents.x, center.y - extents.y, center.z + extents.z);
+        manual_object_->colour (color);
         manual_object_->end ();
       }
     }
@@ -358,7 +352,7 @@ namespace ogre_vis
   }
 
   void
-    PolygonalMapDisplay::incomingMessage (const PolygonalMapPtr& message)
+    CollisionMapDisplay::incomingMessage (const CollisionMapPtr& message)
   {
     message_mutex_.lock();
     new_message_ = message;
@@ -366,52 +360,52 @@ namespace ogre_vis
   }
 
   void
-    PolygonalMapDisplay::reset ()
+    CollisionMapDisplay::reset ()
   {
     clear ();
   }
 
-  void PolygonalMapDisplay::targetFrameChanged()
+  void CollisionMapDisplay::targetFrameChanged()
   {
     notifier_->setTargetFrame( target_frame_ );
   }
 
   void
-    PolygonalMapDisplay::createProperties ()
+    CollisionMapDisplay::createProperties ()
   {
     override_color_property_ = property_manager_->createProperty<BoolProperty>("Override Color", property_prefix_,
-                                                                               boost::bind (&PolygonalMapDisplay::getOverrideColor, this),
-                                                                               boost::bind (&PolygonalMapDisplay::setOverrideColor, this, _1),
+                                                                               boost::bind (&CollisionMapDisplay::getOverrideColor, this),
+                                                                               boost::bind (&CollisionMapDisplay::setOverrideColor, this, _1),
                                                                                parent_category_, this);
     color_property_ = property_manager_->createProperty<ColorProperty>("Color", property_prefix_,
-                                                                       boost::bind (&PolygonalMapDisplay::getColor, this),
-                                                                       boost::bind (&PolygonalMapDisplay::setColor, this, _1),
+                                                                       boost::bind (&CollisionMapDisplay::getColor, this),
+                                                                       boost::bind (&CollisionMapDisplay::setColor, this, _1),
                                                                        parent_category_, this);
     render_operation_property_ = property_manager_->createProperty<EnumProperty>("Render Operation", property_prefix_,
-                                                                                 boost::bind (&PolygonalMapDisplay::getRenderOperation, this),
-                                                                                 boost::bind (&PolygonalMapDisplay::setRenderOperation, this, _1),
+                                                                                 boost::bind (&CollisionMapDisplay::getRenderOperation, this),
+                                                                                 boost::bind (&CollisionMapDisplay::setRenderOperation, this, _1),
                                                                                  parent_category_, this);
-    render_operation_property_->addOption ("Lines", polygon_render_ops::PLines);
-    render_operation_property_->addOption ("Points", polygon_render_ops::PPoints);
+    render_operation_property_->addOption ("Boxes", collision_render_ops::CBoxes);
+    render_operation_property_->addOption ("Points", collision_render_ops::CPoints);
 
     z_position_property_ = property_manager_->createProperty<FloatProperty>("Z Position", property_prefix_, 
-                                                                            boost::bind (&PolygonalMapDisplay::getZPosition, this),
-                                                                            boost::bind (&PolygonalMapDisplay::setZPosition, this, _1),
+                                                                            boost::bind (&CollisionMapDisplay::getZPosition, this),
+                                                                            boost::bind (&CollisionMapDisplay::setZPosition, this, _1),
                                                                             parent_category_, this);
     alpha_property_ = property_manager_->createProperty<FloatProperty>("Alpha", property_prefix_,
-                                                                       boost::bind (&PolygonalMapDisplay::getAlpha, this),
-                                                                       boost::bind (&PolygonalMapDisplay::setAlpha, this, _1),
+                                                                       boost::bind (&CollisionMapDisplay::getAlpha, this),
+                                                                       boost::bind (&CollisionMapDisplay::setAlpha, this, _1),
                                                                        parent_category_, this);
     topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>("Topic", property_prefix_,
-                                                                                boost::bind (&PolygonalMapDisplay::getTopic, this),
-                                                                                boost::bind (&PolygonalMapDisplay::setTopic, this, _1),
+                                                                                boost::bind (&CollisionMapDisplay::getTopic, this),
+                                                                                boost::bind (&CollisionMapDisplay::setTopic, this, _1),
                                                                                 parent_category_, this);
   }
 
   const char*
-    PolygonalMapDisplay::getDescription ()
+    CollisionMapDisplay::getDescription ()
   {
-    return ("Displays data from a std_msgs::PolygonalMap message as either points or lines.");
+    return ("Displays data from a std_msgs::CollisionMap message as either points or lines.");
   }
 
 } // namespace ogre_vis

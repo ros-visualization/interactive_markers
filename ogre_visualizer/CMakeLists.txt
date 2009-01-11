@@ -87,6 +87,7 @@ rospack_add_library(${PROJECT_NAME} src/ogre_visualizer/properties/property.cpp
                                     src/ogre_visualizer/displays/particle_cloud_2d_display.cpp
                                     src/ogre_visualizer/displays/poly_line_2d_display.cpp
                                     src/ogre_visualizer/displays/polygonal_map_display.cpp
+                                    src/ogre_visualizer/displays/collision_map_display.cpp
                                     src/ogre_visualizer/displays/map_display.cpp
                                     src/ogre_visualizer/displays/tf_display.cpp
                                     src/ogre_visualizer/generated/visualization_panel_generated.cpp
