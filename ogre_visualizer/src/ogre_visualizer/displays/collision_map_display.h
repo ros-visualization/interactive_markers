@@ -40,7 +40,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <collision_map/Box3D.h>
+#include <collision_map/OrientedBoundingBox.h>
 #include <collision_map/CollisionMap.h>
 
 
@@ -119,7 +119,7 @@ namespace ogre_vis
       virtual bool isObjectPickable (const Ogre::MovableObject* object) const { return (true); }
       virtual void reset ();
 
-      static const char *getTypeStatic () { return ("CollisionMap"); }
+      static const char *getTypeStatic () { return ("Collision Map"); }
       virtual const char *getType () { return (getTypeStatic ()); }
       static const char *getDescription ();
 

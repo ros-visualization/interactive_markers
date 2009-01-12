@@ -284,13 +284,6 @@ namespace ogre_vis
 
     Ogre::Matrix3 orientation (ogreMatrixFromRobotEulers( yaw, pitch, roll));
 
-    /*btQuaternion quat;
-    pose.getBasis ().getRotation (quat);
-    Ogre::Quaternion orientation (Ogre::Quaternion::IDENTITY);
-    ogreToRobot (orientation);
-    orientation = Ogre::Quaternion (quat.w (), quat.x (), quat.y (), quat.z ()) * orientation;
-    robotToOgre (orientation);*/
-
     manual_object_->clear ();
 
     Ogre::ColourValue color;
