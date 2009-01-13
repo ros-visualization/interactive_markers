@@ -1,6 +1,7 @@
-cmake_minimum_required(VERSION 2.6)
-include(rosbuild)
-include(FindPkgConfig)
+cmake_minimum_required(VERSION 2.4.6)
+include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+# CMake 2.4.6 doesn't include FindPkgConfig, so we provide our own copy
+include($ENV{ROS_ROOT}/core/rosbuild/FindPkgConfig.cmake)
 
 set(ROS_BUILD_TYPE RelWithDebInfo)
 #set(ROS_BUILD_TYPE Debug)
@@ -30,11 +31,12 @@ set(WXSWIG_EXECUTABLE ${wxswig_PACKAGE_PATH}/bin/swig)
 
 # Add a custom command for generating the swig output files
 set(SWIG_INTERFACE_FILE ${PROJECT_SOURCE_DIR}/src/ogre_visualizer/ogre_visualizer.i)
-set(SWIG_OUTPUT_CPP_FILE ${PROJECT_SOURCE_DIR}/src/ogre_visualizer/ogre_visualizer_swig_generated.cpp)
+set(SWIG_OUTPUT_CPP_FILE src/ogre_visualizer/ogre_visualizer_swig_generated.cpp)
 set(SWIG_OUTPUT_PYTHON_FILE ${PROJECT_SOURCE_DIR}/lib/ogre_visualizer.py)
+set_source_files_properties(${SWIG_OUTPUT_CPP_FILE} PROPERTIES GENERATED true)
 add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE} 
                             ${SWIG_OUTPUT_PYTHON_FILE}
-                   COMMAND  ${WXSWIG_EXECUTABLE} ${SWIG_FLAGS} -o ${SWIG_OUTPUT_CPP_FILE} -outdir ../lib -module ${PROJECT_NAME} ${SWIG_INTERFACE_FILE}
+                   COMMAND  ${WXSWIG_EXECUTABLE} ${SWIG_FLAGS} -o ../${SWIG_OUTPUT_CPP_FILE} -outdir ../lib -module ${PROJECT_NAME} ${SWIG_INTERFACE_FILE}
                    DEPENDS  ${SWIG_INTERFACE_FILE}
                             src/ogre_visualizer/display.i
                             src/ogre_visualizer/visualization_panel.i
@@ -60,6 +62,7 @@ add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE}
                             src/ogre_visualizer/displays/tf_display.h
                             src/ogre_visualizer/helpers/color.h)
 
+# We create one lib with the C++...
 rospack_add_library(${PROJECT_NAME} src/ogre_visualizer/properties/property.cpp
                                     src/ogre_visualizer/properties/property_manager.cpp
                                     src/ogre_visualizer/tools/tool.cpp
@@ -90,12 +93,16 @@ rospack_add_library(${PROJECT_NAME} src/ogre_visualizer/properties/property.cpp
                                     src/ogre_visualizer/displays/collision_map_display.cpp
                                     src/ogre_visualizer/displays/map_display.cpp
                                     src/ogre_visualizer/displays/tf_display.cpp
-                                    src/ogre_visualizer/generated/visualization_panel_generated.cpp
-                                    ${SWIG_OUTPUT_CPP_FILE})
+                                    src/ogre_visualizer/generated/visualization_panel_generated.cpp)
 target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} boost_signals ${OGRE_LIBRARIES})
+
+# ...and another with the SWIG code.
+rospack_add_library(python_${PROJECT_NAME} ${SWIG_OUTPUT_CPP_FILE})
+target_link_libraries(python_${PROJECT_NAME} ${PROJECT_NAME})
+
 # swig python needs a shared library named _<modulename>.[so|dll|...]
 # this renames the output file to conform to that by prepending an underscore and removing the "lib" prefix
-set_target_properties(${PROJECT_NAME}
+set_target_properties(python_${PROJECT_NAME}
                       PROPERTIES OUTPUT_NAME _${PROJECT_NAME}
                       PREFIX "")
 

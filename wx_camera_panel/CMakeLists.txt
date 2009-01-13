@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 2.6)
-include(rosbuild)
+cmake_minimum_required(VERSION 2.4.6)
+include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 rospack(wx_camera_panel)
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
@@ -19,25 +19,34 @@ set(WXSWIG_EXECUTABLE ${wxswig_PACKAGE_PATH}/bin/swig)
 
 # Add a custom command for generating the swig output files
 set(SWIG_INTERFACE_FILE ${PROJECT_SOURCE_DIR}/src/wx_camera_panel/CameraPanel.i)
-set(SWIG_OUTPUT_CPP_FILE ${PROJECT_SOURCE_DIR}/src/wx_camera_panel/CameraPanel_swig_generated.cpp)
+set(SWIG_OUTPUT_CPP_FILE src/wx_camera_panel/CameraPanel_swig_generated.cpp)
+set_source_files_properties(${SWIG_OUTPUT_CPP_FILE} PROPERTIES GENERATED true)
 set(SWIG_OUTPUT_PYTHON_FILE ${PROJECT_SOURCE_DIR}/lib/wx_camera_panel.py)
 add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE} 
                             ${SWIG_OUTPUT_PYTHON_FILE}
-                   COMMAND  ${WXSWIG_EXECUTABLE} ${SWIG_FLAGS} -o ${SWIG_OUTPUT_CPP_FILE} -outdir ../lib -module ${PROJECT_NAME} ${SWIG_INTERFACE_FILE}
+                   COMMAND  ${WXSWIG_EXECUTABLE} ${SWIG_FLAGS} -o ../${SWIG_OUTPUT_CPP_FILE} -outdir ../lib -module ${PROJECT_NAME} ${SWIG_INTERFACE_FILE}
                    DEPENDS  ${SWIG_INTERFACE_FILE}
                             src/wx_camera_panel/CameraPanelsGenerated.i
                             src/wx_camera_panel/CameraPanelsGenerated.h 
                             src/wx_camera_panel/CameraPanel.h)
 
-# shared library
-rospack_add_library(wx_camera_panel src/wx_camera_panel/CameraPanelsGenerated.cpp 
+# shared library (for C++)
+rospack_add_library(${PROJECT_NAME} src/wx_camera_panel/CameraPanelsGenerated.cpp 
 				  src/wx_camera_panel/CameraPanel.cpp
-				  src/wx_camera_panel/CameraSetupDialog.cpp
-				  ${SWIG_OUTPUT_CPP_FILE})
+				  src/wx_camera_panel/CameraSetupDialog.cpp)
 target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES})
+
+# We add src/wx_camera_panel to the include list so that
+# ogre_tools_swig_generated.cpp can find its headers.  This is part of a
+# workaround for a deficiency in CMake 2.4's handling of generated sources.
+include_directories(${PROJECT_SOURCE_DIR}/src/wx_camera_panel)
+# shared library (for SWIG)
+rospack_add_library(python_${PROJECT_NAME} ${SWIG_OUTPUT_CPP_FILE})
+target_link_libraries(python_${PROJECT_NAME} ${PROJECT_NAME})
+
 # swig python needs a shared library named _<modulename>.[so|dll|...]
 # this renames the output file to conform to that by prepending an underscore and removing the "lib" prefix
-set_target_properties(${PROJECT_NAME}
+set_target_properties(python_${PROJECT_NAME}
                       PROPERTIES OUTPUT_NAME _${PROJECT_NAME}
                       PREFIX "")
 

@@ -23,7 +23,7 @@ int main( int argc, char** argv )
     marker.header.frame_id = "map";
     marker.header.stamp = ros::Time();
     marker.id = i;
-    marker.type = std_msgs::VisualizationMarker::SPHERE;
+    marker.type = std_msgs::VisualizationMarker::ARROW;
     marker.action = 0;
     marker.x = 1;
     marker.y = (i*2);
@@ -31,7 +31,7 @@ int main( int argc, char** argv )
     marker.yaw = 0.0;
     marker.pitch = 0.0;
     marker.roll = 0.0;
-    marker.xScale = 0.2;
+    marker.xScale = 0.5;
     marker.yScale = 0.2;
     marker.zScale = 0.2;
     marker.alpha = 255;

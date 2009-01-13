@@ -1,13 +1,15 @@
-cmake_minimum_required(VERSION 2.6)
-include(rosbuild)
-include(FindPkgConfig)
+cmake_minimum_required(VERSION 2.4.6)
+include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+# FindPkgConfig was introduced after 2.4.6, so we provide a copy of it
+#include(FindPkgConfig)
+include($ENV{ROS_ROOT}/core/rosbuild/FindPkgConfig.cmake)
 
 set(ROS_BUILD_TYPE RelWithDebInfo)
 #set(ROS_BUILD_TYPE Debug)
 
 rospack(ogre_tools)
 
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+#set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 find_package(wxWidgets REQUIRED)
@@ -51,15 +53,22 @@ set(WXSWIG_EXECUTABLE ${wxswig_PACKAGE_PATH}/bin/swig)
 
 # Add a custom command for generating the swig output files
 set(SWIG_INTERFACE_FILE ${PROJECT_SOURCE_DIR}/src/ogre_tools/ogre_tools.i)
-set(SWIG_OUTPUT_CPP_FILE ${PROJECT_SOURCE_DIR}/src/ogre_tools/ogre_tools_swig_generated.cpp)
+set(SWIG_OUTPUT_CPP_FILE src/ogre_tools/ogre_tools_swig_generated.cpp)
+set_source_files_properties(${SWIG_OUTPUT_CPP_FILE} PROPERTIES GENERATED true)
 set(SWIG_OUTPUT_PYTHON_FILE ${PROJECT_SOURCE_DIR}/lib/ogre_tools.py)
 add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE} 
                             ${SWIG_OUTPUT_PYTHON_FILE}
-                   COMMAND  ${WXSWIG_EXECUTABLE} ${SWIG_FLAGS} -o ${SWIG_OUTPUT_CPP_FILE} -outdir ../lib -module ${PROJECT_NAME} ${SWIG_INTERFACE_FILE}
+                   COMMAND  ${WXSWIG_EXECUTABLE} ${SWIG_FLAGS} -o ../${SWIG_OUTPUT_CPP_FILE} -outdir ../lib -module ${PROJECT_NAME} ${SWIG_INTERFACE_FILE}
                    DEPENDS  ${SWIG_INTERFACE_FILE}
                             src/ogre_tools/initialization.i
                             src/ogre_tools/initialization.h)
 
+# We add src/ogre_tools to the include list so that
+# ogre_tools_swig_generated.cpp can find its headers.  This is part of a
+# workaround for a deficiency in CMake 2.4's handling of generated sources.
+include_directories(${PROJECT_SOURCE_DIR}/src/ogre_tools)
+
+# We make one library with the basic C++ code...
 rospack_add_library(${PROJECT_NAME} src/ogre_tools/point_cloud.cpp
             src/ogre_tools/object.cpp
             src/ogre_tools/shape.cpp
@@ -74,22 +83,25 @@ rospack_add_library(${PROJECT_NAME} src/ogre_tools/point_cloud.cpp
 			      src/ogre_tools/movable_text.cpp
 			      src/ogre_tools/wx_ogre_render_window.cpp
 			      src/ogre_tools/initialization.cpp
-			      src/ogre_tools/orthographic.cpp
-			      ${SWIG_OUTPUT_CPP_FILE})
+			      src/ogre_tools/orthographic.cpp)
 target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} ${GTK2_LIBRARIES} ${OPENGL_gl_LIBRARY} ${OGRE_LIBRARIES})
+
+# ...and we make another library with just the SWIG wrappers, linked
+# against the C++ lib.
+rospack_add_library(python_${PROJECT_NAME} ${SWIG_OUTPUT_CPP_FILE})
+target_link_libraries(python_${PROJECT_NAME} ${PROJECT_NAME})
+
 # swig python needs a shared library named _<modulename>.[so|dll|...]
 # this renames the output file to conform to that by prepending an underscore and removing the "lib" prefix
-set_target_properties(${PROJECT_NAME}
+set_target_properties(python_${PROJECT_NAME}
                       PROPERTIES OUTPUT_NAME _${PROJECT_NAME}
                       PREFIX "")
 
-rospack_add_executable(grid_test src/test/grid_test.cpp)
-target_link_libraries(grid_test ${PROJECT_NAME} ${wxWidgets_LIBRARIES})
+rospack_add_executable(bin/grid_test src/test/grid_test.cpp)
+target_link_libraries(bin/grid_test ${PROJECT_NAME} ${wxWidgets_LIBRARIES})
 
-rospack_add_executable(stl_to_mesh src/stl_to_mesh/stl_to_mesh.cpp)
-target_link_libraries(stl_to_mesh ${OGRE_LIBRARIES})
+rospack_add_executable(bin/stl_to_mesh src/stl_to_mesh/stl_to_mesh.cpp)
+target_link_libraries(bin/stl_to_mesh ${OGRE_LIBRARIES})
 
-rospack_add_gtest_future(utest test/utest.cpp)
-target_link_libraries(utest ${PROJECT_NAME})
-set_target_properties(utest PROPERTIES
-                      RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+rospack_add_gtest_future(test/utest test/utest.cpp)
+target_link_libraries(test/utest ${PROJECT_NAME})

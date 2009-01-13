@@ -31,7 +31,7 @@
     <depend package="collision_map" />
 
     <export> 
-        <cpp cflags="-I${prefix}/src/" lflags="-Wl,-rpath,${prefix}/lib ${prefix}/lib/_ogre_visualizer.so"/>
+        <cpp cflags="-I${prefix}/src/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -logre_visualizer.so"/>
         <python path="${prefix}/lib/"/>
     </export>
 
