@@ -216,6 +216,16 @@ void FPSCamera::fromString(const std::string& str)
   iss >> pitch_;
   iss.ignore();
   iss >> yaw_;
+  iss.ignore();
+
+  Ogre::Vector3 vec;
+  iss >> vec.x;
+  iss.ignore();
+  iss >> vec.y;
+  iss.ignore();
+  iss >> vec.z;
+  iss.ignore();
+  camera_->setPosition(vec);
 
   update();
 }
@@ -223,7 +233,7 @@ void FPSCamera::fromString(const std::string& str)
 std::string FPSCamera::toString()
 {
   std::ostringstream oss;
-  oss << pitch_ << " " << yaw_;
+  oss << pitch_ << " " << yaw_ << " " << camera_->getPosition().x << " " << camera_->getPosition().y << " " << camera_->getPosition().z;
 
   return oss.str();
 }
