@@ -465,7 +465,7 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
 
     valid_channels[index] = channel_size_correct;
 
-    if ( auto_compute_intensity_bounds_ && channel_size_correct && ( chan.name.empty() || chan.name == "intensity" || chan.name == "intensities" ) )
+    if ( auto_compute_intensity_bounds_ && channel_size_correct && ( chan.name == "intensity" || chan.name == "intensities" ) )
     {
       min_intensity_ = 999999.0f;
       max_intensity_ = -999999.0f;
@@ -521,7 +521,11 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
     };
 
     ChannelType type = CT_INTENSITY;
-    if ( chan.name == "rgb" )
+    if ( chan.name == "intensity" || chan.name == "intensities" )
+    {
+      type = CT_INTENSITY;
+    }
+    else if ( chan.name == "rgb" )
     {
       type = CT_RGB;
     }
@@ -536,6 +540,10 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
     else if ( chan.name == "b" )
     {
       type = CT_B;
+    }
+    else
+    {
+      continue;
     }
 
     typedef void (*TransformFunc)(float, ogre_tools::PointCloud::Point&, const Color&, float, float, float);
