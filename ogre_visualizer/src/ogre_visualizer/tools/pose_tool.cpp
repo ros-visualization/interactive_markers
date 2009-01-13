@@ -35,7 +35,7 @@
 #include "ogre_tools/arrow.h"
 #include "ogre_tools/wx_ogre_render_window.h"
 
-#include <std_msgs/Planner2DGoal.h>
+#include <robot_msgs/Planner2DGoal.h>
 #include <std_msgs/Pose2DFloat32.h>
 
 #include <OgreRay.h>
@@ -59,7 +59,7 @@ PoseTool::PoseTool( const std::string& name, char shortcut_key, VisualizationMan
   arrow_->setColor( 0.0f, 1.0f, 0.0f, 1.0f );
   arrow_->getSceneNode()->setVisible( false );
 
-  ros_node_->advertise<std_msgs::Planner2DGoal>("goal", 1);
+  ros_node_->advertise<robot_msgs::Planner2DGoal>("goal", 1);
   ros_node_->advertise<std_msgs::Pose2DFloat32>("initialpose", 1);
 }
 
@@ -162,7 +162,7 @@ int PoseTool::processMouseEvent( wxMouseEvent& event, int last_x, int last_y )
 
       if ( is_goal_ )
       {
-        std_msgs::Planner2DGoal goal;
+        robot_msgs::Planner2DGoal goal;
         goal.goal.x = robot_pos_transformed.x();
         goal.goal.y = robot_pos_transformed.y();
         goal.goal.th = angle;
