@@ -1,1 +1,0 @@
-maxMod0 3 maxMod1 1 maxMod2 1 minMod0 10 minMod1 1 minMod2 1 

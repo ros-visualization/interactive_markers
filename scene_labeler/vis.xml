@@ -1,6 +1,0 @@
-<launch>
-  <node pkg="cv_view" type="cv_view_array" args="images:=videre/images"/>
-  <node pkg="cv_view" type="cv_view_array" args="images:=labeled_images"/>
-  <node pkg="cv_view" type="cv_view" args="image:=intensity_image"/>
-<!--  <node pkg="ogre_visualizer" type="visualizer_test"/> -->
-</launch>
