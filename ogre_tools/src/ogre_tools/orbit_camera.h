@@ -76,6 +76,11 @@ public:
    */
   void setFocalPoint( const Ogre::Vector3& focal_point );
 
+  float getPitch() { return pitch_; }
+  float getYaw() { return yaw_; }
+  float getDistance() { return distance_; }
+  const Ogre::Vector3& getFocalPoint() { return focal_point_; }
+
   virtual void setFrom( CameraBase* camera );
   virtual void yaw( float angle );
   virtual void pitch( float angle );
@@ -105,6 +110,9 @@ public:
   virtual void mouseLeftUp( int x, int y );
   virtual void mouseMiddleUp( int x, int y );
   virtual void mouseRightUp( int x, int y );
+
+  virtual void fromString(const std::string& str);
+  virtual std::string toString();
 
 private:
 

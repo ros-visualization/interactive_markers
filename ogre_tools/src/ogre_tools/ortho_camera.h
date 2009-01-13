@@ -65,6 +65,9 @@ public:
   virtual void mouseRightDrag( int diff_x, int diff_y );
   virtual void scrollWheel( int diff );
 
+  virtual void fromString(const std::string& str);
+  virtual std::string toString();
+
 private:
   float scale_;
   wxOgreRenderWindow* render_window_;

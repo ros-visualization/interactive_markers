@@ -328,4 +328,31 @@ void OrbitCamera::mouseRightUp( int x, int y )
   focal_point_object_->getRootNode()->setVisible( false );
 }
 
+void OrbitCamera::fromString(const std::string& str)
+{
+  std::istringstream iss(str);
+
+  iss >> pitch_;
+  iss.ignore();
+  iss >> yaw_;
+  iss.ignore();
+  iss >> distance_;
+  iss.ignore();
+  iss >> focal_point_.x;
+  iss.ignore();
+  iss >> focal_point_.y;
+  iss.ignore();
+  iss >> focal_point_.z;
+
+  update();
+}
+
+std::string OrbitCamera::toString()
+{
+  std::ostringstream oss;
+  oss << pitch_ << " " << yaw_ << " " << distance_ << " " << focal_point_.x << " " << focal_point_.y << " " << focal_point_.z;
+
+  return oss.str();
+}
+
 } // namespace ogre_tools

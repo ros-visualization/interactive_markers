@@ -138,4 +138,43 @@ void OrthoCamera::scrollWheel( int diff )
   update();
 }
 
+void OrthoCamera::fromString(const std::string& str)
+{
+  std::istringstream iss(str);
+
+  iss >> scale_;
+  iss.ignore();
+
+  Ogre::Vector3 vec;
+  iss >> vec.x;
+  iss.ignore();
+  iss >> vec.y;
+  iss.ignore();
+  iss >> vec.z;
+  iss.ignore();
+  camera_->setPosition(vec);
+
+  Ogre::Quaternion quat;
+  iss >> quat.x;
+  iss.ignore();
+  iss >> quat.y;
+  iss.ignore();
+  iss >> quat.z;
+  iss.ignore();
+  iss >> quat.w;
+  iss.ignore();
+  camera_->setOrientation(quat);
+
+  update();
+}
+
+std::string OrthoCamera::toString()
+{
+  std::ostringstream oss;
+  oss << scale_ << " " << camera_->getPosition().x << " " << camera_->getPosition().y << " " << camera_->getPosition().z
+      << " " << camera_->getOrientation().x << " " << camera_->getOrientation().y << " " << camera_->getOrientation().z << " " << camera_->getOrientation().w;
+
+  return oss.str();
+}
+
 } // namespace ogre_tools

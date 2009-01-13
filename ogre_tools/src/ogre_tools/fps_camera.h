@@ -52,6 +52,9 @@ public:
   FPSCamera( Ogre::SceneManager* scene_manager );
   virtual ~FPSCamera();
 
+  float getPitch() { return pitch_; }
+  float getYaw() { return yaw_; }
+
   virtual void yaw( float angle );
   virtual void pitch( float angle );
   virtual void roll( float angle );
@@ -70,6 +73,9 @@ public:
   virtual void mouseMiddleDrag( int diff_x, int diff_y );
   virtual void mouseRightDrag( int diff_x, int diff_y );
   virtual void scrollWheel( int diff );
+
+  virtual void fromString(const std::string& str);
+  virtual std::string toString();
 
 protected:
   /**

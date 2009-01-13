@@ -32,6 +32,9 @@
 #include <gtest/gtest.h>
 #include "../src/ogre_tools/fps_camera.h"
 #include "../src/ogre_tools/orbit_camera.h"
+#include "../src/ogre_tools/initialization.h"
+
+#include <ros/common.h>
 
 #include <Ogre.h>
 
@@ -55,7 +58,10 @@ public:
     g_root->loadPlugin( "RenderSystem_GL" );
     g_root->loadPlugin( "Plugin_OctreeSceneManager" );
 
-    Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
+    std::string ogre_tools_path = ros::get_package_path(ROS_PACKAGE_NAME);
+    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( ogre_tools_path + "/media", "FileSystem", ROS_PACKAGE_NAME );
+    Ogre::ResourceGroupManager::getSingleton().addResourceLocation( ogre_tools_path + "/media/models", "FileSystem", ROS_PACKAGE_NAME );
+    ogre_tools::initializeResources(ogre_tools::V_string());
 
     // Taken from gazebo
     Ogre::RenderSystemList *rsList = g_root->getAvailableRenderers();
@@ -157,6 +163,33 @@ TEST(OrbitCamera, setOrientation)
   delete orbit_cam;
 }
 
+TEST(OrbitCamera, saveAndLoad)
+{
+  OrbitCamera* cam = new OrbitCamera( g_scene_manager );
+  g_viewport->setCamera( cam->getOgreCamera() );
+
+  const Ogre::Vector3 pos = Ogre::Vector3(0.0f, 10.0f, 0.0f);
+  const Ogre::Vector3 fp = Ogre::Vector3(0.0f, 5.0f, 0.0f);
+  cam->setFocalPoint(fp);
+  cam->CameraBase::setPosition(pos);
+  float pitch = cam->getPitch();
+  float yaw = cam->getYaw();
+  float distance = cam->getDistance();
+
+  std::string str = cam->toString();
+  cam->fromString(str);
+
+  EXPECT_NEAR(pitch, cam->getPitch(), 0.001);
+  EXPECT_NEAR(yaw, cam->getYaw(), 0.001);
+  EXPECT_NEAR(distance, cam->getDistance(), 0.001);
+  EXPECT_VECTOR_NEAR(pos, cam->getPosition(), 0.01);
+  EXPECT_VECTOR_NEAR(fp, cam->getFocalPoint(), 0.001);
+
+  g_viewport->setCamera( NULL );
+
+  delete cam;
+}
+
 TEST(FPSCamera, setPosition)
 {
   FPSCamera* fps_cam = new FPSCamera( g_scene_manager );
@@ -190,6 +223,30 @@ TEST(FPSCamera, setOrientation)
   g_viewport->setCamera( NULL );
 
   delete fps_cam;
+}
+
+TEST(FPSCamera, saveAndLoad)
+{
+  FPSCamera* cam = new FPSCamera( g_scene_manager );
+  g_viewport->setCamera( cam->getOgreCamera() );
+
+  const Ogre::Vector3 pos = Ogre::Vector3(0.0f, 10.0f, 0.0f);
+  const Ogre::Vector3 fp = Ogre::Vector3(0.0f, 5.0f, 0.0f);
+  cam->lookAt(fp);
+  cam->CameraBase::setPosition(pos);
+  float pitch = cam->getPitch();
+  float yaw = cam->getYaw();
+
+  std::string str = cam->toString();
+  cam->fromString(str);
+
+  EXPECT_NEAR(pitch, cam->getPitch(), 0.001);
+  EXPECT_NEAR(yaw, cam->getYaw(), 0.001);
+  EXPECT_VECTOR_NEAR(pos, cam->getPosition(), 0.001);
+
+  g_viewport->setCamera( NULL );
+
+  delete cam;
 }
 
 class OrbitSetFromFPS : public testing::Test

@@ -205,6 +205,16 @@ public:
    */
   virtual void scrollWheel( int diff ) = 0;
 
+  /**
+   * \brief Loads the camera's configure from the supplied string (generated through toString())
+   * @param str The string to load from
+   */
+  virtual void fromString(const std::string& str) = 0;
+  /**
+   * \brief Returns a string representation of the camera's configuration
+   */
+  virtual std::string toString() = 0;
+
 protected:
   Ogre::Camera* camera_;                  ///< Ogre camera associated with this camera object
   Ogre::SceneManager* scene_manager_;     ///< Scene manager this camera is part of
