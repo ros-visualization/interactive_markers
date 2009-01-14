@@ -264,6 +264,8 @@ public:
   void setBackgroundColor(const Color& c);
   const Color& getBackgroundColor();
 
+  void resetTime();
+
 protected:
   /**
    * \brief Add a display to be managed by this panel

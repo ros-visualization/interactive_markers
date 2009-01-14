@@ -93,6 +93,9 @@ VisualizationPanelGenerated::VisualizationPanelGenerated( wxWindow* parent, wxWi
 	
 	bSizer9->Add( tools_, 1, wxEXPAND, 0 );
 	
+	reset_time_button_ = new wxButton( render_panel_, wxID_ANY, wxT("Reset Time"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer9->Add( reset_time_button_, 0, wxALL, 5 );
+	
 	render_sizer_->Add( bSizer9, 0, wxEXPAND, 5 );
 	
 	render_panel_->SetSizer( render_sizer_ );
@@ -110,6 +113,7 @@ VisualizationPanelGenerated::VisualizationPanelGenerated( wxWindow* parent, wxWi
 	down_button_->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( VisualizationPanelGenerated::onMoveDown ), NULL, this );
 	up_button_->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( VisualizationPanelGenerated::onMoveUp ), NULL, this );
 	views_->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( VisualizationPanelGenerated::onViewSelected ), NULL, this );
+	reset_time_button_->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( VisualizationPanelGenerated::onResetTime ), NULL, this );
 }
 
 VisualizationPanelGenerated::~VisualizationPanelGenerated()
@@ -120,6 +124,7 @@ VisualizationPanelGenerated::~VisualizationPanelGenerated()
 	down_button_->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( VisualizationPanelGenerated::onMoveDown ), NULL, this );
 	up_button_->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( VisualizationPanelGenerated::onMoveUp ), NULL, this );
 	views_->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( VisualizationPanelGenerated::onViewSelected ), NULL, this );
+	reset_time_button_->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( VisualizationPanelGenerated::onResetTime ), NULL, this );
 }
 
 NewDisplayDialogGenerated::NewDisplayDialogGenerated( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )

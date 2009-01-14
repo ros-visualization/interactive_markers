@@ -293,6 +293,10 @@ void VisualizationPanel::onToolClicked( wxCommandEvent& event )
   manager_->setCurrentTool( tool );
 }
 
+void VisualizationPanel::onResetTime( wxCommandEvent& event )
+{
+  manager_->resetTime();
+}
 
 void VisualizationPanel::onViewSelected( wxCommandEvent& event )
 {

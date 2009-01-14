@@ -235,11 +235,7 @@ void VisualizationManager::onUpdate( wxTimerEvent& event )
   if ( needs_reset_ )
   {
     needs_reset_ = false;
-    resetDisplays();
-    tf_->clear();
-
-    ros_time_begin_ = ros::Time();
-    wall_clock_begin_ = ros::Time();
+    resetTime();
   }
 
   static float time_update_timer = 0.0f;
@@ -277,6 +273,15 @@ void VisualizationManager::onUpdate( wxTimerEvent& event )
     wall_clock_property_->changed();
     wall_clock_elapsed_property_->changed();
   }
+}
+
+void VisualizationManager::resetTime()
+{
+  resetDisplays();
+  tf_->clear();
+
+  ros_time_begin_ = ros::Time();
+  wall_clock_begin_ = ros::Time();
 }
 
 std::string getCategoryLabel( DisplayInfo* info )

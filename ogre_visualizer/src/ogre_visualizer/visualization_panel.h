@@ -156,7 +156,9 @@ protected:
   void onChar( wxKeyEvent& event );
 
   /// Called when a "view" (camera) is selected from the list
-  void onViewSelected( wxCommandEvent& event );
+  virtual void onViewSelected( wxCommandEvent& event );
+  /// Called when the "Reset Time" button is clicked
+  virtual void onResetTime( wxCommandEvent& event );
   /// Called when the "New Display" button is pressed
   virtual void onNewDisplay( wxCommandEvent& event );
   /// Called when the "Delete Display" button is pressed

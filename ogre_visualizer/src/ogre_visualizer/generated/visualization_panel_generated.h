@@ -53,6 +53,7 @@ class VisualizationPanelGenerated : public wxPanel
 		wxBoxSizer* render_sizer_;
 		wxChoice* views_;
 		wxToolBar* tools_;
+		wxButton* reset_time_button_;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void onNewDisplay( wxCommandEvent& event ){ event.Skip(); }
@@ -60,6 +61,7 @@ class VisualizationPanelGenerated : public wxPanel
 		virtual void onMoveDown( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onMoveUp( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onViewSelected( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onResetTime( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:
