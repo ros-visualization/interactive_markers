@@ -121,6 +121,9 @@ public:
   wxPropertyGrid* getPropertyGrid() { return property_grid_; }
   VisualizationManager* getManager() { return manager_; }
   ogre_tools::CameraBase* getCurrentCamera() { return current_camera_; }
+  const char* getCurrentCameraType();
+  bool setCurrentCamera(const std::string& camera_type);
+  void setCurrentCamera(int camera_type);
 
   void addTool( Tool* tool );
   void setTool( Tool* tool );
@@ -170,6 +173,7 @@ protected:
   ogre_tools::wxOgreRenderWindow* render_panel_;          ///< Render window
 
   ogre_tools::CameraBase* current_camera_;                ///< The current camera
+  int current_camera_type_;
   ogre_tools::FPSCamera* fps_camera_;                     ///< FPS camera
   ogre_tools::OrbitCamera* orbit_camera_;                 ///< Orbit camera
   ogre_tools::OrthoCamera* top_down_ortho_;               ///< Top-down orthographic camera

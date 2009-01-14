@@ -59,9 +59,18 @@ enum View
   Orbit,
   FPS,
   TopDownOrtho,
+
+  Count
 };
 }
 typedef Views::View View;
+
+const char* g_view_names[Views::Count] =
+{
+  "Orbit",
+  "FPS",
+  "TopDownOrtho"
+};
 
 BEGIN_DECLARE_EVENT_TYPES()
 DECLARE_EVENT_TYPE(EVT_RENDER, wxID_ANY)
@@ -134,6 +143,7 @@ VisualizationPanel::VisualizationPanel( wxWindow* parent )
   top_down_ortho_->setRelativeNode( manager_->getTargetRelativeNode() );
 
   current_camera_ = orbit_camera_;
+  current_camera_type_ = Views::Orbit;
 
   render_panel_->getViewport()->setCamera( current_camera_->getOgreCamera() );
 
@@ -200,26 +210,18 @@ void VisualizationPanel::queueRender()
   wxPostEvent( this, event );
 }
 
-void VisualizationPanel::onRender( wxCommandEvent& event )
+void VisualizationPanel::setCurrentCamera(int camera_type)
 {
-  render_panel_->Refresh();
-}
+  if (camera_type == current_camera_type_)
+  {
+    return;
+  }
 
-void VisualizationPanel::onToolClicked( wxCommandEvent& event )
-{
-  Tool* tool = manager_->getTool( event.GetId() );
-
-  manager_->setCurrentTool( tool );
-}
-
-
-void VisualizationPanel::onViewSelected( wxCommandEvent& event )
-{
   ogre_tools::CameraBase* prev_camera = current_camera_;
 
   bool set_from_old = false;
 
-  switch ( views_->GetSelection() )
+  switch ( camera_type )
   {
   case Views::FPS:
     {
@@ -255,7 +257,46 @@ void VisualizationPanel::onViewSelected( wxCommandEvent& event )
     current_camera_->setFrom( prev_camera );
   }
 
+  current_camera_type_ = camera_type;
+  views_->SetSelection(camera_type);
   render_panel_->setCamera( current_camera_->getOgreCamera() );
+}
+
+bool VisualizationPanel::setCurrentCamera(const std::string& camera_type)
+{
+  for (int i = 0; i < Views::Count; ++i)
+  {
+    if (g_view_names[i] == camera_type)
+    {
+      setCurrentCamera(i);
+      return true;
+    }
+  }
+
+  return false;
+}
+
+const char* VisualizationPanel::getCurrentCameraType()
+{
+  return g_view_names[current_camera_type_];
+}
+
+void VisualizationPanel::onRender( wxCommandEvent& event )
+{
+  render_panel_->Refresh();
+}
+
+void VisualizationPanel::onToolClicked( wxCommandEvent& event )
+{
+  Tool* tool = manager_->getTool( event.GetId() );
+
+  manager_->setCurrentTool( tool );
+}
+
+
+void VisualizationPanel::onViewSelected( wxCommandEvent& event )
+{
+  setCurrentCamera(views_->GetSelection());
 }
 
 void VisualizationPanel::onPropertyChanging( wxPropertyGridEvent& event )
