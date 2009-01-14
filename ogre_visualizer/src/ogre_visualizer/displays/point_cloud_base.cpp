@@ -71,6 +71,7 @@ PointCloudBase::PointCloudBase( const std::string& name, VisualizationManager* m
 , auto_compute_intensity_bounds_(true)
 , intensity_bounds_changed_(false)
 , style_( Billboards )
+, channel_color_idx_( Intensity )
 , billboard_size_( 0.01 )
 , point_decay_time_(0.0f)
 , billboard_size_property_( NULL )
@@ -80,10 +81,12 @@ PointCloudBase::PointCloudBase( const std::string& name, VisualizationManager* m
 , min_intensity_property_( NULL )
 , max_intensity_property_( NULL )
 , style_property_( NULL )
+, channel_property_( NULL )
 , decay_time_property_( NULL )
 {
   setStyle( style_ );
   setBillboardSize( billboard_size_ );
+  setChannelColorIndex ( channel_color_idx_ );
 }
 
 PointCloudBase::~PointCloudBase()
@@ -191,14 +194,23 @@ void PointCloudBase::setStyle( int style )
     }
   }
 
-  causeRender();
-
   if ( style_property_ )
   {
     style_property_->changed();
   }
 
   causeRender();
+}
+
+/** \brief Set the channel color index. Called through the \a channel_property_ callback.
+  * \param channel_color_idx the index of the channel to be rendered
+  */
+void
+  PointCloudBase::setChannelColorIndex (int channel_color_idx)
+{
+  ROS_ASSERT (channel_color_idx < ChannelRenderCount);
+
+  channel_color_idx_ = channel_color_idx;
 }
 
 void PointCloudBase::setBillboardSize( float size )
@@ -358,6 +370,27 @@ void PointCloudBase::processMessage(const boost::shared_ptr<std_msgs::PointCloud
     info = CloudInfoPtr(new CloudInfo(scene_manager_));
   }
 
+  // Get the channels that we could potentially render
+  channel_property_->clear ();
+  typedef std::vector<std_msgs::ChannelFloat32> V_Chan;
+  V_Chan::iterator chan_it = cloud->chan.begin();
+  V_Chan::iterator chan_end = cloud->chan.end();
+  uint32_t index = 0;
+  for ( ; chan_it != chan_end; ++chan_it, ++index )
+  {
+    std_msgs::ChannelFloat32& chan = *chan_it;
+    if (chan.name == "intensity" || chan.name == "intensities")
+      channel_property_->addOption ("Intensity", Intensity);
+    if (chan.name == "nx")
+      channel_property_->addOption ("Normal Sphere", NormalSphere);
+    if (chan.name == "curvature" || chan.name == "curvatures")
+      channel_property_->addOption ("Curvature", Curvature);
+  }
+  if ( channel_property_ )
+  {
+    channel_property_->changed();
+  }
+
   info->message_ = cloud;
   info->time_ = 0;
   if (!info->scene_node_)
@@ -456,6 +489,9 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
   V_Chan::iterator chan_it = cloud->chan.begin();
   V_Chan::iterator chan_end = cloud->chan.end();
   uint32_t index = 0;
+
+  bool use_normals_as_coordinates = false;
+
   for ( ; chan_it != chan_end; ++chan_it, ++index )
   {
     std_msgs::ChannelFloat32& chan = *chan_it;
@@ -465,7 +501,9 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
 
     valid_channels[index] = channel_size_correct;
 
-    if ( auto_compute_intensity_bounds_ && channel_size_correct && ( chan.name == "intensity" || chan.name == "intensities" ) )
+    // Check for intensities
+    if ( auto_compute_intensity_bounds_ && channel_size_correct && ( chan.name == "intensity" || chan.name == "intensities" ) &&
+         channel_color_idx_ == Intensity )
     {
       min_intensity_ = 999999.0f;
       max_intensity_ = -999999.0f;
@@ -480,6 +518,35 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
 
       intensity_bounds_changed_ = true;
     }
+
+    // Check for curvatures
+    else if ( auto_compute_intensity_bounds_ && channel_size_correct && ( chan.name == "curvature" || chan.name == "curvatures" ) &&
+              channel_color_idx_ == Curvature )
+    {
+      min_intensity_ = 999999.0f;
+      max_intensity_ = -999999.0f;
+      for(uint32_t i = 0; i < point_count; i++)
+      {
+        float& intensity = chan.vals[i];
+        // arbitrarily cap to 4096 for now
+        intensity = std::min( intensity, 4096.0f );
+        min_intensity_ = std::min( min_intensity_, intensity );
+        max_intensity_ = std::max( max_intensity_, intensity );
+      }
+
+      intensity_bounds_changed_ = true;
+    }
+    else if ( chan.name == "nx" && channel_color_idx_ == NormalSphere )
+      use_normals_as_coordinates = true;
+  }
+
+  int nx_idx = getROSCloudChannelIndex (cloud, std::string ("nx"));
+  int ny_idx = getROSCloudChannelIndex (cloud, std::string ("ny"));
+  int nz_idx = getROSCloudChannelIndex (cloud, std::string ("nz"));
+  if ( use_normals_as_coordinates && (ny_idx == -1 || nz_idx == -1) )
+  {
+    ROS_WARN ("Normal information requested via 'nx', but 'ny' and 'nz' channels are not present!");
+    use_normals_as_coordinates = false;
   }
 
   float diff_intensity = max_intensity_ - min_intensity_;
@@ -491,9 +558,18 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
   {
     ogre_tools::PointCloud::Point& current_point = points[ i ];
 
-    current_point.x_ = cloud->pts[i].x;
-    current_point.y_ = cloud->pts[i].y;
-    current_point.z_ = cloud->pts[i].z;
+    if (use_normals_as_coordinates && nx_idx != -1 && ny_idx != -1 && nz_idx != -1)
+    {
+      current_point.x_ = cloud->chan[nx_idx].vals[i];
+      current_point.y_ = cloud->chan[ny_idx].vals[i];
+      current_point.z_ = cloud->chan[nz_idx].vals[i];
+    }
+    else          // Use normal 3D x-y-z coordinates
+    {
+      current_point.x_ = cloud->pts[i].x;
+      current_point.y_ = cloud->pts[i].y;
+      current_point.z_ = cloud->pts[i].z;
+    }
     current_point.r_ = max_color_.r_;
     current_point.g_ = max_color_.g_;
     current_point.b_ = max_color_.b_;
@@ -521,7 +597,7 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
     };
 
     ChannelType type = CT_INTENSITY;
-    if ( chan.name == "intensity" || chan.name == "intensities" )
+    if ( chan.name == "intensity" || chan.name == "intensities" || chan.name == "curvatures" || chan.name == "curvature" )
     {
       type = CT_INTENSITY;
     }
@@ -559,7 +635,9 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
     for(uint32_t i = 0; i < point_count; i++)
     {
       ogre_tools::PointCloud::Point& current_point = points[ i ];
-      funcs[type]( chan.vals[i], current_point, min_color_, min_intensity_, max_intensity_, diff_intensity );
+      if ( ( channel_color_idx_ == Intensity && (chan.name == "intensity" || chan.name == "intensities") ) || 
+           ( channel_color_idx_ == Curvature && (chan.name == "curvature" || chan.name == "curvatures") ) )
+        funcs[type]( chan.vals[i], current_point, min_color_, min_intensity_, max_intensity_, diff_intensity );
     }
   }
 
@@ -598,6 +676,9 @@ void PointCloudBase::createProperties()
                                                                      boost::bind( &PointCloudBase::setStyle, this, _1 ), parent_category_, this );
   style_property_->addOption( "Billboards", Billboards );
   style_property_->addOption( "Points", Points );
+
+  channel_property_ = property_manager_->createProperty<EnumProperty>( "Channel", property_prefix_, boost::bind( &PointCloudBase::getChannelColorIndex, this ),
+                                                                     boost::bind( &PointCloudBase::setChannelColorIndex, this, _1 ), parent_category_, this );
 
   max_color_property_ = property_manager_->createProperty<ColorProperty>( "Max Color", property_prefix_, boost::bind( &PointCloudBase::getMaxColor, this ),
                                                                         boost::bind( &PointCloudBase::setMaxColor, this, _1 ), parent_category_, this );

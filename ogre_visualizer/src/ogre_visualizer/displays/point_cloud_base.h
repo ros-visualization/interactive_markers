@@ -104,6 +104,19 @@ public:
     StyleCount,
   };
 
+  /**
+   * \enum ChannelRender
+   * \brief The different channels that we support rendering
+   */
+  enum ChannelRender
+  {
+    Intensity,    ///< Intensity data
+    Curvature,    ///< Surface curvature estimates
+    NormalSphere, ///< Use the nx-ny-nz (normal coordinates) instead of x-y-z
+
+    ChannelRenderCount,
+  };
+
   PointCloudBase( const std::string& name, VisualizationManager* manager );
   ~PointCloudBase();
   /**
@@ -145,6 +158,26 @@ public:
   const Color& getMinColor() { return min_color_; }
   int getStyle() { return style_; }
   float getDecayTime() { return point_decay_time_; }
+
+  /**
+   * \brief Set the channel index to be rendered as color
+   * @param channel_color_idx the index of the channel
+   */
+  void setChannelColorIndex (int channel_color_idx);
+  int getChannelColorIndex () { return (channel_color_idx_); }
+
+  /** \brief Get the index of a specified dimension/channel in a point cloud
+    * \param points the point cloud
+    * \param channel_name the string defining the channel name
+    */
+  inline int
+    getROSCloudChannelIndex (const boost::shared_ptr<std_msgs::PointCloud>& points, std::string channel_name)
+  {
+    for (unsigned int d = 0; d < points->chan.size (); d++)
+      if (points->chan[d].name == channel_name)
+        return (d);
+    return (-1);
+  }
 
   // Overrides from Display
   virtual void fixedFrameChanged();
@@ -188,6 +221,7 @@ protected:
   bool intensity_bounds_changed_;
 
   int style_;                                 ///< Our rendering style
+  int channel_color_idx_;                     ///< Which channel to render as color
   float billboard_size_;                      ///< Size to draw our billboards
   float point_decay_time_;                    ///< How long clouds should stick around for before they are culled
 
@@ -198,6 +232,7 @@ protected:
   FloatProperty* min_intensity_property_;
   FloatProperty* max_intensity_property_;
   EnumProperty* style_property_;
+  EnumProperty* channel_property_;
   FloatProperty* decay_time_property_;
 };
 
