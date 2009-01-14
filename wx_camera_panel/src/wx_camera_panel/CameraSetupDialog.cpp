@@ -30,7 +30,9 @@
 
 #include "CameraSetupDialog.h"
 
-#include "wx_topic_display/TopicDisplayDialog.h"
+#include "rxtools/topic_display_dialog.h"
+
+using namespace rxtools;
 
 CameraSetupDialog::CameraSetupDialog(wxWindow* parent, ros::node* node, const std::string& name, float panMin, float panMax,
                                      float tiltMin, float tiltMax, float zoomMin, float zoomMax, bool ptz_enabled)
