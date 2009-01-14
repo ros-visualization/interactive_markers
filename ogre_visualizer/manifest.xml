@@ -21,7 +21,7 @@
     <depend package="wg_robot_description_parser"/>
     <depend package="scan_utils" />
     <depend package="wxpropgrid"/>
-    <depend package="wx_topic_display"/>
+    <depend package="rxtools"/>
     <depend package="planning_models"/>
     <depend package="robot_msgs" />
     <depend package="wxswig"/>

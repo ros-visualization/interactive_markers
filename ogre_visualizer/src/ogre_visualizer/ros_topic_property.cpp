@@ -28,7 +28,9 @@
  */
 
 #include "ros_topic_property.h"
-#include <wx_topic_display/TopicDisplayDialog.h>
+#include <rxtools/topic_display_dialog.h>
+
+using namespace rxtools;
 
 namespace ogre_vis
 {
