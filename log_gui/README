@@ -1,6 +1,0 @@
-You need to have wxWidgets installed on your box for this to compile.
-
-To do this on Ubuntu 08.04, type this:
-
-sudo apt-get install wxgtk2.8-dev
-
