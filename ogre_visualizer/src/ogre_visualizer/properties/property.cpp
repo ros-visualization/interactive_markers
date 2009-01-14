@@ -401,6 +401,14 @@ void EnumProperty::addOption( const std::string& name, int value )
   writeToGrid();
 }
 
+void EnumProperty::clear ()
+{
+  wxPGChoices& choices = grid_->GetPropertyChoices( property_ );
+  choices.Clear ();
+
+  writeToGrid();
+}
+
 void EnumProperty::writeToGrid()
 {
   if ( !property_ )
@@ -431,7 +439,7 @@ void EnumProperty::saveToConfig( wxConfigBase* config )
 
 void EnumProperty::loadFromConfig( wxConfigBase* config )
 {
-  long val;
+  long val = 0xffffffff;
   if (!config->Read( prefix_ + name_, &val, get() ))
   {
     V_wxString::iterator it = legacy_names_.begin();

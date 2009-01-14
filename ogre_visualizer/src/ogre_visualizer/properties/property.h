@@ -358,6 +358,7 @@ public:
   }
 
   void addOption( const std::string& name, int value );
+  void clear ();
 
   virtual void writeToGrid();
   virtual void readFromGrid();
