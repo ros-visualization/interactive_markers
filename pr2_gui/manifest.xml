@@ -9,7 +9,7 @@
     <review status="unreviewed" notes=""/>
     <url>http://pr.willowgarage.com/wiki/ROS</url>
     <depend package="wx_camera_panel"/>
-    <depend package="wx_rosout"/>
+    <depend package="rxtools"/>
     <depend package="ogre_visualizer"/>
     <depend package="ogre_tools"/>
     <depend package="runtime_monitor"/>

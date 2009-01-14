@@ -37,7 +37,7 @@ import wx
 import wx.aui
 import wx.py.shell
 import wx_camera_panel
-import wx_rosout
+import rxtools
 import ogre_tools
 import visualizer_panel
 import runtime_monitor
@@ -82,7 +82,7 @@ class PR2Frame(wx.Frame):
         ogre_tools.initializeResources( media_paths )
         self._visualizer_panel.createDefaultVisualizers()
         
-        self._rosout_panel = wx_rosout.RosoutPanel(self)
+        self._rosout_panel = rxtools.RosoutPanel(self)
         
         self._monitor_panel = MonitorPanel(self)
         self._monitor_panel.set_new_errors_callback(self.on_monitor_errors_received)
