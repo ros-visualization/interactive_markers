@@ -324,6 +324,7 @@ public:
   virtual void loadFromConfig( wxConfigBase* config );
 };
 
+class ROSTopicProperty;
 class ROSTopicStringProperty : public StringProperty
 {
 public:
@@ -332,7 +333,13 @@ public:
   {
   }
 
+  void setMessageType(const std::string& message_type);
+
   virtual void writeToGrid();
+
+private:
+  std::string message_type_;
+  ROSTopicProperty* ros_topic_property_;
 };
 
 class ColorProperty : public Property<Color>

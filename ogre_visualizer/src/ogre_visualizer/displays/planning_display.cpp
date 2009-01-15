@@ -303,6 +303,7 @@ void PlanningDisplay::createProperties()
                                                                                    boost::bind( &PlanningDisplay::setRobotDescription, this, _1 ), parent_category_, this );
   topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &PlanningDisplay::getTopic, this ),
                                                                                boost::bind( &PlanningDisplay::setTopic, this, _1 ), parent_category_, this );
+  topic_property_->setMessageType(robot_msgs::DisplayKinematicPath::__s_get_datatype());
 }
 
 const char* PlanningDisplay::getDescription()

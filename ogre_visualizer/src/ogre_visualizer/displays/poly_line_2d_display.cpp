@@ -404,6 +404,7 @@ void PolyLine2DDisplay::createProperties()
 
   topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &PolyLine2DDisplay::getTopic, this ),
                                                                                 boost::bind( &PolyLine2DDisplay::setTopic, this, _1 ), parent_category_, this );
+  topic_property_->setMessageType(std_msgs::Polyline2D::__s_get_datatype());
 }
 
 const char* PolyLine2DDisplay::getDescription()

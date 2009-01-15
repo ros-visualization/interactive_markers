@@ -308,11 +308,18 @@ void StringProperty::loadFromConfig( wxConfigBase* config )
   set( (const char*)val.mb_str() );
 }
 
+void ROSTopicStringProperty::setMessageType(const std::string& message_type)
+{
+  message_type_ = message_type;
+  ros_topic_property_->setMessageType(message_type);
+}
+
 void ROSTopicStringProperty::writeToGrid()
 {
   if ( !property_ )
   {
-    property_ = grid_->AppendIn( parent_->getPGProperty(), new ROSTopicProperty( ros::node::instance(), name_, prefix_ + name_, wxString::FromAscii( get().c_str() ) ) );
+    ros_topic_property_ = new ROSTopicProperty( ros::node::instance(), message_type_, name_, prefix_ + name_, wxString::FromAscii( get().c_str() ) );
+    property_ = grid_->AppendIn( parent_->getPGProperty(), ros_topic_property_ );
 
     if ( !hasSetter() )
     {

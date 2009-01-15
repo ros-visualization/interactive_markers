@@ -53,7 +53,7 @@
 namespace ogre_vis
 {
 
-  PolygonalMapDisplay::PolygonalMapDisplay (const std::string & name, VisualizationManager * manager) 
+  PolygonalMapDisplay::PolygonalMapDisplay (const std::string & name, VisualizationManager * manager)
     : Display (name, manager)
     , color_ (0.1f, 1.0f, 0.0f)
     , render_operation_ (polygon_render_ops::PLines)
@@ -333,7 +333,7 @@ namespace ogre_vis
         manual_object_->begin ("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
         for (uint32_t j = 0; j < new_message_->polygons[i].points.size (); j++)
         {
-          manual_object_->position (new_message_->polygons[i].points[j].x, 
+          manual_object_->position (new_message_->polygons[i].points[j].x,
                                     new_message_->polygons[i].points[j].y,
                                     new_message_->polygons[i].points[j].z);
           if (override_color_)
@@ -387,7 +387,7 @@ namespace ogre_vis
     render_operation_property_->addOption ("Lines", polygon_render_ops::PLines);
     render_operation_property_->addOption ("Points", polygon_render_ops::PPoints);
 
-    z_position_property_ = property_manager_->createProperty<FloatProperty>("Z Position", property_prefix_, 
+    z_position_property_ = property_manager_->createProperty<FloatProperty>("Z Position", property_prefix_,
                                                                             boost::bind (&PolygonalMapDisplay::getZPosition, this),
                                                                             boost::bind (&PolygonalMapDisplay::setZPosition, this, _1),
                                                                             parent_category_, this);
@@ -399,6 +399,7 @@ namespace ogre_vis
                                                                                 boost::bind (&PolygonalMapDisplay::getTopic, this),
                                                                                 boost::bind (&PolygonalMapDisplay::setTopic, this, _1),
                                                                                 parent_category_, this);
+    topic_property_->setMessageType(std_msgs::PolygonalMap::__s_get_datatype());
   }
 
   const char*

@@ -252,6 +252,7 @@ void OctreeDisplay::createProperties()
 
   topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &OctreeDisplay::getOctreeTopic, this ),
                                                                               boost::bind( &OctreeDisplay::setOctreeTopic, this, _1 ), parent_category_, this );
+  topic_property_->setMessageType(scan_utils::OctreeMsg::__s_get_datatype());
 }
 
 void OctreeDisplay::reset()

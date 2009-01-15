@@ -179,6 +179,7 @@ void ParticleCloud2DDisplay::createProperties()
                                                                           boost::bind( &ParticleCloud2DDisplay::setColor, this, _1 ), parent_category_, this );
   topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &ParticleCloud2DDisplay::getTopic, this ),
                                                                                 boost::bind( &ParticleCloud2DDisplay::setTopic, this, _1 ), parent_category_, this );
+  topic_property_->setMessageType(std_msgs::ParticleCloud2D::__s_get_datatype());
 }
 
 void ParticleCloud2DDisplay::fixedFrameChanged()

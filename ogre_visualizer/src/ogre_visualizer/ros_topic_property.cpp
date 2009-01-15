@@ -39,7 +39,7 @@ IMPLEMENT_DYNAMIC_CLASS(ROSTopicProperty, wxLongStringProperty)
 
 bool ROSTopicDialogAdapter::DoShowDialog( wxPropertyGrid* WXUNUSED(propGrid), wxPGProperty* WXUNUSED(property) )
 {
-  TopicDisplayDialog dialog(NULL, ros_node_, false);
+  TopicDisplayDialog dialog(NULL, ros_node_, false, message_type_);
 
   if (dialog.ShowModal() == wxID_OK)
   {
@@ -62,7 +62,7 @@ ROSTopicProperty::ROSTopicProperty()
 
 }
 
-ROSTopicProperty::ROSTopicProperty( ros::node* node, const wxString& label, const wxString& name, const wxString& value )
+ROSTopicProperty::ROSTopicProperty( ros::node* node, const std::string& message_type, const wxString& label, const wxString& name, const wxString& value )
 : wxLongStringProperty( label, name, value )
 , ros_node_( node )
 {

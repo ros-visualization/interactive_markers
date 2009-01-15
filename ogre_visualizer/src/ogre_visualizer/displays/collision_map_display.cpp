@@ -388,7 +388,7 @@ namespace ogre_vis
     render_operation_property_->addOption ("Boxes", collision_render_ops::CBoxes);
     render_operation_property_->addOption ("Points", collision_render_ops::CPoints);
 
-    z_position_property_ = property_manager_->createProperty<FloatProperty>("Z Position", property_prefix_, 
+    z_position_property_ = property_manager_->createProperty<FloatProperty>("Z Position", property_prefix_,
                                                                             boost::bind (&CollisionMapDisplay::getZPosition, this),
                                                                             boost::bind (&CollisionMapDisplay::setZPosition, this, _1),
                                                                             parent_category_, this);
@@ -400,6 +400,7 @@ namespace ogre_vis
                                                                                 boost::bind (&CollisionMapDisplay::getTopic, this),
                                                                                 boost::bind (&CollisionMapDisplay::setTopic, this, _1),
                                                                                 parent_category_, this);
+    topic_property_->setMessageType(collision_map::CollisionMap::__s_get_datatype());
   }
 
   const char*
