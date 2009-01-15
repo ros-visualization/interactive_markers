@@ -112,6 +112,7 @@ public:
   {
     Intensity,    ///< Intensity data
     Curvature,    ///< Surface curvature estimates
+    ColorRGBSpace,///< RGB Color
     NormalSphere, ///< Use the nx-ny-nz (normal coordinates) instead of x-y-z
 
     ChannelRenderCount,

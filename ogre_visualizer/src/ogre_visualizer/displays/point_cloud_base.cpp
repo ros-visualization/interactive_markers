@@ -71,7 +71,7 @@ PointCloudBase::PointCloudBase( const std::string& name, VisualizationManager* m
 , auto_compute_intensity_bounds_(true)
 , intensity_bounds_changed_(false)
 , style_( Billboards )
-, channel_color_idx_( Intensity )
+, channel_color_idx_( -1 )
 , billboard_size_( 0.01 )
 , point_decay_time_(0.0f)
 , billboard_size_property_( NULL )
@@ -381,8 +381,13 @@ void PointCloudBase::processMessage(const boost::shared_ptr<std_msgs::PointCloud
     std_msgs::ChannelFloat32& chan = *chan_it;
     if (chan.name == "intensity" || chan.name == "intensities")
       channel_property_->addOption ("Intensity", Intensity);
+
+    if (chan.name == "rgb" || chan.name == "r")
+      channel_property_->addOption ("Color (RGB)", ColorRGBSpace);
+
     if (chan.name == "nx")
       channel_property_->addOption ("Normal Sphere", NormalSphere);
+
     if (chan.name == "curvature" || chan.name == "curvatures")
       channel_property_->addOption ("Curvature", Curvature);
   }
@@ -540,6 +545,7 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
       use_normals_as_coordinates = true;
   }
 
+  // Look for point normals
   int nx_idx = getROSCloudChannelIndex (cloud, std::string ("nx"));
   int ny_idx = getROSCloudChannelIndex (cloud, std::string ("ny"));
   int nz_idx = getROSCloudChannelIndex (cloud, std::string ("nz"));
@@ -585,6 +591,7 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
     }
 
     std_msgs::ChannelFloat32& chan = *chan_it;
+
     enum ChannelType
     {
       CT_INTENSITY,
@@ -635,9 +642,13 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
     for(uint32_t i = 0; i < point_count; i++)
     {
       ogre_tools::PointCloud::Point& current_point = points[ i ];
-      if ( ( channel_color_idx_ == Intensity && (chan.name == "intensity" || chan.name == "intensities") ) || 
-           ( channel_color_idx_ == Curvature && (chan.name == "curvature" || chan.name == "curvatures") ) )
+      if ( ( channel_color_idx_ == Intensity && (chan.name == "intensity" || chan.name == "intensities") ) ||
+           ( channel_color_idx_ == Curvature && (chan.name == "curvature" || chan.name == "curvatures") ) ||
+           ( channel_color_idx_ == ColorRGBSpace && (chan.name == "rgb" || chan.name == "r" || chan.name == "g" || chan.name == "b") )
+         )
+      {
         funcs[type]( chan.vals[i], current_point, min_color_, min_intensity_, max_intensity_, diff_intensity );
+      }
     }
   }
 
