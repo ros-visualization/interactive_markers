@@ -63,7 +63,7 @@ void initializeOgre()
 
     root->initialise( false );
 
-    std::string ogre_tools_path = ros::get_package_path(ROS_PACKAGE_NAME);
+    std::string ogre_tools_path = ros::getPackagePath(ROS_PACKAGE_NAME);
     Ogre::ResourceGroupManager::getSingleton().addResourceLocation( ogre_tools_path + "/media", "FileSystem", ROS_PACKAGE_NAME );
     Ogre::ResourceGroupManager::getSingleton().addResourceLocation( ogre_tools_path + "/media/models", "FileSystem", ROS_PACKAGE_NAME );
   }
