@@ -39,7 +39,7 @@ class SceneManager;
 
 namespace ros
 {
-class node;
+class Node;
 }
 
 namespace ogre_vis

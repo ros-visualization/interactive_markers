@@ -33,7 +33,7 @@
 #include <boost/function.hpp>
 #include <boost/signal.hpp>
 
-#include <rosconsole/rosconsole.h>
+#include <ros/console.h>
 
 #include <wx/wx.h>
 #include <wx/propgrid/propgrid.h>

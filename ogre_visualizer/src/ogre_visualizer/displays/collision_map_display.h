@@ -36,7 +36,7 @@
 #include "display.h"
 #include "helpers/color.h"
 
-#include <rosthread/mutex.h>
+#include <boost/thread/mutex.hpp>
 
 #include <boost/shared_ptr.hpp>
 
@@ -147,7 +147,7 @@ namespace ogre_vis
       Ogre::ManualObject* manual_object_;
       ogre_tools::PointCloud* cloud_;
 
-      ros::thread::mutex message_mutex_;
+      boost::mutex message_mutex_;
       CollisionMapPtr new_message_;
       CollisionMapPtr current_message_;
       tf::MessageNotifier<collision_map::CollisionMap>* notifier_;

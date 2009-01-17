@@ -41,7 +41,7 @@ class SceneManager;
 
 namespace ros
 {
-class node;
+class Node;
 }
 
 namespace ogre_vis
@@ -69,7 +69,7 @@ public:
   virtual int processMouseEvent( wxMouseEvent& event, int last_x, int last_y ) = 0;
 protected:
   Ogre::SceneManager* scene_manager_;
-  ros::node* ros_node_;
+  ros::Node* ros_node_;
   VisualizationManager* manager_;
 
   std::string name_;

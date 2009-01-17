@@ -34,13 +34,13 @@
 
 namespace ros
 {
-	class node;
+	class Node;
 }
 
 class CameraSetupDialog : public CameraSetupDialogBase
 {
 public:
-	CameraSetupDialog( wxWindow* parent, ros::node* node, const std::string& name, float panMin, float panMax, float tiltMin, float tiltMax, float zoomMin,
+	CameraSetupDialog( wxWindow* parent, ros::Node* node, const std::string& name, float panMin, float panMax, float tiltMin, float tiltMax, float zoomMin,
 					   float zoomMax, bool ptz_enabled);
 	~CameraSetupDialog();
 
@@ -58,7 +58,7 @@ private:
 	void onCancel( wxCommandEvent& event );
 
 
-	ros::node* ros_node_;
+	ros::Node* ros_node_;
 };
 
 #endif

@@ -76,14 +76,14 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
   initializeCommon();
   registerFactories( this );
 
-  ros_node_ = ros::node::instance();
+  ros_node_ = ros::Node::instance();
 
-  /// @todo This should go away once creation of the ros::node is more well-defined
+  /// @todo This should go away once creation of the ros::Node is more well-defined
   if (!ros_node_)
   {
     int argc = 0;
     ros::init( argc, 0 );
-    ros_node_ = new ros::node( "VisualizationManager", ros::node::DONT_HANDLE_SIGINT | ros::node::ANONYMOUS_NAME );
+    ros_node_ = new ros::Node( "VisualizationManager", ros::Node::DONT_HANDLE_SIGINT | ros::Node::ANONYMOUS_NAME );
   }
   ROS_ASSERT( ros_node_ );
 

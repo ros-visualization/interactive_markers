@@ -31,7 +31,7 @@
 #include "ortho_camera.h"
 #include "wx_ogre_render_window.h"
 
-#include "rosconsole/rosassert.h"
+#include "ros/assert.h"
 
 #include <OgreCamera.h>
 #include <OgreSceneManager.h>

@@ -455,7 +455,7 @@ namespace ogre_vis
                                                                                 boost::bind (&CollisionMapDisplay::getTopic, this),
                                                                                 boost::bind (&CollisionMapDisplay::setTopic, this, _1),
                                                                                 parent_category_, this);
-    topic_property_->setMessageType(collision_map::CollisionMap::__s_get_datatype());
+    topic_property_->setMessageType(collision_map::CollisionMap::__s_getDataType());
   }
 
   const char*

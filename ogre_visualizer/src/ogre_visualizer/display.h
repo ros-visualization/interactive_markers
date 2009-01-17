@@ -43,7 +43,7 @@ class MovableObject;
 
 namespace ros
 {
-class node;
+class Node;
 }
 
 namespace tf
@@ -194,7 +194,7 @@ protected:
   boost::function<void ()> render_lock_;              ///< Render lock callback
   boost::function<void ()> render_unlock_;            ///< Render unlock callback
 
-  ros::node* ros_node_;                               ///< ros node
+  ros::Node* ros_node_;                               ///< ros node
   tf::TransformListener* tf_;                         ///< tf client
 
   std::string property_prefix_;                       ///< Prefix to prepend to our properties

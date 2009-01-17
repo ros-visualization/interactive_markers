@@ -45,7 +45,7 @@
 #include <OgreEntity.h>
 #include <OgreSubEntity.h>
 
-#include <rosconsole/rosconsole.h>
+#include <ros/console.h>
 
 namespace ogre_vis
 {

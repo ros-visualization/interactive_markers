@@ -34,7 +34,7 @@
 
 using namespace rxtools;
 
-CameraSetupDialog::CameraSetupDialog(wxWindow* parent, ros::node* node, const std::string& name, float panMin, float panMax,
+CameraSetupDialog::CameraSetupDialog(wxWindow* parent, ros::Node* node, const std::string& name, float panMin, float panMax,
                                      float tiltMin, float tiltMax, float zoomMin, float zoomMax, bool ptz_enabled)
 : CameraSetupDialogBase( parent )
 , ros_node_( node )

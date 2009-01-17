@@ -63,7 +63,7 @@ class RaySceneQuery;
 
 namespace ros
 {
-class node;
+class Node;
 }
 
 namespace tf
@@ -231,7 +231,7 @@ public:
 
   bool isValidDisplay( Display* display );
 
-  ros::node* getROSNode() { return ros_node_; }
+  ros::Node* getROSNode() { return ros_node_; }
   tf::TransformListener* getTFClient() { return tf_; }
   Ogre::SceneManager* getSceneManager() { return scene_manager_; }
 
@@ -286,7 +286,7 @@ protected:
   wxTimer* update_timer_;                                 ///< Update timer.  Display::update is called on each display whenever this timer fires
   wxStopWatch update_stopwatch_;                          ///< Update stopwatch.  Stores how long it's been since the last update
 
-  ros::node* ros_node_;                                   ///< Our ros::node
+  ros::Node* ros_node_;                                   ///< Our ros::Node
   tf::TransformListener* tf_;                             ///< Our rosTF client
 
 

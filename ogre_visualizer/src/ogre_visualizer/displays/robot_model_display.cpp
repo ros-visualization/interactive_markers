@@ -172,7 +172,7 @@ bool RobotModelDisplay::isCollisionVisible()
 void RobotModelDisplay::load()
 {
   std::string content;
-  ros_node_->get_param(description_param_, content);
+  ros_node_->getParam(description_param_, content);
 
   if ( content == robot_description_ )
   {
@@ -252,7 +252,7 @@ void RobotModelDisplay::createProperties()
 
   mechanism_topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Mechanism Topic", property_prefix_, boost::bind( &RobotModelDisplay::getMechanismTopic, this ),
                                                                                          boost::bind( &RobotModelDisplay::setMechanismTopic, this, _1 ), parent_category_, this );
-  mechanism_topic_property_->setMessageType(robot_msgs::MechanismState::__s_get_datatype());
+  mechanism_topic_property_->setMessageType(robot_msgs::MechanismState::__s_getDataType());
 
   robot_->setPropertyManager( property_manager_, parent_category_ );
 }

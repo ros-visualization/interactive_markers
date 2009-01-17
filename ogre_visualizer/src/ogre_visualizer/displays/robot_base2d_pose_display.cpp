@@ -180,7 +180,7 @@ void RobotBase2DPoseDisplay::createProperties()
                                                                           boost::bind( &RobotBase2DPoseDisplay::setColor, this, _1 ), parent_category_, this );
   topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &RobotBase2DPoseDisplay::getTopic, this ),
                                                                                 boost::bind( &RobotBase2DPoseDisplay::setTopic, this, _1 ), parent_category_, this );
-  topic_property_->setMessageType(std_msgs::RobotBase2DOdom::__s_get_datatype());
+  topic_property_->setMessageType(std_msgs::RobotBase2DOdom::__s_getDataType());
 
   position_tolerance_property_ = property_manager_->createProperty<FloatProperty>( "Position Tolerance", property_prefix_, boost::bind( &RobotBase2DPoseDisplay::getPositionTolerance, this ),
                                                                                boost::bind( &RobotBase2DPoseDisplay::setPositionTolerance, this, _1 ), parent_category_, this );

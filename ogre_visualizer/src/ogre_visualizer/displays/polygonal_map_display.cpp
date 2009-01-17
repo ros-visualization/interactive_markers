@@ -399,7 +399,7 @@ namespace ogre_vis
                                                                                 boost::bind (&PolygonalMapDisplay::getTopic, this),
                                                                                 boost::bind (&PolygonalMapDisplay::setTopic, this, _1),
                                                                                 parent_category_, this);
-    topic_property_->setMessageType(std_msgs::PolygonalMap::__s_get_datatype());
+    topic_property_->setMessageType(std_msgs::PolygonalMap::__s_getDataType());
   }
 
   const char*

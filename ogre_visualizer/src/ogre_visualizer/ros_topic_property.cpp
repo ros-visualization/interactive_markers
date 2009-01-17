@@ -62,7 +62,7 @@ ROSTopicProperty::ROSTopicProperty()
 
 }
 
-ROSTopicProperty::ROSTopicProperty( ros::node* node, const std::string& message_type, const wxString& label, const wxString& name, const wxString& value )
+ROSTopicProperty::ROSTopicProperty( ros::Node* node, const std::string& message_type, const wxString& label, const wxString& name, const wxString& value )
 : wxLongStringProperty( label, name, value )
 , ros_node_( node )
 {

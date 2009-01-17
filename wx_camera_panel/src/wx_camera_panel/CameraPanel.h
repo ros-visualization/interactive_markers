@@ -49,7 +49,7 @@
 
 namespace ros
 {
-  class node;
+  class Node;
 }
 
 /** Standalone camera panel that can be used anywhere wx is
@@ -213,7 +213,7 @@ private:
   std::string ptz_control_topic_;
 
   /// Our ROS node
-  ros::node* ros_node_;
+  ros::Node* ros_node_;
 
   std_msgs::Image   image_message_;
   uint8_t*      image_data_;

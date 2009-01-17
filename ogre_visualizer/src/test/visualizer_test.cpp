@@ -68,7 +68,7 @@ public:
 
     root_ = Ogre::Root::getSingletonPtr();
 
-    std::string mediaPath = ros::get_package_path( "gazebo_robot_description" );
+    std::string mediaPath = ros::getPackagePath( "gazebo_robot_description" );
     mediaPath += "/world/Media/";
     ogre_tools::V_string paths;
     paths.push_back( mediaPath );
@@ -152,7 +152,7 @@ public:
     }
 
     ros::init(argc, localArgv);
-    new ros::node( "Display Test", ros::node::DONT_HANDLE_SIGINT );
+    new ros::Node( "Display Test", ros::Node::DONT_HANDLE_SIGINT );
 
     wxFrame* frame = new MyFrame(NULL);
     SetTopWindow(frame);

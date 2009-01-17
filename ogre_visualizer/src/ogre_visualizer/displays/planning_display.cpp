@@ -154,7 +154,7 @@ bool PlanningDisplay::isCollisionVisible()
 void PlanningDisplay::load()
 {
   std::string content;
-  ros_node_->get_param(description_param_, content);
+  ros_node_->getParam(description_param_, content);
   robot_desc::URDF file;
   file.loadString(content.c_str());
 
@@ -303,7 +303,7 @@ void PlanningDisplay::createProperties()
                                                                                    boost::bind( &PlanningDisplay::setRobotDescription, this, _1 ), parent_category_, this );
   topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &PlanningDisplay::getTopic, this ),
                                                                                boost::bind( &PlanningDisplay::setTopic, this, _1 ), parent_category_, this );
-  topic_property_->setMessageType(robot_msgs::DisplayKinematicPath::__s_get_datatype());
+  topic_property_->setMessageType(robot_msgs::DisplayKinematicPath::__s_getDataType());
 }
 
 const char* PlanningDisplay::getDescription()

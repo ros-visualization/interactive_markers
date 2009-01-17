@@ -31,7 +31,7 @@
 #define OGRE_VISUALIZER_PROPERTY_MANAGER_H
 
 #include "property.h"
-#include "rosconsole/rosassert.h"
+#include "ros/assert.h"
 
 #include <boost/bind.hpp>
 

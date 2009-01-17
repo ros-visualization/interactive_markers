@@ -318,7 +318,7 @@ void ROSTopicStringProperty::writeToGrid()
 {
   if ( !property_ )
   {
-    ros_topic_property_ = new ROSTopicProperty( ros::node::instance(), message_type_, name_, prefix_ + name_, wxString::FromAscii( get().c_str() ) );
+    ros_topic_property_ = new ROSTopicProperty( ros::Node::instance(), message_type_, name_, prefix_ + name_, wxString::FromAscii( get().c_str() ) );
     property_ = grid_->AppendIn( parent_->getPGProperty(), ros_topic_property_ );
 
     if ( !hasSetter() )

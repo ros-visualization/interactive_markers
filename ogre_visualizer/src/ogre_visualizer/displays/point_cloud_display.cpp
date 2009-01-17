@@ -123,7 +123,7 @@ void PointCloudDisplay::createProperties()
 
   topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &PointCloudDisplay::getTopic, this ),
                                                                               boost::bind( &PointCloudDisplay::setTopic, this, _1 ), parent_category_, this );
-  topic_property_->setMessageType(std_msgs::PointCloud::__s_get_datatype());
+  topic_property_->setMessageType(std_msgs::PointCloud::__s_getDataType());
 
 }
 

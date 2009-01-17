@@ -56,7 +56,7 @@ public:
   cloud_point(float _x, float _y, float _z, float _i) : x(_x), y(_y), z(_z), i(_i) {}
 };
 
-class Cloud_Node : public ros::node, public ros::SDLGL
+class Cloud_Node : public ros::Node, public ros::SDLGL
 {
 public:
   std_msgs::PointCloud cloud;
@@ -77,13 +77,13 @@ public:
 
   boost::mutex cloud_mutex;
 
-  Cloud_Node() : ros::node("cloud_viewer"), level(20), spread(400), buf_read_ind(0), buf_use_ind(1), cloud_cnt(0), made_dir(false)
+  Cloud_Node() : ros::Node("cloud_viewer"), level(20), spread(400), buf_read_ind(0), buf_use_ind(1), cloud_cnt(0), made_dir(false)
   {
-    subscribe("cloud", cloud, &Cloud_Node::cloud_callback);
-    subscribe("shutter", shutter, &Cloud_Node::shutter_callback);
+    subscribe("cloud", cloud, &Cloud_Node::cloud_callback, 1);
+    subscribe("shutter", shutter, &Cloud_Node::shutter_callback, 1);
 
     if (!init_gui(1024, 768))
-      self_destruct();
+      shutdown();
 
     cloud_viewer.set_opengl_params(1024,768);
 

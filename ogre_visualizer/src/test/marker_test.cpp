@@ -6,7 +6,7 @@ int main( int argc, char** argv )
 {
   ros::init( argc, argv );
 
-  ros::node* node = new ros::node( "MarkerTest", ros::node::DONT_HANDLE_SIGINT );
+  ros::Node* node = new ros::Node( "MarkerTest", ros::Node::DONT_HANDLE_SIGINT );
 
   while ( !node->ok() )
   {

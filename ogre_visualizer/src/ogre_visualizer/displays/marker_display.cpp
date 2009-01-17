@@ -94,7 +94,7 @@ void MarkerDisplay::onEnable()
 
   std::string content;
   /// @todo pass this in
-  ros_node_->get_param("robotdesc/pr2", content);
+  ros_node_->getParam("robotdesc/pr2", content);
   urdf_->clear();
   urdf_->loadString(content.c_str());
 

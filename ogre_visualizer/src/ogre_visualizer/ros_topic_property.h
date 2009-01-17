@@ -36,7 +36,7 @@
 
 namespace ros
 {
-class node;
+class Node;
 }
 
 namespace ogre_vis
@@ -45,7 +45,7 @@ class ROSTopicDialogAdapter : public wxPGEditorDialogAdapter
 {
 public:
 
-  ROSTopicDialogAdapter( ros::node* node, const std::string& message_type )
+  ROSTopicDialogAdapter( ros::Node* node, const std::string& message_type )
   : wxPGEditorDialogAdapter()
   , ros_node_( node )
   , message_type_(message_type)
@@ -55,7 +55,7 @@ public:
   virtual bool DoShowDialog( wxPropertyGrid* WXUNUSED(propGrid), wxPGProperty* WXUNUSED(property) );
 
 protected:
-  ros::node* ros_node_;
+  ros::Node* ros_node_;
   std::string message_type_;
 };
 
@@ -71,7 +71,7 @@ class ROSTopicProperty : public wxLongStringProperty
 public:
 
   // Normal property constructor.
-  ROSTopicProperty(ros::node* node, const std::string& message_type, const wxString& label, const wxString& name = wxPG_LABEL, const wxString& value = wxEmptyString);
+  ROSTopicProperty(ros::Node* node, const std::string& message_type, const wxString& label, const wxString& name = wxPG_LABEL, const wxString& value = wxEmptyString);
 
   // Do something special when button is clicked.
   virtual wxPGEditorDialogAdapter* GetEditorDialog() const
@@ -87,7 +87,7 @@ public:
 protected:
   ROSTopicProperty();
 
-  ros::node* ros_node_;
+  ros::Node* ros_node_;
   std::string message_type_;
 };
 

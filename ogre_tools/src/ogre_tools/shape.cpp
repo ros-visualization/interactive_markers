@@ -28,7 +28,7 @@
  */
 
 #include "shape.h"
-#include <rosconsole/rosassert.h>
+#include <ros/assert.h>
 
 #include <OgreSceneManager.h>
 #include <OgreSceneNode.h>

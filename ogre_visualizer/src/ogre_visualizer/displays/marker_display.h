@@ -46,7 +46,7 @@ class SceneNode;
 
 namespace ros
 {
-class node;
+class Node;
 }
 
 namespace ogre_tools

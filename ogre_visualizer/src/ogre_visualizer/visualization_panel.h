@@ -41,7 +41,7 @@
 
 #include "generated/visualization_panel_generated.h"
 
-#include "rosthread/mutex.h"
+#include "boost/thread/mutex.hpp"
 
 #include "wx/stopwatch.h"
 
@@ -68,7 +68,7 @@ class ParticleSystem;
 
 namespace ros
 {
-class node;
+class Node;
 }
 
 class wxTimerEvent;
@@ -186,7 +186,7 @@ protected:
 
   std::string target_frame_;                              ///< Target coordinate frame we're displaying everything in
 
-  ros::thread::mutex render_mutex_;                       ///< Render mutex
+  boost::mutex render_mutex_;                       ///< Render mutex
 
   VisualizationManager* manager_;
 

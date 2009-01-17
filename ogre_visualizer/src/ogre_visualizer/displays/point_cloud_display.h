@@ -45,7 +45,7 @@
 
 namespace ros
 {
-  class node;
+  class Node;
 }
 
 namespace tf

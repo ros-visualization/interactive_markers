@@ -8,7 +8,7 @@ int main( int argc, char** argv )
 {
   ros::init( argc, argv );
 
-  ros::node* node = new ros::node( "RGBCloudTest" );
+  ros::Node* node = new ros::Node( "RGBCloudTest" );
 
   while ( !node->ok() )
   {

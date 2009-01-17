@@ -29,7 +29,7 @@
 
 #include "property_manager.h"
 
-#include <rosconsole/rosconsole.h>
+#include <ros/console.h>
 
 #include <wx/wx.h>
 #include <wx/confbase.h>
