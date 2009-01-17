@@ -11,7 +11,7 @@ A simple point cloud viewer written using SDL.
 <depend package="std_msgs"/>
 <depend package="sdlgl"/>
 <export>
-  <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -lcloud_viewer -lGL -lGLU"/>
+  <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -Wl,-rpath,${prefix}/lib -lcloud_viewer -lGL -lGLU"/>
 </export>
 </package>
 
