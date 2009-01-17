@@ -286,25 +286,45 @@ namespace ogre_vis
     Ogre::ColourValue color;
 
     uint32_t num_boxes = new_message_->get_boxes_size ();
-    ROS_INFO ("Collision map contains %d boxes.", num_boxes);
+    uint32_t num_spheres = new_message_->get_spheres_size ();
+    ROS_INFO ("Collision map contains %d boxes and %d spheres.", num_boxes, num_spheres);
 
     // If we render points, we don't care about the order
     if (render_operation_ == collision_render_ops::CPoints)
     {
       typedef std::vector < ogre_tools::PointCloud::Point > V_Point;
       V_Point points;
-      points.resize (num_boxes);
-      for (uint32_t i = 0; i < num_boxes; i++)
+      if (num_boxes > 0)
       {
-        ogre_tools::PointCloud::Point & current_point = points[i];
+        points.resize (num_boxes);
+        for (uint32_t i = 0; i < num_boxes; i++)
+        {
+          ogre_tools::PointCloud::Point & current_point = points[i];
 
-        current_point.x_ = new_message_->boxes[i].center.x;
-        current_point.y_ = new_message_->boxes[i].center.y;
-        current_point.z_ = new_message_->boxes[i].center.z;
-        color = Ogre::ColourValue (color_.r_, color_.g_, color_.b_, alpha_);
-        current_point.r_ = color.r;
-        current_point.g_ = color.g;
-        current_point.b_ = color.b;
+          current_point.x_ = new_message_->boxes[i].center.x;
+          current_point.y_ = new_message_->boxes[i].center.y;
+          current_point.z_ = new_message_->boxes[i].center.z;
+          color = Ogre::ColourValue (color_.r_, color_.g_, color_.b_, alpha_);
+          current_point.r_ = color.r;
+          current_point.g_ = color.g;
+          current_point.b_ = color.b;
+        }
+      }
+      else if (num_spheres > 0)
+      {
+        points.resize (num_spheres);
+        for (uint32_t i = 0; i < num_spheres; i++)
+        {
+          ogre_tools::PointCloud::Point & current_point = points[i];
+
+          current_point.x_ = new_message_->spheres[i].center.x;
+          current_point.y_ = new_message_->spheres[i].center.y;
+          current_point.z_ = new_message_->spheres[i].center.z;
+          color = Ogre::ColourValue (color_.r_, color_.g_, color_.b_, alpha_);
+          current_point.r_ = color.r;
+          current_point.g_ = color.g;
+          current_point.b_ = color.b;
+        }
       }
 
       cloud_->clear ();
@@ -316,34 +336,69 @@ namespace ogre_vis
     {
       std_msgs::Point32 center, extents;
       color = Ogre::ColourValue (color_.r_, color_.g_, color_.b_, alpha_);
-      for (uint32_t i = 0; i < num_boxes; i++)
+      if (num_boxes > 0)
       {
-        manual_object_->estimateVertexCount (8);
-        manual_object_->begin ("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
-        center.x = new_message_->boxes[i].center.x;
-        center.y = new_message_->boxes[i].center.y;
-        center.z = new_message_->boxes[i].center.z;
-        extents.x = new_message_->boxes[i].extents.x;
-        extents.y = new_message_->boxes[i].extents.y;
-        extents.z = new_message_->boxes[i].extents.z;
+        for (uint32_t i = 0; i < num_boxes; i++)
+        {
+          manual_object_->estimateVertexCount (8);
+          manual_object_->begin ("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
+          center.x = new_message_->boxes[i].center.x;
+          center.y = new_message_->boxes[i].center.y;
+          center.z = new_message_->boxes[i].center.z;
+          extents.x = new_message_->boxes[i].extents.x;
+          extents.y = new_message_->boxes[i].extents.y;
+          extents.z = new_message_->boxes[i].extents.z;
 
-        manual_object_->position (center.x - extents.x, center.y - extents.y, center.z - extents.z);
-        manual_object_->colour (color);
-        manual_object_->position (center.x - extents.x, center.y + extents.y, center.z - extents.z);
-        manual_object_->colour (color);
-        manual_object_->position (center.x + extents.x, center.y + extents.y, center.z - extents.z);
-        manual_object_->colour (color);
-        manual_object_->position (center.x + extents.x, center.y - extents.y, center.z - extents.z);
-        manual_object_->colour (color);
-        manual_object_->position (center.x + extents.x, center.y - extents.y, center.z + extents.z);
-        manual_object_->colour (color);
-        manual_object_->position (center.x + extents.x, center.y + extents.y, center.z + extents.z);
-        manual_object_->colour (color);
-        manual_object_->position (center.x - extents.x, center.y + extents.y, center.z + extents.z);
-        manual_object_->colour (color);
-        manual_object_->position (center.x - extents.x, center.y - extents.y, center.z + extents.z);
-        manual_object_->colour (color);
-        manual_object_->end ();
+          manual_object_->position (center.x - extents.x, center.y - extents.y, center.z - extents.z);
+          manual_object_->colour (color);
+          manual_object_->position (center.x - extents.x, center.y + extents.y, center.z - extents.z);
+          manual_object_->colour (color);
+          manual_object_->position (center.x + extents.x, center.y + extents.y, center.z - extents.z);
+          manual_object_->colour (color);
+          manual_object_->position (center.x + extents.x, center.y - extents.y, center.z - extents.z);
+          manual_object_->colour (color);
+          manual_object_->position (center.x + extents.x, center.y - extents.y, center.z + extents.z);
+          manual_object_->colour (color);
+          manual_object_->position (center.x + extents.x, center.y + extents.y, center.z + extents.z);
+          manual_object_->colour (color);
+          manual_object_->position (center.x - extents.x, center.y + extents.y, center.z + extents.z);
+          manual_object_->colour (color);
+          manual_object_->position (center.x - extents.x, center.y - extents.y, center.z + extents.z);
+          manual_object_->colour (color);
+          manual_object_->end ();
+        }
+      }
+      else if (num_spheres > 0)
+      {
+        for (uint32_t i = 0; i < num_spheres; i++)
+        {
+          manual_object_->estimateVertexCount (8);
+          manual_object_->begin ("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
+          center.x = new_message_->spheres[i].center.x;
+          center.y = new_message_->spheres[i].center.y;
+          center.z = new_message_->spheres[i].center.z;
+          extents.x = new_message_->spheres[i].radius * 2;
+          extents.y = new_message_->spheres[i].radius * 2;
+          extents.z = new_message_->spheres[i].radius * 2;
+
+          manual_object_->position (center.x - extents.x, center.y - extents.y, center.z - extents.z);
+          manual_object_->colour (color);
+          manual_object_->position (center.x - extents.x, center.y + extents.y, center.z - extents.z);
+          manual_object_->colour (color);
+          manual_object_->position (center.x + extents.x, center.y + extents.y, center.z - extents.z);
+          manual_object_->colour (color);
+          manual_object_->position (center.x + extents.x, center.y - extents.y, center.z - extents.z);
+          manual_object_->colour (color);
+          manual_object_->position (center.x + extents.x, center.y - extents.y, center.z + extents.z);
+          manual_object_->colour (color);
+          manual_object_->position (center.x + extents.x, center.y + extents.y, center.z + extents.z);
+          manual_object_->colour (color);
+          manual_object_->position (center.x - extents.x, center.y + extents.y, center.z + extents.z);
+          manual_object_->colour (color);
+          manual_object_->position (center.x - extents.x, center.y - extents.y, center.z + extents.z);
+          manual_object_->colour (color);
+          manual_object_->end ();
+        }
       }
     }
 
