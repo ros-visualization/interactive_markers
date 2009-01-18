@@ -371,6 +371,7 @@ void PointCloudBase::processMessage(const boost::shared_ptr<std_msgs::PointCloud
   }
 
   // Get the channels that we could potentially render
+  int channel_color_idx = getChannelColorIndex ();
   channel_property_->clear ();
   typedef std::vector<std_msgs::ChannelFloat32> V_Chan;
   V_Chan::iterator chan_it = cloud->chan.begin();
@@ -395,6 +396,7 @@ void PointCloudBase::processMessage(const boost::shared_ptr<std_msgs::PointCloud
   {
     channel_property_->changed();
   }
+  setChannelColorIndex (channel_color_idx);
 
   info->message_ = cloud;
   info->time_ = 0;
@@ -581,8 +583,30 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
     current_point.b_ = max_color_.b_;
   }
 
-  chan_it = cloud->chan.begin();
   index = 0;
+  enum ChannelType
+  {
+    CT_INTENSITY,
+    CT_RGB,
+    CT_R,
+    CT_G,
+    CT_B,
+
+    CT_COUNT
+  };
+  ChannelType type = CT_INTENSITY;
+  typedef void (*TransformFunc)(float, ogre_tools::PointCloud::Point&, const Color&, float, float, float);
+  TransformFunc funcs[CT_COUNT] =
+  {
+    transformIntensity,
+    transformRGB,
+    transformR,
+    transformG,
+    transformB
+  };
+
+
+  chan_it = cloud->chan.begin();
   for ( ; chan_it != chan_end; ++chan_it, ++index )
   {
     if ( !valid_channels[index] )
@@ -592,18 +616,6 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
 
     std_msgs::ChannelFloat32& chan = *chan_it;
 
-    enum ChannelType
-    {
-      CT_INTENSITY,
-      CT_RGB,
-      CT_R,
-      CT_G,
-      CT_B,
-
-      CT_COUNT
-    };
-
-    ChannelType type = CT_INTENSITY;
     if ( chan.name == "intensity" || chan.name == "intensities" || chan.name == "curvatures" || chan.name == "curvature" )
     {
       type = CT_INTENSITY;
@@ -629,17 +641,8 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
       continue;
     }
 
-    typedef void (*TransformFunc)(float, ogre_tools::PointCloud::Point&, const Color&, float, float, float);
-    TransformFunc funcs[CT_COUNT] =
-    {
-      transformIntensity,
-      transformRGB,
-      transformR,
-      transformG,
-      transformB
-    };
-
-    for(uint32_t i = 0; i < point_count; i++)
+    // Color all points
+    for (uint32_t i = 0; i < point_count; i++)
     {
       ogre_tools::PointCloud::Point& current_point = points[ i ];
       if ( ( channel_color_idx_ == Intensity && (chan.name == "intensity" || chan.name == "intensities") ) ||
@@ -649,7 +652,7 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
       {
         funcs[type]( chan.vals[i], current_point, min_color_, min_intensity_, max_intensity_, diff_intensity );
       }
-    }
+    } // for point_count
   }
 
   {
