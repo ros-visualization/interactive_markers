@@ -76,9 +76,8 @@ namespace ogre_vis
     scene_node_->attachObject (manual_object_);
 
     cloud_ = new ogre_tools::PointCloud (scene_manager_, scene_node_);
-    cloud_->setBillboardType (Ogre::BBT_PERPENDICULAR_COMMON);
     setAlpha (1.0f);
-    setPointSize (0.05f);
+    setPointSize (0.02f);
     setZPosition (0.0f);
 
    notifier_ = new tf::MessageNotifier<std_msgs::PolygonalMap>(tf_, ros_node_, boost::bind(&PolygonalMapDisplay::incomingMessage, this, _1), "", "", 1);
