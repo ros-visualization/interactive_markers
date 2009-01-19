@@ -15,7 +15,6 @@
     <depend package="std_msgs"/>
     <depend package="tf"/>
     <depend package="laser_scan"/>
-    <depend package="wg_robot_description"/>
     <depend package="gazebo_robot_description"/>
     <depend package="wg_robot_description_parser"/>
     <depend package="scan_utils" />
