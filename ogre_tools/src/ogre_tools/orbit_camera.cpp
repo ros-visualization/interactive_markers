@@ -40,7 +40,7 @@
 #include <stdint.h>
 #include <sstream>
 
-#define MIN_DISTANCE 0.1
+#define MIN_DISTANCE 0.5
 
 namespace ogre_tools
 {
@@ -205,15 +205,12 @@ void OrbitCamera::zoom( float amount )
 
   if ( distance_ <= MIN_DISTANCE )
   {
-#if 0
-    float diff = MIN_DISTANCE - distance_;
-    distance_ = MIN_DISTANCE + diff;
-
-    move( 0.0f, 0.0f, -diff );
-#else
     distance_ = MIN_DISTANCE;
-#endif
-
+    Ogre::Vector3 normalized = getOrientation() * Ogre::Vector3::NEGATIVE_UNIT_Z;
+    normalized.normalise();
+    normalized *= amount;
+    normalized += focal_point_;
+    setFocalPoint(normalized);
   }
 
   update();
