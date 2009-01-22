@@ -31,69 +31,44 @@ set(WXSWIG_EXECUTABLE ${wxswig_PACKAGE_PATH}/bin/swig)
 
 # Add a custom command for generating the swig output files
 set(SWIG_INTERFACE_FILE ${PROJECT_SOURCE_DIR}/src/ogre_visualizer/ogre_visualizer.i)
+set(SWIG_OUTPUT_PYTHON_FILE ${PROJECT_SOURCE_DIR}/lib/ogre_visualizer.py)
+
 if("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" GREATER 2.4)
   set(SWIG_OUTPUT_CPP_FILE ${PROJECT_SOURCE_DIR}/src/ogre_visualizer/ogre_visualizer_swig_generated.cpp)
-  set(SWIG_OUTPUT_PYTHON_FILE ${PROJECT_SOURCE_DIR}/lib/ogre_visualizer.py)
-  set_source_files_properties(${SWIG_OUTPUT_CPP_FILE} PROPERTIES GENERATED true)
-  add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE} 
-                              ${SWIG_OUTPUT_PYTHON_FILE}
-                     COMMAND  ${WXSWIG_EXECUTABLE} ${SWIG_FLAGS} -o ${SWIG_OUTPUT_CPP_FILE} -outdir ../lib -module ${PROJECT_NAME} ${SWIG_INTERFACE_FILE}
-                     DEPENDS  ${SWIG_INTERFACE_FILE}
-                              src/ogre_visualizer/display.i
-                              src/ogre_visualizer/visualization_panel.i
-                              src/ogre_visualizer/visualization_manager.i
-                              src/ogre_visualizer/helpers/color.i
-                              src/ogre_visualizer/visualization_panel.h
-                              src/ogre_visualizer/visualization_manager.h  
-                              src/ogre_visualizer/generated/visualization_panel_generated.h
-                              src/ogre_visualizer/display.h
-                              src/ogre_visualizer/displays/axes_display.h
-                              src/ogre_visualizer/displays/grid_display.h
-                              src/ogre_visualizer/displays/laser_scan_display.h
-                              src/ogre_visualizer/displays/marker_display.h
-                              src/ogre_visualizer/displays/octree_display.h
-                              src/ogre_visualizer/displays/planning_display.h
-                              src/ogre_visualizer/displays/point_cloud_base.h
-                              src/ogre_visualizer/displays/point_cloud_display.h
-                              src/ogre_visualizer/displays/robot_model_display.h
-                              src/ogre_visualizer/displays/robot_base2d_pose_display.h
-                              src/ogre_visualizer/displays/particle_cloud_2d_display.h
-                              src/ogre_visualizer/displays/poly_line_2d_display.h
-                              src/ogre_visualizer/displays/map_display.h
-                              src/ogre_visualizer/displays/tf_display.h
-                              src/ogre_visualizer/helpers/color.h)
+  set(SWIG_COMMAND ${WXSWIG_EXECUTABLE} ${SWIG_FLAGS} -o ${SWIG_OUTPUT_CPP_FILE} -outdir ../lib -module ${PROJECT_NAME} ${SWIG_INTERFACE_FILE})
 else("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" GREATER 2.4)
   set(SWIG_OUTPUT_CPP_FILE src/ogre_visualizer/ogre_visualizer_swig_generated.cpp)
-  set(SWIG_OUTPUT_PYTHON_FILE ${PROJECT_SOURCE_DIR}/lib/ogre_visualizer.py)
-  set_source_files_properties(${SWIG_OUTPUT_CPP_FILE} PROPERTIES GENERATED true)
-  add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE} 
-                              ${SWIG_OUTPUT_PYTHON_FILE}
-                     COMMAND  ${WXSWIG_EXECUTABLE} ${SWIG_FLAGS} -o ../${SWIG_OUTPUT_CPP_FILE} -outdir ../lib -module ${PROJECT_NAME} ${SWIG_INTERFACE_FILE}
-                     DEPENDS  ${SWIG_INTERFACE_FILE}
-                              src/ogre_visualizer/display.i
-                              src/ogre_visualizer/visualization_panel.i
-                              src/ogre_visualizer/visualization_manager.i
-                              src/ogre_visualizer/helpers/color.i
-                              src/ogre_visualizer/visualization_panel.h
-                              src/ogre_visualizer/visualization_manager.h  
-                              src/ogre_visualizer/generated/visualization_panel_generated.h
-                              src/ogre_visualizer/display.h
-                              src/ogre_visualizer/displays/axes_display.h
-                              src/ogre_visualizer/displays/grid_display.h
-                              src/ogre_visualizer/displays/laser_scan_display.h
-                              src/ogre_visualizer/displays/marker_display.h
-                              src/ogre_visualizer/displays/octree_display.h
-                              src/ogre_visualizer/displays/planning_display.h
-                              src/ogre_visualizer/displays/point_cloud_base.h
-                              src/ogre_visualizer/displays/point_cloud_display.h
-                              src/ogre_visualizer/displays/robot_model_display.h
-                              src/ogre_visualizer/displays/robot_base2d_pose_display.h
-                              src/ogre_visualizer/displays/particle_cloud_2d_display.h
-                              src/ogre_visualizer/displays/poly_line_2d_display.h
-                              src/ogre_visualizer/displays/map_display.h
-                              src/ogre_visualizer/displays/tf_display.h
-                              src/ogre_visualizer/helpers/color.h)
+  set(SWIG_COMMAND ${WXSWIG_EXECUTABLE} ${SWIG_FLAGS} -o ../${SWIG_OUTPUT_CPP_FILE} -outdir ../lib -module ${PROJECT_NAME} ${SWIG_INTERFACE_FILE})
 endif("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" GREATER 2.4)
+
+set_source_files_properties(${SWIG_OUTPUT_CPP_FILE} PROPERTIES GENERATED true)
+add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE} 
+                            ${SWIG_OUTPUT_PYTHON_FILE}
+                   COMMAND  ${SWIG_COMMAND}
+                   DEPENDS  ${SWIG_INTERFACE_FILE}
+                            src/ogre_visualizer/display.i
+                            src/ogre_visualizer/visualization_panel.i
+                            src/ogre_visualizer/visualization_manager.i
+                            src/ogre_visualizer/helpers/color.i
+                            src/ogre_visualizer/visualization_panel.h
+                            src/ogre_visualizer/visualization_manager.h  
+                            src/ogre_visualizer/generated/visualization_panel_generated.h
+                            src/ogre_visualizer/display.h
+                            src/ogre_visualizer/displays/axes_display.h
+                            src/ogre_visualizer/displays/grid_display.h
+                            src/ogre_visualizer/displays/laser_scan_display.h
+                            src/ogre_visualizer/displays/marker_display.h
+                            src/ogre_visualizer/displays/octree_display.h
+                            src/ogre_visualizer/displays/planning_display.h
+                            src/ogre_visualizer/displays/point_cloud_base.h
+                            src/ogre_visualizer/displays/point_cloud_display.h
+                            src/ogre_visualizer/displays/robot_model_display.h
+                            src/ogre_visualizer/displays/robot_base2d_pose_display.h
+                            src/ogre_visualizer/displays/particle_cloud_2d_display.h
+                            src/ogre_visualizer/displays/poly_line_2d_display.h
+                            src/ogre_visualizer/displays/map_display.h
+                            src/ogre_visualizer/displays/tf_display.h
+                            src/ogre_visualizer/helpers/color.h)
 
 
 # We create one lib with the C++...
