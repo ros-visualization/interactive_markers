@@ -45,25 +45,18 @@
 namespace ogre_vis
 {
 
-PointCloudBase::CloudInfo::CloudInfo(Ogre::SceneManager* scene_manager)
-: cloud_(NULL)
-, scene_node_(NULL)
-, scene_manager_(scene_manager)
-, time_(0.0f)
+PointCloudBase::CloudInfo::CloudInfo()
+: time_(0.0f)
+, num_points_(0)
 {}
 
 PointCloudBase::CloudInfo::~CloudInfo()
 {
-  delete cloud_;
-
-  if (scene_node_)
-  {
-    scene_manager_->destroySceneNode(scene_node_->getName());
-  }
 }
 
 PointCloudBase::PointCloudBase( const std::string& name, VisualizationManager* manager )
 : Display( name, manager )
+, new_cloud_(false)
 , min_color_( 0.0f, 0.0f, 0.0f )
 , max_color_( 1.0f, 1.0f, 1.0f )
 , min_intensity_(0.0f)
@@ -84,6 +77,8 @@ PointCloudBase::PointCloudBase( const std::string& name, VisualizationManager* m
 , channel_property_( NULL )
 , decay_time_property_( NULL )
 {
+  cloud_ = new ogre_tools::PointCloud( scene_manager_, NULL );
+
   setStyle( style_ );
   setBillboardSize( billboard_size_ );
   setChannelColorIndex ( channel_color_idx_ );
@@ -91,9 +86,6 @@ PointCloudBase::PointCloudBase( const std::string& name, VisualizationManager* m
 
 PointCloudBase::~PointCloudBase()
 {
-  transform_thread_destroy_ = true;
-  transform_cond_.notify_all();
-  transform_thread_.join();
 }
 
 void PointCloudBase::setMaxColor( const Color& color )
@@ -185,13 +177,7 @@ void PointCloudBase::setStyle( int style )
 
     style_ = style;
 
-    boost::mutex::scoped_lock lock(clouds_mutex_);
-    D_CloudInfo::iterator it = clouds_.begin();
-    D_CloudInfo::iterator end = clouds_.end();
-    for (; it != end; ++it)
-    {
-      (*it)->cloud_->setUsePoints(style == Points);
-    }
+    cloud_->setUsePoints(style == Points);
   }
 
   if ( style_property_ )
@@ -220,16 +206,8 @@ void PointCloudBase::setBillboardSize( float size )
 
     billboard_size_ = size;
 
-    boost::mutex::scoped_lock lock(clouds_mutex_);
-    D_CloudInfo::iterator it = clouds_.begin();
-    D_CloudInfo::iterator end = clouds_.end();
-    for (; it != end; ++it)
-    {
-      (*it)->cloud_->setBillboardDimensions( size, size );
-    }
+    cloud_->setBillboardDimensions( size, size );
   }
-
-  causeRender();
 
   if ( billboard_size_property_ )
   {
@@ -241,27 +219,12 @@ void PointCloudBase::setBillboardSize( float size )
 
 void PointCloudBase::onEnable()
 {
-  transform_thread_destroy_ = false;
-  transform_thread_ = boost::thread(boost::bind(&PointCloudBase::transformThreadFunc, this));
 }
 
 void PointCloudBase::onDisable()
 {
-  transform_thread_destroy_ = true;
-  transform_cond_.notify_all();
-  transform_thread_.join();
-
-  boost::mutex::scoped_lock clouds_lock(clouds_mutex_);
-  boost::mutex::scoped_lock messages_lock(message_queue_mutex_);
-
   clouds_.clear();
-  message_queue_.clear();
-  clouds_to_delete_.clear();
-
-  while (!transform_queue_.empty())
-  {
-    transform_queue_.pop();
-  }
+  cloud_->clear();
 }
 
 void PointCloudBase::update(float dt)
@@ -272,20 +235,6 @@ void PointCloudBase::update(float dt)
     setMaxIntensity(max_intensity_);
     intensity_bounds_changed_ = false;
   }
-
-  V_PointCloud messages;
-  {
-    boost::mutex::scoped_lock lock(message_queue_mutex_);
-    messages.swap(message_queue_);
-  }
-
-  V_PointCloud::iterator message_it = messages.begin();
-  V_PointCloud::iterator message_end = messages.end();
-  for (; message_it != message_end; ++message_it)
-  {
-    processMessage(*message_it);
-  }
-  messages.clear();
 
   {
     boost::mutex::scoped_lock lock(clouds_mutex_);
@@ -301,16 +250,59 @@ void PointCloudBase::update(float dt)
 
     if (point_decay_time_ > 0.0f)
     {
+      bool removed = false;
       while (!clouds_.empty() && clouds_.front()->time_ > point_decay_time_)
       {
+        cloud_->popPoints(clouds_.front()->num_points_);
         clouds_.pop_front();
+        removed = true;
+      }
+
+      if (removed)
+      {
+        causeRender();
       }
     }
-  }
 
-  {
-    boost::mutex::scoped_lock lock(clouds_to_delete_mutex_);
-    clouds_to_delete_.clear();
+    if (new_cloud_ && !clouds_.empty())
+    {
+      const boost::shared_ptr<std_msgs::PointCloud>& cloud = clouds_.front()->message_;
+
+      // Get the channels that we could potentially render
+      int channel_color_idx = getChannelColorIndex ();
+      channel_property_->clear ();
+      typedef std::vector<std_msgs::ChannelFloat32> V_Chan;
+      V_Chan::iterator chan_it = cloud->chan.begin();
+      V_Chan::iterator chan_end = cloud->chan.end();
+      uint32_t index = 0;
+      for ( ; chan_it != chan_end; ++chan_it, ++index )
+      {
+        if (channel_color_idx == -1)
+        {
+          channel_color_idx = 0;
+        }
+
+        std_msgs::ChannelFloat32& chan = *chan_it;
+        if (chan.name == "intensity" || chan.name == "intensities")
+          channel_property_->addOption ("Intensity", Intensity);
+
+        if (chan.name == "rgb" || chan.name == "r")
+          channel_property_->addOption ("Color (RGB)", ColorRGBSpace);
+
+        if (chan.name == "nx")
+          channel_property_->addOption ("Normal Sphere", NormalSphere);
+
+        if (chan.name == "curvature" || chan.name == "curvatures")
+          channel_property_->addOption ("Curvature", Curvature);
+      }
+      if ( channel_property_ )
+      {
+        channel_property_->changed();
+      }
+      setChannelColorIndex (channel_color_idx);
+    }
+
+    new_cloud_ = false;
   }
 }
 
@@ -348,114 +340,17 @@ void transformB( float val, ogre_tools::PointCloud::Point& point, const Color&, 
 
 void PointCloudBase::processMessage(const boost::shared_ptr<std_msgs::PointCloud>& cloud)
 {
-  CloudInfoPtr info;
-
-  if (point_decay_time_ == 0.0f) // reuse old cloud
-  {
-    boost::mutex::scoped_lock lock(clouds_mutex_);
-
-    if (clouds_.size() == 1)
-    {
-      info = clouds_.front();
-    }
-    else
-    {
-      info = CloudInfoPtr(new CloudInfo(scene_manager_));
-    }
-
-    clouds_.clear();
-  }
-  else
-  {
-    info = CloudInfoPtr(new CloudInfo(scene_manager_));
-  }
-
-  // Get the channels that we could potentially render
-  int channel_color_idx = getChannelColorIndex ();
-  channel_property_->clear ();
-  typedef std::vector<std_msgs::ChannelFloat32> V_Chan;
-  V_Chan::iterator chan_it = cloud->chan.begin();
-  V_Chan::iterator chan_end = cloud->chan.end();
-  uint32_t index = 0;
-  for ( ; chan_it != chan_end; ++chan_it, ++index )
-  {
-    std_msgs::ChannelFloat32& chan = *chan_it;
-    if (chan.name == "intensity" || chan.name == "intensities")
-      channel_property_->addOption ("Intensity", Intensity);
-
-    if (chan.name == "rgb" || chan.name == "r")
-      channel_property_->addOption ("Color (RGB)", ColorRGBSpace);
-
-    if (chan.name == "nx")
-      channel_property_->addOption ("Normal Sphere", NormalSphere);
-
-    if (chan.name == "curvature" || chan.name == "curvatures")
-      channel_property_->addOption ("Curvature", Curvature);
-  }
-  if ( channel_property_ )
-  {
-    channel_property_->changed();
-  }
-  setChannelColorIndex (channel_color_idx);
-
+  CloudInfoPtr info(new CloudInfo());
   info->message_ = cloud;
   info->time_ = 0;
-  if (!info->scene_node_)
+
+  transformCloud(info);
+
   {
-    ROS_ASSERT(!info->cloud_);
-    info->scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
-    info->cloud_ = new ogre_tools::PointCloud( scene_manager_, info->scene_node_ );
-  }
-  // TODO: these two should actually happen after the cloud has been transformed, back in the main thread
-  info->cloud_->setUsePoints( style_ == Points );
-  info->cloud_->setBillboardDimensions( billboard_size_, billboard_size_ );
+    boost::mutex::scoped_lock lock(clouds_mutex_);
+    clouds_.push_back(info);
 
-  boost::mutex::scoped_lock lock(transform_queue_mutex_);
-  transform_queue_.push(info);
-  transform_cond_.notify_all();
-}
-
-void PointCloudBase::transformThreadFunc()
-{
-  while (!transform_thread_destroy_)
-  {
-    CloudInfoPtr info;
-
-    {
-      boost::mutex::scoped_lock lock(transform_queue_mutex_);
-
-      while (!transform_thread_destroy_ && transform_queue_.empty())
-      {
-        transform_cond_.wait(lock);
-      }
-
-      if (transform_thread_destroy_)
-      {
-        return;
-      }
-
-      info = transform_queue_.front();
-      transform_queue_.pop();
-    }
-
-    transformCloud(info);
-
-    {
-      boost::mutex::scoped_lock lock(clouds_mutex_);
-
-      if (point_decay_time_ == 0.0f)
-      {
-        boost::mutex::scoped_lock lock(clouds_to_delete_mutex_);
-        clouds_to_delete_.insert(clouds_to_delete_.begin(), clouds_.begin(), clouds_.end());
-        clouds_.clear();
-      }
-
-      clouds_.push_back(info);
-      // Clear the info shared pointer while we still have the clouds mutex locked
-      // So that we will never delete it from this thread
-      info = CloudInfoPtr();
-      causeRender();
-    }
+    new_cloud_ = true;
   }
 }
 
@@ -469,24 +364,14 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
     frame_id = fixed_frame_;
   }
 
-  tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), cloud->header.stamp, frame_id );
-
   try
   {
-    tf_->transformPose( fixed_frame_, pose, pose );
+    tf_->transformPointCloud( fixed_frame_, *cloud, *cloud );
   }
   catch(tf::TransformException& e)
   {
     ROS_ERROR( "Error transforming point cloud '%s' from frame '%s' to frame '%s'\n", name_.c_str(), frame_id.c_str(), fixed_frame_.c_str() );
   }
-
-  Ogre::Vector3 position( pose.getOrigin().x(), pose.getOrigin().y(), pose.getOrigin().z() );
-  robotToOgre( position );
-
-  btScalar yaw, pitch, roll;
-  pose.getBasis().getEulerZYX( yaw, pitch, roll );
-
-  Ogre::Matrix3 orientation( ogreMatrixFromRobotEulers( yaw, pitch, roll ) );
 
   typedef std::vector<std_msgs::ChannelFloat32> V_Chan;
   typedef std::vector<bool> V_bool;
@@ -496,6 +381,8 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
   V_Chan::iterator chan_it = cloud->chan.begin();
   V_Chan::iterator chan_end = cloud->chan.end();
   uint32_t index = 0;
+
+  info->num_points_ = point_count;
 
   bool use_normals_as_coordinates = false;
 
@@ -578,6 +465,13 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
       current_point.y_ = cloud->pts[i].y;
       current_point.z_ = cloud->pts[i].z;
     }
+
+    Ogre::Vector3 position( current_point.x_, current_point.y_, current_point.z_ );
+    robotToOgre( position );
+    current_point.x_ = position.x;
+    current_point.y_ = position.y;
+    current_point.z_ = position.z;
+
     current_point.r_ = max_color_.r_;
     current_point.g_ = max_color_.g_;
     current_point.b_ = max_color_.b_;
@@ -604,7 +498,6 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
     transformG,
     transformB
   };
-
 
   chan_it = cloud->chan.begin();
   for ( ; chan_it != chan_end; ++chan_it, ++index )
@@ -642,30 +535,31 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
     }
 
     // Color all points
-    for (uint32_t i = 0; i < point_count; i++)
-    {
-      ogre_tools::PointCloud::Point& current_point = points[ i ];
-      if ( ( channel_color_idx_ == Intensity && (chan.name == "intensity" || chan.name == "intensities") ) ||
+    if ( ( channel_color_idx_ == Intensity && (chan.name == "intensity" || chan.name == "intensities") ) ||
            ( channel_color_idx_ == Curvature && (chan.name == "curvature" || chan.name == "curvatures") ) ||
            ( channel_color_idx_ == ColorRGBSpace && (chan.name == "rgb" || chan.name == "r" || chan.name == "g" || chan.name == "b") )
          )
+    {
+      for (uint32_t i = 0; i < point_count; i++)
       {
+        ogre_tools::PointCloud::Point& current_point = points[ i ];
+
         funcs[type]( chan.vals[i], current_point, min_color_, min_intensity_, max_intensity_, diff_intensity );
-      }
-    } // for point_count
+      } // for point_count
+    }
   }
 
   {
     RenderAutoLock renderLock( this );
 
-    info->scene_node_->setPosition( position );
-    info->scene_node_->setOrientation( orientation );
-
-    info->cloud_->clear();
+    if (point_decay_time_ == 0.0f)
+    {
+      cloud_->clear();
+    }
 
     if ( !points.empty() )
     {
-      info->cloud_->addPoints( &points.front(), points.size() );
+      cloud_->addPoints( &points.front(), points.size() );
     }
   }
 
@@ -675,8 +569,7 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
 
 void PointCloudBase::addMessage(const boost::shared_ptr<std_msgs::PointCloud>& cloud)
 {
-  boost::mutex::scoped_lock lock(message_queue_mutex_);
-  message_queue_.push_back(cloud);
+  processMessage(cloud);
 }
 
 void PointCloudBase::fixedFrameChanged()
@@ -718,28 +611,12 @@ void PointCloudBase::createProperties()
 
 void PointCloudBase::reset()
 {
-  transform_thread_destroy_ = true;
-  transform_cond_.notify_all();
-  transform_thread_.join();
-
   {
-    // transform thread should no longer be running, so no need to lock the mutex
-    while (!transform_queue_.empty())
-    {
-      transform_queue_.pop();
-    }
-
     RenderAutoLock renderLock( this );
 
-    boost::mutex::scoped_lock clouds_lock(clouds_mutex_);
     clouds_.clear();
-
-    boost::mutex::scoped_lock message_lock(message_queue_mutex_);
-    message_queue_.clear();
+    cloud_->clear();
   }
-
-  transform_thread_destroy_ = false;
-  transform_thread_ = boost::thread(boost::bind(&PointCloudBase::transformThreadFunc, this));
 }
 
 } // namespace ogre_vis

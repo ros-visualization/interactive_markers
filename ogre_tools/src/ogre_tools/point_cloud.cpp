@@ -28,6 +28,7 @@
  */
 
 #include "point_cloud.h"
+#include <ros/assert.h>
 
 #include <OgreSceneManager.h>
 #include <OgreSceneNode.h>
@@ -277,6 +278,14 @@ void PointCloud::addPoints( Point* points, uint32_t num_points )
   }*/
 
   point_count_ += num_points;
+}
+
+void PointCloud::popPoints( uint32_t num_points )
+{
+  ROS_ASSERT(num_points <= point_count_);
+  points_.erase(points_.begin(), points_.begin() + num_points);
+
+  point_count_ -= num_points;
 }
 
 void PointCloud::_notifyCurrentCamera( Ogre::Camera* camera )

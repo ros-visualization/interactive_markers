@@ -77,15 +77,13 @@ class PointCloudBase : public Display
 private:
   struct CloudInfo
   {
-    CloudInfo(Ogre::SceneManager* scene_manager);
+    CloudInfo();
     ~CloudInfo();
 
-    ogre_tools::PointCloud* cloud_;
-    Ogre::SceneNode* scene_node_;
-    Ogre::SceneManager* scene_manager_;
     float time_;
 
     boost::shared_ptr<std_msgs::PointCloud> message_;
+    uint32_t num_points_;
   };
   typedef boost::shared_ptr<CloudInfo> CloudInfoPtr;
   typedef std::deque<CloudInfoPtr> D_CloudInfo;
@@ -201,18 +199,9 @@ protected:
 
   D_CloudInfo clouds_;
   boost::mutex clouds_mutex_;
-  D_CloudInfo clouds_to_delete_;
-  boost::mutex clouds_to_delete_mutex_;
+  bool new_cloud_;
 
-  typedef std::vector<boost::shared_ptr<std_msgs::PointCloud> > V_PointCloud;
-  V_PointCloud message_queue_;
-  boost::mutex message_queue_mutex_;
-
-  Q_CloudInfo transform_queue_;
-  boost::mutex transform_queue_mutex_;
-  boost::condition_variable transform_cond_;
-  bool transform_thread_destroy_;
-  boost::thread transform_thread_;
+  ogre_tools::PointCloud* cloud_;
 
   Color min_color_;
   Color max_color_;

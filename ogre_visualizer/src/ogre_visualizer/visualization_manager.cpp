@@ -100,7 +100,7 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
   directional_light->setDiffuseColour( Ogre::ColourValue( 1.0f, 1.0f, 1.0f ) );
 
   update_timer_ = new wxTimer( this );
-  update_timer_->Start( 10 );
+  update_timer_->Start( 33 );
   update_stopwatch_.Start();
   Connect( update_timer_->GetId(), wxEVT_TIMER, wxTimerEventHandler( VisualizationManager::onUpdate ), NULL, this );
 
@@ -282,6 +282,8 @@ void VisualizationManager::resetTime()
 
   ros_time_begin_ = ros::Time();
   wall_clock_begin_ = ros::Time();
+
+  vis_panel_->queueRender();
 }
 
 std::string getCategoryLabel( DisplayInfo* info )

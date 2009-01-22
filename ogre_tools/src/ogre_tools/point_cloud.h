@@ -98,6 +98,12 @@ public:
   void addPoints( Point* points, uint32_t num_points );
 
   /**
+   * \brief Remove a number of points from this point cloud
+   * \param num_points The number of points to pop
+   */
+  void popPoints( uint32_t num_points );
+
+  /**
    * \brief Set whether to use points for rendering rather than billboards
    * @param usePoints If true, will use point rendering instead of billboards
    */
