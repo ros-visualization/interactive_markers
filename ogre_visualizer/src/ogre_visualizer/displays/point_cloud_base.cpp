@@ -348,6 +348,12 @@ void PointCloudBase::processMessage(const boost::shared_ptr<std_msgs::PointCloud
 
   {
     boost::mutex::scoped_lock lock(clouds_mutex_);
+
+    if (point_decay_time_ == 0.0f)
+    {
+      clouds_.clear();
+    }
+
     clouds_.push_back(info);
 
     new_cloud_ = true;
