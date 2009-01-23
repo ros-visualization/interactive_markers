@@ -50,7 +50,7 @@ PointCloudDisplay::PointCloudDisplay( const std::string& name, VisualizationMana
 : PointCloudBase( name, manager )
 , topic_property_( NULL )
 {
-  notifier_ = new tf::MessageNotifier<std_msgs::PointCloud>(tf_, ros_node_, boost::bind(&PointCloudDisplay::incomingCloudCallback, this, _1), "", "", 1);
+  notifier_ = new tf::MessageNotifier<std_msgs::PointCloud>(tf_, ros_node_, boost::bind(&PointCloudDisplay::incomingCloudCallback, this, _1), "", "", 10);
 }
 
 PointCloudDisplay::~PointCloudDisplay()
