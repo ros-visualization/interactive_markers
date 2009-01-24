@@ -339,11 +339,12 @@ void MarkerDisplay::update( float dt )
 
 void MarkerDisplay::targetFrameChanged()
 {
-  notifier_->setTargetFrame( target_frame_ );
 }
 
 void MarkerDisplay::fixedFrameChanged()
 {
+  notifier_->setTargetFrame( fixed_frame_ );
+
   clearMarkers();
 }
 

@@ -244,11 +244,11 @@ void RobotBase2DPoseDisplay::transformArrow( const MessagePtr& message, ogre_too
 
 void RobotBase2DPoseDisplay::targetFrameChanged()
 {
-  notifier_->setTargetFrame( target_frame_ );
 }
 
 void RobotBase2DPoseDisplay::fixedFrameChanged()
 {
+  notifier_->setTargetFrame( fixed_frame_ );
   clear();
 }
 

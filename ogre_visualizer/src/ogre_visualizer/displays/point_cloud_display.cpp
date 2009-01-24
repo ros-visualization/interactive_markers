@@ -114,7 +114,11 @@ void PointCloudDisplay::incomingCloudCallback(const boost::shared_ptr<std_msgs::
 
 void PointCloudDisplay::targetFrameChanged()
 {
-  notifier_->setTargetFrame( target_frame_ );
+}
+
+void PointCloudDisplay::fixedFrameChanged()
+{
+  notifier_->setTargetFrame( fixed_frame_ );
 }
 
 void PointCloudDisplay::createProperties()

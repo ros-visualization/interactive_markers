@@ -127,7 +127,11 @@ void LaserScanDisplay::incomingScanCallback(const boost::shared_ptr<std_msgs::La
 
 void LaserScanDisplay::targetFrameChanged()
 {
-  notifier_->setTargetFrame( target_frame_ );
+}
+
+void LaserScanDisplay::fixedFrameChanged()
+{
+  notifier_->setTargetFrame( fixed_frame_ );
 }
 
 void LaserScanDisplay::createProperties()
