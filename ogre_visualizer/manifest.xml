@@ -25,7 +25,6 @@
     <depend package="wxswig"/>
     <depend package="wxPython_swig_interface"/>
     <depend package="std_srvs"/>
-    <depend package="boost"/>
     <depend package="collision_map" />
 
     <export> 

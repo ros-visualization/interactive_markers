@@ -8,6 +8,8 @@ set(ROS_BUILD_TYPE RelWithDebInfo)
 
 rospack(ogre_visualizer)
 
+rospack_add_boost_directories()
+
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
@@ -103,7 +105,8 @@ rospack_add_library(${PROJECT_NAME} src/ogre_visualizer/properties/property.cpp
                                     src/ogre_visualizer/displays/map_display.cpp
                                     src/ogre_visualizer/displays/tf_display.cpp
                                     src/ogre_visualizer/generated/visualization_panel_generated.cpp)
-target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} boost_signals ${OGRE_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} ${OGRE_LIBRARIES})
+rospack_link_boost(${PROJECT_NAME} thread signals)
 
 # ...and another with the SWIG code.
 rospack_add_library(python_${PROJECT_NAME} ${SWIG_OUTPUT_CPP_FILE})

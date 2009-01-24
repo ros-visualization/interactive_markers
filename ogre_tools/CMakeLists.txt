@@ -9,6 +9,8 @@ set(ROS_BUILD_TYPE RelWithDebInfo)
 
 rospack(ogre_tools)
 
+rospack_add_boost_directories()
+
 #set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 

@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.4.6)
 include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 rospack(wx_camera_panel)
 
+rospack_add_boost_directories()
+
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
@@ -46,6 +48,7 @@ rospack_add_library(${PROJECT_NAME} src/wx_camera_panel/CameraPanelsGenerated.cp
 				  src/wx_camera_panel/CameraPanel.cpp
 				  src/wx_camera_panel/CameraSetupDialog.cpp)
 target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES})
+rospack_link_boost(${PROJECT_NAME} thread)
 
 # We add src/wx_camera_panel to the include list so that
 # ogre_tools_swig_generated.cpp can find its headers.  This is part of a
