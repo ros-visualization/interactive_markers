@@ -165,6 +165,7 @@ void PlanningDisplay::load()
   kinematic_model_->setVerbose( false );
   kinematic_model_->build( file );
   kinematic_model_->defaultState();
+  kinematic_model_->reduceToRobotFrame();
 
   robot_->update( kinematic_model_, target_frame_ );
 }
