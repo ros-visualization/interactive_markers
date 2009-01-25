@@ -77,7 +77,7 @@ CollisionMapDisplay::CollisionMapDisplay(const std::string & name,
   setPointSize(0.05f);
   setZPosition(0.0f);
 
-  notifier_ = new tf::MessageNotifier<collision_map::CollisionMap>(tf_,
+  notifier_ = new tf::MessageNotifier<robot_msgs::CollisionMap>(tf_,
       ros_node_, boost::bind(&CollisionMapDisplay::incomingMessage, this, _1),
       "", "", 1);
 }
@@ -408,7 +408,7 @@ void CollisionMapDisplay::createProperties()
           this), boost::bind(&CollisionMapDisplay::setTopic, this, _1),
       parent_category_, this);
   topic_property_->setMessageType(
-      collision_map::CollisionMap::__s_getDataType());
+      robot_msgs::CollisionMap::__s_getDataType());
 }
 
 const char*
