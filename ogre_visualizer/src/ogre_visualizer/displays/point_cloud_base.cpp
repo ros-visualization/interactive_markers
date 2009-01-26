@@ -86,6 +86,7 @@ PointCloudBase::PointCloudBase( const std::string& name, VisualizationManager* m
 
 PointCloudBase::~PointCloudBase()
 {
+  delete cloud_;
 }
 
 void PointCloudBase::setMaxColor( const Color& color )
@@ -277,28 +278,50 @@ void PointCloudBase::update(float dt)
       uint32_t index = 0;
       for ( ; chan_it != chan_end; ++chan_it, ++index )
       {
-        if (channel_color_idx == -1)
-        {
-          channel_color_idx = 0;
-        }
-
         std_msgs::ChannelFloat32& chan = *chan_it;
         if (chan.name == "intensity" || chan.name == "intensities")
+        {
+          if (channel_color_idx == -1)
+          {
+            channel_color_idx = Intensity;
+          }
+
           channel_property_->addOption ("Intensity", Intensity);
+        }
+        else if (chan.name == "rgb" || chan.name == "r")
+        {
+          if (channel_color_idx == -1)
+          {
+            channel_color_idx = ColorRGBSpace;
+          }
 
-        if (chan.name == "rgb" || chan.name == "r")
           channel_property_->addOption ("Color (RGB)", ColorRGBSpace);
+        }
+        else if (chan.name == "nx")
+        {
+          if (channel_color_idx == -1)
+          {
+            channel_color_idx = NormalSphere;
+          }
 
-        if (chan.name == "nx")
           channel_property_->addOption ("Normal Sphere", NormalSphere);
+        }
+        else if (chan.name == "curvature" || chan.name == "curvatures")
+        {
+          if (channel_color_idx == -1)
+          {
+            channel_color_idx = Curvature;
+          }
 
-        if (chan.name == "curvature" || chan.name == "curvatures")
           channel_property_->addOption ("Curvature", Curvature);
+        }
       }
+
       if ( channel_property_ )
       {
         channel_property_->changed();
       }
+
       setChannelColorIndex (channel_color_idx);
     }
 

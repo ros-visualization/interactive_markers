@@ -122,5 +122,5 @@ rospack_add_executable(visualizer_test src/test/visualizer_test.cpp)
 target_link_libraries(visualizer_test ${PROJECT_NAME} ${wxWidgets_LIBRARIES})
 
 rospack_add_executable(marker_test src/test/marker_test.cpp)
-rospack_add_executable(rgb_cloud_test src/test/rgb_cloud_test.cpp)
+rospack_add_executable(cloud_test src/test/cloud_test.cpp)
  
