@@ -45,7 +45,7 @@ import  wx.xrc  as  xrc
 
 import rostools
 import rostools.packspec
-rostools.update_path('wxpy_ros')
+rostools.load_manifest('wxpy_ros')
 import wxpy_ros
 import rospy
 

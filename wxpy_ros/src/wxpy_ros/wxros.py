@@ -34,7 +34,7 @@
 #Some utilities for launching a ROS listener process
 
 PKG = 'wxpy_ros'
-import rostools; rostools.update_path(PKG)
+import rostools; rostools.load_manifest(PKG)
 
 import rospy
 from threading import Thread

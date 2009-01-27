@@ -1,10 +1,8 @@
-import rostools
-rostools.update_path('rospy')
-from rospy import client
-import rospy
-client.get_published_topics()
+import rostools; rostools.load_manifest('wxpy_ros')
 
-rostools.update_path('wxpy_ros')
+import rospy
+rospy.get_published_topics()
+
 import wxpy_ros
 
 class MySubscriber:
@@ -74,7 +72,7 @@ class RosMessageHandler:
     #def importMessageModule(moduleName, messageName):
         #"""Given the fully qualified name of the message class, tries to import the class.
         #Will add some exception handling."""
-        #upp_com = 'rostools.update_path(\'%s\')'%moduleName
+        #upp_com = 'rostools.load_manifest(\'%s\')'%moduleName
         #print upp_com
         #exec(upp_com)
         #exec('import %s' % messageName)
@@ -92,20 +90,8 @@ class RosMessageHandler:
         #exec(command)
         #return myobj
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 def getTopicsList():
-    return client.get_published_topics()
+    return rospy.get_published_topics()
 
 #def registerTopic(topicName, topicTypeName, callback):
     #"""Register to the topic using only the names (strings) of the topic, type."""
@@ -143,7 +129,7 @@ def messageNames(rosMessageName):
 def importMessageModule(moduleName, messageName):
     """Given the fully qualified name of the message class, tries to import the message class.
     Will add some exception handling."""
-    upp_com = 'rostools.update_path(\'%s\')'%moduleName
+    upp_com = 'rostools.load_manifest(\'%s\')'%moduleName
     print upp_com
     exec(upp_com)
     exec('import %s' % messageName)
@@ -171,7 +157,7 @@ def getMessageFloatSlots(rosMessageName):
     #sub = MySubscriber()
     #sub.channels.append(MyChannel())
     
-    #rostools.update_path('rosControllers')
+    #rostools.load_manifest('rosControllers')
     #import rosControllers.msg.RotaryJointState
     #rospy.TopicSub('ARM_L_PAN_state', rosControllers.msg.RotaryJointState, sub.callback)
     #registerTopic('ARM_L_PAN_state', 'rosControllers/RotaryJointState', 'sub.callback')

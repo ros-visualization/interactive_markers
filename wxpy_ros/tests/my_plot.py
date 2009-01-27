@@ -1,13 +1,13 @@
 # import rostools ; will handle importing all the ros depedencies
 import rostools
 #import the visualitzation package
-rostools.update_path('wxpy_ros')
+rostools.load_manifest('wxpy_ros')
 import wxpy_ros
 #import the GUI
 import wx
 
 #import the messages if they are non standard
-#rostools.update_path('rosControllers')
+#rostools.load_manifest('rosControllers')
 #from rosControllers.msg import RotaryJointState
 
 #Define the channels

@@ -52,7 +52,7 @@ finally:
 
 #import matplotlib
 import rostools
-rostools.update_path('matplotlib')
+rostools.load_manifest('matplotlib')
 import matplotlib
 matplotlib.use('WXAgg')
 

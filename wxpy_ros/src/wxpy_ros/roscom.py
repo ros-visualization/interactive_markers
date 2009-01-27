@@ -33,7 +33,7 @@
 ## Some common ROS communication utilities. See the wiki documentation and the demo scripts for how to use it.
 
 import rostools
-rostools.update_path('rospy')
+rostools.load_manifest('rospy')
 from rostools import msgspec as msgspec
 from rospy import client
 import rospy
@@ -353,7 +353,7 @@ def messageNames(rosMessageName):
 def importMessageModule(moduleName, messageModName):
     """Given the fully qualified name of the message class, tries to import the message class.
     Will add some exception handling."""
-    upp_com = 'rostools.update_path(\'%s\')'%moduleName
+    upp_com = 'rostools.load_manifest(\'%s\')'%moduleName
     exec(upp_com)
     print messageModName
     exec('import %s' % messageModName)
