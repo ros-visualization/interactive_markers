@@ -34,7 +34,7 @@
 
 #include <map>
 
-#include <std_msgs/VisualizationMarker.h>
+#include <robot_msgs/VisualizationMarker.h>
 #include <boost/thread/mutex.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -76,7 +76,7 @@ namespace ogre_vis
  * \class MarkerDisplay
  * \brief Displays "markers" sent in by other ROS nodes on the "visualizationMarker" topic
  *
- * Markers come in as std_msgs::VisualizationMarker messages.  See the VisualizationMarker message for more information.
+ * Markers come in as robot_msgs::VisualizationMarker messages.  See the VisualizationMarker message for more information.
  */
 class MarkerDisplay : public Display
 {
@@ -114,7 +114,7 @@ protected:
    */
   void clearMarkers();
 
-  typedef boost::shared_ptr<std_msgs::VisualizationMarker> MarkerPtr;
+  typedef boost::shared_ptr<robot_msgs::VisualizationMarker> MarkerPtr;
 
   /**
    * \brief Processes a marker message
@@ -150,7 +150,7 @@ protected:
     , message_(message)
     {}
     ogre_tools::Object* object_;
-    boost::shared_ptr<std_msgs::VisualizationMarker> message_;
+    boost::shared_ptr<robot_msgs::VisualizationMarker> message_;
   };
 
   typedef std::map<int, MarkerInfo> M_IDToMarker;
@@ -166,7 +166,7 @@ protected:
   robot_desc::URDF* urdf_;
   planning_models::KinematicModel* kinematic_model_;
 
-  tf::MessageNotifier<std_msgs::VisualizationMarker>* notifier_;
+  tf::MessageNotifier<robot_msgs::VisualizationMarker>* notifier_;
 };
 
 } // namespace ogre_vis

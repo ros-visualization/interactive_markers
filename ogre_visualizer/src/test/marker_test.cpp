@@ -1,6 +1,6 @@
 #include "ros/node.h"
 
-#include "std_msgs/VisualizationMarker.h"
+#include "robot_msgs/VisualizationMarker.h"
 
 int main( int argc, char** argv )
 {
@@ -13,17 +13,17 @@ int main( int argc, char** argv )
     usleep( 10000 );
   }
 
-  node->advertise<std_msgs::VisualizationMarker>( "visualizationMarker", 0 );
+  node->advertise<robot_msgs::VisualizationMarker>( "visualizationMarker", 0 );
 
   usleep( 1000000 );
 
   for ( int i = -50; i < 50; ++i )
   {
-    std_msgs::VisualizationMarker marker;
+    robot_msgs::VisualizationMarker marker;
     marker.header.frame_id = "map";
     marker.header.stamp = ros::Time();
     marker.id = i;
-    marker.type = std_msgs::VisualizationMarker::ARROW;
+    marker.type = robot_msgs::VisualizationMarker::ARROW;
     marker.action = 0;
     marker.x = 1;
     marker.y = (i*2);
@@ -41,11 +41,11 @@ int main( int argc, char** argv )
     node->publish( "visualizationMarker", marker );
   }
 
-  std_msgs::VisualizationMarker line_marker;
+  robot_msgs::VisualizationMarker line_marker;
   line_marker.header.frame_id = "map";
   line_marker.header.stamp = ros::Time();
   line_marker.id = 1000;
-  line_marker.type = std_msgs::VisualizationMarker::LINE_STRIP;
+  line_marker.type = robot_msgs::VisualizationMarker::LINE_STRIP;
   line_marker.action = 0;
   line_marker.x = 0;
   line_marker.y = 0;
