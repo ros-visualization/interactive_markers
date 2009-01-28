@@ -15,7 +15,7 @@ import wx
 
 import rostools
 import rostools.packspec
-rostools.update_path('ogre_visualizer')
+rostools.load_manifest('ogre_visualizer')
 
 import shutil
 import glob

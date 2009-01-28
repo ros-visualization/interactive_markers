@@ -31,7 +31,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import rostools
-rostools.update_path('pr2_gui')
+rostools.load_manifest('pr2_gui')
 
 import wx
 from wx import xrc
