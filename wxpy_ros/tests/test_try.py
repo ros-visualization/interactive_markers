@@ -52,7 +52,7 @@ class WorkerListener(Thread):
     Thread.__init__(self)
     
   def run(self):
-    rospy.ready(NAME, anonymous=True)
+    rospy.init_node(NAME, anonymous=True)
     rospy.spin()
     
 channel = MyChannel()

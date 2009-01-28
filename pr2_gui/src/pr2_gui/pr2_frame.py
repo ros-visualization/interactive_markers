@@ -59,7 +59,7 @@ class PR2Frame(wx.Frame):
     def __init__(self, parent, id=wx.ID_ANY, title='PR2 GUI', pos=wx.DefaultPosition, size=(1280, 1024), style=wx.DEFAULT_FRAME_STYLE):
         wx.Frame.__init__(self, parent, id, title, pos, size, style)
         
-        rospy.ready('pr2_gui', anonymous=True)
+        rospy.init_node('pr2_gui', anonymous=True)
         
         self._config = wx.Config("pr2_gui")
         self._aui_manager = wx.aui.AuiManager(self)
