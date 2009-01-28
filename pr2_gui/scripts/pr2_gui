@@ -36,7 +36,7 @@ PR2_GUI
 GUI for the PR2."""
 
 import rostools
-rostools.update_path('pr2_gui')
+rostools.load_manifest('pr2_gui')
 
 WXVER = '2.8'
 import wxversion
