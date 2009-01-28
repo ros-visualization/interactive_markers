@@ -179,7 +179,7 @@ void ParticleCloud2DDisplay::createProperties()
                                                                           boost::bind( &ParticleCloud2DDisplay::setColor, this, _1 ), parent_category_, this );
   topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &ParticleCloud2DDisplay::getTopic, this ),
                                                                                 boost::bind( &ParticleCloud2DDisplay::setTopic, this, _1 ), parent_category_, this );
-  topic_property_->setMessageType(std_msgs::ParticleCloud2D::__s_getDataType());
+  topic_property_->setMessageType(robot_msgs::ParticleCloud::__s_getDataType());
 }
 
 void ParticleCloud2DDisplay::fixedFrameChanged()
@@ -267,8 +267,12 @@ void ParticleCloud2DDisplay::processMessage()
   manual_object_->begin( "BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_LIST );
   for( int i=0; i < num_particles; ++i)
   {
-    Ogre::Vector3 pos( -message_.particles[i].y, 0.0f, -message_.particles[i].x );
-    Ogre::Quaternion orient( Ogre::Quaternion( Ogre::Radian( message_.particles[i].th ), Ogre::Vector3::UNIT_Y ) );
+    Ogre::Vector3 pos( -message_.particles[i].position.y, 0.0f, -message_.particles[i].position.x );
+    tf::Quaternion orientation;
+    tf::QuaternionMsgToTF(message_.particles[i].orientation, orientation);
+    double yaw, pitch, roll;
+    btMatrix3x3(orientation).getEulerZYX(yaw, pitch, roll);
+    Ogre::Quaternion orient( Ogre::Quaternion( Ogre::Radian( yaw ), Ogre::Vector3::UNIT_Y ) );
 
     const static float radius = 0.3f;
     Ogre::Vector3 vertices[8];

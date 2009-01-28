@@ -34,7 +34,7 @@
 #include "display.h"
 #include "helpers/color.h"
 
-#include <std_msgs/ParticleCloud2D.h>
+#include <robot_msgs/ParticleCloud.h>
 
 namespace ogre_tools
 {
@@ -78,7 +78,7 @@ public:
   virtual bool isObjectPickable( const Ogre::MovableObject* object ) const { return true; }
   virtual void reset();
 
-  static const char* getTypeStatic() { return "ParticleCloud2D"; }
+  static const char* getTypeStatic() { return "ParticleCloud"; }
   virtual const char* getType() { return getTypeStatic(); }
   static const char* getDescription();
 
@@ -106,7 +106,7 @@ protected:
   Ogre::ManualObject* manual_object_;
 
   bool new_message_;
-  std_msgs::ParticleCloud2D message_;
+  robot_msgs::ParticleCloud message_;
 
   ColorProperty* color_property_;
   ROSTopicStringProperty* topic_property_;
