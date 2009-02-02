@@ -181,8 +181,8 @@ void MapDisplay::clear()
 
 void MapDisplay::load()
 {
-  std_srvs::StaticMap::request  req;
-  std_srvs::StaticMap::response resp;
+  std_srvs::StaticMap::Request  req;
+  std_srvs::StaticMap::Response resp;
   ROS_DEBUG("Requesting the map...");
   if( !ros::service::call(service_, req, resp) )
   {
