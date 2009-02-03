@@ -5,7 +5,6 @@
 #include "displays/grid_display.h"
 #include "displays/laser_scan_display.h"
 #include "displays/marker_display.h"
-#include "displays/octree_display.h"
 #include "displays/planning_display.h"
 #include "displays/point_cloud_display.h"
 #include "displays/robot_model_display.h"
@@ -24,7 +23,6 @@
 %include "displays/grid_display.h"
 %include "displays/laser_scan_display.h"
 %include "displays/marker_display.h"
-%include "displays/octree_display.h"
 %include "displays/planning_display.h"
 %include "displays/point_cloud_display.h"
 %include "displays/robot_model_display.h"
@@ -46,7 +44,6 @@
   %template(createGridDisplay) createDisplay<ogre_vis::GridDisplay>;
   %template(createLaserScanDisplay) createDisplay<ogre_vis::LaserScanDisplay>;
   %template(createMarkerDisplay) createDisplay<ogre_vis::MarkerDisplay>;
-  %template(createOctreeDisplay) createDisplay<ogre_vis::OctreeDisplay>;
   %template(createPlanningDisplay) createDisplay<ogre_vis::PlanningDisplay>;
   %template(createPointCloudDisplay) createDisplay<ogre_vis::PointCloudDisplay>;
   %template(createRobotModelDisplay) createDisplay<ogre_vis::RobotModelDisplay>;

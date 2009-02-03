@@ -36,7 +36,6 @@
 #include "displays/laser_scan_display.h"
 #include "displays/robot_model_display.h"
 #include "displays/marker_display.h"
-#include "displays/octree_display.h"
 #include "displays/planning_display.h"
 #include "displays/robot_base2d_pose_display.h"
 #include "displays/particle_cloud_2d_display.h"
@@ -57,7 +56,6 @@ void registerFactories(VisualizationManager* manager)
   manager->registerFactory( LaserScanDisplay::getTypeStatic(), LaserScanDisplay::getDescription(), new DisplayFactoryImpl<LaserScanDisplay>() );
   manager->registerFactory( RobotModelDisplay::getTypeStatic(), RobotModelDisplay::getDescription(), new DisplayFactoryImpl<RobotModelDisplay>() );
   manager->registerFactory( MarkerDisplay::getTypeStatic(), MarkerDisplay::getDescription(), new DisplayFactoryImpl<MarkerDisplay>() );
-  manager->registerFactory( OctreeDisplay::getTypeStatic(), OctreeDisplay::getDescription(), new DisplayFactoryImpl<OctreeDisplay>() );
   manager->registerFactory( PlanningDisplay::getTypeStatic(), PlanningDisplay::getDescription(), new DisplayFactoryImpl<PlanningDisplay>() );
   manager->registerFactory( RobotBase2DPoseDisplay::getTypeStatic(), RobotBase2DPoseDisplay::getDescription(), new DisplayFactoryImpl<RobotBase2DPoseDisplay>() );
   manager->registerFactory( ParticleCloud2DDisplay::getTypeStatic(), ParticleCloud2DDisplay::getDescription(), new DisplayFactoryImpl<ParticleCloud2DDisplay>() );

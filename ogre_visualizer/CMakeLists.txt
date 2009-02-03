@@ -63,7 +63,6 @@ add_custom_command(OUTPUT   ${SWIG_OUTPUT_CPP_FILE}
                             src/ogre_visualizer/displays/grid_display.h
                             src/ogre_visualizer/displays/laser_scan_display.h
                             src/ogre_visualizer/displays/marker_display.h
-                            src/ogre_visualizer/displays/octree_display.h
                             src/ogre_visualizer/displays/planning_display.h
                             src/ogre_visualizer/displays/point_cloud_base.h
                             src/ogre_visualizer/displays/point_cloud_display.h
@@ -99,7 +98,6 @@ rospack_add_library(${PROJECT_NAME} src/ogre_visualizer/properties/property.cpp
                                     src/ogre_visualizer/displays/laser_scan_display.cpp
                                     src/ogre_visualizer/displays/robot_model_display.cpp
                                     src/ogre_visualizer/displays/planning_display.cpp
-                                    src/ogre_visualizer/displays/octree_display.cpp
                                     src/ogre_visualizer/displays/robot_base2d_pose_display.cpp
                                     src/ogre_visualizer/displays/particle_cloud_2d_display.cpp
                                     src/ogre_visualizer/displays/poly_line_2d_display.cpp

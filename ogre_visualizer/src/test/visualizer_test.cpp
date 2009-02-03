@@ -46,7 +46,6 @@
 #include "displays/laser_scan_display.h"
 #include "displays/robot_model_display.h"
 #include "displays/marker_display.h"
-#include "displays/octree_display.h"
 #include "displays/planning_display.h"
 
 #include <OgreRoot.h>
@@ -116,7 +115,6 @@ public:
     laserScan->setMaxColor( Color( 0.0f, 1.0f, 0.0f ) );
     laserScan->setDecayTime( 0.0f );
 
-    manager->createDisplay<OctreeDisplay>( "Octree", false )->setOctreeTopic( "full_octree" );
     manager->createDisplay<MarkerDisplay>( "Visualization Markers", false );
   }
 
@@ -152,7 +150,7 @@ public:
     }
 
     ros::init(argc, localArgv);
-    new ros::Node( "Display Test", ros::Node::DONT_HANDLE_SIGINT );
+    new ros::Node( "Visualizer Test", ros::Node::DONT_HANDLE_SIGINT );
 
     wxFrame* frame = new MyFrame(NULL);
     SetTopWindow(frame);
@@ -162,7 +160,7 @@ public:
 
   int OnExit()
   {
-    
+
 
     for ( int i = 0; i < argc; ++i )
     {
