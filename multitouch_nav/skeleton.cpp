@@ -61,7 +61,7 @@ int main(int argc, char **argv)
   ros::Duration(5).sleep();
   send_goal(40, 20, 2);
   n.spin();
-  ros::fini();
+  
   return 0;
 }
 

@@ -388,7 +388,7 @@ int main(int argc, char **argv)
 
   cn.main_loop();
 
-  ros::fini();
+  
   return 0;
 }
 

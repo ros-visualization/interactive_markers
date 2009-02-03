@@ -162,7 +162,7 @@ public:
 
   int OnExit()
   {
-    ros::fini();
+    
 
     for ( int i = 0; i < argc; ++i )
     {

@@ -162,5 +162,5 @@ int main( int argc, char** argv )
   node->shutdown();
   delete node;
 
-  ros::fini();
+  
 }
