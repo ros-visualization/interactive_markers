@@ -30,8 +30,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import rostools
-rostools.load_manifest('pr2_dashboard')
+import roslib
+roslib.load_manifest('pr2_dashboard')
 
 import wx
 from wx import xrc
@@ -45,7 +45,7 @@ class ResetPanel(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
         
-        xrc_path = rostools.packspec.get_pkg_dir(PKG) + '/xrc/reset_panel.xrc'
+        xrc_path = roslib.packspec.get_pkg_dir(PKG) + '/xrc/reset_panel.xrc'
         
         self._xrc = xrc.XmlResource(xrc_path)
         self._real_panel = self._xrc.LoadPanel(self, 'ResetPanel')

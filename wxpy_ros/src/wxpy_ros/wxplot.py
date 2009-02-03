@@ -51,8 +51,8 @@ finally:
 
 
 #import matplotlib
-import rostools
-rostools.load_manifest('matplotlib')
+import roslib
+roslib.load_manifest('matplotlib')
 import matplotlib
 matplotlib.use('WXAgg')
 

@@ -30,8 +30,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import rostools
-rostools.load_manifest('pr2_gui')
+import roslib
+roslib.load_manifest('pr2_gui')
 
 import wx
 import wx.aui
@@ -66,7 +66,7 @@ class PR2Frame(wx.Frame):
 
         self._visualizer_panel = visualizer_panel.DefaultVisualizationPanel(self)
         
-        media_path = rostools.packspec.get_pkg_dir( "gazebo_robot_description" )
+        media_path = roslib.packages.get_pkg_dir( "gazebo_robot_description" )
         media_path += "/world/Media/";
         
         media_paths = [media_path]

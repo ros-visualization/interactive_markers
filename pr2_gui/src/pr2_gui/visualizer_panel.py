@@ -30,8 +30,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import rostools
-rostools.load_manifest('pr2_gui')
+import roslib
+roslib.load_manifest('pr2_gui')
 
 import wx
 import ogre_visualizer
@@ -43,7 +43,7 @@ class DefaultVisualizationPanel(ogre_visualizer.VisualizationPanel):
     def createDefaultVisualizers(self):
         manager = self.getManager();
         
-        config_path = rostools.packspec.get_pkg_dir( "ogre_visualizer" ) + "/configs/pr2.vcg"
+        config_path = roslib.packages.get_pkg_dir( "ogre_visualizer" ) + "/configs/pr2.vcg"
         config = wx.FileConfig(localFilename=config_path)
         manager.loadConfig(config)
         

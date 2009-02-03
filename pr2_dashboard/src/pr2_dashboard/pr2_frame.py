@@ -30,8 +30,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import rostools
-rostools.load_manifest('pr2_dashboard')
+import roslib
+roslib.load_manifest('pr2_dashboard')
 
 import wx
 import wx.aui

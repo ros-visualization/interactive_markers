@@ -43,8 +43,8 @@ A small utility to plot data from ROS topics."""
 import  wx
 import  wx.xrc  as  xrc
 
-import rostools
-rostools.load_manifest('wxpy_ros')
+import roslib
+roslib.load_manifest('wxpy_ros')
 import wxpy_ros
 import rospy
 

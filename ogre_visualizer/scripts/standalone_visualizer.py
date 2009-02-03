@@ -13,9 +13,9 @@ else:
 
 import wx
 
-import rostools
-import rostools.packspec
-rostools.load_manifest('ogre_visualizer')
+import roslib
+import roslib.packspec
+roslib.load_manifest('ogre_visualizer')
 
 import shutil
 import glob
@@ -37,12 +37,12 @@ class VisualizerFrame(wx.Frame):
         ogre_tools.initializeOgre()
         visualizer_panel = ogre_visualizer.VisualizationPanel(self)
         
-        self._package_path = rostools.packspec.get_pkg_dir('ogre_visualizer')
+        self._package_path = roslib.packages.get_pkg_dir('ogre_visualizer')
         self._global_config_path = os.path.join(self._package_path, "configs")
         
         self._visualizer_panel = visualizer_panel
         
-        media_path = rostools.packspec.get_pkg_dir( "gazebo_robot_description" )
+        media_path = roslib.packages.get_pkg_dir( "gazebo_robot_description" )
         media_path += "/world/Media/";
         
         media_paths = [media_path]

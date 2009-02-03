@@ -1,17 +1,9 @@
 import wx
 
 PKG = 'wxpy_ros'
-# LOADER #####################
+
 import sys, os, subprocess
-try:
-    rostoolsDir = (subprocess.Popen(['rospack', 'find', 'rostools'], stdout=subprocess.PIPE).communicate()[0] or '').strip()
-    sys.path.append(os.path.join(rostoolsDir,'src'))
-    import rostools.launcher
-    rostools.launcher.updateSysPath(sys.argv[0], PKG, bootstrapVersion="0.6")
-except ImportError:
-    print >> sys.stderr, "\nERROR: Cannot locate rostools"
-    sys.exit(1)  
-# END LOADER #################
+import roslib; roslib.load_manifest(PKG)
 
 # A hack for now for finding the packages in the ROS architecture
 def addpackagedir(packagename):
@@ -25,7 +17,7 @@ from threading import Thread
 
 
 addpackagedir('rosControllers')
-import rostools
+import roslib
 from rosControllers.msg import RotaryJointState
 
 import time

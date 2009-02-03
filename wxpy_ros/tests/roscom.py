@@ -1,4 +1,4 @@
-import rostools; rostools.load_manifest('wxpy_ros')
+import roslib; roslib.load_manifest('wxpy_ros')
 
 import rospy
 rospy.get_published_topics()
@@ -72,7 +72,7 @@ class RosMessageHandler:
     #def importMessageModule(moduleName, messageName):
         #"""Given the fully qualified name of the message class, tries to import the class.
         #Will add some exception handling."""
-        #upp_com = 'rostools.load_manifest(\'%s\')'%moduleName
+        #upp_com = 'roslib.load_manifest(\'%s\')'%moduleName
         #print upp_com
         #exec(upp_com)
         #exec('import %s' % messageName)
@@ -129,7 +129,7 @@ def messageNames(rosMessageName):
 def importMessageModule(moduleName, messageName):
     """Given the fully qualified name of the message class, tries to import the message class.
     Will add some exception handling."""
-    upp_com = 'rostools.load_manifest(\'%s\')'%moduleName
+    upp_com = 'roslib.load_manifest(\'%s\')'%moduleName
     print upp_com
     exec(upp_com)
     exec('import %s' % messageName)
@@ -157,7 +157,7 @@ def getMessageFloatSlots(rosMessageName):
     #sub = MySubscriber()
     #sub.channels.append(MyChannel())
     
-    #rostools.load_manifest('rosControllers')
+    #roslib.load_manifest('rosControllers')
     #import rosControllers.msg.RotaryJointState
     #rospy.TopicSub('ARM_L_PAN_state', rosControllers.msg.RotaryJointState, sub.callback)
     #registerTopic('ARM_L_PAN_state', 'rosControllers/RotaryJointState', 'sub.callback')

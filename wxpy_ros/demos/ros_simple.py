@@ -35,12 +35,10 @@ __doc__ = """
 ROS_PLOT
 A small utility to plot data from ROS topics."""
 
-
-
 import  wx
 
-import rostools
-rostools.load_manifest('wxpy_ros')
+import roslib
+roslib.load_manifest('wxpy_ros')
 import wxpy_ros
 import rospy
 

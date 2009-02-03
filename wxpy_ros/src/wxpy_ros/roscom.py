@@ -32,16 +32,16 @@
 
 ## Some common ROS communication utilities. See the wiki documentation and the demo scripts for how to use it.
 
-import rostools
-rostools.load_manifest('rospy')
-from rostools import msgspec as msgspec
-from rospy import client
+import roslib
+roslib.load_manifest('rospy')
+from roslib.msgs
+
 import rospy
 import copy
 
 # Timestamp imports
-import rostools.msg._Time 
-_time_class_name = 'rostools.msg._Time.Time'
+import roslib.msg._Time 
+_time_class_name = 'roslib.msg._Time.Time'
 
 import wxplot
 import wxros
@@ -228,8 +228,8 @@ def _getContext(mType):
     return None
 
 def _messageNameInContext(msg_name, context):
-    if context and context+msgspec.SEP+msg_name in msgspec.REGISTERED_TYPES:
-        return context+msgspec.SEP+msg_name
+    if context and context+roslib.msgs.SEP+msg_name in roslib.msgs.REGISTERED_TYPES:
+        return context+roslib.msgs.SEP+msg_name
     return msg_name
 ## RosMessageHandler: manages all comunications with ROSListener
 #  The usual way to use it is:
@@ -290,7 +290,7 @@ class RosMessageHandler:
         # Registers and imports all the types
         for (topic_name, topic_type) in l:
             (modName, messageModName, messageName) = messageNames(topic_type)
-            msgspec.load_package(modName)
+            roslib.msgs.load_package(modName)
             importMessageModule(modName, messageModName)
             exec('import %s' % messageModName)
             #print 'import %s' % modName
@@ -302,7 +302,7 @@ class RosMessageHandler:
         for (topic_name, topic_type) in l:
             topicQualifiedType = messageNames(topic_type)
             self.topics[topic_name] = RosMessageRoot(topicQualifiedType)                       
-            self._buildMessageTree(self.topics[topic_name], msgspec.REGISTERED_TYPES[topic_type], _getContext(topic_type))
+            self._buildMessageTree(self.topics[topic_name], roslib.msgs.REGISTERED_TYPES[topic_type], _getContext(topic_type))
     
     def _buildMessageTree(self, messageItem, messageType, context=None):
         
@@ -315,11 +315,11 @@ class RosMessageHandler:
                     messageItem.children[slot_name] = RosMessageLeaf(isNumeric(stripped_slot_type))
                 else:
                   messageItem.children[slot_name] = RosMessageItem(True)
-                  self._buildMessageTree(messageItem.children[slot_name], msgspec.REGISTERED_TYPES[_messageNameInContext(stripped_slot_type, context)], context)
+                  self._buildMessageTree(messageItem.children[slot_name], roslib.msgs.REGISTERED_TYPES[_messageNameInContext(stripped_slot_type, context)], context)
                 
             else:
                 messageItem.children[slot_name] = RosMessageItem()
-                self._buildMessageTree(messageItem.children[slot_name], msgspec.REGISTERED_TYPES[_messageNameInContext(slot_type, context)], context)
+                self._buildMessageTree(messageItem.children[slot_name], roslib.msgs.REGISTERED_TYPES[_messageNameInContext(slot_type, context)], context)
                 
     def _getTopic(self, itemPath):
         l = itemPath.split('/')
@@ -337,7 +337,7 @@ def isAtomic(obj_type):
     return obj_type in ['string'] or isNumeric(obj_type)   
     
 def getTopicsList():
-    return client.get_published_topics()
+    return rospy.get_published_topics()
 
 
 def messageNames(rosMessageName):
@@ -353,7 +353,7 @@ def messageNames(rosMessageName):
 def importMessageModule(moduleName, messageModName):
     """Given the fully qualified name of the message class, tries to import the message class.
     Will add some exception handling."""
-    upp_com = 'rostools.load_manifest(\'%s\')'%moduleName
+    upp_com = 'roslib.load_manifest(\'%s\')'%moduleName
     exec(upp_com)
     print messageModName
     exec('import %s' % messageModName)

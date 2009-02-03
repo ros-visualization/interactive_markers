@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
-import rostools
-rostools.load_manifest('wx_camera_panel')
+import roslib
+roslib.load_manifest('wx_camera_panel')
 
 import wx
 import wx_camera_panel

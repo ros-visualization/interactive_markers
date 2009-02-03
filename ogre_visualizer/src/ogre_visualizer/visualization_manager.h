@@ -41,7 +41,7 @@
 #include <vector>
 #include <map>
 
-#include <rostools/Time.h>
+#include <roslib/Time.h>
 #include <ros/time.h>
 
 namespace ogre_tools
@@ -325,7 +325,7 @@ protected:
 
   Ogre::SceneNode* target_relative_node_;
 
-  rostools::Time time_message_;
+  roslib::Time time_message_;
   bool needs_reset_;
   bool new_ros_time_;
   ros::Time wall_clock_begin_;

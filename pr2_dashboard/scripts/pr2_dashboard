@@ -35,8 +35,8 @@ __doc__ = """
 PR2_Dashboard
 GUI for the PR2."""
 
-import rostools
-rostools.load_manifest('pr2_dashboard')
+import roslib
+roslib.load_manifest('pr2_dashboard')
 
 WXVER = '2.8'
 import wxversion

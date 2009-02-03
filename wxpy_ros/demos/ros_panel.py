@@ -40,12 +40,12 @@ A small utility to plot data from ROS topics."""
 ##"""
 
 import pdb
-import  wx
-import  wx.xrc  as  xrc
+import wx
+import wx.xrc  as  xrc
 
-import rostools
-import rostools.packspec
-rostools.load_manifest('wxpy_ros')
+import roslib; roslib.load_manifest('wxpy_ros')
+
+import roslib.packages
 import wxpy_ros
 import rospy
 
@@ -53,7 +53,7 @@ class RosFrame(wx.Frame):
     def __init__(self, parent, id):
         wx.Frame.__init__(self, parent, id, 'Topics', size=(300,300))
 
-        xrc_path = rostools.packspec.get_pkg_dir('wxpy_ros') + '/xrc/ros_panel.xrc'
+        xrc_path = roslib.packages.get_pkg_dir('wxpy_ros') + '/xrc/ros_panel.xrc'
         self.res = xrc.XmlResource(xrc_path)     
 
         self.res.LoadPanel(self, 'main_panel')
