@@ -369,7 +369,7 @@ void TFDisplay::updateFrame(FrameInfo* frame)
 
       // The set() operation on the arrow is rather expensive (has to clear/regenerate geometry), so
       // avoid doing it if possible
-      bool distance_changed = abs(distance - frame->distance_to_parent_) > 0.0001f;
+      bool distance_changed = fabsf(distance - frame->distance_to_parent_) > 0.0001f;
       if ( distance_changed )
       {
         frame->distance_to_parent_ = distance;
