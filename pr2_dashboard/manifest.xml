@@ -1,0 +1,23 @@
+<package>
+    <description brief="PR2 Dashboard">
+    
+      This is a minimal debugging GUI for the PR2.
+    
+    </description>
+    <author>Josh Faust</author>
+    <license>BSD</license>
+    <review status="unreviewed" notes=""/>
+    <url>http://pr.willowgarage.com/wiki/ROS</url>
+    <depend package="rxtools"/>
+    <depend package="runtime_monitor"/>
+    <depend package="rospy"/>
+    <depend package="rostools"/>
+    <depend package="std_srvs"/>
+    <depend package="ocean_battery_driver"/>
+    <depend package="pr2_power_board"/>
+    
+    <sysdepend os="ubuntu" version="7.04-feisty" package="libwxgtk2.8-dev"/>
+    <sysdepend os="ubuntu" version="8.04-hardy" package="libwxgtk2.8-dev"/>
+    <sysdepend os="ubuntu" version="8.04-hardy" package="python-wxgtk2.8"/>
+</package>
+
