@@ -11,6 +11,9 @@ find_package(wxWidgets REQUIRED)
 include(${wxWidgets_USE_FILE})
 include_directories( ${wxWidgets_INCLUDE_DIRS} )
 
+find_package(PythonLibs REQUIRED)
+include_directories(${PYTHON_INCLUDE_PATH})
+
 # Find the combined swig flags for this project
 _rospack_invoke(${PROJECT_NAME} ${PROJECT_NAME} SWIG_FLAGS "--lang=swig" "--attrib=flags" "export")
 set(SWIG_FLAGS ${${PROJECT_NAME}_SWIG_FLAGS})

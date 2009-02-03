@@ -23,6 +23,9 @@ message("wxWidgets not found!  Aborting...")
 fail()
 endif(NOT wxWidgets_FOUND)
 
+find_package(PythonLibs REQUIRED)
+include_directories(${PYTHON_INCLUDE_PATH})
+
 # The versioned check apparently doesn't work.  So we'll check the version
 # manually
 pkg_check_modules(OGRE OGRE=1.4.9)
