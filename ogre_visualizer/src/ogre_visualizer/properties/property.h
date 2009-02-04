@@ -373,6 +373,24 @@ public:
   virtual void loadFromConfig( wxConfigBase* config );
 };
 
+class EditEnumProperty : public Property<std::string>
+{
+public:
+  EditEnumProperty( const std::string& name, const std::string& prefix, wxPropertyGrid* grid, CategoryProperty* parent, const Getter& getter, const Setter& setter )
+  : Property<std::string>( name, prefix, grid, parent, getter, setter )
+  {
+  }
+
+  void addOption( const std::string& name );
+  void clear ();
+
+  virtual void writeToGrid();
+  virtual void readFromGrid();
+  virtual void saveToConfig( wxConfigBase* config );
+  virtual void loadFromConfig( wxConfigBase* config );
+};
+
+
 class CategoryProperty : public Property<int>
 {
 public:

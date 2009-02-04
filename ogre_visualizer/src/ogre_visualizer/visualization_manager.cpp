@@ -61,6 +61,8 @@
 #include <OgreLight.h>
 #include <OgreViewport.h>
 
+#include <algorithm>
+
 namespace ogre_vis
 {
 
@@ -72,6 +74,8 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
 , new_ros_time_( false )
 , wall_clock_begin_( ros::Time() )
 , ros_time_begin_( ros::Time() )
+, time_update_timer_(0.0f)
+, frame_update_timer_(0.0f)
 {
   initializeCommon();
   registerFactories( this );
@@ -118,9 +122,9 @@ VisualizationManager::VisualizationManager( VisualizationPanel* panel )
   time_category->collapse();
 
   CategoryProperty* options_category = property_manager_->createCategory( ".Global Options", "", NULL );
-  target_frame_property_ = property_manager_->createProperty<StringProperty>( "Target Frame", "", boost::bind( &VisualizationManager::getTargetFrame, this ),
+  target_frame_property_ = property_manager_->createProperty<EditEnumProperty>( "Target Frame", "", boost::bind( &VisualizationManager::getTargetFrame, this ),
                                                                               boost::bind( &VisualizationManager::setTargetFrame, this, _1 ), options_category );
-  fixed_frame_property_ = property_manager_->createProperty<StringProperty>( "Fixed Frame", "", boost::bind( &VisualizationManager::getFixedFrame, this ),
+  fixed_frame_property_ = property_manager_->createProperty<EditEnumProperty>( "Fixed Frame", "", boost::bind( &VisualizationManager::getFixedFrame, this ),
                                                                              boost::bind( &VisualizationManager::setFixedFrame, this, _1 ), options_category );
   background_color_property_ = property_manager_->createProperty<ColorProperty>( "Background Color", "", boost::bind( &VisualizationManager::getBackgroundColor, this ),
                                                                              boost::bind( &VisualizationManager::setBackgroundColor, this, _1 ), options_category );
@@ -238,40 +242,96 @@ void VisualizationManager::onUpdate( wxTimerEvent& event )
     resetTime();
   }
 
-  static float time_update_timer = 0.0f;
-  time_update_timer += dt;
+  time_update_timer_ += dt;
 
-  if ( time_update_timer > 0.1f )
+  if ( time_update_timer_ > 0.1f )
   {
-    time_update_timer = 0.0f;
+    time_update_timer_ = 0.0f;
 
-    if ( new_ros_time_ )
+    updateTime();
+  }
+
+  frame_update_timer_ += dt;
+
+  if (frame_update_timer_ > 1.0f)
+  {
+    frame_update_timer_ = 0.0f;
+
+    updateFrames();
+  }
+}
+
+void VisualizationManager::updateTime()
+{
+  if ( new_ros_time_ )
+  {
+    time_message_.lock();
+
+    if ( ros_time_begin_.is_zero() )
     {
-      time_message_.lock();
-
-      if ( ros_time_begin_.is_zero() )
-      {
-        ros_time_begin_ = time_message_.rostime;
-        wall_clock_begin_ = ros::Time::now();
-      }
-
-      ros_time_elapsed_ = time_message_.rostime - ros_time_begin_;
-
-      time_message_.unlock();
-
-
-      ros_time_property_->changed();
-      ros_time_elapsed_property_->changed();
-    }
-
-    if ( wall_clock_begin_.is_zero() )
-    {
+      ros_time_begin_ = time_message_.rostime;
       wall_clock_begin_ = ros::Time::now();
     }
 
-    wall_clock_elapsed_ = ros::Time::now() - wall_clock_begin_;
-    wall_clock_property_->changed();
-    wall_clock_elapsed_property_->changed();
+    ros_time_elapsed_ = time_message_.rostime - ros_time_begin_;
+
+    time_message_.unlock();
+
+
+    ros_time_property_->changed();
+    ros_time_elapsed_property_->changed();
+  }
+
+  if ( wall_clock_begin_.is_zero() )
+  {
+    wall_clock_begin_ = ros::Time::now();
+  }
+
+  wall_clock_elapsed_ = ros::Time::now() - wall_clock_begin_;
+  wall_clock_property_->changed();
+  wall_clock_elapsed_property_->changed();
+}
+
+void VisualizationManager::updateFrames()
+{
+  bool target = property_manager_->getPropertyGrid()->GetSelectedProperty() != target_frame_property_->getPGProperty();
+  bool fixed = property_manager_->getPropertyGrid()->GetSelectedProperty() != fixed_frame_property_->getPGProperty();
+
+  if (target)
+  {
+    target_frame_property_->clear();
+  }
+
+  if (fixed)
+  {
+    fixed_frame_property_->clear();
+  }
+
+  typedef std::vector<std::string> V_string;
+  V_string frames;
+  tf_->getFrameStrings( frames );
+  std::sort(frames.begin(), frames.end());
+
+  V_string::iterator it = frames.begin();
+  V_string::iterator end = frames.end();
+  for (; it != end; ++it)
+  {
+    const std::string& frame = *it;
+
+    if (frame.empty())
+    {
+      continue;
+    }
+
+    if (target)
+    {
+      target_frame_property_->addOption(frame);
+    }
+
+    if (fixed)
+    {
+      fixed_frame_property_->addOption(frame);
+    }
   }
 }
 

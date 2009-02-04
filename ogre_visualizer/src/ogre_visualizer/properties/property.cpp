@@ -463,6 +463,69 @@ void EnumProperty::loadFromConfig( wxConfigBase* config )
   set( val );
 }
 
+void EditEnumProperty::addOption( const std::string& name )
+{
+  wxPGChoices& choices = grid_->GetPropertyChoices( property_ );
+  choices.Add( wxString::FromAscii( name.c_str() ) );
+
+  writeToGrid();
+}
+
+void EditEnumProperty::clear ()
+{
+  wxPGChoices& choices = grid_->GetPropertyChoices( property_ );
+  choices.Clear ();
+
+  writeToGrid();
+}
+
+void EditEnumProperty::writeToGrid()
+{
+  if ( !property_ )
+  {
+    property_ = grid_->AppendIn( parent_->getPGProperty(), new wxEditEnumProperty( name_, prefix_ + name_ ) );
+
+    if ( !hasSetter() )
+    {
+      grid_->DisableProperty( property_ );
+    }
+  }
+  else
+  {
+    grid_->SetPropertyValue(property_, wxString::FromAscii( get().c_str() ));
+  }
+}
+
+void EditEnumProperty::readFromGrid()
+{
+  wxString str = property_->GetValueString();
+  set( (const char*)str.mb_str() );
+}
+
+void EditEnumProperty::saveToConfig( wxConfigBase* config )
+{
+  config->Write( prefix_ + name_, wxString::FromAscii( get().c_str() ) );
+}
+
+void EditEnumProperty::loadFromConfig( wxConfigBase* config )
+{
+  wxString val;
+  if (!config->Read( prefix_ + name_, &val, wxString::FromAscii( get().c_str() ) ))
+  {
+    V_wxString::iterator it = legacy_names_.begin();
+    V_wxString::iterator end = legacy_names_.end();
+    for (; it != end; ++it)
+    {
+      if (config->Read( prefix_ + *it, &val, wxString::FromAscii( get().c_str() ) ))
+      {
+        break;
+      }
+    }
+  }
+
+  set( (const char*)val.mb_str() );
+}
+
 void CategoryProperty::setLabel( const std::string& label )
 {
   grid_->SetPropertyLabel( property_, wxString::FromAscii( label.c_str() ) );

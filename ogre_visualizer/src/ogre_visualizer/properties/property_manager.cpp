@@ -28,6 +28,7 @@
  */
 
 #include "property_manager.h"
+#include "property.h"
 
 #include <ros/console.h>
 

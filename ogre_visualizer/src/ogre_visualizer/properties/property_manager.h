@@ -30,7 +30,7 @@
 #ifndef OGRE_VISUALIZER_PROPERTY_MANAGER_H
 #define OGRE_VISUALIZER_PROPERTY_MANAGER_H
 
-#include "property.h"
+//#include "property.h"
 #include "ros/assert.h"
 
 #include <boost/bind.hpp>
@@ -43,6 +43,9 @@ class wxConfigBase;
 
 namespace ogre_vis
 {
+
+class PropertyBase;
+class CategoryProperty;
 
 /**
  * \brief Manages a set of properties

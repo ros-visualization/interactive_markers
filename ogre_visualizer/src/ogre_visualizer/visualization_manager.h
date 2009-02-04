@@ -83,6 +83,7 @@ namespace ogre_vis
 
 class VisualizationPanel;
 class PropertyManager;
+class EditEnumProperty;
 class StringProperty;
 class DoubleProperty;
 class ColorProperty;
@@ -280,6 +281,9 @@ protected:
 
   void incomingROSTime();
 
+  void updateTime();
+  void updateFrames();
+
   Ogre::Root* ogre_root_;                                 ///< Ogre Root
   Ogre::SceneManager* scene_manager_;                     ///< Ogre scene manager associated with this panel
 
@@ -316,8 +320,8 @@ protected:
   std::string fixed_frame_;                               ///< Frame to transform fixed data to
 
   PropertyManager* property_manager_;
-  StringProperty* target_frame_property_;
-  StringProperty* fixed_frame_property_;
+  EditEnumProperty* target_frame_property_;
+  EditEnumProperty* fixed_frame_property_;
 
   VisualizationPanel* vis_panel_;
 
@@ -340,6 +344,9 @@ protected:
 
   Color background_color_;
   ColorProperty* background_color_property_;
+
+  float time_update_timer_;
+  float frame_update_timer_;
 };
 
 }
