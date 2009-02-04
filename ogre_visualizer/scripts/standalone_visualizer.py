@@ -14,7 +14,7 @@ else:
 import wx
 
 import roslib
-import roslib.packspec
+import roslib.packages
 roslib.load_manifest('ogre_visualizer')
 
 import shutil
