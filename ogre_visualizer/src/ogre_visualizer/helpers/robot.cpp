@@ -43,7 +43,6 @@
 #include <OgreSceneManager.h>
 #include <OgreRibbonTrail.h>
 #include <OgreEntity.h>
-#include <OgreSubEntity.h>
 
 #include <ros/console.h>
 
@@ -306,30 +305,23 @@ void Robot::createVisualForLink( LinkInfo* info, robot_desc::URDF::Link* link )
     info->visual_node_ = root_visual_node_->createChildSceneNode();
     info->visual_node_->attachObject( info->visual_mesh_ );
 
-    // assign the material from the link
-    uint16_t num_sub_entities = info->visual_mesh_->getNumSubEntities();
-    for ( uint16_t i = 0; i < num_sub_entities; ++i )
+    typedef std::vector<std::string> V_string;
+    V_string gazebo_names;
+    link->visual->data.getMapTagNames("gazebo", gazebo_names);
+
+    V_string::iterator name_it = gazebo_names.begin();
+    V_string::iterator name_end = gazebo_names.end();
+    for ( ; name_it != name_end; ++name_it )
     {
-      Ogre::SubEntity* subEntity = info->visual_mesh_->getSubEntity( i );
+      typedef std::map<std::string, std::string> M_string;
+      M_string m = link->visual->data.getMapTagValues("gazebo", *name_it);
 
-      typedef std::vector<std::string> V_string;
-      V_string gazebo_names;
-      link->visual->data.getMapTagNames("gazebo", gazebo_names);
-
-      V_string::iterator name_it = gazebo_names.begin();
-      V_string::iterator name_end = gazebo_names.end();
-      for ( ; name_it != name_end; ++name_it )
+      M_string::iterator it = m.find( "material" );
+      if ( it != m.end() )
       {
-        typedef std::map<std::string, std::string> M_string;
-        M_string m = link->visual->data.getMapTagValues("gazebo", *name_it);
-
-        M_string::iterator it = m.find( "material" );
-        if ( it != m.end() )
-        {
-          info->material_name_ = it->second;
-          subEntity->setMaterialName( info->material_name_ );
-          break;
-        }
+        info->material_name_ = it->second;
+        info->visual_mesh_->setMaterialName( info->material_name_ );
+        break;
       }
     }
   }
@@ -618,7 +610,17 @@ void Robot::update( tf::TransformListener* tf, const std::string& target_frame )
     if ( std::find( frames.begin(), frames.end(), name ) == frames.end() )
     {
       ROS_ERROR( "Frame '%s' does not exist in the TF frame list", name.c_str() );
+
+      if (info->visual_mesh_)
+      {
+        info->visual_mesh_->setMaterialName("BaseWhiteNoLighting");
+      }
       continue;
+    }
+
+    if (info->visual_mesh_)
+    {
+      info->visual_mesh_->setMaterialName(info->material_name_);
     }
 
     tf::Stamped<tf::Pose> pose( btTransform( btQuaternion( 0, 0, 0 ), btVector3( 0, 0, 0 ) ), ros::Time(), name );
