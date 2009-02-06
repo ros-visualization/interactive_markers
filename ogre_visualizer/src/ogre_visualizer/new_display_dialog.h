@@ -33,17 +33,19 @@
 #include "generated/visualization_panel_generated.h"
 
 #include <vector>
+#include <set>
 #include <string>
 
 namespace ogre_vis
 {
 
 typedef std::vector<std::string> V_string;
+typedef std::set<std::string> S_string;
 
 class NewDisplayDialog : public NewDisplayDialogGenerated
 {
 public:
-  NewDisplayDialog( wxWindow* parent, const V_string& types, const V_string& descriptions );
+  NewDisplayDialog( wxWindow* parent, const V_string& types, const V_string& descriptions, const S_string& current_display_names );
 
   std::string getTypeName();
   std::string getDisplayName();
@@ -59,6 +61,7 @@ protected:
   std::string display_name_;
 
   const V_string& descriptions_;
+  const S_string& current_display_names_;
 };
 
 } //namespace ogre_vis

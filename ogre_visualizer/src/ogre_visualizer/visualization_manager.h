@@ -40,6 +40,7 @@
 
 #include <vector>
 #include <map>
+#include <set>
 
 #include <roslib/Time.h>
 #include <ros/time.h>
@@ -243,6 +244,9 @@ public:
   Ogre::SceneNode* getTargetRelativeNode() { return target_relative_node_; }
 
   VisualizationPanel* getVisualizationPanel() { return vis_panel_; }
+
+  typedef std::set<std::string> S_string;
+  void getDisplayNames(S_string& displays);
 
   void resetDisplays();
 

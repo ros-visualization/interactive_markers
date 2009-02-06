@@ -213,6 +213,18 @@ DisplayInfo* VisualizationManager::getDisplayInfo( const Display* display )
   return NULL;
 }
 
+void VisualizationManager::getDisplayNames(S_string& displays)
+{
+  V_DisplayInfo::iterator vis_it = displays_.begin();
+  V_DisplayInfo::iterator vis_end = displays_.end();
+  for ( ; vis_it != vis_end; ++vis_it )
+  {
+    Display* display = (*vis_it)->display_;
+
+    displays.insert(display->getName());
+  }
+}
+
 void VisualizationManager::onUpdate( wxTimerEvent& event )
 {
   long millis = update_stopwatch_.Time();

@@ -387,7 +387,10 @@ void VisualizationPanel::onNewDisplay( wxCommandEvent& event )
   V_string descriptions;
   manager_->getRegisteredTypes( types, descriptions );
 
-  NewDisplayDialog dialog( this, types, descriptions );
+  S_string current_display_names;
+  manager_->getDisplayNames(current_display_names);
+
+  NewDisplayDialog dialog( this, types, descriptions, current_display_names );
   while (1)
   {
     if ( dialog.ShowModal() == wxOK )

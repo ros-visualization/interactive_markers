@@ -31,12 +31,15 @@
 
 #include <wx/wx.h>
 
+#include <sstream>
+
 namespace ogre_vis
 {
 
-NewDisplayDialog::NewDisplayDialog( wxWindow* parent, const V_string& types, const V_string& descriptions )
+NewDisplayDialog::NewDisplayDialog( wxWindow* parent, const V_string& types, const V_string& descriptions, const S_string& current_display_names )
 : NewDisplayDialogGenerated( parent )
 , descriptions_( descriptions )
+, current_display_names_(current_display_names)
 {
   V_string::const_iterator it = types.begin();
   V_string::const_iterator end = types.end();
@@ -49,6 +52,25 @@ NewDisplayDialog::NewDisplayDialog( wxWindow* parent, const V_string& types, con
 void NewDisplayDialog::onDisplaySelected( wxCommandEvent& event )
 {
   type_description_->SetValue( wxString::FromAscii( descriptions_[types_->GetSelection()].c_str() ) );
+
+  int counter = 1;
+  std::string name;
+  do
+  {
+    std::stringstream ss;
+    ss << (const char*)types_->GetStringSelection().fn_str();
+
+    if (counter > 1)
+    {
+      ss << counter;
+    }
+
+    ++counter;
+
+    name = ss.str();
+  } while(current_display_names_.find(name) != current_display_names_.end());
+
+  name_->SetValue(wxString::FromAscii(name.c_str()));
 }
 
 void NewDisplayDialog::onDisplayDClick( wxCommandEvent& event )
@@ -73,6 +95,13 @@ void NewDisplayDialog::onOK( wxCommandEvent& event )
   if ( name_->GetValue().IsEmpty() )
   {
     wxMessageBox( wxT("You must enter a name!"), wxT("No name"), wxICON_ERROR | wxOK, this );
+    return;
+  }
+
+  std::string name = (const char*)name_->GetValue().fn_str();
+  if (current_display_names_.find(name) != current_display_names_.end())
+  {
+    wxMessageBox( wxT("A display with that name already exists!"), wxT("Name conflict"), wxICON_ERROR | wxOK, this );
     return;
   }
 
