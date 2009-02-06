@@ -49,7 +49,7 @@ find_package(OpenGL REQUIRED)
 include_directories( ${OPENGL_INCLUDE_DIR} )
 
 # Find the combined swig flags for this project
-_rospack_invoke(${PROJECT_NAME} ${PROJECT_NAME} SWIG_FLAGS "--lang=swig" "--attrib=flags" "export")
+_rospack_invoke(${PROJECT_NAME} ${PROJECT_NAME} SWIG_FLAGS "export" "--lang=swig" "--attrib=flags")
 set(SWIG_FLAGS ${${PROJECT_NAME}_SWIG_FLAGS})
 
 # Find the wxswig executable
