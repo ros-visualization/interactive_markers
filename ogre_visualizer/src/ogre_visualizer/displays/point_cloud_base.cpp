@@ -82,11 +82,24 @@ PointCloudBase::PointCloudBase( const std::string& name, VisualizationManager* m
   setStyle( style_ );
   setBillboardSize( billboard_size_ );
   setChannelColorIndex ( channel_color_idx_ );
+  setAlpha(1.0f);
 }
 
 PointCloudBase::~PointCloudBase()
 {
   delete cloud_;
+}
+
+void PointCloudBase::setAlpha( float alpha )
+{
+  alpha_ = alpha;
+
+  cloud_->setAlpha(alpha_);
+
+  if ( alpha_property_ )
+  {
+    alpha_property_->changed();
+  }
 }
 
 void PointCloudBase::setMaxColor( const Color& color )
@@ -616,10 +629,13 @@ void PointCloudBase::createProperties()
   channel_property_ = property_manager_->createProperty<EnumProperty>( "Channel", property_prefix_, boost::bind( &PointCloudBase::getChannelColorIndex, this ),
                                                                      boost::bind( &PointCloudBase::setChannelColorIndex, this, _1 ), parent_category_, this );
 
+  alpha_property_ = property_manager_->createProperty<FloatProperty>( "Alpha", property_prefix_, boost::bind( &PointCloudBase::getAlpha, this ),
+                                                                        boost::bind( &PointCloudBase::setAlpha, this, _1 ), parent_category_, this );
+
+  min_color_property_ = property_manager_->createProperty<ColorProperty>( "Min Color", property_prefix_, boost::bind( &PointCloudBase::getMinColor, this ),
+                                                                            boost::bind( &PointCloudBase::setMinColor, this, _1 ), parent_category_, this );
   max_color_property_ = property_manager_->createProperty<ColorProperty>( "Max Color", property_prefix_, boost::bind( &PointCloudBase::getMaxColor, this ),
                                                                         boost::bind( &PointCloudBase::setMaxColor, this, _1 ), parent_category_, this );
-  min_color_property_ = property_manager_->createProperty<ColorProperty>( "Min Color", property_prefix_, boost::bind( &PointCloudBase::getMinColor, this ),
-                                                                          boost::bind( &PointCloudBase::setMinColor, this, _1 ), parent_category_, this );
   // legacy "Color" support... convert it to max color
   max_color_property_->addLegacyName("Color");
 
@@ -629,10 +645,10 @@ void PointCloudBase::createProperties()
 
   auto_compute_intensity_bounds_property_ = property_manager_->createProperty<BoolProperty>( "Autocompute Intensity Bounds", property_prefix_, boost::bind( &PointCloudBase::getAutoComputeIntensityBounds, this ),
                                                                             boost::bind( &PointCloudBase::setAutoComputeIntensityBounds, this, _1 ), parent_category_, this );
+  min_intensity_property_ = property_manager_->createProperty<FloatProperty>( "Min Intensity", property_prefix_, boost::bind( &PointCloudBase::getMinIntensity, this ),
+                                                                            boost::bind( &PointCloudBase::setMinIntensity, this, _1 ), parent_category_, this );
   max_intensity_property_ = property_manager_->createProperty<FloatProperty>( "Max Intensity", property_prefix_, boost::bind( &PointCloudBase::getMaxIntensity, this ),
                                                                           boost::bind( &PointCloudBase::setMaxIntensity, this, _1 ), parent_category_, this );
-  min_intensity_property_ = property_manager_->createProperty<FloatProperty>( "Min Intensity", property_prefix_, boost::bind( &PointCloudBase::getMinIntensity, this ),
-                                                                          boost::bind( &PointCloudBase::setMinIntensity, this, _1 ), parent_category_, this );
 
   decay_time_property_ = property_manager_->createProperty<FloatProperty>( "Decay Time", property_prefix_, boost::bind( &PointCloudBase::getDecayTime, this ),
                                                                            boost::bind( &PointCloudBase::setDecayTime, this, _1 ), parent_category_, this );

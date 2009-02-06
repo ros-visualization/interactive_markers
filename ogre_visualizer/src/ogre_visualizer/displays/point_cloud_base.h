@@ -178,6 +178,9 @@ public:
     return (-1);
   }
 
+  float getAlpha() { return alpha_; }
+  void setAlpha( float alpha );
+
   // Overrides from Display
   virtual void fixedFrameChanged();
   virtual void createProperties();
@@ -203,6 +206,7 @@ protected:
 
   ogre_tools::PointCloud* cloud_;
 
+  float alpha_;
   Color min_color_;
   Color max_color_;
   float min_intensity_;
@@ -216,6 +220,7 @@ protected:
   float point_decay_time_;                    ///< How long clouds should stick around for before they are culled
 
   FloatProperty* billboard_size_property_;
+  FloatProperty* alpha_property_;
   ColorProperty* min_color_property_;
   ColorProperty* max_color_property_;
   BoolProperty* auto_compute_intensity_bounds_property_;
