@@ -108,6 +108,9 @@ public:
   void setMechanismTopic( const std::string& topic );
   const std::string& getMechanismTopic() { return mechanism_topic_; }
 
+  float getAlpha() { return alpha_; }
+  void setAlpha( float alpha );
+
   // Overrides from Display
   virtual void targetFrameChanged();
   virtual void fixedFrameChanged() {}
@@ -145,12 +148,14 @@ protected:
 
   float time_since_last_transform_;
   float update_rate_;
+  float alpha_;
 
   BoolProperty* visual_enabled_property_;
   BoolProperty* collision_enabled_property_;
   FloatProperty* update_rate_property_;
   StringProperty* robot_description_property_;
   ROSTopicStringProperty* mechanism_topic_property_;
+  FloatProperty* alpha_property_;
 
   robot_desc::URDF* urdf_;
   std::string robot_description_;

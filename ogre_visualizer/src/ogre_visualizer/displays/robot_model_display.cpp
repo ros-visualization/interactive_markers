@@ -62,6 +62,8 @@ RobotModelDisplay::RobotModelDisplay( const std::string& name, VisualizationMana
   robot_->setUserData( Ogre::Any( (void*)this ) );
 
   urdf_ = new robot_desc::URDF();
+
+  setAlpha(1.0f);
 }
 
 RobotModelDisplay::~RobotModelDisplay()
@@ -70,6 +72,18 @@ RobotModelDisplay::~RobotModelDisplay()
 
   delete robot_;
   delete urdf_;
+}
+
+void RobotModelDisplay::setAlpha( float alpha )
+{
+  alpha_ = alpha;
+
+  robot_->setAlpha(alpha_);
+
+  if ( alpha_property_ )
+  {
+    alpha_property_->changed();
+  }
 }
 
 void RobotModelDisplay::setRobotDescription( const std::string& description_param )
@@ -246,6 +260,9 @@ void RobotModelDisplay::createProperties()
   update_rate_property_ = property_manager_->createProperty<FloatProperty>( "Update Rate", property_prefix_, boost::bind( &RobotModelDisplay::getUpdateRate, this ),
                                                                                   boost::bind( &RobotModelDisplay::setUpdateRate, this, _1 ), parent_category_, this );
   update_rate_property_->setMin( 0.0 );
+
+  alpha_property_ = property_manager_->createProperty<FloatProperty>( "Alpha", property_prefix_, boost::bind( &RobotModelDisplay::getAlpha, this ),
+                                                                          boost::bind( &RobotModelDisplay::setAlpha, this, _1 ), parent_category_, this );
 
   robot_description_property_ = property_manager_->createProperty<StringProperty>( "Robot Description", property_prefix_, boost::bind( &RobotModelDisplay::getRobotDescription, this ),
                                                                                    boost::bind( &RobotModelDisplay::setRobotDescription, this, _1 ), parent_category_, this );

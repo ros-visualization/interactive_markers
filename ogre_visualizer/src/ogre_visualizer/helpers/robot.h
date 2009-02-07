@@ -132,6 +132,8 @@ struct LinkInfo
   double getJointAppliedEffort() { return joint_state_.applied_effort; }
   double getJointCommandedEffort() { return joint_state_.commanded_effort; }
 
+  void setAlpha(float a);
+
   robot_msgs::JointState joint_state_;
 
   BoolProperty* joint_display_velocity_;
@@ -220,6 +222,9 @@ public:
   bool isShowingAxes( const LinkInfo* info );
   void setShowAxes( LinkInfo* info, bool show );
 
+  void setAlpha(float a);
+  float getAlpha() { return alpha_; }
+
   LinkInfo* getLinkInfo( const std::string& name );
 
   const std::string& getName() { return name_; }
@@ -265,6 +270,7 @@ protected:
   Ogre::Any user_data_;
 
   std::string name_;
+  float alpha_;
 };
 
 } // namespace ogre_vis

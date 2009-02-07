@@ -169,8 +169,7 @@ public:
     * \param points the point cloud
     * \param channel_name the string defining the channel name
     */
-  inline int
-    getROSCloudChannelIndex (const boost::shared_ptr<std_msgs::PointCloud>& points, std::string channel_name)
+  inline int getROSCloudChannelIndex (const boost::shared_ptr<std_msgs::PointCloud>& points, std::string channel_name)
   {
     for (unsigned int d = 0; d < points->chan.size (); d++)
       if (points->chan[d].name == channel_name)

@@ -43,6 +43,8 @@
 #include <OgreSceneManager.h>
 #include <OgreRibbonTrail.h>
 #include <OgreEntity.h>
+#include <OgreMaterialManager.h>
+#include <OgreMaterial.h>
 
 #include <ros/console.h>
 
@@ -68,6 +70,34 @@ LinkInfo::~LinkInfo()
 {
 }
 
+void LinkInfo::setAlpha(float a)
+{
+  if (collision_object_)
+  {
+    collision_object_->setColor( 0.0f, 0.6f, 1.0f, a );
+  }
+
+  if (visual_mesh_)
+  {
+    Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().getByName(material_name_);
+
+    Ogre::ColourValue color = material->getTechnique(0)->getPass(0)->getDiffuse();
+    color.a = a;
+    material->setDiffuse( color );
+
+    if ( a < 0.9998 )
+    {
+      material->setSceneBlending( Ogre::SBT_TRANSPARENT_ALPHA );
+      material->setDepthWriteEnabled( false );
+    }
+    else
+    {
+      material->setSceneBlending( Ogre::SBT_REPLACE );
+      material->setDepthWriteEnabled( true );
+    }
+  }
+}
+
 Robot::Robot( Ogre::SceneManager* scene_manager, const std::string& name )
 : ogre_tools::Object( scene_manager )
 , visual_visible_( true )
@@ -84,6 +114,7 @@ Robot::Robot( Ogre::SceneManager* scene_manager, const std::string& name )
 
   setVisualVisible( visual_visible_ );
   setCollisionVisible( collision_visible_ );
+  setAlpha(1.0f);
 }
 
 Robot::~Robot()
@@ -128,6 +159,20 @@ bool Robot::isVisualVisible()
 bool Robot::isCollisionVisible()
 {
   return collision_visible_;
+}
+
+void Robot::setAlpha(float a)
+{
+  alpha_ = a;
+
+  M_NameToLinkInfo::iterator it = links_.begin();
+  M_NameToLinkInfo::iterator end = links_.end();
+  for ( ; it != end; ++it )
+  {
+    LinkInfo* info = it->second;
+
+    info->setAlpha(alpha_);
+  }
 }
 
 void Robot::setUserData( const Ogre::Any& user_data )
@@ -258,8 +303,6 @@ void Robot::createCollisionForLink( LinkInfo* info, robot_desc::URDF::Link* link
     info->collision_offset_position_ = position;
     info->collision_offset_orientation_ = orientation;
 
-    info->collision_object_->setColor( 0.0f, 0.6f, 1.0f, 1.0f );
-
     if ( !user_data_.isEmpty() )
     {
       info->collision_object_->setUserData( user_data_ );
@@ -319,7 +362,15 @@ void Robot::createVisualForLink( LinkInfo* info, robot_desc::URDF::Link* link )
       M_string::iterator it = m.find( "material" );
       if ( it != m.end() )
       {
-        info->material_name_ = it->second;
+        static int count = 0;
+        std::stringstream ss;
+        ss << it->second << count++ << "Robot";
+        std::string cloned_name = ss.str();
+
+        Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().getByName(it->second);
+        material->clone(cloned_name);
+
+        info->material_name_ = cloned_name;
         info->visual_mesh_->setMaterialName( info->material_name_ );
         break;
       }
@@ -422,6 +473,8 @@ void Robot::load( robot_desc::URDF* urdf, bool visual, bool collision )
     {
       createCollisionForLink( link_info, link );
     }
+
+    link_info->setAlpha(alpha_);
 
     if ( property_manager_ )
     {
