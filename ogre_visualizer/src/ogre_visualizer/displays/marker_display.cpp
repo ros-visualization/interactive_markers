@@ -98,7 +98,7 @@ void MarkerDisplay::onEnable()
   urdf_->clear();
   urdf_->loadString(content.c_str());
 
-  kinematic_model_->build( *urdf_ );
+  kinematic_model_->build( content );
   kinematic_model_->defaultState();
 }
 
