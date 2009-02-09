@@ -68,6 +68,7 @@ PointCloudBase::PointCloudBase( const std::string& name, VisualizationManager* m
 , billboard_size_( 0.01 )
 , point_decay_time_(0.0f)
 , billboard_size_property_( NULL )
+, alpha_property_(NULL)
 , min_color_property_( NULL )
 , max_color_property_( NULL )
 , auto_compute_intensity_bounds_property_( NULL )

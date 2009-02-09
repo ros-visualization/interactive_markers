@@ -54,6 +54,7 @@ RobotModelDisplay::RobotModelDisplay( const std::string& name, VisualizationMana
 , update_rate_property_( NULL )
 , robot_description_property_( NULL )
 , mechanism_topic_property_( NULL )
+, alpha_property_(NULL)
 {
   robot_ = new Robot( scene_manager_, "Robot: " + name_ );
 
