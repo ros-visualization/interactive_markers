@@ -163,8 +163,7 @@ void PlanningDisplay::load()
   delete kinematic_model_;
   kinematic_model_ = new planning_models::KinematicModel();
   kinematic_model_->setVerbose( false );
-  kinematic_model_->build( file );
-  kinematic_model_->defaultState();
+  kinematic_model_->build( description_param_ );
   kinematic_model_->reduceToRobotFrame();
 
   robot_->update( kinematic_model_, target_frame_ );
