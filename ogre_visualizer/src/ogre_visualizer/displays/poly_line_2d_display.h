@@ -35,7 +35,7 @@
 #include "helpers/color.h"
 
 #include <std_msgs/Polyline2D.h>
-#include <std_msgs/MapMetaData.h>
+#include <robot_msgs/MapMetaData.h>
 
 namespace ogre_tools
 {
@@ -144,7 +144,7 @@ protected:
   std_msgs::Polyline2D message_;
 
   bool new_metadata_;
-  std_msgs::MapMetaData metadata_message_;
+  robot_msgs::MapMetaData metadata_message_;
 
   ColorProperty* color_property_;
   ROSTopicStringProperty* topic_property_;

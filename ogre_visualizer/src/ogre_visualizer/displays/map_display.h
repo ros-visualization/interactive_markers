@@ -35,7 +35,7 @@
 #include <OgreTexture.h>
 #include <OgreMaterial.h>
 
-#include <std_msgs/MapMetaData.h>
+#include <robot_msgs/MapMetaData.h>
 #include <ros/time.h>
 
 namespace Ogre
@@ -112,7 +112,7 @@ protected:
   float alpha_;
 
   bool new_metadata_;
-  std_msgs::MapMetaData metadata_message_;
+  robot_msgs::MapMetaData metadata_message_;
   ros::Time last_loaded_map_time_;
 
   StringProperty* service_property_;

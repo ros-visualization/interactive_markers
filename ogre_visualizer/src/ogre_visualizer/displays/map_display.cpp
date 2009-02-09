@@ -33,7 +33,7 @@
 #include "common.h"
 
 #include <tf/transform_listener.h>
-#include <std_srvs/StaticMap.h>
+#include <robot_srvs/StaticMap.h>
 
 #include <ogre_tools/grid.h>
 
@@ -181,8 +181,8 @@ void MapDisplay::clear()
 
 void MapDisplay::load()
 {
-  std_srvs::StaticMap::Request  req;
-  std_srvs::StaticMap::Response resp;
+  robot_srvs::StaticMap::Request  req;
+  robot_srvs::StaticMap::Response resp;
   ROS_DEBUG("Requesting the map...");
   if( !ros::service::call(service_, req, resp) )
   {
@@ -407,7 +407,7 @@ void MapDisplay::incomingMetaData()
 
 const char* MapDisplay::getDescription()
 {
-  return "Displays an image of a map gotten through a std_srvs::StaticMap service.";
+  return "Displays an image of a map gotten through a robot_srvs::StaticMap service.";
 }
 
 } // namespace ogre_vis
