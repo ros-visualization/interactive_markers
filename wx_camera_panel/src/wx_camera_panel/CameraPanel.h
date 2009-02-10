@@ -34,7 +34,7 @@
 #include "CameraPanelsGenerated.h"
 
 // ROS includes
-#include <std_msgs/Image.h>
+#include <deprecated_msgs/Image.h>
 #include <axis_cam/PTZActuatorState.h>
 #include <axis_cam/PTZActuatorCmd.h>
 
@@ -215,11 +215,11 @@ private:
   /// Our ROS node
   ros::Node* ros_node_;
 
-  std_msgs::Image   image_message_;
+  deprecated_msgs::Image   image_message_;
   uint8_t*      image_data_;
   wxImage*      image_;
   boost::mutex  image_mutex_;
-  ImageCodec<std_msgs::Image> image_codec_;
+  ImageCodec<deprecated_msgs::Image> image_codec_;
   wxBitmap      bitmap_;
   bool        recreate_bitmap_;
 
