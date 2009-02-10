@@ -59,7 +59,7 @@ RobotBase2DPoseDisplay::RobotBase2DPoseDisplay( const std::string& name, Visuali
 {
   scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
 
-  notifier_ = new tf::MessageNotifier<std_msgs::RobotBase2DOdom>(tf_, ros_node_, boost::bind(&RobotBase2DPoseDisplay::incomingMessage, this, _1), "", "", 5);
+  notifier_ = new tf::MessageNotifier<deprecated_msgs::RobotBase2DOdom>(tf_, ros_node_, boost::bind(&RobotBase2DPoseDisplay::incomingMessage, this, _1), "", "", 5);
 }
 
 RobotBase2DPoseDisplay::~RobotBase2DPoseDisplay()
@@ -180,7 +180,7 @@ void RobotBase2DPoseDisplay::createProperties()
                                                                           boost::bind( &RobotBase2DPoseDisplay::setColor, this, _1 ), parent_category_, this );
   topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &RobotBase2DPoseDisplay::getTopic, this ),
                                                                                 boost::bind( &RobotBase2DPoseDisplay::setTopic, this, _1 ), parent_category_, this );
-  topic_property_->setMessageType(std_msgs::RobotBase2DOdom::__s_getDataType());
+  topic_property_->setMessageType(deprecated_msgs::RobotBase2DOdom::__s_getDataType());
 
   position_tolerance_property_ = property_manager_->createProperty<FloatProperty>( "Position Tolerance", property_prefix_, boost::bind( &RobotBase2DPoseDisplay::getPositionTolerance, this ),
                                                                                boost::bind( &RobotBase2DPoseDisplay::setPositionTolerance, this, _1 ), parent_category_, this );
@@ -289,7 +289,7 @@ void RobotBase2DPoseDisplay::reset()
 
 const char* RobotBase2DPoseDisplay::getDescription()
 {
-  return "Accumulates and displays poses from a std_msgs::RobotBase2DOdom message.";
+  return "Accumulates and displays poses from a deprecated_msgs::RobotBase2DOdom message.";
 }
 
 } // namespace ogre_vis

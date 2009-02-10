@@ -34,7 +34,7 @@
 #include "display.h"
 #include "helpers/color.h"
 
-#include <std_msgs/RobotBase2DOdom.h>
+#include <deprecated_msgs/RobotBase2DOdom.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/mutex.hpp>
@@ -63,7 +63,7 @@ class FloatProperty;
 
 /**
  * \class RobotBase2DPoseDisplay
- * \brief Accumulates and displays the pose from a std_msgs::RobotBase2DOdom message
+ * \brief Accumulates and displays the pose from a deprecated_msgs::RobotBase2DOdom message
  */
 class RobotBase2DPoseDisplay : public Display
 {
@@ -100,7 +100,7 @@ protected:
   void unsubscribe();
   void clear();
 
-  typedef boost::shared_ptr<std_msgs::RobotBase2DOdom> MessagePtr;
+  typedef boost::shared_ptr<deprecated_msgs::RobotBase2DOdom> MessagePtr;
 
   void incomingMessage( const MessagePtr& message );
   void processMessage( const MessagePtr& message );
@@ -132,7 +132,7 @@ protected:
   FloatProperty* position_tolerance_property_;
   FloatProperty* angle_tolerance_property_;
 
-  tf::MessageNotifier<std_msgs::RobotBase2DOdom>* notifier_;
+  tf::MessageNotifier<deprecated_msgs::RobotBase2DOdom>* notifier_;
 };
 
 } // namespace ogre_vis

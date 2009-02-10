@@ -8,6 +8,6 @@ A simple point cloud viewer written using SDL.
 <url>http://stair.stanford.edu</url>
 <depend package="roscpp"/>
 <depend package="robot_msgs"/>
-<depend package="std_msgs"/>
+<depend package="deprecated_msgs"/>
 </package>
 

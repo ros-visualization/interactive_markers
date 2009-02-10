@@ -29,10 +29,10 @@
 
 #include <ros/node.h>
 #include <ros/time.h>
-#include <std_msgs/RobotBase2DOdom.h>
+#include <deprecated_msgs/RobotBase2DOdom.h>
 #include <robot_msgs/Planner2DGoal.h>
 
-std_msgs::RobotBase2DOdom g_pose;
+deprecated_msgs::RobotBase2DOdom g_pose;
 
 void pose_updated()
 {
