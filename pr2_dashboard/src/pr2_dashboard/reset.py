@@ -45,7 +45,7 @@ class ResetPanel(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
         
-        xrc_path = roslib.packspec.get_pkg_dir(PKG) + '/xrc/reset_panel.xrc'
+        xrc_path = roslib.packages.get_pkg_dir(PKG) + '/xrc/reset_panel.xrc'
         
         self._xrc = xrc.XmlResource(xrc_path)
         self._real_panel = self._xrc.LoadPanel(self, 'ResetPanel')

@@ -34,7 +34,7 @@
 #include "helpers/color.h"
 #include "ogre_tools/point_cloud.h"
 
-#include "std_msgs/LaserScan.h"
+#include "laser_scan/LaserScan.h"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
@@ -65,7 +65,7 @@ class ROSTopicStringProperty;
 
 /**
  * \class LaserScanDisplay
- * \brief Visualizes a laser scan, received as a std_msgs::LaserScan
+ * \brief Visualizes a laser scan, received as a laser_scan::LaserScan
  */
 class LaserScanDisplay : public PointCloudBase
 {
@@ -105,14 +105,14 @@ protected:
   /**
    * \brief ROS callback for an incoming point cloud message
    */
-  void incomingScanCallback(const boost::shared_ptr<std_msgs::LaserScan>& scan);
+  void incomingScanCallback(const boost::shared_ptr<laser_scan::LaserScan>& scan);
 
   std::string topic_;                         ///< The PointCloud topic set by setTopic()
   ROSTopicStringProperty* topic_property_;
 
   laser_scan::LaserProjection* projector_;
 
-  tf::MessageNotifier<std_msgs::LaserScan>* notifier_;
+  tf::MessageNotifier<laser_scan::LaserScan>* notifier_;
 };
 
 } // namespace ogre_vis

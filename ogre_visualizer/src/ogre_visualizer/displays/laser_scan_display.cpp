@@ -52,7 +52,7 @@ LaserScanDisplay::LaserScanDisplay( const std::string& name, VisualizationManage
 , topic_property_( NULL )
 {
   projector_ = new laser_scan::LaserProjection();
-  notifier_ = new tf::MessageNotifier<std_msgs::LaserScan>(tf_, ros_node_, boost::bind(&LaserScanDisplay::incomingScanCallback, this, _1), "", "", 10);
+  notifier_ = new tf::MessageNotifier<laser_scan::LaserScan>(tf_, ros_node_, boost::bind(&LaserScanDisplay::incomingScanCallback, this, _1), "", "", 10);
 }
 
 LaserScanDisplay::~LaserScanDisplay()
@@ -110,7 +110,7 @@ void LaserScanDisplay::unsubscribe()
 }
 
 
-void LaserScanDisplay::incomingScanCallback(const boost::shared_ptr<std_msgs::LaserScan>& scan)
+void LaserScanDisplay::incomingScanCallback(const boost::shared_ptr<laser_scan::LaserScan>& scan)
 {
   boost::shared_ptr<std_msgs::PointCloud> cloud(new std_msgs::PointCloud);
 
@@ -141,12 +141,12 @@ void LaserScanDisplay::createProperties()
   topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &LaserScanDisplay::getTopic, this ),
                                                                             boost::bind( &LaserScanDisplay::setTopic, this, _1 ), parent_category_, this );
   topic_property_->addLegacyName("Scan Topic");
-  topic_property_->setMessageType(std_msgs::LaserScan::__s_getDataType());
+  topic_property_->setMessageType(laser_scan::LaserScan::__s_getDataType());
 }
 
 const char* LaserScanDisplay::getDescription()
 {
-  return "Displays the data from a std_msgs::LaserScan message, with the option to accumulate over a period of time.";
+  return "Displays the data from a laser_scan::LaserScan message, with the option to accumulate over a period of time.";
 }
 
 } // namespace ogre_vis
