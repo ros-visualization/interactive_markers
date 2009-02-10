@@ -60,7 +60,7 @@ int main( int argc, char** argv )
   line_marker.b = 0;
   for ( int i = -50; i < 50; ++i )
   {
-    std_msgs::Position p;
+    robot_msgs::Point p;
     p.x = 1;
     p.y = (i*2);
     p.z = 0;

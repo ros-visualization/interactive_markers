@@ -300,11 +300,11 @@ void MarkerDisplay::setValues( const MarkerPtr& message, ogre_tools::Object* obj
     line->clear();
     line->setLineWidth( message->xScale );
 
-    std::vector<std_msgs::Position>::iterator it = message->points.begin();
-    std::vector<std_msgs::Position>::iterator end = message->points.end();
+    std::vector<robot_msgs::Point>::iterator it = message->points.begin();
+    std::vector<robot_msgs::Point>::iterator end = message->points.end();
     for ( ; it != end; ++it )
     {
-      std_msgs::Position& p = *it;
+      robot_msgs::Point& p = *it;
 
       Ogre::Vector3 v( p.x, p.y, p.z );
       robotToOgre( v );
