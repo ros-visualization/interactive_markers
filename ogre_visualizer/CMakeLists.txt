@@ -3,8 +3,8 @@ include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 # CMake 2.4.6 doesn't include FindPkgConfig, so we provide our own copy
 include($ENV{ROS_ROOT}/core/rosbuild/FindPkgConfig.cmake)
 
-set(ROS_BUILD_TYPE RelWithDebInfo)
-#set(ROS_BUILD_TYPE Debug)
+#set(ROS_BUILD_TYPE RelWithDebInfo)
+set(ROS_BUILD_TYPE Debug)
 
 rospack(ogre_visualizer)
 
@@ -84,6 +84,7 @@ rospack_add_library(${PROJECT_NAME} src/ogre_visualizer/properties/property.cpp
                                     src/ogre_visualizer/tools/selection_tool.cpp
                                     src/ogre_visualizer/visualization_panel.cpp
                                     src/ogre_visualizer/visualization_manager.cpp
+                                    src/ogre_visualizer/visualization_frame.cpp
                                     src/ogre_visualizer/display.cpp
                                     src/ogre_visualizer/common.cpp
                                     src/ogre_visualizer/factory.cpp
@@ -107,7 +108,7 @@ rospack_add_library(${PROJECT_NAME} src/ogre_visualizer/properties/property.cpp
                                     src/ogre_visualizer/displays/tf_display.cpp
                                     src/ogre_visualizer/generated/visualization_panel_generated.cpp)
 target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} ${OGRE_LIBRARIES})
-rospack_link_boost(${PROJECT_NAME} thread signals)
+rospack_link_boost(${PROJECT_NAME} thread signals filesystem)
 
 # ...and another with the SWIG code.
 rospack_add_library(python_${PROJECT_NAME} ${SWIG_OUTPUT_CPP_FILE})
@@ -119,8 +120,8 @@ set_target_properties(python_${PROJECT_NAME}
                       PROPERTIES OUTPUT_NAME _${PROJECT_NAME}
                       PREFIX "")
 
-rospack_add_executable(visualizer_test src/test/visualizer_test.cpp)
-target_link_libraries(visualizer_test ${PROJECT_NAME} ${wxWidgets_LIBRARIES})
+rospack_add_executable(visualizer src/ogre_visualizer/visualizer_app.cpp)
+target_link_libraries(visualizer ${PROJECT_NAME} ${wxWidgets_LIBRARIES})
 
 rospack_add_executable(marker_test src/test/marker_test.cpp)
 rospack_add_executable(cloud_test src/test/cloud_test.cpp)
