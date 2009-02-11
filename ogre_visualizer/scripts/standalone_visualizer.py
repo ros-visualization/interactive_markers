@@ -77,7 +77,8 @@ class VisualizerFrame(wx.Frame):
         self.SetPosition((x, y))
         self.SetSize((width, height))
         
-        manager.loadConfig(self._config)
+        manager.loadGeneralConfig(self._config)
+        manager.loadDisplayConfig(self._config)
         
         self.Bind(wx.EVT_CLOSE, self.on_close)
         
@@ -89,7 +90,9 @@ class VisualizerFrame(wx.Frame):
         manager = self._visualizer_panel.getManager()
         manager.removeAllDisplays()
         config = wx.FileConfig(localFilename=path)
-        manager.loadConfig(config)
+        
+        manager.loadGeneralConfig(config)
+        manager.loadDisplayConfig(config)
         
     def on_open(self, event):
         dialog = wx.FileDialog(self, "Choose a file to open", self._save_location, wildcard="*."+self._CONFIG_EXTENSION, style=wx.FD_OPEN)
@@ -107,7 +110,8 @@ class VisualizerFrame(wx.Frame):
             manager = self._visualizer_panel.getManager()
             config = wx.FileConfig(localFilename=path)
             config.DeleteAll()
-            manager.saveConfig(config)
+            manager.saveGeneralConfig(config)
+            manager.saveDisplayConfig(config)
             config.Flush()
             
             self.load_config_menus()
@@ -211,7 +215,8 @@ class VisualizerFrame(wx.Frame):
         self._config.WriteInt(self._CONFIG_WINDOW_WIDTH, width)
         self._config.WriteInt(self._CONFIG_WINDOW_HEIGHT, height)
         
-        self._visualizer_panel.getManager().saveConfig(self._config)
+        self._visualizer_panel.getManager().saveGeneralConfig(self._config)
+        self._visualizer_panel.getManager().saveDisplayConfig(self._config)
         self._config.Flush()
 
 class VisualizerApp(wx.App):

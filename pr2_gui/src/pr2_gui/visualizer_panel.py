@@ -45,5 +45,6 @@ class DefaultVisualizationPanel(ogre_visualizer.VisualizationPanel):
         
         config_path = roslib.packages.get_pkg_dir( "ogre_visualizer" ) + "/configs/pr2.vcg"
         config = wx.FileConfig(localFilename=config_path)
-        manager.loadConfig(config)
+        manager.loadGeneralConfig(config)
+        manager.loadDisplayConfig(config)
         

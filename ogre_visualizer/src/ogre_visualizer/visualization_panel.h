@@ -128,17 +128,6 @@ public:
   void addTool( Tool* tool );
   void setTool( Tool* tool );
 
-  /**
-   * \brief Load configuration.  Simply passes through to the VisualizationManager, here for convenience
-   * @param config The wx config object to load from
-   */
-  void loadConfig( wxConfigBase* config );
-  /**
-   * \brief Save configuration.  Simply passes through to the VisualizationManager, here for convenience
-   * @param config The wx config object to save to
-   */
-  void saveConfig( wxConfigBase* config );
-
 protected:
   /// Called when a mouse event happens inside the render window
   void onRenderWindowMouseEvents( wxMouseEvent& event );

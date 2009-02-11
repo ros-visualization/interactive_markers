@@ -468,16 +468,6 @@ void VisualizationPanel::onDisplayStateChanged( Display* display )
   }
 }
 
-void VisualizationPanel::loadConfig( wxConfigBase* config )
-{
-  manager_->loadConfig( config );
-}
-
-void VisualizationPanel::saveConfig( wxConfigBase* config )
-{
-  manager_->saveConfig( config );
-}
-
 void VisualizationPanel::onChar( wxKeyEvent& event )
 {
   manager_->handleChar( event );

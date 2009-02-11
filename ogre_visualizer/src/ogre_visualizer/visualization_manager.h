@@ -184,15 +184,25 @@ public:
   Tool* getDefaultTool() { return default_tool_; }
 
   /**
-   * \brief Load configuration
+   * \brief Load general configuration
    * @param config The wx config object to load from
    */
-  void loadConfig( wxConfigBase* config );
+  void loadGeneralConfig( wxConfigBase* config );
   /**
-   * \brief Save configuration
+   * \brief Save general configuration
    * @param config The wx config object to save to
    */
-  void saveConfig( wxConfigBase* config );
+  void saveGeneralConfig( wxConfigBase* config );
+  /**
+   * \brief Load display configuration
+   * @param config The wx config object to load from
+   */
+  void loadDisplayConfig( wxConfigBase* config );
+  /**
+   * \brief Save display configuration
+   * @param config The wx config object to save to
+   */
+  void saveDisplayConfig( wxConfigBase* config );
 
   /**
    * \brief Register a display factory with the panel.  Allows you to create a display by type.

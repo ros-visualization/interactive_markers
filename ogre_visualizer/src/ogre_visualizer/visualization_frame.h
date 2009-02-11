@@ -52,11 +52,11 @@ public:
   void init();
 
 protected:
-  void initConfig();
-  void initMenu();
-  void loadConfig(const std::string& path);
+  void initConfigs();
+  void initMenus();
+  void loadDisplayConfig(const std::string& path);
   void loadConfigMenus();
-  void saveConfig();
+  void saveConfigs();
 
   void onClose(wxCommandEvent& event);
   void onOpen(wxCommandEvent& event);
@@ -66,9 +66,11 @@ protected:
 
   VisualizationPanel* visualization_panel_;
 
-  wxConfigBase* config_;
+  wxConfigBase* general_config_;
+  wxConfigBase* display_config_;
   std::string config_dir_;
-  std::string config_file_;
+  std::string general_config_file_;
+  std::string display_config_file_;
   std::string save_dir_;
   std::string global_config_dir_;
 

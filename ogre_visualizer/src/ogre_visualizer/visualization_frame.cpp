@@ -56,7 +56,8 @@ namespace ogre_vis
 
 VisualizationFrame::VisualizationFrame(wxWindow* parent)
 : wxFrame(parent, wxID_ANY, wxT("Visualizer"), wxDefaultPosition, wxSize(800,600), wxDEFAULT_FRAME_STYLE)
-, config_(NULL)
+, general_config_(NULL)
+, display_config_(NULL)
 , menubar_(NULL)
 , file_menu_(NULL)
 , local_configs_menu_(NULL)
@@ -84,48 +85,56 @@ VisualizationFrame::VisualizationFrame(wxWindow* parent)
 
 VisualizationFrame::~VisualizationFrame()
 {
-  saveConfig();
+  saveConfigs();
 }
 
 void VisualizationFrame::init()
 {
-  initConfig();
-  initMenu();
+  initConfigs();
+  initMenus();
 
   wxPoint pos = GetPosition();
   wxSize size = GetSize();
   int width = size.GetWidth();
   int height = size.GetHeight();
-  config_->Read(CONFIG_WINDOW_X, &pos.x, pos.x);
-  config_->Read(CONFIG_WINDOW_Y, &pos.y, pos.y);
-  config_->Read(CONFIG_WINDOW_WIDTH, &width, width);
-  config_->Read(CONFIG_WINDOW_HEIGHT, &height, height);
+  general_config_->Read(CONFIG_WINDOW_X, &pos.x, pos.x);
+  general_config_->Read(CONFIG_WINDOW_Y, &pos.y, pos.y);
+  general_config_->Read(CONFIG_WINDOW_WIDTH, &width, width);
+  general_config_->Read(CONFIG_WINDOW_HEIGHT, &height, height);
 
   SetPosition(pos);
   SetSize(wxSize(width, height));
 
   VisualizationManager* manager = visualization_panel_->getManager();
-  manager->loadConfig(config_);
+  manager->loadGeneralConfig(general_config_);
+  manager->loadDisplayConfig(display_config_);
 }
 
-void VisualizationFrame::initConfig()
+void VisualizationFrame::initConfigs()
 {
   config_dir_ = (const char*)wxStandardPaths::Get().GetUserConfigDir().fn_str();
   config_dir_ = (fs::path(config_dir_) / ".standalone_visualizer").file_string();
-  config_file_ = (fs::path(config_dir_) / "config").file_string();
+  general_config_file_ = (fs::path(config_dir_) / "config").file_string();
+  display_config_file_ = (fs::path(config_dir_) / "display_config").file_string();
 
   if (fs::is_regular_file(config_dir_))
   {
-    ROS_INFO("Migrating old config file to new location (%s to %s)", config_dir_.c_str(), config_file_.c_str());
+    ROS_INFO("Migrating old config file to new location (%s to %s)", config_dir_.c_str(), general_config_file_.c_str());
     std::string backup_file = config_dir_ + "bak";
 
     fs::rename(config_dir_, backup_file);
     fs::create_directory(config_dir_);
-    fs::rename(backup_file, config_file_);
+    fs::rename(backup_file, general_config_file_);
   }
   else if (!fs::exists(config_dir_))
   {
     fs::create_directory(config_dir_);
+  }
+
+  if (fs::exists(general_config_file_) && !fs::exists(display_config_file_))
+  {
+    ROS_INFO("Creating display config from general config");
+    fs::copy_file(general_config_file_, display_config_file_);
   }
 
   save_dir_ = (fs::path(config_dir_) / "saved").file_string();
@@ -134,22 +143,25 @@ void VisualizationFrame::initConfig()
     fs::create_directory(save_dir_);
   }
 
-  config_ = new wxFileConfig(wxT("standalone_visualizer"), wxEmptyString, wxString::FromAscii(config_file_.c_str()));
+  ROS_INFO("Loading general config from [%s]", general_config_file_.c_str());
+  general_config_ = new wxFileConfig(wxT("standalone_visualizer"), wxEmptyString, wxString::FromAscii(general_config_file_.c_str()));
+  ROS_INFO("Loading display config from [%s]", display_config_file_.c_str());
+  display_config_ = new wxFileConfig(wxT("standalone_visualizer"), wxEmptyString, wxString::FromAscii(display_config_file_.c_str()));
 }
 
-void VisualizationFrame::initMenu()
+void VisualizationFrame::initMenus()
 {
   menubar_ = new wxMenuBar();
   file_menu_ = new wxMenu(wxT(""));
-  wxMenuItem* item = file_menu_->Append(wxID_OPEN, wxT("&Open Config\tCtrl-O"));
+  wxMenuItem* item = file_menu_->Append(wxID_OPEN, wxT("&Open Display Config\tCtrl-O"));
   Connect(item->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(VisualizationFrame::onOpen), NULL, this);
-  item = file_menu_->Append(wxID_SAVE, wxT("&Save Config\tCtrl-S"));
+  item = file_menu_->Append(wxID_SAVE, wxT("&Save Display Config\tCtrl-S"));
   Connect(item->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(VisualizationFrame::onSave), NULL, this);
 
   local_configs_menu_ = new wxMenu(wxT(""));
   global_configs_menu_ = new wxMenu(wxT(""));
-  file_menu_->Append(wxID_ANY, wxT("&Local Configs"), local_configs_menu_);
-  file_menu_->Append(wxID_ANY, wxT("&Global Configs"), global_configs_menu_);
+  file_menu_->Append(wxID_ANY, wxT("&Local Display Configs"), local_configs_menu_);
+  file_menu_->Append(wxID_ANY, wxT("&Global Display Configs"), global_configs_menu_);
 
   file_menu_->AppendSeparator();
   item = file_menu_->Append(wxID_EXIT, wxT("&Quit"));
@@ -162,13 +174,13 @@ void VisualizationFrame::initMenu()
   loadConfigMenus();
 }
 
-void VisualizationFrame::loadConfig(const std::string& path)
+void VisualizationFrame::loadDisplayConfig(const std::string& path)
 {
   VisualizationManager* manager = visualization_panel_->getManager();
   manager->removeAllDisplays();
 
   wxFileConfig config(wxT("standalone_visualizer"), wxEmptyString, wxString::FromAscii(path.c_str()));
-  manager->loadConfig(&config);
+  manager->loadDisplayConfig(&config);
 }
 
 void VisualizationFrame::loadConfigMenus()
@@ -216,19 +228,25 @@ void VisualizationFrame::loadConfigMenus()
   }
 }
 
-void VisualizationFrame::saveConfig()
+void VisualizationFrame::saveConfigs()
 {
-  config_->DeleteAll();
+  ROS_INFO("Saving general config to [%s]", general_config_file_.c_str());
+  general_config_->DeleteAll();
   wxPoint pos = GetPosition();
   wxSize size = GetSize();
-  config_->Write(CONFIG_WINDOW_X, pos.x);
-  config_->Write(CONFIG_WINDOW_Y, pos.y);
-  config_->Write(CONFIG_WINDOW_WIDTH, size.GetWidth());
-  config_->Write(CONFIG_WINDOW_HEIGHT, size.GetHeight());
+  general_config_->Write(CONFIG_WINDOW_X, pos.x);
+  general_config_->Write(CONFIG_WINDOW_Y, pos.y);
+  general_config_->Write(CONFIG_WINDOW_WIDTH, size.GetWidth());
+  general_config_->Write(CONFIG_WINDOW_HEIGHT, size.GetHeight());
 
   VisualizationManager* manager = visualization_panel_->getManager();
-  manager->saveConfig(config_);
-  config_->Flush();
+  manager->saveGeneralConfig(general_config_);
+  general_config_->Flush();
+
+  ROS_INFO("Saving display config to [%s]", display_config_file_.c_str());
+  display_config_->DeleteAll();
+  manager->saveDisplayConfig(display_config_);
+  display_config_->Flush();
 }
 
 
@@ -244,7 +262,7 @@ void VisualizationFrame::onOpen(wxCommandEvent& event)
   if (!wxstr_file.empty())
   {
     std::string filename = (const char*)wxstr_file.fn_str();
-    loadConfig(filename);
+    loadDisplayConfig(filename);
   }
 }
 
@@ -266,7 +284,7 @@ void VisualizationFrame::onSave(wxCommandEvent& event)
     config.DeleteAll();
 
     VisualizationManager* manager = visualization_panel_->getManager();
-    manager->saveConfig(&config);
+    manager->saveDisplayConfig(&config);
     config.Flush();
 
     loadConfigMenus();
@@ -281,7 +299,7 @@ void VisualizationFrame::onGlobalConfig(wxCommandEvent& event)
   fs::path path(global_config_dir_);
   path /= filename + "." + CONFIG_EXTENSION;
 
-  loadConfig(path.file_string());
+  loadDisplayConfig(path.file_string());
 }
 
 void VisualizationFrame::onLocalConfig(wxCommandEvent& event)
@@ -292,7 +310,7 @@ void VisualizationFrame::onLocalConfig(wxCommandEvent& event)
   fs::path path(save_dir_);
   path /= filename + "." + CONFIG_EXTENSION;
 
-  loadConfig(path.file_string());
+  loadDisplayConfig(path.file_string());
 }
 
 
