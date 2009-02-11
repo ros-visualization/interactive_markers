@@ -309,7 +309,7 @@ void CollisionMapDisplay::processMessage()
   }
   else
   {
-    std_msgs::Point32 center, extents;
+    robot_msgs::Point32 center, extents;
     color = Ogre::ColourValue(color_.r_, color_.g_, color_.b_, alpha_);
     if (num_boxes > 0)
     {
@@ -414,7 +414,7 @@ void CollisionMapDisplay::createProperties()
 const char*
 CollisionMapDisplay::getDescription()
 {
-  return ("Displays data from a std_msgs::CollisionMap message as either points or lines.");
+  return ("Displays data from a robot_msgs::CollisionMap message as either points or lines.");
 }
 
 } // namespace ogre_vis

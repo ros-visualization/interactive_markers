@@ -34,7 +34,7 @@
 #include "helpers/color.h"
 #include "ogre_tools/point_cloud.h"
 
-#include "std_msgs/PointCloud.h"
+#include "robot_msgs/PointCloud.h"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
@@ -66,7 +66,7 @@ class BoolProperty;
 
 /**
  * \class PointCloudBase
- * \brief Displays a point cloud of type std_msgs::PointCloud
+ * \brief Displays a point cloud of type robot_msgs::PointCloud
  *
  * By default it will assume channel 0 of the cloud is an intensity value, and will color them by intensity.
  * If you set the channel's name to "rgb", it will interpret the channel as an integer rgb value, with r, g and b
@@ -82,7 +82,7 @@ private:
 
     float time_;
 
-    boost::shared_ptr<std_msgs::PointCloud> message_;
+    boost::shared_ptr<robot_msgs::PointCloud> message_;
     uint32_t num_points_;
   };
   typedef boost::shared_ptr<CloudInfo> CloudInfoPtr;
@@ -169,7 +169,7 @@ public:
     * \param points the point cloud
     * \param channel_name the string defining the channel name
     */
-  inline int getROSCloudChannelIndex (const boost::shared_ptr<std_msgs::PointCloud>& points, std::string channel_name)
+  inline int getROSCloudChannelIndex (const boost::shared_ptr<robot_msgs::PointCloud>& points, std::string channel_name)
   {
     for (unsigned int d = 0; d < points->chan.size (); d++)
       if (points->chan[d].name == channel_name)
@@ -196,8 +196,8 @@ protected:
   void transformCloud(const CloudInfoPtr& cloud);
   void transformThreadFunc();
 
-  void processMessage(const boost::shared_ptr<std_msgs::PointCloud>& cloud);
-  void addMessage(const boost::shared_ptr<std_msgs::PointCloud>& cloud);
+  void processMessage(const boost::shared_ptr<robot_msgs::PointCloud>& cloud);
+  void addMessage(const boost::shared_ptr<robot_msgs::PointCloud>& cloud);
 
   D_CloudInfo clouds_;
   boost::mutex clouds_mutex_;

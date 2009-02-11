@@ -38,7 +38,7 @@
 
 #include <tf/transform_listener.h>
 #include <tf/message_notifier.h>
-#include <std_msgs/PointCloud.h>
+#include <robot_msgs/PointCloud.h>
 #include <laser_scan/laser_scan.h>
 
 #include <OgreSceneNode.h>
@@ -112,7 +112,7 @@ void LaserScanDisplay::unsubscribe()
 
 void LaserScanDisplay::incomingScanCallback(const boost::shared_ptr<laser_scan::LaserScan>& scan)
 {
-  boost::shared_ptr<std_msgs::PointCloud> cloud(new std_msgs::PointCloud);
+  boost::shared_ptr<robot_msgs::PointCloud> cloud(new robot_msgs::PointCloud);
 
   std::string frame_id = scan->header.frame_id;
   if ( frame_id.empty() )

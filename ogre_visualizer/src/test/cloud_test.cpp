@@ -1,6 +1,6 @@
 #include "ros/node.h"
 
-#include "std_msgs/PointCloud.h"
+#include "robot_msgs/PointCloud.h"
 
 #include <tf/transform_broadcaster.h>
 
@@ -15,10 +15,10 @@ int main( int argc, char** argv )
     usleep( 10000 );
   }
 
-  node->advertise<std_msgs::PointCloud>( "rgb_cloud_test", 0 );
-  node->advertise<std_msgs::PointCloud>( "rgb_cloud_test2", 0 );
-  node->advertise<std_msgs::PointCloud>( "intensity_cloud_test", 0 );
-  node->advertise<std_msgs::PointCloud>( "million_points_cloud_test", 0 );
+  node->advertise<robot_msgs::PointCloud>( "rgb_cloud_test", 0 );
+  node->advertise<robot_msgs::PointCloud>( "rgb_cloud_test2", 0 );
+  node->advertise<robot_msgs::PointCloud>( "intensity_cloud_test", 0 );
+  node->advertise<robot_msgs::PointCloud>( "million_points_cloud_test", 0 );
 
   tf::TransformBroadcaster tf_broadcaster(*node);
 
@@ -33,7 +33,7 @@ int main( int argc, char** argv )
     tf_broadcaster.sendTransform(tf::Stamped<tf::Transform>(t, tm, "base", "map"));
 
     {
-      std_msgs::PointCloud cloud;
+      robot_msgs::PointCloud cloud;
       cloud.header.stamp = tm;
       cloud.header.frame_id = "map";
 
@@ -54,7 +54,7 @@ int main( int argc, char** argv )
     }
 
     {
-      std_msgs::PointCloud cloud;
+      robot_msgs::PointCloud cloud;
       cloud.header.stamp = tm;
       cloud.header.frame_id = "map";
 
@@ -85,7 +85,7 @@ int main( int argc, char** argv )
     }
 
     {
-      std_msgs::PointCloud cloud;
+      robot_msgs::PointCloud cloud;
       cloud.header.stamp = tm;
       cloud.header.frame_id = "map";
 
@@ -129,7 +129,7 @@ int main( int argc, char** argv )
     }
 
     {
-      std_msgs::PointCloud cloud;
+      robot_msgs::PointCloud cloud;
       cloud.header.stamp = tm;
       cloud.header.frame_id = "map";
 

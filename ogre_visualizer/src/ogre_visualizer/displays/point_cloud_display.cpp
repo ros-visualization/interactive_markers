@@ -50,7 +50,7 @@ PointCloudDisplay::PointCloudDisplay( const std::string& name, VisualizationMana
 : PointCloudBase( name, manager )
 , topic_property_( NULL )
 {
-  notifier_ = new tf::MessageNotifier<std_msgs::PointCloud>(tf_, ros_node_, boost::bind(&PointCloudDisplay::incomingCloudCallback, this, _1), "", "", 10);
+  notifier_ = new tf::MessageNotifier<robot_msgs::PointCloud>(tf_, ros_node_, boost::bind(&PointCloudDisplay::incomingCloudCallback, this, _1), "", "", 10);
 }
 
 PointCloudDisplay::~PointCloudDisplay()
@@ -107,7 +107,7 @@ void PointCloudDisplay::unsubscribe()
   notifier_->setTopic( "" );
 }
 
-void PointCloudDisplay::incomingCloudCallback(const boost::shared_ptr<std_msgs::PointCloud>& cloud)
+void PointCloudDisplay::incomingCloudCallback(const boost::shared_ptr<robot_msgs::PointCloud>& cloud)
 {
   addMessage(cloud);
 }
@@ -127,13 +127,13 @@ void PointCloudDisplay::createProperties()
 
   topic_property_ = property_manager_->createProperty<ROSTopicStringProperty>( "Topic", property_prefix_, boost::bind( &PointCloudDisplay::getTopic, this ),
                                                                               boost::bind( &PointCloudDisplay::setTopic, this, _1 ), parent_category_, this );
-  topic_property_->setMessageType(std_msgs::PointCloud::__s_getDataType());
+  topic_property_->setMessageType(robot_msgs::PointCloud::__s_getDataType());
 
 }
 
 const char* PointCloudDisplay::getDescription()
 {
-  return "Displays a point cloud from a std_msgs::PointCloud message, with the option to accumulate over time.";
+  return "Displays a point cloud from a robot_msgs::PointCloud message, with the option to accumulate over time.";
 }
 
 } // namespace ogre_vis

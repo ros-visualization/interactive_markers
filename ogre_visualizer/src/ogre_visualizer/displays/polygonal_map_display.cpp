@@ -79,7 +79,7 @@ PolygonalMapDisplay::PolygonalMapDisplay(const std::string & name,
   setPointSize(0.02f);
   setZPosition(0.0f);
 
-  notifier_ = new tf::MessageNotifier<std_msgs::PolygonalMap>(tf_, ros_node_,
+  notifier_ = new tf::MessageNotifier<robot_msgs::PolygonalMap>(tf_, ros_node_,
       boost::bind(&PolygonalMapDisplay::incomingMessage, this, _1), "", "", 1);
 }
 
@@ -394,13 +394,13 @@ void PolygonalMapDisplay::createProperties()
       "Topic", property_prefix_, boost::bind(&PolygonalMapDisplay::getTopic,
           this), boost::bind(&PolygonalMapDisplay::setTopic, this, _1),
       parent_category_, this);
-  topic_property_->setMessageType(std_msgs::PolygonalMap::__s_getDataType());
+  topic_property_->setMessageType(robot_msgs::PolygonalMap::__s_getDataType());
 }
 
 const char*
 PolygonalMapDisplay::getDescription()
 {
-  return ("Displays data from a std_msgs::PolygonalMap message as either points or lines.");
+  return ("Displays data from a robot_msgs::PolygonalMap message as either points or lines.");
 }
 
 } // namespace ogre_vis

@@ -33,7 +33,7 @@
 *********************************************************************/
 
 #include "ros/node.h"
-#include "std_msgs/PointCloud.h"
+#include "robot_msgs/PointCloud.h"
 #include "std_msgs/Empty.h"
 #include "cloud_viewer/cloud_viewer.h"
 #include <SDL/SDL.h>
@@ -59,7 +59,7 @@ public:
 class Cloud_Node : public ros::Node, public ros::SDLGL
 {
 public:
-  std_msgs::PointCloud cloud;
+  robot_msgs::PointCloud cloud;
   std_msgs::Empty shutter;
   CloudViewer cloud_viewer;
 

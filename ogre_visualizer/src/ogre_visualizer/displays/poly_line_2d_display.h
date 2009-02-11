@@ -34,7 +34,7 @@
 #include "display.h"
 #include "helpers/color.h"
 
-#include <std_msgs/Polyline2D.h>
+#include <robot_msgs/Polyline2D.h>
 #include <robot_msgs/MapMetaData.h>
 
 namespace ogre_tools
@@ -71,7 +71,7 @@ typedef poly_line_render_ops::PolyLineRenderOp PolyLineRenderOp;
 
 /**
  * \class PolyLine2DDisplay
- * \brief Displays a std_msgs::Polyline2D message
+ * \brief Displays a robot_msgs::Polyline2D message
  */
 class PolyLine2DDisplay : public Display
 {
@@ -141,7 +141,7 @@ protected:
   ogre_tools::PointCloud* cloud_;
 
   bool new_message_;
-  std_msgs::Polyline2D message_;
+  robot_msgs::Polyline2D message_;
 
   bool new_metadata_;
   robot_msgs::MapMetaData metadata_message_;

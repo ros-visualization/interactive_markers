@@ -281,18 +281,18 @@ void PointCloudBase::update(float dt)
 
     if (new_cloud_ && !clouds_.empty())
     {
-      const boost::shared_ptr<std_msgs::PointCloud>& cloud = clouds_.front()->message_;
+      const boost::shared_ptr<robot_msgs::PointCloud>& cloud = clouds_.front()->message_;
 
       // Get the channels that we could potentially render
       int channel_color_idx = getChannelColorIndex ();
       channel_property_->clear ();
-      typedef std::vector<std_msgs::ChannelFloat32> V_Chan;
+      typedef std::vector<robot_msgs::ChannelFloat32> V_Chan;
       V_Chan::iterator chan_it = cloud->chan.begin();
       V_Chan::iterator chan_end = cloud->chan.end();
       uint32_t index = 0;
       for ( ; chan_it != chan_end; ++chan_it, ++index )
       {
-        std_msgs::ChannelFloat32& chan = *chan_it;
+        robot_msgs::ChannelFloat32& chan = *chan_it;
         if (chan.name == "intensity" || chan.name == "intensities")
         {
           if (channel_color_idx == -1)
@@ -375,7 +375,7 @@ void transformB( float val, ogre_tools::PointCloud::Point& point, const Color&, 
   point.b_ = val;
 }
 
-void PointCloudBase::processMessage(const boost::shared_ptr<std_msgs::PointCloud>& cloud)
+void PointCloudBase::processMessage(const boost::shared_ptr<robot_msgs::PointCloud>& cloud)
 {
   CloudInfoPtr info(new CloudInfo());
   info->message_ = cloud;
@@ -399,7 +399,7 @@ void PointCloudBase::processMessage(const boost::shared_ptr<std_msgs::PointCloud
 
 void PointCloudBase::transformCloud(const CloudInfoPtr& info)
 {
-  const boost::shared_ptr<std_msgs::PointCloud>& cloud = info->message_;
+  const boost::shared_ptr<robot_msgs::PointCloud>& cloud = info->message_;
 
   std::string frame_id = cloud->header.frame_id;
   if ( frame_id.empty() )
@@ -416,7 +416,7 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
     ROS_ERROR( "Error transforming point cloud '%s' from frame '%s' to frame '%s'\n", name_.c_str(), frame_id.c_str(), fixed_frame_.c_str() );
   }
 
-  typedef std::vector<std_msgs::ChannelFloat32> V_Chan;
+  typedef std::vector<robot_msgs::ChannelFloat32> V_Chan;
   typedef std::vector<bool> V_bool;
 
   V_bool valid_channels(cloud->chan.size());
@@ -431,7 +431,7 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
 
   for ( ; chan_it != chan_end; ++chan_it, ++index )
   {
-    std_msgs::ChannelFloat32& chan = *chan_it;
+    robot_msgs::ChannelFloat32& chan = *chan_it;
     uint32_t val_count = chan.vals.size();
     bool channel_size_correct = val_count == point_count;
     ROS_ERROR_COND(!channel_size_correct, "Point cloud '%s' has channel with fewer values than points (%d values, %d points)", name_.c_str(), val_count, point_count);
@@ -550,7 +550,7 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
       continue;
     }
 
-    std_msgs::ChannelFloat32& chan = *chan_it;
+    robot_msgs::ChannelFloat32& chan = *chan_it;
 
     if ( chan.name == "intensity" || chan.name == "intensities" || chan.name == "curvatures" || chan.name == "curvature" )
     {
@@ -610,7 +610,7 @@ void PointCloudBase::transformCloud(const CloudInfoPtr& info)
 
 }
 
-void PointCloudBase::addMessage(const boost::shared_ptr<std_msgs::PointCloud>& cloud)
+void PointCloudBase::addMessage(const boost::shared_ptr<robot_msgs::PointCloud>& cloud)
 {
   processMessage(cloud);
 }

@@ -34,7 +34,7 @@
 #include "helpers/color.h"
 #include "ogre_tools/point_cloud.h"
 
-#include "std_msgs/PointCloud.h"
+#include "robot_msgs/PointCloud.h"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
@@ -60,7 +60,7 @@ class ROSTopicStringProperty;
 
 /**
  * \class PointCloudDisplay
- * \brief Displays a point cloud of type std_msgs::PointCloud
+ * \brief Displays a point cloud of type robot_msgs::PointCloud
  *
  * By default it will assume channel 0 of the cloud is an intensity value, and will color them by intensity.
  * If you set the channel's name to "rgb", it will interpret the channel as an integer rgb value, with r, g and b
@@ -104,14 +104,14 @@ protected:
   /**
    * \brief ROS callback for an incoming point cloud message
    */
-  void incomingCloudCallback(const boost::shared_ptr<std_msgs::PointCloud>& cloud);
+  void incomingCloudCallback(const boost::shared_ptr<robot_msgs::PointCloud>& cloud);
 
   std::string topic_;                         ///< The PointCloud topic set by setTopic()
 
 
   ROSTopicStringProperty* topic_property_;
 
-  tf::MessageNotifier<std_msgs::PointCloud>* notifier_;
+  tf::MessageNotifier<robot_msgs::PointCloud>* notifier_;
 };
 
 } // namespace ogre_vis

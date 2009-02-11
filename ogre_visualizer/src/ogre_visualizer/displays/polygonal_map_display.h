@@ -40,8 +40,8 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <std_msgs/Polygon3D.h>
-#include <std_msgs/PolygonalMap.h>
+#include <robot_msgs/Polygon3D.h>
+#include <robot_msgs/PolygonalMap.h>
 
 
 namespace ogre_tools
@@ -81,7 +81,7 @@ namespace ogre_vis
 
   /**
    * \class PolygonalMapDisplay
-   * \brief Displays a std_msgs::PolygonalMap message
+   * \brief Displays a robot_msgs::PolygonalMap message
    */
   class PolygonalMapDisplay:public Display
   {
@@ -127,7 +127,7 @@ namespace ogre_vis
       void subscribe ();
       void unsubscribe ();
       void clear ();
-      typedef boost::shared_ptr<std_msgs::PolygonalMap> PolygonalMapPtr;
+      typedef boost::shared_ptr<robot_msgs::PolygonalMap> PolygonalMapPtr;
       void incomingMessage (const PolygonalMapPtr& message);
       void processMessage ();
 
@@ -150,7 +150,7 @@ namespace ogre_vis
       boost::mutex message_mutex_;
       PolygonalMapPtr new_message_;
       PolygonalMapPtr current_message_;
-      tf::MessageNotifier<std_msgs::PolygonalMap>* notifier_;
+      tf::MessageNotifier<robot_msgs::PolygonalMap>* notifier_;
 
       ColorProperty *color_property_;
       ROSTopicStringProperty *topic_property_;
