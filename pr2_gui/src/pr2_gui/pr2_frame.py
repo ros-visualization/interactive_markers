@@ -65,21 +65,6 @@ class PR2Frame(wx.Frame):
         self._aui_manager = wx.aui.AuiManager(self)
 
         self._visualizer_panel = visualizer_panel.DefaultVisualizationPanel(self)
-        
-        media_path = roslib.packages.get_pkg_dir( "gazebo_robot_description" )
-        media_path += "/world/Media/";
-        
-        media_paths = [media_path]
-        media_paths.append(media_path)
-        media_paths.append(media_path + "fonts")
-        media_paths.append(media_path + "materials")
-        media_paths.append(media_path + "materials/scripts")
-        media_paths.append(media_path + "materials/programs")
-        media_paths.append(media_path + "materials/textures")
-        media_paths.append(media_path + "models")
-        media_paths.append(media_path + "models/pr2")
-        
-        ogre_tools.initializeResources( media_paths )
         self._visualizer_panel.createDefaultVisualizers()
         
         self._rosout_panel = rxtools.RosoutPanel(self)

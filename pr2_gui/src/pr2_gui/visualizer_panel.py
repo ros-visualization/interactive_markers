@@ -34,16 +34,16 @@ import roslib
 roslib.load_manifest('pr2_gui')
 
 import wx
-import ogre_visualizer
+import rviz
 
-class DefaultVisualizationPanel(ogre_visualizer.VisualizationPanel):
+class DefaultVisualizationPanel(rviz.VisualizationPanel):
     def __init__(self, parent):
-        ogre_visualizer.VisualizationPanel.__init__(self, parent)
+        rviz.VisualizationPanel.__init__(self, parent)
         
     def createDefaultVisualizers(self):
         manager = self.getManager();
         
-        config_path = roslib.packages.get_pkg_dir( "ogre_visualizer" ) + "/configs/pr2.vcg"
+        config_path = roslib.packages.get_pkg_dir( "rviz" ) + "/configs/pr2.vcg"
         config = wx.FileConfig(localFilename=config_path)
         manager.loadGeneralConfig(config)
         manager.loadDisplayConfig(config)
