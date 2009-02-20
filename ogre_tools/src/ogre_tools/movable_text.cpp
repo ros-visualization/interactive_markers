@@ -40,8 +40,8 @@
 
 #include "movable_text.h"
 
-#include "Ogre.h"
-#include "OgreFontManager.h"
+#include "OGRE/Ogre.h"
+#include "OGRE/OgreFontManager.h"
 
 #include <sstream>
 

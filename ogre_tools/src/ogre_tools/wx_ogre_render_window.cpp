@@ -1,11 +1,11 @@
 #include "wx_ogre_render_window.h"
 #include "orthographic.h"
 
-#include <OgreRoot.h>
-#include <OgreViewport.h>
-#include <OgreCamera.h>
-#include <OgreRenderWindow.h>
-#include <OgreStringConverter.h>
+#include <OGRE/OgreRoot.h>
+#include <OGRE/OgreViewport.h>
+#include <OGRE/OgreCamera.h>
+#include <OGRE/OgreRenderWindow.h>
+#include <OGRE/OgreStringConverter.h>
 
 #ifdef __WXGTK__
 #include <gdk/gdk.h>
@@ -232,7 +232,8 @@ std::string wxOgreRenderWindow::getOgreHandle () const
   handle = str.str();
 #else
   // Any other unsupported system
-    #error Not supported on this platform.
+  //  #error Not supported on this platform.
+  handle = std::string("none");
 #endif
 
   return handle;

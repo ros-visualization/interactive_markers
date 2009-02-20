@@ -30,10 +30,10 @@
 #ifndef OGRE_TOOLS_OGRE_POINT_CLOUD_H
 #define OGRE_TOOLS_OGRE_POINT_CLOUD_H
 
-#include <OgreMovableObject.h>
-#include <OgreString.h>
-#include <OgreAxisAlignedBox.h>
-#include <OgreVector3.h>
+#include <OGRE/OgreMovableObject.h>
+#include <OGRE/OgreString.h>
+#include <OGRE/OgreAxisAlignedBox.h>
+#include <OGRE/OgreVector3.h>
 
 #include <stdint.h>
 

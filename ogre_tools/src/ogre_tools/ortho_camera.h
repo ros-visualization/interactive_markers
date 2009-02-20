@@ -32,7 +32,7 @@
 #define OGRE_TOOLS_ORTHO_CAMERA_H_
 
 #include "camera_base.h"
-#include <OgreVector3.h>
+#include <OGRE/OgreVector3.h>
 
 namespace ogre_tools
 {

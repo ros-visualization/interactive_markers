@@ -1,8 +1,8 @@
 #include "initialization.h"
 
-#include <OgreRoot.h>
-#include <OgreRenderSystem.h>
-#include <OgreLogManager.h>
+#include <OGRE/OgreRoot.h>
+#include <OGRE/OgreRenderSystem.h>
+#include <OGRE/OgreLogManager.h>
 
 #include <exception>
 #include <stdexcept>

@@ -103,7 +103,7 @@ target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} ${GTK2_LIBRARIES} $
 # ...and we make another library with just the SWIG wrappers, linked
 # against the C++ lib.
 rospack_add_library(python_${PROJECT_NAME} ${SWIG_OUTPUT_CPP_FILE})
-target_link_libraries(python_${PROJECT_NAME} ${PROJECT_NAME})
+target_link_libraries(python_${PROJECT_NAME} ${PROJECT_NAME} ${PYTHON_LIBRARIES})
 
 # swig python needs a shared library named _<modulename>.[so|dll|...]
 # this renames the output file to conform to that by prepending an underscore and removing the "lib" prefix
