@@ -41,9 +41,9 @@
 #include "../ogre_tools/billboard_line.h"
 #include "../ogre_tools/initialization.h"
 
-#include <Ogre/OgreRoot.h>
-#include <Ogre/OgreSceneManager.h>
-#include <Ogre/OgreViewport.h>
+#include <OGRE/OgreRoot.h>
+#include <OGRE/OgreSceneManager.h>
+#include <OGRE/OgreViewport.h>
 
 using namespace ogre_tools;
 
