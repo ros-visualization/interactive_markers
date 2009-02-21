@@ -45,6 +45,10 @@
 #include <OGRE/OgreSceneManager.h>
 #include <OGRE/OgreViewport.h>
 
+#ifdef __WXMAC__
+#include <ApplicationServices/ApplicationServices.h>
+#endif
+
 using namespace ogre_tools;
 
 class MyFrame : public wxFrame
@@ -271,6 +275,13 @@ public:
 
   bool OnInit()
   {
+#ifdef __WXMAC__
+    ProcessSerialNumber PSN;
+    GetCurrentProcess(&PSN);
+    TransformProcessType(&PSN,kProcessTransformToForegroundApplication);
+    SetFrontProcess(&PSN);
+#endif
+
     wxFrame* frame = new MyFrame(NULL);
     SetTopWindow(frame);
     frame->Show();

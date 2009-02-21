@@ -230,10 +230,11 @@ std::string wxOgreRenderWindow::getOgreHandle () const
   str << (unsigned long)vi;
 
   handle = str.str();
+#elif defined(__WXMAC__)
+  handle = Ogre::StringConverter::toString((size_t)(GetHandle()));
 #else
   // Any other unsupported system
-  //  #error Not supported on this platform.
-  handle = std::string("none");
+  #error("Not supported on this platform.")
 #endif
 
   return handle;
