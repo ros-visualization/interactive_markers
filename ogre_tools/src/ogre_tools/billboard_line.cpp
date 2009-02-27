@@ -38,12 +38,15 @@
 
 #include <sstream>
 
+#include <ros/assert.h>
+
 namespace ogre_tools
 {
 
 BillboardLine::BillboardLine( Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node )
 : Object( scene_manager )
 , width_( 0.1f )
+, current_line_(0)
 {
   if ( !parent_node )
   {
@@ -56,8 +59,8 @@ BillboardLine::BillboardLine( Ogre::SceneManager* scene_manager, Ogre::SceneNode
   static int count = 0;
   ss << "BillboardLine chain" << count++;
   chain_ = scene_manager_->createBillboardChain(ss.str());
-  chain_->setNumberOfChains(1);
-  chain_->setMaxChainElements(1000);
+  setNumLines(1);
+  setMaxPointsPerLine(100);
 
   scene_node_->attachObject( chain_ );
 
@@ -77,24 +80,43 @@ BillboardLine::~BillboardLine()
 
 void BillboardLine::clear()
 {
-  points_.clear();
-  chain_->clearChain(0);
+  chain_->clearAllChains();
+  current_line_ = 0;
+
+  for (V_uint32::iterator it = num_elements_.begin(); it != num_elements_.end(); ++it)
+  {
+    *it = 0;
+  }
+}
+
+void BillboardLine::setMaxPointsPerLine(uint32_t max)
+{
+  chain_->setMaxChainElements(max);
+}
+
+void BillboardLine::setNumLines(uint32_t num)
+{
+  chain_->setNumberOfChains(num);
+  num_elements_.resize(num);
+}
+
+void BillboardLine::newLine()
+{
+  ++current_line_;
+
+  ROS_ASSERT(current_line_ < chain_->getNumberOfChains());
 }
 
 void BillboardLine::addPoint( const Ogre::Vector3& point )
 {
-  points_.push_back( point );
-
-  if ( points_.size() >  chain_->getMaxChainElements() )
-  {
-    chain_->setMaxChainElements( chain_->getMaxChainElements() * 2 );
-  }
+  ++num_elements_[current_line_];
+  ROS_ASSERT(num_elements_[current_line_] <=  (chain_->getMaxChainElements() * (current_line_+1)));
 
   Ogre::BillboardChain::Element e;
   e.position = point;
   e.width = width_;
   e.colour = color_;
-  chain_->addChainElement(0, e);
+  chain_->addChainElement(current_line_, e);
 }
 
 void BillboardLine::setPoints( const V_Vector3& points )
@@ -112,10 +134,20 @@ void BillboardLine::setPoints( const V_Vector3& points )
 void BillboardLine::setLineWidth( float width )
 {
   width_ = width;
-  V_Vector3 points;
-  points.swap( points_ );
 
-  setPoints( points );
+  uint32_t num_chains = chain_->getNumberOfChains();
+  for (uint32_t chain = 0; chain < num_chains; ++chain)
+  {
+    uint32_t element_count = num_elements_[chain];
+
+    for ( uint32_t i = 0; i < element_count; ++i )
+    {
+      Ogre::BillboardChain::Element e = chain_->getChainElement(chain, i);
+
+      e.width = width_;
+      chain_->updateChainElement(chain, i, e);
+    }
+  }
 }
 
 void BillboardLine::setPosition( const Ogre::Vector3& position )
@@ -148,13 +180,18 @@ void BillboardLine::setColor( float r, float g, float b, float a )
 
   color_ = Ogre::ColourValue( r, g, b, a );
 
-  uint32_t element_count = points_.size();
-  for ( uint32_t i = 0; i < element_count; ++i )
+  uint32_t num_chains = chain_->getNumberOfChains();
+  for (uint32_t chain = 0; chain < num_chains; ++chain)
   {
-    Ogre::BillboardChain::Element e = chain_->getChainElement(0, i);
+    uint32_t element_count = num_elements_[chain];
 
-    e.colour = color_;
-    chain_->updateChainElement(0, i, e);
+    for ( uint32_t i = 0; i < element_count; ++i )
+    {
+      Ogre::BillboardChain::Element e = chain_->getChainElement(chain, i);
+
+      e.colour = color_;
+      chain_->updateChainElement(chain, i, e);
+    }
   }
 }
 

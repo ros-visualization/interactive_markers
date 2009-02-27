@@ -67,12 +67,16 @@ public:
   virtual ~BillboardLine();
 
   void clear();
+  void newLine();
   void addPoint(const Ogre::Vector3& point);
 
   typedef std::vector<Ogre::Vector3> V_Vector3;
   void setPoints( const V_Vector3& points );
 
   void setLineWidth( float width );
+
+  void setMaxPointsPerLine(uint32_t max);
+  void setNumLines(uint32_t num);
 
   // overrides from Object
   virtual void setOrientation( const Ogre::Quaternion& orientation );
@@ -98,9 +102,14 @@ private:
   Ogre::BillboardChain* chain_;
   Ogre::MaterialPtr material_;
 
-  V_Vector3 points_;
   Ogre::ColourValue color_;
   float width_;
+
+  int current_line_;
+
+  // Ogre 1.4 doesn't have getNumChainElements()
+  typedef std::vector<uint32_t> V_uint32;
+  V_uint32 num_elements_;
 };
 
 } // namespace ogre_tools
