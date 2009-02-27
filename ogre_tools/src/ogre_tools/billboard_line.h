@@ -105,11 +105,12 @@ private:
   Ogre::ColourValue color_;
   float width_;
 
-  int current_line_;
+  uint32_t current_line_;
 
   // Ogre 1.4 doesn't have getNumChainElements()
   typedef std::vector<uint32_t> V_uint32;
   V_uint32 num_elements_;
+  uint32_t total_elements_;
 };
 
 } // namespace ogre_tools

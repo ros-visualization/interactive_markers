@@ -40,6 +40,8 @@
 
 #include <ros/assert.h>
 
+#define MAX_ELEMENTS (65536/4)
+
 namespace ogre_tools
 {
 
@@ -47,6 +49,7 @@ BillboardLine::BillboardLine( Ogre::SceneManager* scene_manager, Ogre::SceneNode
 : Object( scene_manager )
 , width_( 0.1f )
 , current_line_(0)
+, total_elements_(0)
 {
   if ( !parent_node )
   {
@@ -82,6 +85,7 @@ void BillboardLine::clear()
 {
   chain_->clearAllChains();
   current_line_ = 0;
+  total_elements_ = 0;
 
   for (V_uint32::iterator it = num_elements_.begin(); it != num_elements_.end(); ++it)
   {
@@ -109,7 +113,15 @@ void BillboardLine::newLine()
 
 void BillboardLine::addPoint( const Ogre::Vector3& point )
 {
+  if (total_elements_ >= MAX_ELEMENTS)
+  {
+    ROS_ERROR("BillboardLine is full.  Cannot add any more points. (max %d segments)", MAX_ELEMENTS);
+    return;
+  }
+
   ++num_elements_[current_line_];
+  ++total_elements_;
+
   ROS_ASSERT(num_elements_[current_line_] <=  (chain_->getMaxChainElements() * (current_line_+1)));
 
   Ogre::BillboardChain::Element e;
