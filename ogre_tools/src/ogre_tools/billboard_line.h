@@ -70,9 +70,6 @@ public:
   void newLine();
   void addPoint(const Ogre::Vector3& point);
 
-  typedef std::vector<Ogre::Vector3> V_Vector3;
-  void setPoints( const V_Vector3& points );
-
   void setLineWidth( float width );
 
   void setMaxPointsPerLine(uint32_t max);
@@ -98,8 +95,13 @@ public:
   void setUserData( const Ogre::Any& data ) {}
 
 private:
+  void setupChains();
+  Ogre::BillboardChain* createChain();
+
   Ogre::SceneNode* scene_node_;
-  Ogre::BillboardChain* chain_;
+
+  typedef std::vector<Ogre::BillboardChain*> V_Chain;
+  V_Chain chains_;
   Ogre::MaterialPtr material_;
 
   Ogre::ColourValue color_;
@@ -111,6 +113,13 @@ private:
   typedef std::vector<uint32_t> V_uint32;
   V_uint32 num_elements_;
   uint32_t total_elements_;
+
+  uint32_t num_lines_;
+  uint32_t max_points_per_line_;
+  uint32_t lines_per_chain_;
+
+  uint32_t current_chain_;
+  uint32_t elements_in_current_chain_;
 };
 
 } // namespace ogre_tools
