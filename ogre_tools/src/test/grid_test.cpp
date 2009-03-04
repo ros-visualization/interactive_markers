@@ -80,9 +80,11 @@ public:
 
         m_WXRenderWindow->getViewport()->setCamera( camera_->getOgreCamera() );
 
-        new ogre_tools::Grid( scene_manager_, NULL, 10, 1.0f, 1.0f, 0.0f, 0.0f );
+        ogre_tools::Grid* grid = new ogre_tools::Grid( scene_manager_, NULL, ogre_tools::Grid::Lines, 10, 1.0f, 0.02, Ogre::ColourValue(1.0f, 1.0f, 1.0f, 0.5f));
+        grid->setHeight(4);
 
         ogre_tools::BillboardLine* line = new ogre_tools::BillboardLine( scene_manager_, NULL );
+        line->setMaxPointsPerLine(105);
         for ( int i = -50; i < 50; ++i )
         {
           line->addPoint( Ogre::Vector3( i*2, 0.0f, -1.0f ) );

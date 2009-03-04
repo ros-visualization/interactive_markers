@@ -34,6 +34,9 @@
 
 #include <vector>
 
+#include <OGRE/OgreColourValue.h>
+#include <OGRE/OgreMaterial.h>
+
 namespace Ogre
 {
 class SceneManager;
@@ -47,6 +50,8 @@ class Any;
 namespace ogre_tools
 {
 
+class BillboardLine;
+
 /**
  * \class Grid
  * \brief Displays a grid of cells, drawn with lines
@@ -56,6 +61,12 @@ namespace ogre_tools
 class Grid
 {
 public:
+  enum Style
+  {
+    Lines,
+    Billboards,
+  };
+
   /**
    * \brief Constructor
    *
@@ -66,19 +77,10 @@ public:
    * @param g Green color component, in the range [0, 1]
    * @param b Blue color component, in the range [0, 1]
    */
-  Grid( Ogre::SceneManager* manager, Ogre::SceneNode* parent_node, uint32_t cell_count, float cell_length, float r, float g, float b );
+  Grid( Ogre::SceneManager* manager, Ogre::SceneNode* parent_node, Style style, uint32_t cell_count, float cell_length, float line_width, const Ogre::ColourValue& color );
   ~Grid();
 
-  /**
-   * \brief Set the parameters on this grid
-   *
-   * @param cell_count The number of cells to draw
-   * @param cell_length The size of each cell
-   * @param r Red color component, in the range [0, 1]
-   * @param g Green color component, in the range [0, 1]
-   * @param b Blue color component, in the range [0, 1]
-   */
-  void set( uint32_t gridSize, float cell_length, float r, float g, float b );
+  void create();
 
   /**
    * \brief Get the Ogre scene node associated with this grid
@@ -92,11 +94,39 @@ public:
    */
   void setUserData( const Ogre::Any& data );
 
+  void setStyle(Style style);
+  Style getStyle() { return style_; }
+
+  void setColor(const Ogre::ColourValue& color);
+  Ogre::ColourValue getColor() { return color_; }
+
+  void setCellCount(uint32_t count);
+  float getCellCount() { return cell_count_; }
+
+  void setCellLength(float len);
+  float getCellLength() { return cell_length_; }
+
+  void setLineWidth(float width);
+  float getLineWidth() { return line_width_; }
+
+  void setHeight(uint32_t count);
+  uint32_t getHeight() { return height_; }
+
 private:
   Ogre::SceneManager* scene_manager_;
   Ogre::SceneNode* scene_node_;           ///< The scene node that this grid is attached to
   Ogre::ManualObject* manual_object_;     ///< The manual object used to draw the grid
 
+  BillboardLine* billboard_line_;
+
+  Ogre::MaterialPtr material_;
+
+  Style style_;
+  uint32_t cell_count_;
+  float cell_length_;
+  float line_width_;
+  uint32_t height_;
+  Ogre::ColourValue color_;
 };
 
 } // namespace ogre_tools

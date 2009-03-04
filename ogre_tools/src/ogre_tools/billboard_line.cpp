@@ -159,6 +159,11 @@ void BillboardLine::setNumLines(uint32_t num)
   setupChains();
 
   num_elements_.resize(num);
+
+  for (V_uint32::iterator it = num_elements_.begin(); it != num_elements_.end(); ++it)
+  {
+    *it = 0;
+  }
 }
 
 void BillboardLine::newLine()
@@ -173,7 +178,7 @@ void BillboardLine::addPoint( const Ogre::Vector3& point )
   ++num_elements_[current_line_];
   ++total_elements_;
 
-  ROS_ASSERT(num_elements_[current_line_] <=  (max_points_per_line_ * (current_line_+1)));
+  ROS_ASSERT(num_elements_[current_line_] <= max_points_per_line_);
 
   ++elements_in_current_chain_;
   if (elements_in_current_chain_ > MAX_ELEMENTS)

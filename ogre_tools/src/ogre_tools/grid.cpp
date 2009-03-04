@@ -28,6 +28,7 @@
  */
 
 #include "grid.h"
+#include "billboard_line.h"
 
 #include <OGRE/OgreSceneManager.h>
 #include <OGRE/OgreSceneNode.h>
@@ -41,8 +42,14 @@
 namespace ogre_tools
 {
 
-Grid::Grid( Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node, uint32_t gridSize, float cell_length, float r, float g, float b )
-    : scene_manager_( scene_manager )
+Grid::Grid( Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node, Style style, uint32_t cell_count, float cell_length, float line_width, const Ogre::ColourValue& color )
+: scene_manager_( scene_manager )
+, style_(style)
+, cell_count_(cell_count)
+, cell_length_(cell_length)
+, line_width_(line_width)
+, height_(0)
+, color_(color)
 {
   static uint32_t gridCount = 0;
   std::stringstream ss;
@@ -58,40 +65,174 @@ Grid::Grid( Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node, uin
   scene_node_ = parent_node->createChildSceneNode();
   scene_node_->attachObject( manual_object_ );
 
-  set( gridSize, cell_length, r, g, b );
+  billboard_line_ = new BillboardLine(scene_manager, scene_node_);
+
+  ss << "Material";
+  material_ = Ogre::MaterialManager::getSingleton().create( ss.str(), Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
+  material_->setReceiveShadows(false);
+  material_->getTechnique(0)->setLightingEnabled(false);
+
+  setColor(color_);
 }
 
 Grid::~Grid()
 {
+  delete billboard_line_;
+
   scene_manager_->destroySceneNode( scene_node_->getName() );
   scene_manager_->destroyManualObject( manual_object_ );
 }
 
-void Grid::set( uint32_t gridSize, float cell_length, float r, float g, float b )
+void Grid::setCellCount(uint32_t count)
 {
-  manual_object_->clear();
+  cell_count_ = count;
 
-  manual_object_->estimateVertexCount( gridSize * 4 );
-  manual_object_->begin( "BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_LIST );
+  create();
+}
 
-  float extent = (cell_length*((double)gridSize))/2;
+void Grid::setCellLength(float len)
+{
+  cell_length_ = len;
 
-  for( uint32_t i = 0; i <= gridSize; i++ )
+  create();
+}
+
+void Grid::setLineWidth(float width)
+{
+  line_width_ = width;
+
+  create();
+}
+
+void Grid::setColor(const Ogre::ColourValue& color)
+{
+  color_ = color;
+
+  if ( color_.a < 0.9998 )
   {
-    float inc = extent - ( i * cell_length );
-
-    manual_object_->position( inc, 0, -extent );
-    manual_object_->colour( r, g, b );
-    manual_object_->position( inc, 0, extent );
-    manual_object_->colour( r, g, b );
-
-    manual_object_->position( -extent, 0, inc );
-    manual_object_->colour( r, g, b );
-    manual_object_->position( extent, 0, inc );
-    manual_object_->colour( r, g, b );
+    material_->setSceneBlending( Ogre::SBT_TRANSPARENT_ALPHA );
+    material_->setDepthWriteEnabled( false );
+  }
+  else
+  {
+    material_->setSceneBlending( Ogre::SBT_REPLACE );
+    material_->setDepthWriteEnabled( true );
   }
 
-  manual_object_->end();
+  create();
+}
+
+void Grid::setStyle(Style style)
+{
+  style_ = style;
+
+  create();
+}
+
+void Grid::setHeight(uint32_t height)
+{
+  height_ = height;
+
+  create();
+}
+
+void Grid::create()
+{
+  manual_object_->clear();
+  billboard_line_->clear();
+
+  float extent = (cell_length_*((double)cell_count_))/2;
+
+  if (style_ == Billboards)
+  {
+    billboard_line_->setColor(color_.r, color_.g, color_.b, color_.a);
+    billboard_line_->setLineWidth(line_width_);
+    billboard_line_->setMaxPointsPerLine(2);
+    billboard_line_->setNumLines((cell_count_+1) * 2 * (height_ + 1)
+                              + ((cell_count_ + 1) * (cell_count_ + 1)) * height_);
+  }
+  else
+  {
+    manual_object_->estimateVertexCount( cell_count_ * 4 * height_ + ((cell_count_ + 1) * (cell_count_ + 1)));
+    manual_object_->begin( material_->getName(), Ogre::RenderOperation::OT_LINE_LIST );
+  }
+
+  for (uint32_t h = 0; h <= height_; ++h)
+  {
+    float h_real = (height_ / 2.0f - (float)h) * cell_length_;
+    for( uint32_t i = 0; i <= cell_count_; i++ )
+    {
+      float inc = extent - ( i * cell_length_ );
+
+      Ogre::Vector3 p1(inc, h_real, -extent);
+      Ogre::Vector3 p2(inc, h_real, extent);
+      Ogre::Vector3 p3(-extent, h_real, inc);
+      Ogre::Vector3 p4(extent, h_real, inc);
+
+      if (style_ == Billboards)
+      {
+        if (h != 0 || i != 0)
+        {
+          billboard_line_->newLine();
+        }
+
+        billboard_line_->addPoint(p1);
+        billboard_line_->addPoint(p2);
+
+        billboard_line_->newLine();
+
+        billboard_line_->addPoint(p3);
+        billboard_line_->addPoint(p4);
+      }
+      else
+      {
+        manual_object_->position(p1);
+        manual_object_->colour( color_ );
+        manual_object_->position(p2);
+        manual_object_->colour( color_ );
+
+        manual_object_->position(p3);
+        manual_object_->colour( color_ );
+        manual_object_->position(p4);
+        manual_object_->colour( color_ );
+      }
+    }
+  }
+
+  if (height_ > 0)
+  {
+    for (uint32_t x = 0; x <= cell_count_; ++x)
+    {
+      for (uint32_t z = 0; z <= cell_count_; ++z)
+      {
+        float x_real = extent - x * cell_length_;
+        float z_real = extent - z * cell_length_;
+
+        float y_top = (height_ / 2.0f) * cell_length_;
+        float y_bottom = -y_top;
+
+        if (style_ == Billboards)
+        {
+          billboard_line_->newLine();
+
+          billboard_line_->addPoint( Ogre::Vector3(x_real, y_bottom, z_real) );
+          billboard_line_->addPoint( Ogre::Vector3(x_real, y_top, z_real) );
+        }
+        else
+        {
+          manual_object_->position( x_real, y_bottom, z_real );
+          manual_object_->colour( color_ );
+          manual_object_->position(x_real, y_top, z_real);
+          manual_object_->colour( color_ );
+        }
+      }
+    }
+  }
+
+  if (style_ == Lines)
+  {
+    manual_object_->end();
+  }
 }
 
 void Grid::setUserData( const Ogre::Any& data )
