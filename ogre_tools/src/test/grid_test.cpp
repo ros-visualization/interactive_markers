@@ -44,6 +44,7 @@
 #include <OGRE/OgreRoot.h>
 #include <OGRE/OgreSceneManager.h>
 #include <OGRE/OgreViewport.h>
+#include <OGRE/OgreLight.h>
 
 #ifdef __WXMAC__
 #include <ApplicationServices/ApplicationServices.h>
@@ -79,6 +80,11 @@ public:
         camera_->getOgreCamera()->setNearClipDistance( 0.1 );
 
         m_WXRenderWindow->getViewport()->setCamera( camera_->getOgreCamera() );
+
+        Ogre::Light* directional_light = scene_manager_->createLight( "MainDirectional" );
+        directional_light->setType( Ogre::Light::LT_DIRECTIONAL );
+        directional_light->setDirection( Ogre::Vector3( 0, -1, 1 ) );
+        directional_light->setDiffuseColour( Ogre::ColourValue( 1.0f, 1.0f, 1.0f ) );
 
         ogre_tools::Grid* grid = new ogre_tools::Grid( scene_manager_, NULL, ogre_tools::Grid::Lines, 10, 1.0f, 0.02, Ogre::ColourValue(1.0f, 1.0f, 1.0f, 0.5f));
         grid->setHeight(4);
