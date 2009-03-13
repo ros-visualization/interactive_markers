@@ -110,7 +110,16 @@ void CloudViewer::render()
   		glVertex3f(points[i].x, points[i].y, points[i].z);
   	}
   	glEnd();
-    //glEndList();
+    glBegin(GL_LINES);
+  	for (size_t i = 0; i < lines.size(); i++)
+  	{
+  		glColor3ub(lines[i].first.r, lines[i].first.g, lines[i].first.b);
+  		glVertex3f(lines[i].first.x, lines[i].first.y, lines[i].first.z);
+  		glColor3ub(lines[i].second.r, lines[i].second.g, lines[i].second.b);
+  		glVertex3f(lines[i].second.x, lines[i].second.y, lines[i].second.z);
+  	}
+  	glEnd();
+  //glEndList();
     //state = LIST_GENERATED;
  // }
   //else
@@ -155,16 +164,22 @@ void CloudViewer::mouse_motion(int x, int y, int dx, int dy)
 		cam_rho *= (1.0f + 0.01f * dy);
 }
 
-void CloudViewer::keypress(char c)
+void CloudViewer::keypress(char c, uint32_t mod)
 {
+  double move_len;
+  if (mod & MOD_SHIFT)
+    move_len = 1.0;
+  else
+    move_len = 0.05;
+
 	switch(c)
 	{
-		case 'w': look_tgt_z += 0.05; break;
-		case 'x': look_tgt_z -= 0.05; break;
-		case 'a': look_tgt_x -= 0.05; break;
-		case 'd': look_tgt_x += 0.05; break;
-		case 'i': look_tgt_y -= 0.05; break;
-		case 'k': look_tgt_y += 0.05; break;
+		case 'w': look_tgt_z += move_len; break;
+		case 'x': look_tgt_z -= move_len; break;
+		case 'a': look_tgt_x -= move_len; break;
+		case 'd': look_tgt_x += move_len; break;
+		case 'i': look_tgt_y -= move_len; break;
+		case 'k': look_tgt_y += move_len; break;
     case 'h': hide_axes = !hide_axes; break;
 	}
 }
@@ -191,3 +206,12 @@ bool CloudViewer::write_file(const std::string &filename)
   return true;
 }
 
+void CloudViewer::add_line(float x1, float y1, float z1, 
+                           uint8_t r1, uint8_t g1, uint8_t b1,
+                           float x2, float y2, float z2, 
+                           uint8_t r2, uint8_t g2, uint8_t b2)
+{
+	lines.push_back(std::pair<CloudViewerPoint,CloudViewerPoint>(
+                         CloudViewerPoint(x1,y1,z1,r1,g1,b1,0,0),
+                         CloudViewerPoint(x2,y2,z2,r2,g2,b2,0,0)));
+}

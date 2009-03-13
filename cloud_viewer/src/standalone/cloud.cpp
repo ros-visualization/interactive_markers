@@ -37,7 +37,7 @@
 int main(int argc, char **argv)
 {
   srand(time(NULL));
-  double frac_to_show = 1.0;
+  double frac_to_show = 1;
   if (argc < 2)
   {
     printf("please give the cloudfile as the first parameter\n");
@@ -129,7 +129,12 @@ int main(int argc, char **argv)
           if (event.key.keysym.sym == SDLK_ESCAPE)
             done = true;
           else
-            cloud_viewer.keypress(event.key.keysym.sym);
+          {
+            uint32_t mod = 0;
+            if (event.key.keysym.sym & KMOD_SHIFT)
+              mod |= CloudViewer::MOD_SHIFT;
+            cloud_viewer.keypress(event.key.keysym.sym, mod);
+          }
           cloud_viewer.render();
           SDL_GL_SwapBuffers();
           break;

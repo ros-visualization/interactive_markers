@@ -58,17 +58,23 @@ public:
 	void clear_cloud();
 	void add_point(float x, float y, float z, uint8_t r, uint8_t g, uint8_t b,
                  float *extra = 0, uint32_t num_extra = 0);
+	void add_line(float x1, float y1, float z1, 
+                uint8_t r1, uint8_t g1, uint8_t b1,
+	              float x2, float y2, float z2, 
+                uint8_t r2, uint8_t g2, uint8_t b2);
 	void set_opengl_params(unsigned width, unsigned height);
 	void render();
 	void mouse_button(int x, int y, int button, bool is_down);
 	void mouse_motion(int x, int y, int dx, int dy);
-	void keypress(char c);
+	void keypress(char c, uint32_t mod = 0);
   void set_look_tgt(double x, double y, double z) 
   { look_tgt_x = x; look_tgt_y = y; look_tgt_z = z; }
   bool write_file(const std::string &filename);
   void set_postrender_cb(void(*cb)()) { postrender_cb = cb; }
 	std::vector<CloudViewerPoint> points;
+	std::vector< std::pair< CloudViewerPoint, CloudViewerPoint > > lines;
 	float cam_x, cam_y, cam_z, cam_azi, cam_ele, cam_rho;
+  static const uint32_t MOD_SHIFT = 0x1;
 
 private:
 	float look_tgt_x, look_tgt_y, look_tgt_z;
