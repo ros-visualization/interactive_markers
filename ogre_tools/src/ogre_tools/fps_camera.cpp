@@ -46,6 +46,8 @@ static const float PITCH_LIMIT_HIGH = Ogre::Math::HALF_PI - 0.001;
 
 FPSCamera::FPSCamera( Ogre::SceneManager* scene_manager )
 : CameraBase( scene_manager )
+, pitch_(0.0f)
+, yaw_(0.0f)
 {
 }
 
