@@ -3,7 +3,7 @@
     <node pkg="map_server" type="map_server" args="$(find 2dnav_stage)/maps/willow-full.pgm 0.1" respawn="false" />
     <node pkg="multitouch_nav" type="multitouch_nav.py" args="$(find 2dnav_stage)/worlds/willow-pr2-multi.world" output="screen" respawn="false" />
     <node pkg="multitouch_nav" type="touchServer" respawn="false" />
-    <node pkg="rosstage" type="rosstage" args="$(find 2dnav_stage)/worlds/willow-pr2-multi.world" output="screen" respawn="false" />
+    <node pkg="stage" type="stageros" args="$(find 2dnav_stage)/worlds/willow-pr2-multi.world" output="screen" respawn="false" />
     <param name="robot_0/wavefront_player_0/tf_prefix" value="robot_0" /><!--Broken see ros ticket:941 replaced by above-->
     <node pkg="wavefront_player" type="wavefront_player" respawn="false" name="wavefront_player_0" ns="robot_0" output="screen">
       <param name="tf_prefix" value="robot_0"/>

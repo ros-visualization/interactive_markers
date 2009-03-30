@@ -11,7 +11,7 @@ Multitouch interface for driving multiple robots.
 <depend package="robot_msgs"/>
 <depend package="robot_srvs"/>
 <depend package="laser_scan"/>
-<depend package="rosstage"/>
+<depend package="stage"/>
 <depend package="wavefront_player"/>
 <depend package="fake_localization"/>
 <depend package="deprecated_msgs"/>
