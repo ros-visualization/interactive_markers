@@ -1,13 +1,20 @@
 <package>
 <description brief="Multitouch interface for driving multiple robots">
-A simple point cloud viewer written using SDL.
+Multitouch interface for driving multiple robots.
 </description>
-<author>Tony Ricciardi and Morgan Quigley</author>
+<author>Tony Ricciardi</author>
 <license>BSD</license>
 <review status="unreviewed" notes=""/>
 <url>http://stair.stanford.edu</url>
+<depend package="rospy"/>
 <depend package="roscpp"/>
 <depend package="robot_msgs"/>
+<depend package="robot_srvs"/>
+<depend package="laser_scan"/>
+<depend package="rosstage"/>
+<depend package="wavefront_player"/>
+<depend package="fake_localization"/>
 <depend package="deprecated_msgs"/>
+<sysdepend os="ubuntu" version="8.10-intrepid" package="python-pygame"/>
 </package>
 
