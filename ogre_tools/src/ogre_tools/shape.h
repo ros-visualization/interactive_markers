@@ -68,6 +68,8 @@ public:
   Shape(Type shape_type, Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node = NULL);
   virtual ~Shape();
 
+  Type getType() { return type_; }
+
   /**
    * \brief Set the offset for this shape
    *
@@ -96,12 +98,16 @@ public:
    */
   void setUserData( const Ogre::Any& data );
 
+  Ogre::Entity* getEntity() { return entity_; }
+
 private:
   Ogre::SceneNode* scene_node_;
   Ogre::SceneNode* offset_node_;
   Ogre::Entity* entity_;
   Ogre::MaterialPtr material_;
   std::string material_name_;
+
+  Type type_;
 };
 
 } // namespace ogre_tools

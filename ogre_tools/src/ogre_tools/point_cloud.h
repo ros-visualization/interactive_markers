@@ -34,6 +34,7 @@
 #include <OGRE/OgreString.h>
 #include <OGRE/OgreAxisAlignedBox.h>
 #include <OGRE/OgreVector3.h>
+#include <OGRE/OgreMaterial.h>
 
 #include <stdint.h>
 
@@ -131,6 +132,10 @@ public:
 
   void setCloudVisible( bool visible );
 
+  const Ogre::MaterialPtr& getMaterial() { return material_; }
+
+  void setColorByIndex(bool set);
+
   // overrides from MovableObject
   virtual const Ogre::String& getMovableType() const { return sm_Type; }
   virtual const Ogre::AxisAlignedBox& getBoundingBox() const;
@@ -167,7 +172,10 @@ private:
   Ogre::Vector3 common_up_vector_;          ///< See Ogre::BillboardSet::setCommonUpVector
 
   std::string material_name_;
+  Ogre::MaterialPtr material_;
   float alpha_;
+
+  bool color_by_index_;
 
   static Ogre::String sm_Type;              ///< The "renderable type" used by Ogre
 };

@@ -9,6 +9,10 @@
 #include <OGRE/OgreDefaultHardwareBufferManager.h>
 #include <OGRE/OgreManualObject.h>
 
+#include "ogre_tools/stl_loader.h"
+
+#include <ros/console.h>
+
 /**
  * @file
  *
@@ -24,10 +28,11 @@
  */
 
 using namespace Ogre;
+using namespace ogre_tools;
 
-void calculateUV(float x, float y, float z, float& u, float& v)
+void calculateUV(const Ogre::Vector3& vec, float& u, float& v)
 {
-  Ogre::Vector3 pos(x,y,z);
+  Ogre::Vector3 pos(vec);
   pos.normalise();
   u = acos( pos.y / pos.length() );
 
@@ -42,8 +47,8 @@ int main( int argc, char** argv )
 {
   if ( argc < 3 )
   {
-    printf( "Usage: stl_to_mesh <stl files> <output directory>\n" );
-    printf( "or     stl_to_mesh <stl file> <output file>\n" );
+    ROS_INFO( "Usage: stl_to_mesh <stl files> <output directory>" );
+    ROS_INFO( "or     stl_to_mesh <stl file> <output file>" );
 
     return 0;
   }
@@ -54,13 +59,13 @@ int main( int argc, char** argv )
   std::string outputDirectory = argv[ argc - 1 ];
   if ( outputDirectory.rfind( ".mesh" ) != std::string::npos )
   {
-    printf( "Converting single mesh: %s to %s\n", argv[1], outputDirectory.c_str() );
+    ROS_INFO( "Converting single mesh: %s to %s", argv[1], outputDirectory.c_str() );
     inputFiles.push_back( argv[ 1 ] );
     outputFiles.push_back( outputDirectory );
   }
   else
   {
-    printf( "Converting multiple meshes, into output directory %s...\n", outputDirectory.c_str() );
+    ROS_INFO( "Converting multiple meshes, into output directory %s...", outputDirectory.c_str() );
 
     for ( int i = 1; i < argc - 1; ++i )
     {
@@ -76,7 +81,7 @@ int main( int argc, char** argv )
 
       if ( pos == std::string::npos )
       {
-        printf( "Input file %s is not a .stl or .STL file!\n", inputFile.c_str() );
+        ROS_INFO( "Input file %s is not a .stl or .STL file!", inputFile.c_str() );
         exit(1);
       }
 
@@ -124,114 +129,40 @@ int main( int argc, char** argv )
       std::string inputFile = inputFiles[ i ];
       std::string outputFile = outputFiles[ i ];
 
-      printf( "Converting %s to %s...\n", inputFile.c_str(), outputFile.c_str() );
-
-      FILE* input = fopen( inputFile.c_str(), "r" );
-      if ( !input )
+      STLLoader loader;
+      if (!loader.load(inputFile))
       {
-        printf( "Could not open '%s' for read\n", inputFile.c_str() );
         exit( 1 );
       }
 
-      /* from wikipedia:
-       * Because ASCII STL files can become very large, a binary version of STL exists. A binary STL file has an 80 character header
-       * (which is generally ignored - but which should never begin with 'solid' because that will lead most software to assume that
-       * this is an ASCII STL file). Following the header is a 4 byte unsigned integer indicating the number of triangular facets in
-       * the file. Following that is data describing each triangle in turn. The file simply ends after the last triangle.
-       *
-       * Each triangle is described by twelve 32-bit-floating point numbers: three for the normal and then three for the X/Y/Z coordinate
-       * of each vertex - just as with the ASCII version of STL. After the twelve floats there is a two byte unsigned 'short' integer that
-       * is the 'attribute byte count' - in the standard format, this should be zero because most software does not understand anything else.
-       *
-       * Floating point numbers are represented as IEEE floating point numbers and the endianness is assumed to be little endian although this
-       * is not stated in documentation.
-       */
-
-      // find the file size
-      fseek( input, 0, SEEK_END );
-      long long fileSize = ftell( input );
-      fseek( input, 0, SEEK_SET );
-
-      char* buffer = new char[ fileSize ];
-      fread( buffer, fileSize, 1, input );
-
-      fclose( input );
-
-      char* pos = buffer;
-      pos += 80; // skip the 80 byte header
-
-      unsigned int numTriangles = *(unsigned int*)pos;
-      pos += 4;
-
-      printf( "%d triangles\n", numTriangles );
+      ROS_INFO( "Converting %s to %s...", inputFile.c_str(), outputFile.c_str() );
+      ROS_INFO( "%d triangles", loader.triangles_.size() );
 
       ManualObject* object = new ManualObject( "the one and only" );
       object->begin( "BaseWhiteNoLighting", RenderOperation::OT_TRIANGLE_LIST );
 
       unsigned int vertexCount = 0;
-      for ( unsigned int currentTriangle = 0; currentTriangle < numTriangles; ++currentTriangle )
+      STLLoader::V_Triangle::const_iterator it = loader.triangles_.begin();
+      STLLoader::V_Triangle::const_iterator end = loader.triangles_.end();
+      for (; it != end; ++it )
       {
-        float nX = *(float*)pos;
-        pos += 4;
-        float nY = *(float*)pos;
-        pos += 4;
-        float nZ = *(float*)pos;
-        pos += 4;
-
-        float v1X = *(float*)pos;
-        pos += 4;
-        float v1Y = *(float*)pos;
-        pos += 4;
-        float v1Z = *(float*)pos;
-        pos += 4;
-
-        float v2X = *(float*)pos;
-        pos += 4;
-        float v2Y = *(float*)pos;
-        pos += 4;
-        float v2Z = *(float*)pos;
-        pos += 4;
-
-        float v3X = *(float*)pos;
-        pos += 4;
-        float v3Y = *(float*)pos;
-        pos += 4;
-        float v3Z = *(float*)pos;
-        pos += 4;
-
-        // Blender was writing a large number into this short... am I misinterpreting what the attribute byte count is supposed to do?
-        //unsigned short attributeByteCount = *(unsigned short*)pos;
-        pos += 2;
-
-        //pos += attributeByteCount;
+        const STLLoader::Triangle& tri = *it;
 
         float u, v;
-
-        Ogre::Vector3 normal(nX, nY, nZ);
-        if (normal.squaredLength() < 0.001)
-        {
-          Ogre::Vector3 side1 = Ogre::Vector3(v1X, v1Y, v1Z) - Ogre::Vector3(v2X, v2Y, v2Z);
-          Ogre::Vector3 side2 = Ogre::Vector3(v2X, v2Y, v2Z) - Ogre::Vector3(v3X, v3Y, v3Z);
-          normal = side1.crossProduct(side2);
-          normal.normalise();
-          nX = normal.x;
-          nY = normal.y;
-          nZ = normal.z;
-        }
-
-        object->position( v1X, v1Y, v1Z );
-        object->normal( nX, nY, nZ );
-        calculateUV( v1X, v1Y, v1Z, u, v );
+        u = v = 0.0f;
+        object->position( tri.vertices_[0] );
+        object->normal( tri.normal_);
+        calculateUV( tri.vertices_[0], u, v );
         object->textureCoord( u, v );
 
-        object->position( v2X, v2Y, v2Z );
-        object->normal( nX, nY, nZ );
-        calculateUV( v2X, v2Y, v2Z, u, v );
+        object->position( tri.vertices_[1] );
+        object->normal( tri.normal_);
+        calculateUV( tri.vertices_[1], u, v );
         object->textureCoord( u, v );
 
-        object->position( v3X, v3Y, v3Z );
-        object->normal( nX, nY, nZ );
-        calculateUV( v3X, v3Y, v3Z, u, v );
+        object->position( tri.vertices_[2] );
+        object->normal( tri.normal_);
+        calculateUV( tri.vertices_[2], u, v );
         object->textureCoord( u, v );
 
         object->triangle( vertexCount + 0, vertexCount + 1, vertexCount + 2 );
@@ -241,8 +172,6 @@ int main( int argc, char** argv )
 
       object->end();
 
-      delete [] buffer;
-
       std::stringstream ss;
       ss << "converted" << i;
       MeshPtr mesh = object->convertToMesh( ss.str(), ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
@@ -251,7 +180,7 @@ int main( int argc, char** argv )
   }
   catch ( Exception& e )
   {
-    printf( "Error: %s\n", e.what() );
+    ROS_ERROR( "%s", e.what() );
   }
 
   delete meshSerializer;

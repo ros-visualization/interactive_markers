@@ -92,6 +92,10 @@ public:
    */
   void setUserData( const Ogre::Any& data );
 
+  Shape* getXShape() { return x_axis_; }
+  Shape* getYShape() { return y_axis_; }
+  Shape* getZShape() { return z_axis_; }
+
 private:
   Ogre::SceneNode* scene_node_;
 

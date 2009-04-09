@@ -97,7 +97,8 @@ rospack_add_library(${PROJECT_NAME} src/ogre_tools/point_cloud.cpp
 			      src/ogre_tools/movable_text.cpp
 			      src/ogre_tools/wx_ogre_render_window.cpp
 			      src/ogre_tools/initialization.cpp
-			      src/ogre_tools/orthographic.cpp)
+			      src/ogre_tools/orthographic.cpp
+			      src/ogre_tools/stl_loader.cpp)
 target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} ${GTK2_LIBRARIES} ${OPENGL_gl_LIBRARY} ${OGRE_LIBRARIES})
 
 # ...and we make another library with just the SWIG wrappers, linked
@@ -114,8 +115,9 @@ set_target_properties(python_${PROJECT_NAME}
 rospack_add_executable(bin/grid_test src/test/grid_test.cpp)
 target_link_libraries(bin/grid_test ${PROJECT_NAME} ${wxWidgets_LIBRARIES})
 
+include_directories(src)
 rospack_add_executable(bin/stl_to_mesh src/stl_to_mesh/stl_to_mesh.cpp)
-target_link_libraries(bin/stl_to_mesh ${OGRE_LIBRARIES})
+target_link_libraries(bin/stl_to_mesh ${OGRE_LIBRARIES} ${PROJECT_NAME})
 
 rospack_add_gtest_future(test/utest test/utest.cpp)
 target_link_libraries(test/utest ${PROJECT_NAME})

@@ -42,6 +42,7 @@ namespace ogre_tools
 
 Shape::Shape( Type type, Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node )
 : Object( scene_manager )
+, type_(type)
 {
   static uint32_t count = 0;
   std::stringstream ss;
@@ -109,13 +110,13 @@ void Shape::setColor( float r, float g, float b, float a )
 
   if ( a < 0.9998 )
   {
-    material_->setSceneBlending( Ogre::SBT_TRANSPARENT_ALPHA );
-    material_->setDepthWriteEnabled( false );
+    material_->getTechnique(0)->setSceneBlending( Ogre::SBT_TRANSPARENT_ALPHA );
+    material_->getTechnique(0)->setDepthWriteEnabled( false );
   }
   else
   {
-    material_->setSceneBlending( Ogre::SBT_REPLACE );
-    material_->setDepthWriteEnabled( true );
+    material_->getTechnique(0)->setSceneBlending( Ogre::SBT_REPLACE );
+    material_->getTechnique(0)->setDepthWriteEnabled( true );
   }
 }
 

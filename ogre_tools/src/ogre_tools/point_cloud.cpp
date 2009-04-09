@@ -60,6 +60,7 @@ PointCloud::PointCloud( Ogre::SceneManager* scene_manager, Ogre::SceneNode* pare
 , billboard_type_( Ogre::BBT_POINT )
 , common_direction_( Ogre::Vector3::NEGATIVE_UNIT_Z )
 , common_up_vector_( Ogre::Vector3::UNIT_Y )
+, color_by_index_(false)
 {
   if ( parent )
   {
@@ -76,10 +77,10 @@ PointCloud::PointCloud( Ogre::SceneManager* scene_manager, Ogre::SceneNode* pare
   static int count = 0;
   ss << "PointCloudMaterial" << count++;
   material_name_ = ss.str();
-  Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().create( material_name_, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
-  material->setReceiveShadows(false);
-  material->getTechnique(0)->setLightingEnabled(false);
-  material->setCullingMode( Ogre::CULL_NONE );
+  material_ = Ogre::MaterialManager::getSingleton().create( material_name_, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
+  material_->setReceiveShadows(false);
+  material_->getTechnique(0)->setLightingEnabled(false);
+  material_->setCullingMode( Ogre::CULL_NONE );
 
   setAlpha( 1.0f );
 
@@ -132,6 +133,11 @@ void PointCloud::clear()
 void PointCloud::setCloudVisible( bool visible )
 {
   scene_node_->setVisible( visible );
+}
+
+void PointCloud::setColorByIndex(bool set)
+{
+  color_by_index_ = set;
 }
 
 void PointCloud::setUsePoints( bool usePoints )
@@ -218,16 +224,15 @@ void PointCloud::setAlpha( float alpha )
 {
   alpha_ = alpha;
 
-  Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().getByName( material_name_ );
   if ( alpha_ < 0.9998 )
   {
-    material->setSceneBlending( Ogre::SBT_TRANSPARENT_ALPHA );
-    material->setDepthWriteEnabled( false );
+    material_->getTechnique(0)->setSceneBlending( Ogre::SBT_TRANSPARENT_ALPHA );
+    material_->getTechnique(0)->setDepthWriteEnabled( false );
   }
   else
   {
-    material->setSceneBlending( Ogre::SBT_REPLACE );
-    material->setDepthWriteEnabled( true );
+    material_->getTechnique(0)->setSceneBlending( Ogre::SBT_REPLACE );
+    material_->getTechnique(0)->setDepthWriteEnabled( true );
   }
 }
 
@@ -319,8 +324,9 @@ void PointCloud::_updateRenderQueue( Ogre::RenderQueue* queue )
   uint32_t points_in_current = 0;
   uint32_t current_bbs = 0;
   Ogre::BillboardSet* bbs = NULL;
+  uint32_t index = 1;
   V_BillboardSet used;
-  for ( uint32_t i = 0; i < point_count_; ++i, ++points_in_current )
+  for ( uint32_t i = 0; i < point_count_; ++i, ++points_in_current, ++index )
   {
     bool new_bbs = false;
     if ( points_in_current > points_per_bbs_ )
@@ -356,10 +362,21 @@ void PointCloud::_updateRenderQueue( Ogre::RenderQueue* queue )
     bb.mPosition.x = p.x_;
     bb.mPosition.y = p.y_;
     bb.mPosition.z = p.z_;
-    bb.mColour.r = p.r_;
-    bb.mColour.g = p.g_;
-    bb.mColour.b = p.b_;
-    bb.mColour.a = alpha_;
+
+    if (!color_by_index_)
+    {
+      bb.mColour.r = p.r_;
+      bb.mColour.g = p.g_;
+      bb.mColour.b = p.b_;
+      bb.mColour.a = alpha_;
+    }
+    else
+    {
+      bb.mColour.r = ((index >> 16) & 0xff) / 255.0f;
+      bb.mColour.g = ((index >> 8) & 0xff) / 255.0f;
+      bb.mColour.b = (index & 0xff) / 255.0f;
+      bb.mColour.a = 0.0f;
+    }
 
     bbs->injectBillboard(bb);
   }

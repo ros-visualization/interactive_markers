@@ -57,7 +57,7 @@ void initializeOgre()
 
     render_system->setConfigOption("Full Screen","No");
     render_system->setConfigOption("FSAA","2");
-    render_system->setConfigOption("RTT Preferred Mode", "PBuffer");
+    render_system->setConfigOption("RTT Preferred Mode", "FBO");
 
     root->setRenderSystem( render_system );
 

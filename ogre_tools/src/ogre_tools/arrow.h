@@ -119,6 +119,9 @@ public:
    */
   void setUserData( const Ogre::Any& data );
 
+  Shape* getShaft() { return shaft_; }
+  Shape* getHead() { return head_; }
+
 private:
   Ogre::SceneNode* scene_node_;
 
