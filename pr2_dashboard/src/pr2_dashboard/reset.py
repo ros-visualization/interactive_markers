@@ -36,7 +36,6 @@ roslib.load_manifest('pr2_dashboard')
 import wx
 from wx import xrc
 import rospy
-import rospy.service
 import std_srvs.srv
 
 PKG='pr2_dashboard'
@@ -62,6 +61,6 @@ class ResetPanel(wx.Panel):
          
         try:
             reset()
-        except rospy.service.ServiceException:
+        except rospy.ServiceException:
             rospy.logerr('Failed to reset the motors: service call failed')
             
