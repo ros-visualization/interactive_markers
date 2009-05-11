@@ -40,21 +40,23 @@ import std_srvs.srv
 
 PKG='pr2_dashboard'
 
-class ResetPanel(wx.Panel):
+class MotorPanel(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
         
-        xrc_path = roslib.packages.get_pkg_dir(PKG) + '/xrc/reset_panel.xrc'
+        xrc_path = roslib.packages.get_pkg_dir(PKG) + '/xrc/motor_panel.xrc'
         
         self._xrc = xrc.XmlResource(xrc_path)
-        self._real_panel = self._xrc.LoadPanel(self, 'ResetPanel')
+        self._real_panel = self._xrc.LoadPanel(self, 'MotorPanel')
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self._real_panel, 1, wx.EXPAND)
         self.SetSizer(sizer)
         
         self._reset_motors = xrc.XRCCTRL(self._real_panel, "reset_motors_button")
+        self._halt_motors = xrc.XRCCTRL(self._real_panel, "halt_motors_button")
         
         self._reset_motors.Bind(wx.EVT_BUTTON, self.on_reset_motors)
+        self._halt_motors.Bind(wx.EVT_BUTTON, self.on_halt_motors)
         
     def on_reset_motors(self, event):
         reset = rospy.ServiceProxy("reset_motors", std_srvs.srv.Empty)
@@ -63,4 +65,12 @@ class ResetPanel(wx.Panel):
             reset()
         except rospy.ServiceException:
             rospy.logerr('Failed to reset the motors: service call failed')
+
+    def on_halt_motors(self, event):
+        halt = rospy.ServiceProxy("halt_motors", std_srvs.srv.Empty)
+         
+        try:
+            halt()
+        except rospy.ServiceException:
+            rospy.logerr('Failed to halt the motors: service call failed')
             

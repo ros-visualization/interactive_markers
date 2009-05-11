@@ -36,7 +36,7 @@ roslib.load_manifest('pr2_dashboard')
 import wx
 import wx.aui
 from wx import xrc
-import reset
+import motor
 import ocean_battery_driver
 from ocean_battery_driver.ibps_panel import *
 import pr2_power_board
@@ -56,11 +56,11 @@ class HardwarePanel(wx.Panel):
         sizer.Add(self._notebook, 1, wx.EXPAND)
         self.SetSizer(sizer)
         
-        self._reset_panel = reset.ResetPanel(self)
+        self._motor_panel = motor.MotorPanel(self)
         self._battery_panel = BatteryPanel(self)
         self._powerboard_panel = PowerBoardPanel(self)
         self._notebook.AddPage(self._powerboard_panel, "Power Board", True)
-        self._notebook.AddPage(self._reset_panel, "Reset")
+        self._notebook.AddPage(self._motor_panel, "Motors")
         self._notebook.AddPage(self._battery_panel, "Battery")
         
         
