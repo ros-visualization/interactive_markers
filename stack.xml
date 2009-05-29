@@ -1,0 +1,15 @@
+<stack name="visualization" version="0.1">
+  <description brief="Visualization tools">
+    Tools used for visualization.
+  </description>
+  <version>0.1</version>
+  <author>Josh Faust jfaust@willowgarage.com</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://pr.willowgarage.com/wiki/visualization</url>
+  
+  <depend stack="ros" version="0.5"/>
+  <depend stack="common" version="0.1"/>
+  <depend stack="visualization_core" version="0.1"/>
+</stack>
+
