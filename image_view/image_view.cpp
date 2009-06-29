@@ -60,7 +60,7 @@ public:
   ImageView(const ros::NodeHandle& node_handle)
     : node_handle_(node_handle), filename_format_(""), count_(0)
   {
-    node_handle_.param("~window_name", window_name_, node_handle_.mapName("image"));
+    node_handle_.param("~window_name", window_name_, node_handle_.resolveName("image"));
 
     bool autosize;
     node_handle_.param("~autosize", autosize, false);
@@ -125,7 +125,7 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "image_view", ros::init_options::AnonymousName);
   ros::NodeHandle n;
-  if (n.mapName("image") == "/image") {
+  if (n.resolveName("image") == "/image") {
     ROS_WARN("image_view: image has not been remapped! Example command-line usage:\n"
              "\t$ rosrun image_view image_view image:=/forearm/image_color");
   }
