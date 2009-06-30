@@ -36,7 +36,7 @@
 #include <opencv/highgui.h>
 
 #include <ros/ros.h>
-#include <image_msgs/Image.h>
+#include <sensor_msgs/Image.h>
 #include <opencv_latest/CvBridge.h>
 
 #include <boost/thread.hpp>
@@ -48,8 +48,8 @@ private:
   ros::NodeHandle node_handle_;
   ros::V_Subscriber subs_;
   
-  image_msgs::ImageConstPtr last_msg_;
-  image_msgs::CvBridge img_bridge_;
+  sensor_msgs::ImageConstPtr last_msg_;
+  sensor_msgs::CvBridge img_bridge_;
   boost::mutex image_mutex_;
   
   std::string window_name_;
@@ -81,7 +81,7 @@ public:
     cvDestroyWindow(window_name_.c_str());
   }
 
-  void image_cb(const image_msgs::ImageConstPtr& msg)
+  void image_cb(const sensor_msgs::ImageConstPtr& msg)
   {
     boost::lock_guard<boost::mutex> guard(image_mutex_);
     

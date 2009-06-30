@@ -7,6 +7,6 @@
   <review status="proposal cleared" notes=""/>
   <url>http://pr.willowgarage.com/wiki/image_view</url>
   <depend package="opencv_latest"/>
-  <depend package="image_msgs"/>
+  <depend package="sensor_msgs"/>
   <depend package="roscpp"/>
 </package>
