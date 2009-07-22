@@ -57,6 +57,12 @@ class PR2Frame(wx.Frame):
         wx.Frame.__init__(self, parent, id, title, pos, size, style)
         
         rospy.init_node('pr2_dashboard', anonymous=True)
+        try:
+            getattr(rxtools, "initRoscpp")
+            rxtools.initRoscpp("pr2_dashboard_cpp", anonymous=True)
+        except AttributeError:
+            pass
+            
         
         self._config = wx.Config("pr2_dashboard")
         self._aui_manager = wx.aui.AuiManager(self)
