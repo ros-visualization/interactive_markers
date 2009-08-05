@@ -2,14 +2,18 @@
   <description brief="Visualization tools">
     Tools used for visualization.
   </description>
-  <version>0.1</version>
   <author>Josh Faust jfaust@willowgarage.com</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://pr.willowgarage.com/wiki/visualization</url>
   
-  <depend stack="ros" version="0.5"/>
-  <depend stack="common" version="0.1"/>
-  <depend stack="visualization_core" version="0.1"/>
-</stack>
 
+  <depend stack="3rdparty"/> <!-- wxpropgrid --> 
+  <depend stack="geometry"/> <!-- tf --> 
+  <depend stack="mechanism"/> <!-- mechanism_msgs, mechanism_model --> 
+  <depend stack="common"/> <!-- laser_scan --> 
+  <depend stack="ros"/> <!-- roscpp, rosconsole, message_filters, std_msgs, rxtools, wxswig, wxPython_swig_interface --> 
+  <depend stack="visualization_core"/> <!-- ogre, ogre_tools, visualization_msgs --> 
+  <depend stack="common_msgs"/> <!-- robot_msgs, sensor_msgs, nav_msgs, robot_srvs, mapping_msgs --> 
+
+</stack>
