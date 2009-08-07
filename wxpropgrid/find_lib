@@ -1,0 +1,22 @@
+#!/usr/bin/python
+
+import roslib; roslib.load_manifest('wxpropgrid')
+
+import sys
+import os
+import string
+from glob import glob
+import platform
+
+
+lib_suffix = "so"
+if (sys.platform == "darwin"):
+  lib_suffix = "dylib"
+
+pkg_dir = roslib.packages.get_pkg_dir('wxpropgrid')
+glob_str = os.path.join(pkg_dir, "propgrid_install/lib/*.%s"%(lib_suffix))
+
+libs = glob(glob_str)
+lib = os.path.basename(libs[0])[3:-(len(lib_suffix) + 1)]
+
+print lib

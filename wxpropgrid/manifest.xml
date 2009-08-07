@@ -1,0 +1,14 @@
+<package>
+<description brief="A property sheet control for wxWidgets">
+Provides an easy way of editing properties in wxWidgets.
+</description>
+<author>Jaakko Salli</author>
+<license url="http://www.opensource.org/licenses/wxwindows.php">wxWindows</license>
+<review status="3rdparty" notes=""/>
+<url>http://wxpropgrid.sourceforge.net</url>
+<export>
+  <cpp lflags="-L${prefix}/propgrid_install/lib -l`${prefix}/find_lib`" cflags="-I${prefix}/propgrid_install/include -D__NOTWXPYTHON__"/>
+</export>
+<rosdep name="wxwidgets"/>
+</package>
+
