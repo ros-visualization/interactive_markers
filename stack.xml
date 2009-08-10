@@ -14,6 +14,6 @@
   <depend stack="common"/> <!-- laser_scan --> 
   <depend stack="ros"/> <!-- roscpp, rosconsole, message_filters, std_msgs, rxtools, wxswig, wxPython_swig_interface --> 
   <depend stack="visualization_core"/> <!-- ogre, ogre_tools, visualization_msgs --> 
-  <depend stack="common_msgs"/> <!-- robot_msgs, sensor_msgs, nav_msgs, robot_srvs, mapping_msgs --> 
+  <depend stack="common_msgs"/> <!-- sensor_msgs, nav_msgs, mapping_msgs --> 
 
 </stack>
