@@ -13,7 +13,7 @@
   <depend stack="mechanism"/> <!-- mechanism_msgs, mechanism_model --> 
   <depend stack="common"/> <!-- laser_scan --> 
   <depend stack="ros"/> <!-- roscpp, rosconsole, message_filters, std_msgs, rxtools, wxswig, wxPython_swig_interface --> 
-  <depend stack="visualization_core"/> <!-- ogre, ogre_tools, visualization_msgs --> 
+  <depend stack="visualization_common"/> <!-- ogre, ogre_tools, visualization_msgs --> 
   <depend stack="common_msgs"/> <!-- sensor_msgs, nav_msgs, mapping_msgs --> 
 
 </stack>
