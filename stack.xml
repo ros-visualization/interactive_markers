@@ -1,19 +1,18 @@
-<stack name="visualization" version="0.1">
-  <description brief="Visualization tools">
-    Tools used for visualization.
+<stack name="visualization" version="0.1.0">
+  <description brief="visualization">
+
+     Visualization tools for robots.  Currently just rviz.
+
   </description>
-  <author>Josh Faust jfaust@willowgarage.com</author>
-  <license>BSD</license>
+  <author>Josh Faust</author>
+  <license>BSD,wxWindows</license>  
   <review status="unreviewed" notes=""/>
   <url>http://pr.willowgarage.com/wiki/visualization</url>
-  
-
-  <depend stack="3rdparty"/> <!-- wxpropgrid --> 
+  <depend stack="robot_model"/> <!-- urdf, resource_retriever --> 
   <depend stack="geometry"/> <!-- tf --> 
-  <depend stack="mechanism"/> <!-- mechanism_msgs, mechanism_model --> 
-  <depend stack="common"/> <!-- laser_scan --> 
-  <depend stack="ros"/> <!-- roscpp, rosconsole, message_filters, std_msgs, rxtools, wxswig, wxPython_swig_interface --> 
-  <depend stack="visualization_common"/> <!-- ogre, ogre_tools, visualization_msgs --> 
-  <depend stack="common_msgs"/> <!-- sensor_msgs, nav_msgs, mapping_msgs --> 
+  <depend stack="visualization_common"/> <!-- visualization_msgs, ogre, ogre_tools --> 
+  <depend stack="common"/> <!-- laser_scan, yaml-cpp --> 
+  <depend stack="ros"/> <!-- rxtools, rosconsole, roscpp, message_filters, wxswig, std_msgs, wxPython_swig_interface --> 
+  <depend stack="common_msgs"/> <!-- nav_msgs, geometry_msgs, sensor_msgs --> 
 
 </stack>
