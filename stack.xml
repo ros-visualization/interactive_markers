@@ -14,5 +14,5 @@
   <depend stack="common"/> <!-- laser_scan, yaml-cpp --> 
   <depend stack="ros"/> <!-- rxtools, rosconsole, roscpp, message_filters, wxswig, std_msgs, wxPython_swig_interface --> 
   <depend stack="common_msgs"/> <!-- nav_msgs, geometry_msgs, sensor_msgs --> 
-
+  <depend stack="laser_pipeline"/> <!-- laser_scan -->
 </stack>
