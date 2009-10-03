@@ -39,8 +39,6 @@
 
 #include <wx/splitter.h>
 
-#include <ros/node.h>
-
 namespace rviz
 {
 
@@ -80,6 +78,18 @@ VisualizationPanel::~VisualizationPanel()
 {
   render_panel_->Destroy();
   delete manager_;
+}
+
+void VisualizationPanel::loadGeneralConfig(const std::string& filepath)
+{
+  boost::shared_ptr<wxFileConfig> config(new wxFileConfig(wxEmptyString, wxEmptyString, wxEmptyString, wxString::FromAscii(filepath.c_str()), wxCONFIG_USE_GLOBAL_FILE));
+  manager_->loadGeneralConfig(config);
+}
+
+void VisualizationPanel::loadDisplayConfig(const std::string& filepath)
+{
+  boost::shared_ptr<wxFileConfig> config(new wxFileConfig(wxEmptyString, wxEmptyString, wxEmptyString, wxString::FromAscii(filepath.c_str()), wxCONFIG_USE_GLOBAL_FILE));
+  manager_->loadDisplayConfig(config);
 }
 
 }
