@@ -7,7 +7,7 @@ TARBALL_URL	= http://pr.willowgarage.com/downloads/$(FILENAME)
 UNPACK_CMD	= tar xzf
 SOURCE_DIR	= build/propgrid
 #MD5SUM_FILE 	= $(FILENAME).md5sum
-TARBALL_PATCH   = scrollbars.diff
+TARBALL_PATCH   = scrollbars.diff selection.diff
 WXPROPGRID_ROOT = $(shell rospack find wxpropgrid)
 
 include $(shell rospack find mk)/download_unpack_build.mk
