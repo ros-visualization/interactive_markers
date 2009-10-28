@@ -1,0 +1,68 @@
+--- src/propgrid.cpp	2009-10-04 02:26:33.000000000 -0700
++++ propgrid.cpp	2009-10-12 20:00:57.000000000 -0700
+@@ -3247,6 +3247,12 @@ void wxPropertyGrid::Init2()
+                      (GetWindowStyle() & wxTAB_TRAVERSAL) | wxWANTS_CHARS | wxCLIP_CHILDREN);
+     m_canvas->SetBackgroundStyle( wxBG_STYLE_CUSTOM );
+ 
++    
++    wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
++    sizer->Add(m_canvas, 1, wxEXPAND, 0);
++    SetSizer(sizer);
++    SetScrollRate(wxPG_PIXELS_PER_UNIT, wxPG_PIXELS_PER_UNIT);
++    
+     m_iFlags |= wxPG_FL_INITIALIZED;
+ 
+     m_ncWidth = wndsize.GetWidth();
+@@ -7541,37 +7547,8 @@ void wxPropertyGrid::RecalculateVirtualS
+ 
+     int x = m_pState->m_width;
+     int y = m_pState->m_virtualHeight;
+-
+     int width, height;
+-    GetClientSize(&width,&height);
+-
+-    // Now adjust virtual size.
+-	SetVirtualSize(x, y);
+-
+-    int xAmount = 0;
+-    int xPos = 0;
+-
+-    //
+-    // Adjust scrollbars
+-    if ( HasVirtualWidth() )
+-    {
+-        xAmount = x/wxPG_PIXELS_PER_UNIT;
+-        xPos = GetScrollPos( wxHORIZONTAL );
+-    }
+-
+-    if ( forceXPos != -1 )
+-        xPos = forceXPos;
+-    // xPos too high?
+-    else if ( xPos > (xAmount-(width/wxPG_PIXELS_PER_UNIT)) )
+-        xPos = 0;
+-
+-    int yAmount = y / wxPG_PIXELS_PER_UNIT;
+-    int yPos = GetScrollPos( wxVERTICAL );
+-
+-    SetScrollbars( wxPG_PIXELS_PER_UNIT, wxPG_PIXELS_PER_UNIT,
+-                   xAmount, yAmount, xPos, yPos, true );
+ 
+-    // Must re-get size now
+     GetClientSize(&width,&height);
+ 
+     if ( !HasVirtualWidth() )
+@@ -7588,10 +7565,10 @@ void wxPropertyGrid::RecalculateVirtualS
+     wxASSERT_MSG( y <= 32767,
+                   wxT("Sorry, wxPanel height limitations exceeded") );
+ 
+-    // Explicitly pass the position - works around a bug in wxWidgets when
+-    // the property grid has a native XP border and a contained window
+-    // creeps up-and-left when size is set without the position.
+-    m_canvas->SetSize(0, 0, x, y);
++    // Set the min size so that the sizer can correctly determine how large the virtual
++    // window should be.
++    m_canvas->SetMinSize(wxSize(x, y));
++    FitInside();
+ 
+     m_pState->CheckColumnWidths();
+ 
