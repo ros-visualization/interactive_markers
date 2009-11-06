@@ -1,0 +1,86 @@
+--- src/propgrid.cpp	2009-10-13 16:46:48.000000000 -0700
++++ propgrid.cpp	2009-10-13 16:41:51.000000000 -0700
+@@ -2757,8 +2757,9 @@ wxPGCell::wxPGCell()
+ wxPGCell::wxPGCell( const wxString& text,
+                     const wxBitmap& bitmap,
+                     const wxColour& fgCol,
+-                    const wxColour& bgCol )
+-    : m_bitmap(bitmap), m_fgCol(fgCol), m_bgCol(bgCol)
++                    const wxColour& bgCol,
++		    const wxFont& font )
++  : m_bitmap(bitmap), m_fgCol(fgCol), m_bgCol(bgCol), m_font(font)
+ {
+ #ifndef __WXPYTHON__
+     if ( &text != ((wxString*)NULL) )
+@@ -5562,7 +5563,7 @@ int wxPropertyGrid::DoDrawItems( wxDC& d
+         }
+         else
+         {
+-            if ( p->m_flags & wxPG_PROP_MODIFIED && (windowStyle & wxPG_BOLD_MODIFIED) )
++	    if ( p->m_flags & wxPG_PROP_MODIFIED && (windowStyle & wxPG_BOLD_MODIFIED) )
+             {
+                 dc.SetFont(m_captionFont);
+                 fontChanged = true;
+@@ -5664,6 +5665,17 @@ int wxPropertyGrid::DoDrawItems( wxDC& d
+                 // Foreground
+                 if ( !cellEditor )
+                 {
++		    bool cell_has_font = false;
++		    wxPGCell* cell = p->GetCell(ci);
++		    if (cell)
++		    {
++		      const wxFont& font = cell->GetFont();
++		      if (font != wxNullFont)
++		      {
++			cell_has_font = true;
++			dc.SetFont(font);
++		      }
++		    }
+                     wxPGCellRenderer* renderer;
+                     int cmnVal = p->GetCommonValue();
+                     if ( cmnVal == -1 || ci != 1 )
+@@ -5676,6 +5688,11 @@ int wxPropertyGrid::DoDrawItems( wxDC& d
+                         renderer = GetCommonValue(cmnVal)->GetRenderer();
+                         renderer->Render( dc, cellRect, this, p, ci, -1, renderFlags );
+                     }
++
++		    if (cell_has_font)
++		    {
++		      dc.SetFont(normalfont);
++		    }
+                 }
+ 
+                 cellX += state->m_colWidths[ci];
+--- include/wx/propgrid/propgrid.h	2009-10-04 02:26:34.000000000 -0700
++++ propgrid.h	2009-10-13 16:44:58.000000000 -0700
+@@ -585,7 +585,8 @@ public:
+     wxPGCell( const wxString& text,
+               const wxBitmap& bitmap = wxNullBitmap,
+               const wxColour& fgCol = wxNullColour,
+-              const wxColour& bgCol = wxNullColour );
++              const wxColour& bgCol = wxNullColour,
++	      const wxFont& font = wxNullFont );
+ 
+     virtual ~wxPGCell() { }
+ 
+@@ -593,17 +594,20 @@ public:
+     void SetBitmap( const wxBitmap& bitmap ) { m_bitmap = bitmap; }
+     void SetFgCol( const wxColour& col ) { m_fgCol = col; }
+     void SetBgCol( const wxColour& col ) { m_bgCol = col; }
++    void SetFont( const wxFont& font ) { m_font = font; }
+ 
+     const wxString& GetText() const { return m_text; }
+     const wxBitmap& GetBitmap() const { return m_bitmap; }
+     const wxColour& GetFgCol() const { return m_fgCol; }
+     const wxColour& GetBgCol() const { return m_bgCol; }
++    const wxFont& GetFont() const { return m_font; }
+ 
+ protected:
+     wxString    m_text;
+     wxBitmap    m_bitmap;
+     wxColour    m_fgCol;
+     wxColour    m_bgCol;
++    wxFont      m_font;
+ };
+ 
+ 
