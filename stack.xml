@@ -1,7 +1,7 @@
 <stack name="visualization" version="0.1.0">
   <description brief="visualization">
 
-     Visualization tools for robots.  Currently just rviz.
+     Visualization tools for robots.  Currently just rviz, a 3d visualization environment for robots using ROS.
 
   </description>
   <author>Josh Faust</author>
