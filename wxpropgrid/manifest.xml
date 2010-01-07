@@ -1,14 +1,17 @@
 <package>
 <description brief="A property sheet control for wxWidgets">
 Provides an easy way of editing properties in wxWidgets.
+<br/>
+<br/>
 
 We use a patched version of 1.4.7.  1.4.7 fixed a bad crash we were experiencing, as well as a lot of problems on OSX.  
+<br/>
+<br/>
 
-
-We apply three patches:
- 1) fixes some scrollbar problems we were having. The patch is submitted back: <![CDATA[<a href="https://sourceforge.net/tracker/?func=detail&aid=2877550&group_id=133406&atid=727083">link</a>]]>
- 2) changes it to not snap back to selection all the time.  bug reported: <![CDATA[<a href="https://sourceforge.net/tracker/?func=detail&aid=2877568&group_id=133406&atid=727081">link</a>]]>
- 3) adds the ability to set the font per cell.  feature requested: <![CDATA[<a href="https://sourceforge.net/tracker/?func=detail&aid=2166255&group_id=133406&atid=727084">link</a>]]>
+We apply three patches:<br/>
+ 1) fixes some scrollbar problems we were having. The patch is submitted back: <![CDATA[<a href="https://sourceforge.net/tracker/?func=detail&aid=2877550&group_id=133406&atid=727083">link</a>]]> <br/>
+ 2) changes it to not snap back to selection all the time.  bug reported: <![CDATA[<a href="https://sourceforge.net/tracker/?func=detail&aid=2877568&group_id=133406&atid=727081">link</a>]]> <br/>
+ 3) adds the ability to set the font per cell.  feature requested: <![CDATA[<a href="https://sourceforge.net/tracker/?func=detail&aid=2166255&group_id=133406&atid=727084">link</a>]]> <br/>
 </description>
 <author>Jaakko Salli</author>
 <license url="http://www.opensource.org/licenses/wxwindows.php">wxWindows</license>
