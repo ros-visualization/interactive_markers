@@ -15,7 +15,7 @@ We apply three patches:
 <review status="3rdparty" notes=""/>
 <url>http://wxpropgrid.sourceforge.net</url>
 <export>
-  <cpp lflags="-L${prefix}/propgrid_install/lib -l`${prefix}/find_lib`" cflags="-I${prefix}/propgrid_install/include -D__NOTWXPYTHON__"/>
+  <cpp lflags="-L${prefix}/propgrid_install/lib -Wl,-rpath,${prefix}/propgrid_install/lib -l`${prefix}/find_lib`" cflags="-I${prefix}/propgrid_install/include -D__NOTWXPYTHON__"/>
 </export>
 <rosdep name="wxwidgets"/>
 </package>
