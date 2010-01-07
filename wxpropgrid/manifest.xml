@@ -15,7 +15,7 @@ We apply three patches:<br/>
 </description>
 <author>Jaakko Salli</author>
 <license url="http://www.opensource.org/licenses/wxwindows.php">wxWindows</license>
-<review status="3rdparty" notes=""/>
+<review status="3rdparty" notes="3rdparty doc reviewed"/>
 <url>http://wxpropgrid.sourceforge.net</url>
 <export>
   <cpp lflags="-L${prefix}/propgrid_install/lib -Wl,-rpath,${prefix}/propgrid_install/lib -l`${prefix}/find_lib`" cflags="-I${prefix}/propgrid_install/include -D__NOTWXPYTHON__"/>
