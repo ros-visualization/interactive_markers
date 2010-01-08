@@ -185,7 +185,7 @@ class PlotView(msg_view.TopicMsgView):
             left   = (axes.left.get()   + 10) / self.figure.get_window_extent().width()
             bottom = (axes.bottom.get() + 10) / self.figure.get_window_extent().height()
 
-            subplot_legend = self.figure.legend(subplot_series_data, subplot_series, loc=(left, bottom), prop=fp, handlelen=0.02, handletextsep=0.02, axespad=0.0, labelsep=0.002, pad=0.05)
+            subplot_legend = self.figure.legend(subplot_series_data, subplot_series, loc=(left, bottom), prop=fp, handlelen=0.02, handletextsep=0.02, axespad=0.0, labelsep=0.002, pad=0.2)
             #subplot_legend.draw_frame(False)
             subplot_legend.set_axes(axes)
 

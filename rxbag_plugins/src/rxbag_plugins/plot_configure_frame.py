@@ -49,7 +49,7 @@ from rxbag import msg_view
 ## Choose data to extract from messages
 class PlotConfigureFrame(wx.Frame):
     def __init__(self, plot):
-        wx.Frame.__init__(self, None, title='PlotView: Configure', size=(750, 600))
+        wx.Frame.__init__(self, None, title=plot.frame.GetTitle() + ' - Configure', size=(750, 600))
 
         self.plot = plot
 
@@ -62,7 +62,7 @@ class PlotConfigureFrame(wx.Frame):
         self.msg_tree.ExpandAll()
         self.msg_tree.Bind(wx.EVT_LEFT_DCLICK, self.on_msg_left_dclick)
 
-        self.plot_tree = wx.TreeCtrl(splitter, style=wx.TR_DEFAULT_STYLE | wx.TR_HIDE_ROOT | wx.TR_EDIT_LABELS | wx.TR_HAS_BUTTONS)
+        self.plot_tree = wx.TreeCtrl(splitter, style=wx.TR_DEFAULT_STYLE | wx.TR_HIDE_ROOT | wx.TR_HAS_BUTTONS)
         self.plot_tree.Bind(wx.EVT_TREE_BEGIN_DRAG, self.on_plot_begin_drag)
         self.plot_tree.Bind(wx.EVT_TREE_END_DRAG,   self.on_plot_end_drag)
         self.plot_tree.Bind(wx.EVT_LEFT_DCLICK,     self.on_plot_left_dclick)
@@ -77,6 +77,8 @@ class PlotConfigureFrame(wx.Frame):
         self._update_msg_tree()
 
         self.add_plot()
+        
+        self.plot_tree.SelectItem(self.plot_items[0])
 
         splitter.SplitVertically(self.msg_tree, self.plot_tree)
         splitter.SetSashPosition(400)
@@ -154,13 +156,12 @@ class PlotConfigureFrame(wx.Frame):
             return
 
         (path, obj_type) = self.msg_tree.GetItemPyData(selected_item)
-
         if len(self.plot_items) == 0:
             return
 
-        #selected_plot = self.plot_tree.GetSelection()
-        #if not selected_plot.IsOk():
-        selected_plot = self.plot_items[-1]
+        selected_plot = self.plot_tree.GetSelection()
+        if not selected_plot.IsOk() or selected_plot == self.plot_tree.GetRootItem():
+            selected_plot = self.plot_items[-1]
 
         item = self.plot_tree.AppendItem(selected_plot, path)
         self.plot_tree.ExpandAll()
@@ -223,7 +224,7 @@ class PlotConfigureFrame(wx.Frame):
         return plot_paths
 
     def add_plot(self):
-        item = self.plot_tree.AppendItem(self.plot_root, 'Untitled Plot')
+        item = self.plot_tree.AppendItem(self.plot_root, 'Plot')
         self.plot_tree.SetItemImage(item, self.plot_image_index, wx.TreeItemIcon_Normal)
         self.plot_items.append(item)
         
@@ -259,14 +260,14 @@ class PlotConfigureFrame(wx.Frame):
 
         if dest == src:
             return
-
+        
         text = self.plot_tree.GetItemText(src)
         data = self.plot_tree.GetItemPyData(src)
 
         self.plot_tree.Delete(src)
 
         if dest.IsOk():
-            is_plot_item = self.plot_tree.GetItemText(dest).startswith('Plot ')
+            is_plot_item = (self.plot_tree.GetItemParent(dest) == self.plot_tree.GetRootItem()) 
             if is_plot_item:
                 new_item = self.plot_tree.InsertItemBefore(dest, 0, text)
             else:
