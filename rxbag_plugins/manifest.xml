@@ -1,9 +1,12 @@
 <package>
-  <description brief="rxbag_plugins">
+  <description brief="Visualization plugins for rxbag">
 
-rxbag_plugins contains rxbag plugins for various message types.
-<br/><br/>
-Some icons from the Silk icon pack are used (http://www.famfamfam.com/lab/icons/silk/).
+<p>
+  rxbag_plugins contains rxbag plugins for various message types.
+</p>
+<p>
+  Some icons from the Silk icon pack are used, which is available from <a href="http://www.famfamfam.com/lab/icons/silk/">famfamfam.com</a>.
+</p>
 
   </description>
   <author>Tim Field</author>
