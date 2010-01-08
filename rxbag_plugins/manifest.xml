@@ -1,0 +1,23 @@
+<package>
+  <description brief="rxbag_plugins">
+
+rxbag_plugins contains rxbag plugins for various message types.
+<br/><br/>
+Some icons from the Silk icon pack are used (http://www.famfamfam.com/lab/icons/silk/).
+
+  </description>
+  <author>Tim Field</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/rxbag_plugins</url>
+  <depend package="rospy"/>
+  <depend package="roslib"/>
+  <depend package="std_msgs"/>
+  <depend package="rxbag"/> 
+  <depend package="geometry_msgs"/>
+  <depend package="sensor_msgs"/>
+  <export>
+    <rxbag plugin="rxbag_plugins.plugins" />
+  </export>
+
+</package>
