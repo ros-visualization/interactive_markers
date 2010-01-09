@@ -7,7 +7,7 @@
 
   </description>
   <author>Tim Field</author>
-  <license>BSD</license>
+  <license>BSD, Creative Commons</license>
   <review status="Doc reviewed" notes=""/>
   <url>http://ros.org/wiki/rxbag_plugins</url>
   <depend package="rospy"/>
