@@ -8,7 +8,7 @@
   </description>
   <author>Tim Field</author>
   <license>BSD</license>
-  <review status="unreviewed" notes=""/>
+  <review status="Doc reviewed" notes=""/>
   <url>http://ros.org/wiki/rxbag_plugins</url>
   <depend package="rospy"/>
   <depend package="roslib"/>
