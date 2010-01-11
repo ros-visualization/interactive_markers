@@ -1,0 +1,6 @@
+/**
+\mainpage
+\htmlinclude manifest.html
+
+\b rxbag_plugins contains visualization plugins for the rxbag GUI tool.
+*/
