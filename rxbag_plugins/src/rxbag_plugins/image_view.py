@@ -116,9 +116,8 @@ class ImageTimelineRenderer(msg_view.TimelineRenderer):
 
     #
 
-    ## Can't handle wide stereo images currently
     def _valid_image_topic(self, topic):
-        return True# 'wide' not in topic
+        return True
 
     ## Loads the thumbnail from either the bag file or the cache
     def _get_thumbnail(self, topic, stamp, thumbnail_height, time_threshold):
