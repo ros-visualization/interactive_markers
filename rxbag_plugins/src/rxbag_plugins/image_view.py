@@ -350,6 +350,6 @@ class ImagePopupMenu(wx.Menu):
         self.Bind(wx.EVT_MENU, lambda e: self.image_view.export_frame(), id=export_frame_item.GetId())
 
         # Export to AVI...
-        export_video_item = wx.MenuItem(self, wx.NewId(), 'Export to AVI...')
-        self.AppendItem(export_video_item)
-        self.Bind(wx.EVT_MENU, lambda e: self.image_view.export_video(), id=export_video_item.GetId())
+        #export_video_item = wx.MenuItem(self, wx.NewId(), 'Export to AVI...')
+        #self.AppendItem(export_video_item)
+        #self.Bind(wx.EVT_MENU, lambda e: self.image_view.export_video(), id=export_video_item.GetId())
