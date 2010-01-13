@@ -5,7 +5,7 @@
 
   </description>
   <author>Josh Faust</author>
-  <license>BSD,wxWindows</license>  
+  <license>BSD,wxWindows,Creative Commons</license>  
   <review status="Doc reviewed" notes="2010/01/08"/>
   <url>http://ros.org/wiki/visualization</url>
   <depend stack="common" /> <!-- yaml_cpp -->
