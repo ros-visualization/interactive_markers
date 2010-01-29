@@ -1,0 +1,13 @@
+--- src/propgrid.cpp	2010-01-29 11:21:44.646502481 -0800
++++ propgrid.cpp	2010-01-29 11:24:13.385878285 -0800
+@@ -12370,8 +12370,8 @@ int wxPropertyGridState::PrepareToAddIte
+ #endif
+ 
+     // Make sure nothing is selected.
++    //    if ( propGrid )
++      //        propGrid->ClearSelection(false);
+-    if ( propGrid )
+-        propGrid->ClearSelection(false);
+ 
+     if ( scheduledParent )
+     {
