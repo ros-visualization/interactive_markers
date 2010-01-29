@@ -5,11 +5,12 @@
   This package contains a patched version of 1.4.7.  1.4.7 fixed a bad crash we were experiencing, as well as a lot of problems on OSX.  
 </p>
 <p>
-We apply three patches:
+We apply four patches:
 <ol>
  <li>fixes some scrollbar problems we were having. The patch is submitted back: <a href="https://sourceforge.net/tracker/?func=detail&amp;aid=2877550&amp;group_id=133406&amp;atid=727083">link</a></li>
  <li>changes it to not snap back to selection all the time.  bug reported: <a href="https://sourceforge.net/tracker/?func=detail&amp;aid=2877568&amp;group_id=133406&amp;atid=727081">link</a></li>
  <li>adds the ability to set the font per cell.  feature requested: <a href="https://sourceforge.net/tracker/?func=detail&amp;aid=2166255&amp;group_id=133406&amp;atid=727084">link</a></li>
+ <li>does not clear selection every time Append/AppendIn is called.  feature requested: <a href="https://sourceforge.net/tracker/?func=detail&amp;atid=727084&amp;aid=2942477&amp;group_id=133406">link</a></li>
 </ol>
 </p>
 
