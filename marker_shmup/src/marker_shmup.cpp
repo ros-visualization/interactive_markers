@@ -25,6 +25,8 @@ V_u32 g_marker_free_list;
 
 uint32_t g_id_counter = 0;
 
+uint32_t g_score = 0;
+
 template<typename T>
 void setXYZ(T& t, double x, double y, double z)
 {
@@ -481,6 +483,7 @@ struct Hero
     Marker& m = resolvePersistentMarker(marker_handle);
     setXYZ(m.pose.position, 0.0, 0.0, 0.0);
     m.color.a = 0.0;
+    g_score = 0;
   }
 
   void fire()
@@ -912,7 +915,7 @@ void updateProjectiles(double dt)
               deallocatePersistentMarker(p.marker_handle);
               p.in_use = false;
 
-
+              g_score += 10;
             }
           }
         }
@@ -940,6 +943,130 @@ void updateProjectiles(double dt)
   }
 }
 
+void createDigitLineStrip(uint32_t digit, Marker& m)
+{
+  ROS_ASSERT(digit <= 9ULL);
+
+  switch (digit)
+  {
+  case 0:
+    m.points.resize(6);
+    setXYZ(m.points[0], 0.5, -0.3, 0.0);
+    setXYZ(m.points[1], 0.5, 0.3, 0.0);
+    setXYZ(m.points[2], -0.5, 0.3, 0.0);
+    setXYZ(m.points[3], -0.5, -0.3, 0.0);
+    setXYZ(m.points[4], 0.5, -0.3, 0.0);
+    setXYZ(m.points[5], -0.5, 0.3, 0.0);
+    break;
+  case 1:
+    m.points.resize(5);
+    setXYZ(m.points[0], 0.3, 0.1, 0.0);
+    setXYZ(m.points[1], 0.5, 0.0, 0.0);
+    setXYZ(m.points[2], -0.5, 0.0, 0.0);
+    setXYZ(m.points[3], -0.5, 0.3, 0.0);
+    setXYZ(m.points[4], -0.5, -0.3, 0.0);
+    break;
+  case 2:
+    m.points.resize(6);
+    setXYZ(m.points[0], 0.5, 0.3, 0.0);
+    setXYZ(m.points[1], 0.5, -0.3, 0.0);
+    setXYZ(m.points[2], 0.0, -0.3, 0.0);
+    setXYZ(m.points[3], 0.0, 0.3, 0.0);
+    setXYZ(m.points[4], -0.5, 0.3, 0.0);
+    setXYZ(m.points[5], -0.5, -0.3, 0.0);
+    break;
+  case 3:
+    m.points.resize(7);
+    setXYZ(m.points[0], 0.5, 0.3, 0.0);
+    setXYZ(m.points[1], 0.5, -0.3, 0.0);
+    setXYZ(m.points[2], 0.0, -0.3, 0.0);
+    setXYZ(m.points[3], 0.0, 0.3, 0.0);
+    setXYZ(m.points[4], 0.0, -0.3, 0.0);
+    setXYZ(m.points[5], -0.5, -0.3, 0.0);
+    setXYZ(m.points[6], -0.5, 0.3, 0.0);
+    break;
+  case 4:
+    m.points.resize(4);
+    setXYZ(m.points[0], 0.1, -0.3, 0.0);
+    setXYZ(m.points[1], 0.1, 0.3, 0.0);
+    setXYZ(m.points[2], 0.5, -0.2, 0.0);
+    setXYZ(m.points[3], -0.5, -0.2, 0.0);
+    break;
+  case 5:
+    m.points.resize(6);
+    setXYZ(m.points[0], 0.5, -0.3, 0.0);
+    setXYZ(m.points[1], 0.5, 0.3, 0.0);
+    setXYZ(m.points[2], 0.0, 0.3, 0.0);
+    setXYZ(m.points[3], 0.0, -0.3, 0.0);
+    setXYZ(m.points[4], -0.5, -0.3, 0.0);
+    setXYZ(m.points[5], -0.5, 0.3, 0.0);
+    break;
+  case 6:
+    m.points.resize(6);
+    setXYZ(m.points[0], 0.5, -0.3, 0.0);
+    setXYZ(m.points[1], 0.5, 0.3, 0.0);
+    setXYZ(m.points[2], -0.5, 0.3, 0.0);
+    setXYZ(m.points[3], -0.5, -0.3, 0.0);
+    setXYZ(m.points[4], 0.0, -0.3, 0.0);
+    setXYZ(m.points[5], 0.0, 0.3, 0.0);
+    break;
+  case 7:
+    m.points.resize(3);
+    setXYZ(m.points[0], 0.5, 0.3, 0.0);
+    setXYZ(m.points[1], 0.5, -0.3, 0.0);
+    setXYZ(m.points[2], -0.5, -0.3, 0.0);
+    break;
+  case 8:
+    m.points.resize(7);
+    setXYZ(m.points[0], 0.5, 0.3, 0.0);
+    setXYZ(m.points[1], 0.5, -0.3, 0.0);
+    setXYZ(m.points[2], -0.5, -0.3, 0.0);
+    setXYZ(m.points[3], -0.5, 0.3, 0.0);
+    setXYZ(m.points[4], 0.5, 0.3, 0.0);
+    setXYZ(m.points[5], 0.0, 0.3, 0.0);
+    setXYZ(m.points[6], 0.0, -0.3, 0.0);
+    break;
+  case 9:
+    m.points.resize(5);
+    setXYZ(m.points[0], -0.5, -0.3, 0.0);
+    setXYZ(m.points[1], 0.5, -0.3, 0.0);
+    setXYZ(m.points[2], 0.5, 0.3, 0.0);
+    setXYZ(m.points[3], 0.0, 0.3, 0.0);
+    setXYZ(m.points[4], 0.0, -0.3, 0.0);
+    break;
+  }
+}
+
+static const uint32_t SCOREBOARD_PLACES = 6;
+uint32_t g_scoreboard[SCOREBOARD_PLACES] = {0};
+
+void updateScoreboard(double dt)
+{
+  uint32_t score = g_score;
+
+  for (uint32_t i = 0; i < SCOREBOARD_PLACES; ++i)
+  {
+    uint32_t digit = score % 10;
+    Marker& m = resolvePersistentMarker(g_scoreboard[SCOREBOARD_PLACES - i - 1]);
+    createDigitLineStrip(digit, m);
+
+    score /= 10;
+  }
+}
+
+void initScoreboard()
+{
+  for (uint32_t i = 0; i < SCOREBOARD_PLACES; ++i)
+  {
+    g_scoreboard[i] = allocatePersistentMarker();
+    Marker& m = resolvePersistentMarker(g_scoreboard[i]);
+    m.type = Marker::LINE_STRIP;
+    setXYZ(m.scale, 0.2, 0.2, 0.2);
+    setColor(m.color, 1.0, 1.0, 1.0, 1.0);
+    setXYZ(m.pose.position, 17, -11 - (int32_t)i, 0);
+  }
+}
+
 bool g_first = true;
 
 void update(const ros::TimerEvent& event)
@@ -956,6 +1083,7 @@ void update(const ros::TimerEvent& event)
   updateEnemies(dt);
   updateProjectiles(dt);
   updateExplosions(dt);
+  updateScoreboard(dt);
   g_marker_array_pub.publish(g_markers);
 }
 
@@ -973,6 +1101,7 @@ void init(ros::NodeHandle& nh)
   g_cmd.reset(new HeroCommand);
 
   initPlayingField();
+  initScoreboard();
   initHero();
   initEnemies();
 }
