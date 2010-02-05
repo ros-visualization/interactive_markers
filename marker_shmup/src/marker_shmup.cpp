@@ -26,6 +26,20 @@ V_u32 g_marker_free_list;
 uint32_t g_id_counter = 0;
 
 uint32_t g_score = 0;
+ros::Time g_start_time;
+
+static const float ENEMY_START_MAX_SPEED = 2.0;
+static float ENEMY_MAX_SPEED = 2.0;
+static const float ENEMY_START_PROJECTILE_SPEED = 3.0;
+static float ENEMY_PROJECTILE_SPEED = 3.0;
+static const float ENEMY_FADE_IN_TIME = 2.0;
+static const ros::Duration ENEMY_PROJECTILE_FIRE_DELAY(0.7);
+static const ros::Duration ENEMY_EXPLODE_DURATION(0.5);
+
+static const ros::Duration HERO_PROJECTILE_FIRE_DELAY(0.3);
+static const float HERO_MAX_SPEED = 7.0;
+static const ros::Duration HERO_SPAWN_DURATION(3.0);
+static const ros::Duration HERO_EXPLODE_DURATION(2.0);
 
 template<typename T>
 void setXYZ(T& t, double x, double y, double z)
@@ -455,11 +469,6 @@ void initPlayingField()
   setXYZ(m.points[4], -1.0, -10.0, 0.0);
 }
 
-static const ros::Duration HERO_PROJECTILE_FIRE_DELAY(0.4);
-static const float HERO_MAX_SPEED = 5.0;
-static const ros::Duration HERO_SPAWN_DURATION(3.0);
-static const ros::Duration HERO_EXPLODE_DURATION(2.0);
-
 struct Hero
 {
   Hero()
@@ -469,11 +478,13 @@ struct Hero
 
   uint32_t marker_handle;
   uint32_t shield_handle;
+  uint32_t shield_bar_handle;
   ros::Time last_fire_time;
   ros::Time spawn_time;
   ros::Time explode_time;
   bool finished_spawning;
   bool exploding;
+  float shield;
 
   void spawn()
   {
@@ -483,7 +494,10 @@ struct Hero
     Marker& m = resolvePersistentMarker(marker_handle);
     setXYZ(m.pose.position, 0.0, 0.0, 0.0);
     m.color.a = 0.0;
+    shield = 1.0;
     g_score = 0;
+    ENEMY_MAX_SPEED = ENEMY_START_MAX_SPEED;
+    g_start_time = ros::Time::now();
   }
 
   void fire()
@@ -496,7 +510,7 @@ struct Hero
     last_fire_time = ros::Time::now();
 
     Projectile& p = allocateProjectile();
-    p.vx = 3.0;
+    p.vx = 5.0;
     p.owner = HERO;
 
     Marker& my_m = resolvePersistentMarker(marker_handle);
@@ -509,6 +523,12 @@ struct Hero
   void update(double dt)
   {
     Marker& m = resolvePersistentMarker(marker_handle);
+
+    Marker& bm = resolvePersistentMarker(shield_bar_handle);
+    bm.pose = m.pose;
+    bm.pose.position.y += 1.2;
+    bm.pose.position.x += 0.5;
+    bm.scale.x = shield;
 
     if (exploding)
     {
@@ -541,11 +561,6 @@ struct Hero
       }
     }
 
-    if (g_cmd->fire && !g_cmd->shield)
-    {
-      fire();
-    }
-
     m.pose.position.y += std::max(-HERO_MAX_SPEED, std::min(HERO_MAX_SPEED, g_cmd->y)) * dt;
     m.pose.position.x += std::max(-HERO_MAX_SPEED, std::min(HERO_MAX_SPEED, g_cmd->x)) * dt;
 
@@ -557,13 +572,30 @@ struct Hero
     sm.pose.position.z += 0.1;
     sm.pose.position.x += 0.25;
 
+    sm.color.a = 0.0;
     if (g_cmd->shield)
     {
-      sm.color.a = 0.5;
+      shield = std::max(0.0, shield - 0.5*dt);
+
+      sm.color.a = 0.5 * shield;
+
+      if (shield == 0.0)
+      {
+        bm.color.a = 0.0;
+      }
+      else
+      {
+        bm.color.a = 1.0;
+      }
     }
     else
     {
-      sm.color.a = 0.0;
+      shield = std::min(1.0, shield + 0.2*dt);
+      bm.color.a = 1.0;
+      if (g_cmd->fire && !g_cmd->shield)
+      {
+        fire();
+      }
     }
   }
 
@@ -610,13 +642,14 @@ void initHero()
   setColor(shield_marker.color, 0.2, 0.8, 0.2, 0.0);
   setXYZ(shield_marker.scale, 3.0, 2.0, 1.0);
 
+  g_hero.shield_bar_handle = allocatePersistentMarker();
+  Marker& bar_marker = resolvePersistentMarker(g_hero.shield_bar_handle);
+  bar_marker.type = Marker::CUBE;
+  setColor(bar_marker.color, 0.2, 0.8, 0.2, 1.0);
+  setXYZ(bar_marker.scale, 1.0, 0.1, 0.1);
+
   g_hero.spawn();
 }
-
-const static float ENEMY_MAX_SPEED = 2.0;
-const static float ENEMY_FADE_IN_TIME = 2.0;
-static const ros::Duration ENEMY_PROJECTILE_FIRE_DELAY(0.7);
-static const ros::Duration ENEMY_EXPLODE_DURATION(0.5);
 
 struct Enemy
 {
@@ -706,15 +739,15 @@ struct Enemy
   void updateAccel()
   {
     Marker& m = resolvePersistentMarker(marker_handle);
-    ax = ((targetx - m.pose.position.x) < 0 ? -1 : 1) * 2.0;
-    ay = ((targety - m.pose.position.y) < 0 ? -1 : 1) * 2.0;
+    ax = ((targetx - m.pose.position.x) < 0 ? -1 : 1) * 2.0;// * (ENEMY_MAX_SPEED/2.0);
+    ay = ((targety - m.pose.position.y) < 0 ? -1 : 1) * 2.0 * (ENEMY_MAX_SPEED/2.0);
   }
 
   void updatePositionAndVelocity(double dt)
   {
     Marker& m = resolvePersistentMarker(marker_handle);
     updateXYFromAccel(vx, vy, dt, ax, ay);
-    vx = std::max(std::min(vx, ENEMY_MAX_SPEED), -ENEMY_MAX_SPEED);
+    vx = std::max(std::min(vx, ENEMY_MAX_SPEED), -3.0f);
     vy = std::max(std::min(vy, ENEMY_MAX_SPEED), -ENEMY_MAX_SPEED);
     updateXYFromVel(m.pose.position, dt, vx, vy);
   }
@@ -752,7 +785,7 @@ struct Enemy
     last_fire_time = ros::Time::now();
 
     Projectile& p = allocateProjectile();
-    p.vx = -3.0;
+    p.vx = -ENEMY_PROJECTILE_SPEED;
     p.owner = ENEMY;
 
     Marker& my_m = resolvePersistentMarker(marker_handle);
@@ -869,6 +902,9 @@ void updateEnemies(double dt)
 
     e.spawn();
   }
+
+  ENEMY_MAX_SPEED = ENEMY_START_MAX_SPEED + g_score * 0.01;
+  ENEMY_PROJECTILE_SPEED = ENEMY_START_PROJECTILE_SPEED + g_score * 0.01;
 }
 
 void updateProjectiles(double dt)
@@ -932,7 +968,7 @@ void updateProjectiles(double dt)
             deallocatePersistentMarker(p.marker_handle);
             p.in_use = false;
 
-            if (!g_cmd->shield)
+            if (!g_cmd->shield || g_hero.shield == 0.0)
             {
               g_hero.explode();
             }
