@@ -53,7 +53,7 @@ import wx
 from rxbag import bag_index, msg_view
 from image_helper import ImageHelper
 
-## Draws thumbnails of sensor_msgs/Image in the timeline
+## Draws thumbnails of sensor_msgs/Image or sensor_msgs/CompressedImage in the timeline
 class ImageTimelineRenderer(msg_view.TimelineRenderer):
     def __init__(self, timeline, thumbnail_height=48):
         msg_view.TimelineRenderer.__init__(self, timeline, msg_combine_px=10.0)
@@ -201,7 +201,7 @@ class ImageView(msg_view.TopicMsgView):
             self.set_image(None, topic, stamp)
         else:
             self.set_image(ImageHelper.imgmsg_to_wx(msg), topic, msg.header.stamp)
-            
+                        
             if not self.size_set:
                 self.size_set = True
                 self.reset_size()

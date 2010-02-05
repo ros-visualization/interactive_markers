@@ -41,5 +41,5 @@ import image_view
 import plot_view
 
 def get_rxbag_plugins():
-    return [(image_view.ImageView, image_view.ImageTimelineRenderer, ['sensor_msgs/Image']),
+    return [(image_view.ImageView, image_view.ImageTimelineRenderer, ['sensor_msgs/Image', 'sensor_msgs/CompressedImage']),
             (plot_view.PlotView,   None,                             ['*'])]
