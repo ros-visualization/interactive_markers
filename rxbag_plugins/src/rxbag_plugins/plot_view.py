@@ -185,7 +185,7 @@ class PlotView(msg_view.TopicMsgView):
 
             self.series_data.extend(subplot_series_data)
 
-            # ros:#2588 handle matplotlib's incompatible
+            # ros:#2588 handle matplotlib's incompatible API's
             use_get_position = matplotlib.__version__ >= '0.98.3'
             if use_get_position:
                 left   = (axes.get_position().xmin + 10) / self.figure.get_window_extent().width
