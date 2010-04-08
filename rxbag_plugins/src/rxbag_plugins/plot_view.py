@@ -163,6 +163,9 @@ class PlotView(msg_view.TopicMsgView):
             self.axes.append(axes)
 
             # Create the series data
+            if len(subplot_series) == 0:
+                continue
+
             subplot_series_data = []
             
             for series in subplot_series:
