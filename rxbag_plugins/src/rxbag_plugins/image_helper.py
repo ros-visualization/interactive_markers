@@ -43,6 +43,13 @@ import wx
 class ImageHelper:
     @staticmethod
     def imgmsg_to_wx(img_msg):
+        if img_msg._type == 'sensor_msgs/CompressedImage':
+            import cStringIO
+            io = cStringIO.StringIO(img_msg.data)
+            pil_img = Image.open(io)
+
+            return wx.ImageFromData(pil_img.size[0], pil_img.size[1], pil_img.tostring())
+
         # Can use rgb8 encoding directly
         if img_msg.encoding == 'rgb8':
             return wx.ImageFromBuffer(img_msg.width, img_msg.height, img_msg.data)

@@ -163,6 +163,9 @@ class PlotView(msg_view.TopicMsgView):
             self.axes.append(axes)
 
             # Create the series data
+            if len(subplot_series) == 0:
+                continue
+
             subplot_series_data = []
             
             for series in subplot_series:
@@ -182,10 +185,21 @@ class PlotView(msg_view.TopicMsgView):
 
             self.series_data.extend(subplot_series_data)
 
-            left   = (axes.left.get()   + 10) / self.figure.get_window_extent().width()
-            bottom = (axes.bottom.get() + 10) / self.figure.get_window_extent().height()
+            # ros:#2588 handle matplotlib's incompatible API's
+            use_get_position = matplotlib.__version__ >= '0.98.3'
+            if use_get_position:
+                left   = (axes.get_position().xmin + 10) / self.figure.get_window_extent().width
+                bottom = (axes.get_position().ymin + 10) / self.figure.get_window_extent().height 
+            else:
+                left   = (axes.left.get()   + 10) / self.figure.get_window_extent().width()
+                bottom = (axes.bottom.get() + 10) / self.figure.get_window_extent().height()
 
-            subplot_legend = self.figure.legend(subplot_series_data, subplot_series, loc=(left, bottom), prop=fp, handlelen=0.02, handletextsep=0.02, axespad=0.0, labelsep=0.002, pad=0.2)
+            use_handlelength = matplotlib.__version__ >= '0.98.5.2'
+            if use_handlelength:
+                subplot_legend = self.figure.legend(subplot_series_data, subplot_series, loc=(left, bottom), prop=fp, handlelength=0.02, handletextpad=0.02, borderaxespad=0.0, labelspacing=0.002, borderpad=0.2)
+            else:
+                subplot_legend = self.figure.legend(subplot_series_data, subplot_series, loc=(left, bottom), prop=fp, handlelen=0.02, handletextsep=0.02, axespad=0.0, labelsep=0.002, pad=0.2)
+
             #subplot_legend.draw_frame(False)
             subplot_legend.set_axes(axes)
 
