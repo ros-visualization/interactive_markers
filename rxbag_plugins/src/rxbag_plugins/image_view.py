@@ -138,7 +138,7 @@ class ImageTimelineRenderer(msg_view.TimelineRenderer):
             return None
 
         # Not in the cache; load from the bag file
-        (msg_datatype, msg, msg_stamp) = self.timeline.bag_file.load_message(pos)
+        (msg_datatype, msg, msg_stamp) = self.timeline.bag_file._read_message(pos)
         
         # Convert from ROS image to wxImage
         wx_image = ImageHelper.imgmsg_to_wx(msg)
@@ -248,7 +248,7 @@ class ImageView(msg_view.TopicMsgView):
         frame_count = 0
         w, h = None, None
         for i, (stamp, pos) in enumerate(msg_positions):
-            datatype, msg, msg_stamp = bag_file.load_message(pos, bag_index)
+            datatype, msg, msg_stamp = bag_file._read_message(pos)
             if msg:
                 img = ImageHelper.imgmsg_to_wx(msg)
                 if img:
