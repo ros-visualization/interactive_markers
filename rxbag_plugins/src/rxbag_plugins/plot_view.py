@@ -393,11 +393,11 @@ class PlotDataLoader(threading.Thread):
                 if not self.bag_index:
                     break
                 
-                index = self.bag_index._data.find_stamp_index(self.topic, stamp)
+                index = self.bag_index.find_stamp_index(self.topic, stamp)
                 if index is None:
                     continue
     
-                pos = self.bag_index._data.msg_positions[self.topic][index][1]
+                pos = self.bag_index.msg_positions[self.topic][index][1]
     
                 (datatype, msg, msg_stamp) = bag_file._read_message(pos)
                 if not msg:
