@@ -133,7 +133,7 @@ class ImageTimelineRenderer(msg_view.TimelineRenderer):
                     return cache_thumbnail
 
         # Find position of stamp using index
-        pos = self.timeline.bag_index._data.find_stamp_position(topic, stamp)
+        pos = self.timeline.bag_index.find_stamp_position(topic, stamp)
         if not pos:
             return None
 
@@ -265,7 +265,7 @@ class ImageView(msg_view.TopicMsgView):
             if len(positions) > 1:
                 spacing = positions[1:] - positions[:-1]
                 fps = 1.0 / numpy.median(spacing)
-                
+
             print 'Encoding %dx%d at %d fps' % (w, h, fps)
 
             try:
