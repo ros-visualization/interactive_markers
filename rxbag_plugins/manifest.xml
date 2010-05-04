@@ -13,6 +13,7 @@
   <depend package="rospy"/>
   <depend package="roslib"/>
   <depend package="std_msgs"/>
+  <depend package="rosbag"/>  
   <depend package="rxbag"/> 
   <depend package="geometry_msgs"/>
   <depend package="sensor_msgs"/>
