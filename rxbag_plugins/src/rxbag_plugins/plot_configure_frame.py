@@ -44,10 +44,10 @@ import time
 import numpy
 import wx
 
-from rxbag import msg_view
-
-## Choose data to extract from messages
 class PlotConfigureFrame(wx.Frame):
+    """
+    Choose data to extract from messages.
+    """
     def __init__(self, plot):
         wx.Frame.__init__(self, None, title=plot.frame.GetTitle() + ' - Configure', size=(750, 600))
 

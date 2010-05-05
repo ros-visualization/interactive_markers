@@ -50,13 +50,13 @@ else:
     sys.exit(1)
 import wx
 
-from rxbag import bag_index, msg_view
+from rxbag import BagHelper, TimelineRenderer, TopicMessageView
 from image_helper import ImageHelper
 
 ## Draws thumbnails of sensor_msgs/Image or sensor_msgs/CompressedImage in the timeline
-class ImageTimelineRenderer(msg_view.TimelineRenderer):
-    def __init__(self, timeline, thumbnail_height=48):
-        msg_view.TimelineRenderer.__init__(self, timeline, msg_combine_px=10.0)
+class ImageTimelineRenderer(TimelineRenderer):
+    def __init__(self, timeline, thumbnail_height=64):
+        TimelineRenderer.__init__(self, timeline, msg_combine_px=20.0)
 
         self.thumbnail_height     = thumbnail_height
 
@@ -119,8 +119,10 @@ class ImageTimelineRenderer(msg_view.TimelineRenderer):
     def _valid_image_topic(self, topic):
         return True
 
-    ## Loads the thumbnail from either the bag file or the cache
     def _get_thumbnail(self, topic, stamp, thumbnail_height, time_threshold):
+        """
+        Loads the thumbnail from either the bag or the cache
+        """
         # Attempt to get a thumbnail from the cache that's within time_threshold secs from stamp
         topic_cache = self.thumbnail_cache.get(topic)
         if topic_cache:
@@ -133,12 +135,15 @@ class ImageTimelineRenderer(msg_view.TimelineRenderer):
                     return cache_thumbnail
 
         # Find position of stamp using index
-        pos = self.timeline.bag_index.find_stamp_position(topic, stamp)
-        if not pos:
+        t = roslib.rostime.Time.from_sec(stamp)
+        bag = self.timeline.bag_file
+        entry = bag._get_entry(t, bag._get_connections(topic))
+        if not entry:
             return None
+        pos = entry.position
 
         # Not in the cache; load from the bag file
-        (msg_datatype, msg, msg_stamp) = self.timeline.bag_file._read_message(pos)
+        msg_topic, msg, msg_stamp = bag._read_message(pos)
         
         # Convert from ROS image to wxImage
         wx_image = ImageHelper.imgmsg_to_wx(msg)
@@ -175,11 +180,11 @@ class ImageTimelineRenderer(msg_view.TimelineRenderer):
         
         return thumbnail_bitmap
 
-class ImageView(msg_view.TopicMsgView):
+class ImageView(TopicMessageView):
     name = 'Image'
     
     def __init__(self, timeline, parent, title, x, y, width, height, max_repaint=None):
-        msg_view.TopicMsgView.__init__(self, timeline, parent, title, x, y, width, height, max_repaint)
+        TopicMessageView.__init__(self, timeline, parent, title, x, y, width, height, max_repaint)
         
         self._image        = None
         self._image_topic  = None
@@ -194,9 +199,9 @@ class ImageView(msg_view.TopicMsgView):
         
         self.size_set = False
         
-    def message_viewed(self, bag_file, bag_index, topic, stamp, datatype, msg_index, msg):
-        msg_view.TopicMsgView.message_viewed(self, bag_file, bag_index, topic, stamp, datatype, msg_index, msg)
-        
+    def message_viewed(self, bag, topic, stamp, datatype, msg_index, msg):
+        TopicMessageView.message_viewed(self, bag, topic, stamp, datatype, msg_index, msg)
+
         if not msg:
             self.set_image(None, topic, stamp)
         else:
@@ -207,7 +212,7 @@ class ImageView(msg_view.TopicMsgView):
                 self.reset_size()
 
     def message_cleared(self):
-        msg_view.TopicMsgView.message_cleared(self)
+        TopicMessageView.message_cleared(self)
 
         self.set_image(None, None, None)
 
@@ -231,7 +236,7 @@ class ImageView(msg_view.TopicMsgView):
         dialog.Destroy()
 
     def export_video(self):
-        bag_index, bag_file = self.timeline.bag_index, self.timeline.bag_file
+        bag_file = self.timeline.bag_file
 
         msg_positions = bag_index.msg_positions[self._image_topic]
         if len(msg_positions) == 0:
@@ -247,18 +252,19 @@ class ImageView(msg_view.TopicMsgView):
 
         frame_count = 0
         w, h = None, None
-        for i, (stamp, pos) in enumerate(msg_positions):
-            datatype, msg, msg_stamp = bag_file._read_message(pos)
-            if msg:
-                img = ImageHelper.imgmsg_to_wx(msg)
-                if img:
-                    frame_filename = '%s/frame-%s.png' % (tmpdir, str(stamp)) 
-                    print '[%d / %d]' % (i + 1, len(msg_positions))
-                    img.SaveFile(frame_filename, wx.BITMAP_TYPE_PNG)
-                    frame_count += 1
-                    
-                    if w is None:
-                        w, h = img.GetWidth(), img.GetHeight()
+        
+        total_frames = len(bag_file.read_messages(self._image_topic, raw=True))
+        
+        for i, (topic, msg, t) in enumerate(bag_file.read_messages(self._image_topic)):
+            img = ImageHelper.imgmsg_to_wx(msg)
+            if img:
+                frame_filename = '%s/frame-%s.png' % (tmpdir, str(t))
+                print '[%d / %d]' % (i + 1, total_frames)
+                img.SaveFile(frame_filename, wx.BITMAP_TYPE_PNG)
+                frame_count += 1
+
+                if w is None:
+                    w, h = img.GetWidth(), img.GetHeight()
 
         if frame_count > 0:
             positions = numpy.array([stamp for (stamp, pos) in msg_positions])
@@ -327,7 +333,7 @@ class ImageView(msg_view.TopicMsgView):
         dc.SetFont(self.font)
         dc.SetTextForeground(self.header_color)
         dc.DrawText(self._image_topic, self.indent[0], self.indent[1])
-        dc.DrawText(bag_index.BagIndex.stamp_to_str(self._image_stamp.to_sec()), self.indent[0], self.indent[1] + dc.GetTextExtent(self._image_topic)[1])
+        dc.DrawText(BagHelper.stamp_to_str(self._image_stamp.to_sec()), self.indent[0], self.indent[1] + dc.GetTextExtent(self._image_topic)[1])
 
     def on_right_down(self, event):
         self.parent.PopupMenu(ImagePopupMenu(self.parent, self), event.GetPosition())

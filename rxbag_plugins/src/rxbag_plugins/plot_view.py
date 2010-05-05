@@ -55,15 +55,15 @@ import numpy
 import pylab
 import wx
 
-from rxbag import msg_view
+from rxbag import TopicMessageView
 
 from plot_configure_frame import PlotConfigureFrame
 
-class PlotView(msg_view.TopicMsgView):
+class PlotView(TopicMessageView):
     name = 'Plot'
 
     def __init__(self, timeline, parent, title, x, y, width, height, max_repaint=0.1):
-        msg_view.TopicMsgView.__init__(self, timeline, parent, title, x, y, width, height, max_repaint)
+        TopicMessageView.__init__(self, timeline, parent, title, x, y, width, height, max_repaint)
 
         self.bag_file  = None
         self.bag_index = None
@@ -114,11 +114,11 @@ class PlotView(msg_view.TopicMsgView):
         
         self.invalidate()
 
-    def message_viewed(self, bag_file, bag_index, topic, stamp, datatype, msg_index, msg):
-        msg_view.TopicMsgView.message_viewed(self, bag_file, bag_index, topic, stamp, datatype, msg_index, msg)
+    def message_viewed(self, bag_file, topic, stamp, datatype, msg_index, msg):
+        msg_view.TopicMsgView.message_viewed(self, bag_file, topic, stamp, datatype, msg_index, msg)
 
         if not self._data_thread:
-            self.bag_file, self.bag_index, self.topic = bag_file, bag_index, topic
+            self.bag_file, self.topic = bag_file, topic
             self.start_loading()
 
         self._msg = msg
@@ -126,7 +126,7 @@ class PlotView(msg_view.TopicMsgView):
         self.set_playhead(stamp.to_sec() - bag_index.start_stamp)
         
     def message_cleared(self):
-        msg_view.TopicMsgView.message_cleared(self)
+        TopicMessageView.message_cleared(self)
 
     def _create_figure(self):
         self._window = wx.Window(self.parent, -1, (self._x, self._y), (self._width, self._height))
@@ -396,10 +396,11 @@ class PlotDataLoader(threading.Thread):
                 index = self.bag_index.find_stamp_index(self.topic, stamp)
                 if index is None:
                     continue
-    
+
+                # todo: fix
                 pos = self.bag_index.msg_positions[self.topic][index][1]
     
-                (datatype, msg, msg_stamp) = bag_file._read_message(pos)
+                (topic, msg, msg_stamp) = bag_file._read_message(pos)
                 if not msg:
                     continue
     
