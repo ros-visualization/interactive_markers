@@ -115,7 +115,7 @@ class PlotView(TopicMessageView):
         self.invalidate()
 
     def message_viewed(self, bag_file, topic, stamp, datatype, msg_index, msg):
-        msg_view.TopicMsgView.message_viewed(self, bag_file, topic, stamp, datatype, msg_index, msg)
+        TopicMessageView.message_viewed(self, bag_file, topic, stamp, datatype, msg_index, msg)
 
         if not self._data_thread:
             self.bag_file, self.topic = bag_file, topic
@@ -123,8 +123,8 @@ class PlotView(TopicMessageView):
 
         self._msg = msg
 
-        self.set_playhead(stamp.to_sec() - bag_index.start_stamp)
-        
+        self.set_playhead(stamp.to_sec() - self.timeline.start_stamp)
+
     def message_cleared(self):
         TopicMessageView.message_cleared(self)
 

@@ -68,17 +68,17 @@ from image_helper import ImageHelper
 ## Draws thumbnails of sensor_msgs/Image or sensor_msgs/CompressedImage in the timeline
 class ImageTimelineRenderer(TimelineRenderer):
     def __init__(self, timeline, thumbnail_height=64):
-        TimelineRenderer.__init__(self, timeline, msg_combine_px=20.0)
+        TimelineRenderer.__init__(self, timeline, msg_combine_px=30.0)
 
         self.thumbnail_height     = thumbnail_height
 
-        self.thumbnail_combine_px = 20.0                      # use cached thumbnail if it's less than this many pixels away
+        self.thumbnail_combine_px = 30.0                      # use cached thumbnail if it's less than this many pixels away
         self.min_thumbnail_width  = 8                         # don't display thumbnails if less than this many pixels across
         self.quality              = Image.NEAREST             # quality hint for thumbnail scaling
 
         self.thumbnail_cache      = {}
         self.thumbnail_mem_dc     = wx.MemoryDC()
-        self.max_cache_size       = 200                       # max number of thumbnails to cache (per topic)
+        self.max_cache_size       = 1000                      # max number of thumbnails to cache (per topic)
 
     # TimelineRenderer implementation
 
@@ -94,10 +94,14 @@ class ImageTimelineRenderer(TimelineRenderer):
 
         max_interval_thumbnail = self.timeline.map_dx_to_dstamp(self.thumbnail_combine_px)
 
-        dc.rectangle(x, y, width, height)
-        dc.stroke()
+        thumbnail_gap = 6
 
-        thumbnail_x, thumbnail_y, thumbnail_height = x + 1, y + 1, height - 2   # leave 1px border
+        thumbnail_x, thumbnail_y, thumbnail_height = x + 1, y + 1, height - 2 - thumbnail_gap  # leave 1px border
+
+        dc.set_line_width(1)
+        dc.set_source_rgb(0, 0, 0)
+        dc.rectangle(x, y, width, height - thumbnail_gap)
+        dc.fill()
 
         while True:
             available_width = (x + width) - thumbnail_x
@@ -114,13 +118,18 @@ class ImageTimelineRenderer(TimelineRenderer):
 
             if available_width < thumbnail_width:
                 # Space remaining, but have to chop off thumbnail
-                thumbnail_width = available_width - 2
+                thumbnail_width = available_width - 1
 
             dc.set_source_surface(thumbnail_bitmap, thumbnail_x, thumbnail_y)
             dc.rectangle(thumbnail_x, thumbnail_y, thumbnail_width, thumbnail_height)
             dc.fill()
 
-            thumbnail_x += thumbnail_width + 1    # 1px border (but overlap adjacent message)
+            thumbnail_x += thumbnail_width    # 1px border (but overlap adjacent message)
+
+            #dc.set_source_rgb(0, 0, 0)
+            #dc.move_to(thumbnail_x, y)
+            #dc.line_to(thumbnail_x, y + height)
+            #dc.stroke()
 
         return True
 
