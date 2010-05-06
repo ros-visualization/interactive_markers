@@ -36,13 +36,16 @@ PKG = 'rxbag_plugins'
 import roslib; roslib.load_manifest(PKG)
 import rospy
 
+import array
+from cStringIO import StringIO
 import Image
 import wx
+import cairo
 
 ## Helper class for converting ROS sensor_msgs/Image <-> wxImage
 class ImageHelper:
     @staticmethod
-    def imgmsg_to_wx(img_msg):
+    def imgmsg_to_pil(img_msg):
         if img_msg._type == 'sensor_msgs/CompressedImage':
             import cStringIO
             io = cStringIO.StringIO(img_msg.data)
@@ -81,8 +84,23 @@ class ImageHelper:
             pil_img = Image.frombuffer('RGB', (img_msg.width, img_msg.height), img_msg.data, 'raw', mode, 0, 1)
             if pil_img.mode != 'RGB':
                 pil_img = pil_img.convert('RGB')
-    
-            return wx.ImageFromData(pil_img.size[0], pil_img.size[1], pil_img.tostring())
+            
+            return pil_img
         except:
             print 'Can\'t convert:', mode
             return None
+
+    @staticmethod
+    def imgmsg_to_wx(img_msg):
+        pil_img = ImageHelper.imgmsg_to_pil(img_msg)
+        if not pil_img:
+            return None
+        
+        return wx.ImageFromData(pil_img.size[0], pil_img.size[1], pil_img.tostring())
+
+    @staticmethod
+    def pil_to_cairo(pil_img):
+        s = StringIO()
+        pil_img.save(s, 'png')
+        s.seek(0)
+        return cairo.ImageSurface.create_from_png(s)

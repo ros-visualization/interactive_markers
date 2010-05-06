@@ -49,6 +49,18 @@ else:
     print >> sys.stderr, 'This application requires wxPython version %s' % WXVER
     sys.exit(1)
 import wx
+import wx.lib.wxcairo
+# This is a crazy hack to get this to work on 64-bit systems
+if 'wxMac' in wx.PlatformInfo:
+    pass # Implement if necessary
+elif 'wxMSW' in wx.PlatformInfo:
+    pass # Implement if necessary
+elif 'wxGTK' in wx.PlatformInfo:
+    import ctypes
+    gdkLib = wx.lib.wxcairo._findGDKLib()
+    gdkLib.gdk_cairo_create.restype = ctypes.c_void_p
+
+import Image
 
 from rxbag import BagHelper, TimelineRenderer, TopicMessageView
 from image_helper import ImageHelper
@@ -62,7 +74,7 @@ class ImageTimelineRenderer(TimelineRenderer):
 
         self.thumbnail_combine_px = 20.0                      # use cached thumbnail if it's less than this many pixels away
         self.min_thumbnail_width  = 8                         # don't display thumbnails if less than this many pixels across
-        self.quality              = wx.IMAGE_QUALITY_NORMAL   # quality hint for thumbnail scaling
+        self.quality              = Image.NEAREST             # quality hint for thumbnail scaling
 
         self.thumbnail_cache      = {}
         self.thumbnail_mem_dc     = wx.MemoryDC()
@@ -82,7 +94,8 @@ class ImageTimelineRenderer(TimelineRenderer):
 
         max_interval_thumbnail = self.timeline.map_dx_to_dstamp(self.thumbnail_combine_px)
 
-        dc.DrawRectangle(x, y, width, height)
+        dc.rectangle(x, y, width, height)
+        dc.stroke()
 
         thumbnail_x, thumbnail_y, thumbnail_height = x + 1, y + 1, height - 2   # leave 1px border
 
@@ -97,18 +110,15 @@ class ImageTimelineRenderer(TimelineRenderer):
             if not thumbnail_bitmap:
                 break
 
-            thumbnail_width = thumbnail_bitmap.GetWidth()
+            thumbnail_width = thumbnail_bitmap.get_width()
 
             if available_width < thumbnail_width:
                 # Space remaining, but have to chop off thumbnail
                 thumbnail_width = available_width - 2
 
-                self.thumbnail_mem_dc.SelectObject(thumbnail_bitmap)
-                dc.Blit(thumbnail_x, thumbnail_y, thumbnail_width, thumbnail_height, self.thumbnail_mem_dc, 0, 0)
-                self.thumbnail_mem_dc.SelectObject(wx.NullBitmap)
-            else:
-                # Enough space to draw entire thumbnail
-                dc.DrawBitmap(thumbnail_bitmap, thumbnail_x, thumbnail_y)
+            dc.set_source_surface(thumbnail_bitmap, thumbnail_x, thumbnail_y)
+            dc.rectangle(thumbnail_x, thumbnail_y, thumbnail_width, thumbnail_height)
+            dc.fill()
 
             thumbnail_x += thumbnail_width + 1    # 1px border (but overlap adjacent message)
 
@@ -144,31 +154,37 @@ class ImageTimelineRenderer(TimelineRenderer):
 
         # Not in the cache; load from the bag file
         msg_topic, msg, msg_stamp = bag._read_message(pos)
-        
-        # Convert from ROS image to wxImage
-        wx_image = ImageHelper.imgmsg_to_wx(msg)
-        if not wx_image:
+
+        # Convert from ROS image to PIL image
+        pil_image = ImageHelper.imgmsg_to_pil(msg)
+        if not pil_image:
             return None
-
-        # Calculate width to maintain aspect ratio
-        thumbnail_width = int(round(thumbnail_height * (float(wx_image.GetWidth()) / wx_image.GetHeight())))
         
+        # Calculate width to maintain aspect ratio
+        pil_image_size = pil_image.size
+        thumbnail_width = int(round(thumbnail_height * (float(pil_image_size[0]) / pil_image_size[1])))
+
         # Scale to thumbnail size
-        thumbnail = wx_image.Scale(thumbnail_width, thumbnail_height, self.quality)
+        thumbnail = pil_image.resize((thumbnail_width, thumbnail_height), self.quality)
 
-        # Convert to bitmap
-        thumbnail_bitmap = thumbnail.ConvertToBitmap()
-
+        # Convert from PIL Image to Cairo ImageSurface
+        thumbnail_bitmap = ImageHelper.pil_to_cairo(thumbnail)
+        
         # Store in the cache
-        if not topic_cache:
-            topic_cache = []
-            self.thumbnail_cache[topic] = topic_cache
+        self._cache_thumbnail(topic, msg_stamp, thumbnail_bitmap)
+        
+        return thumbnail_bitmap
+    
+    def _cache_thumbnail(self, topic, t, thumbnail):
+        # Store in the cache
+        if topic not in self.thumbnail_cache:
+            self.thumbnail_cache[topic] = []
+        topic_cache = self.thumbnail_cache[topic]
 
-        cache_value = (msg_stamp.to_sec(), thumbnail_bitmap)
+        cache_value = (t.to_sec(), thumbnail)
 
         # Maintain the cache sorted
-        cache_index = bisect.bisect_right(topic_cache, cache_value)
-        topic_cache.insert(cache_index, cache_value)
+        topic_cache.insert(bisect.bisect_right(topic_cache, cache_value), cache_value)
 
         # Limit cache size - remove the farthest entry in the cache
         cache_size = len(topic_cache)
@@ -177,8 +193,6 @@ class ImageTimelineRenderer(TimelineRenderer):
                 del topic_cache[cache_size - 1]
             else:
                 del topic_cache[0]
-        
-        return thumbnail_bitmap
 
 class ImageView(TopicMessageView):
     name = 'Image'
@@ -186,13 +200,13 @@ class ImageView(TopicMessageView):
     def __init__(self, timeline, parent, title, x, y, width, height, max_repaint=None):
         TopicMessageView.__init__(self, timeline, parent, title, x, y, width, height, max_repaint)
         
-        self._image        = None
-        self._image_topic  = None
-        self._image_stamp  = None
+        self._image         = None
+        self._image_topic   = None
+        self._image_stamp   = None
         
-        self._image_bitmap = None
+        self._image_surface = None
         
-        self.quality       = wx.IMAGE_QUALITY_NORMAL
+        self.quality       = Image.NEAREST
         self.indent        = (4, 4)
         self.font          = wx.Font(9, wx.FONTFAMILY_SCRIPT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
         self.header_color  = wx.BLUE
@@ -204,12 +218,13 @@ class ImageView(TopicMessageView):
 
         if not msg:
             self.set_image(None, topic, stamp)
-        else:
-            self.set_image(ImageHelper.imgmsg_to_wx(msg), topic, msg.header.stamp)
-                        
-            if not self.size_set:
-                self.size_set = True
-                self.reset_size()
+            return
+
+        self.set_image(ImageHelper.imgmsg_to_pil(msg), topic, msg.header.stamp)
+                    
+        if not self.size_set:
+            self.size_set = True
+            self.reset_size()
 
     def message_cleared(self):
         TopicMessageView.message_cleared(self)
@@ -217,8 +232,8 @@ class ImageView(TopicMessageView):
         self.set_image(None, None, None)
 
     def set_image(self, image, image_topic, image_stamp):
-        self._image        = image
-        self._image_bitmap = None
+        self._image         = image
+        self._image_surface = None
         
         self._image_topic = image_topic
         self._image_stamp = image_stamp
@@ -227,7 +242,7 @@ class ImageView(TopicMessageView):
 
     def reset_size(self):
         if self._image:
-            self.parent.GetParent().SetSize(self._image.GetSize())
+            self.parent.GetParent().SetSize(self._image.size)
 
     def export_frame(self):
         dialog = wx.FileDialog(self.parent.GetParent(), 'Save frame to...', wildcard='PNG files (*.png)|*.png', style=wx.FD_SAVE)
@@ -296,7 +311,7 @@ class ImageView(TopicMessageView):
     def on_size(self, event):
         self.resize(*self.parent.GetClientSize())
 
-        self._image_bitmap = None
+        self._image_surface = None
         
         self.force_repaint()
 
@@ -307,12 +322,12 @@ class ImageView(TopicMessageView):
             return 0, 0, self.width, self.height
 
     def paint(self, dc):
-        dc.SetBrush(wx.WHITE_BRUSH)
-        if self.border:
-            dc.SetPen(wx.BLACK_PEN)
-            dc.DrawRectangle(0, 0, self.width, self.height)
-        else:
-            dc.Clear()
+        #dc.SetBrush(wx.WHITE_BRUSH)
+        #if self.border:
+        #    dc.SetPen(wx.BLACK_PEN)
+        #    dc.DrawRectangle(0, 0, self.width, self.height)
+        #else:
+        #    dc.Clear()
 
         if not self._image:
             return
@@ -320,20 +335,22 @@ class ImageView(TopicMessageView):
         ix, iy, iw, ih = self._get_image_rect()
 
         # Rescale the bitmap if necessary
-        if not self._image_bitmap:
-            if self._image.GetWidth() != iw or self._image.GetHeight() != ih:
-                self._image_bitmap = self._image.Scale(iw, ih, self.quality).ConvertToBitmap()
+        if not self._image_surface:
+            if self._image.size[0] != iw or self._image.size[1] != ih:
+                self._image_surface = ImageHelper.pil_to_cairo(self._image.resize((iw, ih), self.quality))
             else:
-                self._image_bitmap = self._image.ConvertToBitmap()
+                self._image_surface = ImageHelper.pil_to_cairo(self._image)
 
         # Draw bitmap
-        dc.DrawBitmap(self._image_bitmap, ix, iy)
+        dc.set_source_surface(self._image_surface, ix, iy)
+        dc.rectangle(ix, iy, iw, ih)
+        dc.fill()
 
         # Draw overlay
-        dc.SetFont(self.font)
-        dc.SetTextForeground(self.header_color)
-        dc.DrawText(self._image_topic, self.indent[0], self.indent[1])
-        dc.DrawText(BagHelper.stamp_to_str(self._image_stamp.to_sec()), self.indent[0], self.indent[1] + dc.GetTextExtent(self._image_topic)[1])
+        #dc.SetFont(self.font)
+        #dc.SetTextForeground(self.header_color)
+        #dc.DrawText(self._image_topic, self.indent[0], self.indent[1])
+        #dc.DrawText(BagHelper.stamp_to_str(self._image_stamp.to_sec()), self.indent[0], self.indent[1] + dc.GetTextExtent(self._image_topic)[1])
 
     def on_right_down(self, event):
         self.parent.PopupMenu(ImagePopupMenu(self.parent, self), event.GetPosition())
