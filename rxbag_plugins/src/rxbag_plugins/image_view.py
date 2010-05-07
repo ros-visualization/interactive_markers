@@ -163,19 +163,22 @@ class ImageTimelineRenderer(TimelineRenderer):
             return None
         
         # Calculate width to maintain aspect ratio
-        pil_image_size = pil_image.size
-        thumbnail_width = int(round(thumbnail_height * (float(pil_image_size[0]) / pil_image_size[1])))
-
-        # Scale to thumbnail size
-        thumbnail = pil_image.resize((thumbnail_width, thumbnail_height), self.quality)
-
-        # Convert from PIL Image to Cairo ImageSurface
-        thumbnail_bitmap = ImageHelper.pil_to_cairo(thumbnail)
-        
-        # Store in the cache
-        self._cache_thumbnail(topic, msg_stamp, thumbnail_bitmap)
-        
-        return thumbnail_bitmap
+        try:
+            pil_image_size = pil_image.size
+            thumbnail_width = int(round(thumbnail_height * (float(pil_image_size[0]) / pil_image_size[1])))
+    
+            # Scale to thumbnail size
+            thumbnail = pil_image.resize((thumbnail_width, thumbnail_height), self.quality)
+    
+            # Convert from PIL Image to Cairo ImageSurface
+            thumbnail_bitmap = ImageHelper.pil_to_cairo(thumbnail)
+            
+            # Store in the cache
+            self._cache_thumbnail(topic, msg_stamp, thumbnail_bitmap)
+            
+            return thumbnail_bitmap
+        except:
+            return None
     
     def _cache_thumbnail(self, topic, t, thumbnail):
         # Store in the cache
