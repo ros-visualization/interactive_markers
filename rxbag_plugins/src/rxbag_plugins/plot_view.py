@@ -114,8 +114,10 @@ class PlotView(TopicMessageView):
         
         self.invalidate()
 
-    def message_viewed(self, bag_file, topic, stamp, datatype, msg_index, msg):
-        TopicMessageView.message_viewed(self, bag_file, topic, stamp, datatype, msg_index, msg)
+    def message_viewed(self, bag_file, msg_details):
+        TopicMessageView.message_viewed(self, bag_file, msg_details)
+
+        topic, msg, t = msg_details
 
         if not self._data_thread:
             self.bag_file, self.topic = bag_file, topic
@@ -123,7 +125,7 @@ class PlotView(TopicMessageView):
 
         self._msg = msg
 
-        self.set_playhead(stamp.to_sec() - self.timeline.start_stamp)
+        self.set_playhead(t.to_sec() - self.timeline.start_stamp)
 
     def message_cleared(self):
         TopicMessageView.message_cleared(self)
@@ -208,13 +210,10 @@ class PlotView(TopicMessageView):
             pylab.setp(ax.get_xticklabels(), visible=(ax == self.axes[-1]))
 
     def paint(self, dc):
-        dc.SetBrush(wx.WHITE_BRUSH)
-        dc.SetPen(wx.BLACK_PEN)
-        dc.DrawRectangle(0, 0, self.width, self.height)
-
         # Draw plot (not visible)
         self._draw_plot(True)
 
+        # todo
         dc.DrawBitmap(self.canvas.bitmap, 0, 0)
 
     def _draw_plot(self, relimit=False):

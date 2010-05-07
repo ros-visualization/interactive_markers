@@ -79,15 +79,21 @@ class ImageHelper:
             mode = 'BGR'
             alpha = True
 
-        # TODO: handle alpha
         try:
             pil_img = Image.frombuffer('RGB', (img_msg.width, img_msg.height), img_msg.data, 'raw', mode, 0, 1)
-            if pil_img.mode != 'RGB':
-                pil_img = pil_img.convert('RGB')
+
+            if mode == 'BGR':
+                rgb2bgr = (0, 0, 1, 0,
+                           0, 1, 0, 0,
+                           1, 0, 0, 0)
+                pil_img = pil_img.convert("RGB", rgb2bgr)
+            
+            if pil_img.mode != 'RGBA':
+                pil_img = pil_img.convert('RGBA')
             
             return pil_img
-        except:
-            print 'Can\'t convert:', mode
+        except Exception, ex:
+            print 'Can\'t convert:', mode, ex
             return None
 
     @staticmethod
@@ -100,7 +106,7 @@ class ImageHelper:
 
     @staticmethod
     def pil_to_cairo(pil_img):
-        s = StringIO()
-        pil_img.save(s, 'png')
-        s.seek(0)
-        return cairo.ImageSurface.create_from_png(s)
+        w, h = pil_img.size
+        data = array.array('c')
+        data.fromstring(pil_img.tostring())
+        return cairo.ImageSurface.create_for_data(data, cairo.FORMAT_ARGB32, w, h)
