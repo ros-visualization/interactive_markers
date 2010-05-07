@@ -65,9 +65,8 @@ class PlotView(TopicMessageView):
     def __init__(self, timeline, parent, title, x, y, width, height):
         TopicMessageView.__init__(self, timeline, parent, title, x, y, width, height)
 
-        self.bag_file  = None
-        self.bag_index = None
-        self.topic     = None
+        self.bag_file = None
+        self.topic    = None
 
         # Input data
         self.series_list = []
@@ -209,12 +208,17 @@ class PlotView(TopicMessageView):
         for ax in self.axes:
             pylab.setp(ax.get_xticklabels(), visible=(ax == self.axes[-1]))
 
+        self.invalidate()
+
     def paint(self, dc):
         # Draw plot (not visible)
         self._draw_plot(True)
 
-        # todo
-        dc.DrawBitmap(self.canvas.bitmap, 0, 0)
+        dc.move_to(50, 50)
+        dc.line_to(50, 500)
+        dc.stroke()
+        #pdc = wx.PaintDC(self.parent)
+        #pdc.DrawBitmap(self.canvas.bitmap, 0, 0)
 
     def _draw_plot(self, relimit=False):
         if self.series_data and relimit and self.datax[0]:
@@ -303,11 +307,11 @@ class PlotView(TopicMessageView):
             self._data_thread = None
 
     def start_loading(self):
-        if self.bag_file is None or self.bag_index is None or self.topic is None:
+        if self.bag_file is None or self.topic is None:
             return
         
         if not self._data_thread:
-            self._data_thread = PlotDataLoader(self, self.bag_file, self.bag_index, self.topic)
+            self._data_thread = PlotDataLoader(self, self.bag_file, self.topic)
             self._data_thread.start()
 
     @staticmethod
@@ -318,8 +322,9 @@ class PlotView(TopicMessageView):
         print event.artist.get_xdata()
 
     def configure(self):
-        frame = PlotConfigureFrame(self)
-        frame.Show()
+        if self._msg:
+            frame = PlotConfigureFrame(self)
+            frame.Show()
 
 class PlotPopupMenu(wx.Menu):
     periods = [(  -1, 'All'),
@@ -368,41 +373,36 @@ class PlotPopupMenu(wx.Menu):
             self.plot.force_repaint()
 
 class PlotDataLoader(threading.Thread):
-    def __init__(self, plot, bag_file, bag_index, topic):
+    def __init__(self, plot, bag_file, topic):
         threading.Thread.__init__(self)
 
         self.setDaemon(True)
 
-        self.plot      = plot
-        self.bag_file  = bag_file
-        self.bag_index = bag_index
-        self.topic     = topic
+        self.plot     = plot
+        self.bag_file = bag_file
+        self.topic    = topic
         
         self.update_freq = 20   # how many msgs to load before updating the plot
 
     def run(self):
         try:
             bag_file = rosbag.Bag(self.bag_file.filename)
-            start_stamp, end_stamp = self.bag_index.start_stamp, self.bag_index.end_stamp 
+            start_stamp, end_stamp = self.plot.timeline.start_stamp, self.plot.timeline.end_stamp 
             last_stamp = None
             datax, datay = None, None
             load_count = 0
             
             for stamp in self.subdivide(start_stamp, end_stamp):
-                if not self.bag_index:
-                    break
+                t = roslib.rostime.Time.from_sec(stamp)
                 
-                index = self.bag_index.find_stamp_index(self.topic, stamp)
-                if index is None:
+                entry = bag_file._get_entry(t, bag_file._get_connections(self.topic))
+                if entry is None:
                     continue
 
-                # todo: fix
-                pos = self.bag_index.msg_positions[self.topic][index][1]
-    
-                (topic, msg, msg_stamp) = bag_file._read_message(pos)
+                (topic, msg, msg_stamp) = bag_file._read_message(entry.position)
                 if not msg:
                     continue
-    
+
                 if datax is None:
                     self.plot._init_plot(self.plot.plot_paths)
     

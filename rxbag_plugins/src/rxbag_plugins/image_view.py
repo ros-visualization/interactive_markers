@@ -132,8 +132,8 @@ class ImageTimelineRenderer(TimelineRenderer):
         # Attempt to get a thumbnail from the cache that's within time_threshold secs from stamp
         topic_cache = self.thumbnail_cache.get(topic)
         if topic_cache:
-            cache_index = bisect.bisect_right(topic_cache, (stamp, None))
-            if cache_index < len(topic_cache):
+            cache_index = bisect.bisect_right(topic_cache, (stamp, None)) - 1
+            if cache_index >= 0:
                 (cache_stamp, cache_thumbnail) = topic_cache[cache_index]
                 
                 cache_dist = abs(cache_stamp - stamp)
