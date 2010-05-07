@@ -62,8 +62,8 @@ from plot_configure_frame import PlotConfigureFrame
 class PlotView(TopicMessageView):
     name = 'Plot'
 
-    def __init__(self, timeline, parent, title, x, y, width, height, max_repaint=0.1):
-        TopicMessageView.__init__(self, timeline, parent, title, x, y, width, height, max_repaint)
+    def __init__(self, timeline, parent, title, x, y, width, height):
+        TopicMessageView.__init__(self, timeline, parent, title, x, y, width, height)
 
         self.bag_file  = None
         self.bag_index = None

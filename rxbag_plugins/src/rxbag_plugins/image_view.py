@@ -200,8 +200,8 @@ class ImageTimelineRenderer(TimelineRenderer):
 class ImageView(TopicMessageView):
     name = 'Image'
     
-    def __init__(self, timeline, parent, title, x, y, width, height, max_repaint=None):
-        TopicMessageView.__init__(self, timeline, parent, title, x, y, width, height, max_repaint)
+    def __init__(self, timeline, parent, title, x, y, width, height):
+        TopicMessageView.__init__(self, timeline, parent, title, x, y, width, height)
         
         self._image         = None
         self._image_topic   = None
