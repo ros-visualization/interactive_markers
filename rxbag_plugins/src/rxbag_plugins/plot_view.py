@@ -51,6 +51,7 @@ matplotlib.use('WXAgg')
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigCanvas, NavigationToolbar2WxAgg as NavigationToolbar
 
+import Image
 import numpy
 import pylab
 import wx
@@ -58,6 +59,7 @@ import wx
 from rxbag import TopicMessageView
 
 from plot_configure_frame import PlotConfigureFrame
+from image_helper import ImageHelper
 
 class PlotView(TopicMessageView):
     name = 'Plot'
@@ -211,15 +213,17 @@ class PlotView(TopicMessageView):
         self.invalidate()
 
     def paint(self, dc):
-        # Draw plot (not visible)
-        self._draw_plot(True)
+        try:
+            # Draw plot (not visible)
+            self._draw_plot(True)
+        except:
+            pass
 
-        dc.move_to(50, 50)
-        dc.line_to(50, 500)
-        dc.stroke()
-        #pdc = wx.PaintDC(self.parent)
-        #pdc.DrawBitmap(self.canvas.bitmap, 0, 0)
-
+        ims = ImageHelper.wxbitmap_to_cairo(self.canvas.bitmap)
+        dc.set_source_surface(ims, 0, 0)
+        dc.rectangle(0, 0, self.canvas.bitmap.GetWidth(), self.canvas.bitmap.GetHeight())
+        dc.fill()
+  
     def _draw_plot(self, relimit=False):
         if self.series_data and relimit and self.datax[0]:
             axes_index = 0
@@ -296,6 +300,8 @@ class PlotView(TopicMessageView):
     def on_close(self, event):
         self.stop_loading()
 
+        TopicMessageView.on_close(self, event)
+
     def reload(self):
         self.stop_loading()
         self.resize_figure()
@@ -319,7 +325,7 @@ class PlotView(TopicMessageView):
         return True, {}
 
     def on_pick(self, event):
-        print event.artist.get_xdata()
+        pass
 
     def configure(self):
         if self._msg:
@@ -370,7 +376,7 @@ class PlotPopupMenu(wx.Menu):
     
         def on_menu(self, event):
             self.plot.period = self.period
-            self.plot.force_repaint()
+            self.plot.invalidate()
 
 class PlotDataLoader(threading.Thread):
     def __init__(self, plot, bag_file, topic):
@@ -383,6 +389,8 @@ class PlotDataLoader(threading.Thread):
         self.topic    = topic
         
         self.update_freq = 20   # how many msgs to load before updating the plot
+        
+        self.stop_flag = False
 
     def run(self):
         try:
@@ -393,69 +401,73 @@ class PlotDataLoader(threading.Thread):
             load_count = 0
             
             for stamp in self.subdivide(start_stamp, end_stamp):
-                t = roslib.rostime.Time.from_sec(stamp)
-                
-                entry = bag_file._get_entry(t, bag_file._get_connections(self.topic))
-                if entry is None:
-                    continue
-
-                (topic, msg, msg_stamp) = bag_file._read_message(entry.position)
-                if not msg:
-                    continue
-
-                if datax is None:
-                    self.plot._init_plot(self.plot.plot_paths)
+                try:
+                    t = roslib.rostime.Time.from_sec(stamp)
+                    
+                    entry = bag_file._get_entry(t, bag_file._get_connections(self.topic))
+                    if entry is None:
+                        continue
     
-                    datax, datay = [], []
-                    for plot in self.plot.plot_paths:
-                        for plot_path in plot:
-                            datax.append([])
-                            datay.append([])
-    
-                # Load the data
-                use_header_stamp = False
-                
-                series_index = 0
-                for plot in self.plot.plot_paths:
-                    for plot_path in plot:
-                        if use_header_stamp:
-                            if msg.__class__._has_header:
-                                header = msg.header
-                            else:
-                                header = PlotDataLoader.get_header(msg, plot_path)
-                            
-                            plot_stamp = header.stamp.to_sec()
-                        else:
-                            plot_stamp = stamp
-
-                        value = eval('msg.' + plot_path)
-
-                        datax[series_index].append(plot_stamp - start_stamp)
-                        datay[series_index].append(value)
-
-                        series_index += 1
-                        
-                load_count += 1
-    
-                # Update the plot
-                if load_count % self.update_freq == 0:
+                    (topic, msg, msg_stamp) = bag_file._read_message(entry.position)
+                    if not msg:
+                        continue
+                    
+                    if datax is None:
+                        self.plot._init_plot(self.plot.plot_paths)
+        
+                        datax, datay = [], []
+                        for plot in self.plot.plot_paths:
+                            for plot_path in plot:
+                                datax.append([])
+                                datay.append([])
+        
+                    # Load the data
+                    use_header_stamp = False
+                    
                     series_index = 0
                     for plot in self.plot.plot_paths:
                         for plot_path in plot:
-                            self.plot.set_series_data(series_index, datax[series_index], datay[series_index])
-                            series_index += 1
-                
-                # Stop loading if the resolution is enough
-                if last_stamp and abs(stamp - last_stamp) < 0.1:
-                    break
-                last_stamp = stamp
+                            if use_header_stamp:
+                                if msg.__class__._has_header:
+                                    header = msg.header
+                                else:
+                                    header = PlotDataLoader.get_header(msg, plot_path)
+                                
+                                plot_stamp = header.stamp.to_sec()
+                            else:
+                                plot_stamp = stamp
     
-                time.sleep(0.001)
+                            value = eval('msg.' + plot_path)
+    
+                            datax[series_index].append(plot_stamp - start_stamp)
+                            datay[series_index].append(value)
+    
+                            series_index += 1
+                            
+                    load_count += 1
+    
+                    if self.stop_flag:
+                        break
+    
+                    # Update the plot
+                    if load_count % self.update_freq == 0:
+                        series_index = 0
+                        for plot in self.plot.plot_paths:
+                            for plot_path in plot:
+                                self.plot.set_series_data(series_index, datax[series_index], datay[series_index])
+                                series_index += 1
+                    
+                    # Stop loading if the resolution is enough
+                    if last_stamp and abs(stamp - last_stamp) < 0.1:
+                        break
+                    last_stamp = stamp
+                except:
+                    pass
         finally:
             bag_file.close()
 
     def stop(self):
-        self.bag_index = None
+        self.stop_flag = True
 
     @staticmethod
     def get_header(msg, path):

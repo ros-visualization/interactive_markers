@@ -36,6 +36,7 @@ PKG = 'rxbag_plugins'
 import roslib; roslib.load_manifest(PKG)
 import rospy
 
+import codecs
 import collections
 import string
 import threading
@@ -59,7 +60,7 @@ class PlotConfigureFrame(wx.Frame):
 
         self.msg_tree = wx.TreeCtrl(splitter, style=wx.TR_DEFAULT_STYLE | wx.TR_HIDE_ROOT)
         self.add_msg_object(None, '', 'msg', self.plot._msg, self.plot._msg._type)
-        self.msg_tree.ExpandAll()
+        #self.msg_tree.ExpandAll()
         self.msg_tree.Bind(wx.EVT_LEFT_DCLICK, self.on_msg_left_dclick)
 
         self.plot_tree = wx.TreeCtrl(splitter, style=wx.TR_DEFAULT_STYLE | wx.TR_HIDE_ROOT | wx.TR_HAS_BUTTONS)
@@ -105,7 +106,15 @@ class PlotConfigureFrame(wx.Frame):
             subobjs = [('[%d]' % i, subobj) for (i, subobj) in enumerate(obj)]
         else:
             subobjs = []
-            label += ': ' + str(obj)
+            
+            # Ignore any binary data
+            obj_repr = codecs.utf_8_decode(str(obj), 'ignore')[0]
+            
+            # Truncate long representations
+            if len(obj_repr) >= 50:
+                obj_repr = obj_repr[:50] + '...'
+            
+            label += ': ' + obj_repr
 
         if parent is None:
             item = self.msg_tree.AddRoot(label)
@@ -164,7 +173,7 @@ class PlotConfigureFrame(wx.Frame):
             selected_plot = self.plot_items[-1]
 
         item = self.plot_tree.AppendItem(selected_plot, path)
-        self.plot_tree.ExpandAll()
+        #self.plot_tree.ExpandAll()
 
         self._update_msg_tree()
 
@@ -174,7 +183,7 @@ class PlotConfigureFrame(wx.Frame):
         if plot_paths != self.plot.plot_paths:
             self.plot.reload()
             self.plot.plot_paths = plot_paths
-
+            
         PlotConfigureFrame.traverse(self.msg_tree, self.msg_tree.GetRootItem(), self._update_msg_tree_item)
 
     def _update_msg_tree_item(self, item):
@@ -278,7 +287,7 @@ class PlotConfigureFrame(wx.Frame):
 
             self.plot_tree.SetItemPyData(new_item, data)
 
-        self.plot_tree.ExpandAll()
+        #self.plot_tree.ExpandAll()
 
         self._update_msg_tree()
 

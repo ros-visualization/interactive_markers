@@ -110,3 +110,14 @@ class ImageHelper:
         data = array.array('c')
         data.fromstring(pil_img.tostring())
         return cairo.ImageSurface.create_for_data(data, cairo.FORMAT_ARGB32, w, h)
+
+    @staticmethod
+    def wxbitmap_to_cairo(bitmap):
+        image = wx.ImageFromBitmap(bitmap)
+        pil_img = Image.new('RGB', (image.GetWidth(), image.GetHeight()))
+        pil_img.fromstring(image.GetData())
+        
+        if pil_img.mode != 'RGBA':
+            pil_img = pil_img.convert('RGBA')
+        
+        return ImageHelper.pil_to_cairo(pil_img)
