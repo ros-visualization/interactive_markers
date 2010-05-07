@@ -278,13 +278,11 @@ class ImageView(TopicMessageView):
         dc.fill()
 
         # Draw overlay
-        dc.set_font_size(12.0)
-        font_height = dc.font_extents()[3]
-        dc.set_source_rgb(0, 0, 1)
+        dc.set_font_size(14.0)
+        font_height = dc.font_extents()[2]
+        dc.set_source_rgb(0.2, 0.2, 1)
         dc.move_to(self.indent[0], self.indent[1] + font_height)
-        dc.show_text(self._image_topic)
-        dc.move_to(self.indent[0], self.indent[1] + font_height * 2)
-        dc.show_text(BagHelper.stamp_to_str(self._image_stamp.to_sec()))
+        dc.show_text(BagHelper.stamp_to_str(self._image_stamp))
 
     def on_right_down(self, event):
         self.parent.PopupMenu(ImagePopupMenu(self.parent, self), event.GetPosition())
