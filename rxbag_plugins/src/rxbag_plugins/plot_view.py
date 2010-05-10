@@ -102,6 +102,12 @@ class PlotView(TopicMessageView):
         tb.AddSeparator()
         tb.Bind(wx.EVT_TOOL, lambda e: self.configure(), tb.AddLabelTool(wx.ID_ANY, '', wx.Bitmap(icons_dir + 'cog.png')))
 
+    def export_image(self):
+        dialog = wx.FileDialog(self.parent.GetParent(), 'Export to PNG...', wildcard='PNG files (*.png)|*.png', style=wx.FD_SAVE)
+        if dialog.ShowModal() == wx.ID_OK:
+            self.canvas.bitmap.SaveFile(dialog.GetPath(), wx.BITMAP_TYPE_PNG)
+        dialog.Destroy()
+
     def set_series_data(self, series, datax, datay):
         data = sorted([(datax[i], datay[i]) for i in range(len(datax))])
 
@@ -364,7 +370,12 @@ class PlotPopupMenu(wx.Menu):
             period_item = self.PeriodMenuItem(self.interval_menu, wx.NewId(), label, period, plot)
             self.interval_menu.AppendItem(period_item)
             period_item.Check(plot.period == period_item.period)
-            
+
+        # Export to PNG...
+        export_image_item = wx.MenuItem(self, wx.NewId(), 'Export to PNG...')
+        self.AppendItem(export_image_item)
+        self.Bind(wx.EVT_MENU, lambda e: self.plot.export_image(), id=export_image_item.GetId())
+
     class PeriodMenuItem(wx.MenuItem):
         def __init__(self, parent, id, label, period, plot):
             wx.MenuItem.__init__(self, parent, id, label, kind=wx.ITEM_CHECK)

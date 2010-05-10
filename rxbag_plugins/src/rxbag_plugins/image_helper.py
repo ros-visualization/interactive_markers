@@ -83,10 +83,7 @@ class ImageHelper:
             pil_img = Image.frombuffer('RGB', (img_msg.width, img_msg.height), img_msg.data, 'raw', mode, 0, 1)
 
             if mode == 'BGR':
-                rgb2bgr = (0, 0, 1, 0,
-                           0, 1, 0, 0,
-                           1, 0, 0, 0)
-                pil_img = pil_img.convert("RGB", rgb2bgr)
+                pil_img = ImageHelper.pil_bgr2rgb(pil_img)
             
             if pil_img.mode != 'RGBA':
                 pil_img = pil_img.convert('RGBA')
@@ -95,6 +92,13 @@ class ImageHelper:
         except Exception, ex:
             print 'Can\'t convert:', mode, ex
             return None
+
+    @staticmethod
+    def pil_bgr2rgb(pil_img):
+        rgb2bgr = (0, 0, 1, 0,
+                   0, 1, 0, 0,
+                   1, 0, 0, 0)
+        return pil_img.convert('RGB', rgb2bgr)
 
     @staticmethod
     def imgmsg_to_wx(img_msg):
@@ -116,7 +120,8 @@ class ImageHelper:
         image = wx.ImageFromBitmap(bitmap)
         pil_img = Image.new('RGB', (image.GetWidth(), image.GetHeight()))
         pil_img.fromstring(image.GetData())
-        
+
+        pil_img = ImageHelper.pil_bgr2rgb(pil_img)
         if pil_img.mode != 'RGBA':
             pil_img = pil_img.convert('RGBA')
         
