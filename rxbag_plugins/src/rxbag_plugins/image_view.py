@@ -39,6 +39,7 @@ import bisect
 import numpy
 import os
 import shutil
+import threading
 import time
 
 import wx
@@ -49,20 +50,61 @@ import Image
 from rxbag import BagHelper, TimelineRenderer, TopicMessageView
 from image_helper import ImageHelper
 
-## Draws thumbnails of sensor_msgs/Image or sensor_msgs/CompressedImage in the timeline
 class ImageTimelineRenderer(TimelineRenderer):
+    """
+    Draws thumbnails of sensor_msgs/Image or sensor_msgs/CompressedImage in the timeline.
+    """
     def __init__(self, timeline, thumbnail_height=64):
         TimelineRenderer.__init__(self, timeline, msg_combine_px=30.0)
 
         self.thumbnail_height     = thumbnail_height
 
-        self.thumbnail_combine_px = 30.0                      # use cached thumbnail if it's less than this many pixels away
-        self.min_thumbnail_width  = 8                         # don't display thumbnails if less than this many pixels across
-        self.quality              = Image.NEAREST             # quality hint for thumbnail scaling
+        self.thumbnail_combine_px = 30.0                 # use cached thumbnail if it's less than this many pixels away
+        self.min_thumbnail_width  = 8                    # don't display thumbnails if less than this many pixels across
+        self.quality              = Image.NEAREST        # quality hint for thumbnail scaling
 
+        self.to_cache             = []
         self.thumbnail_cache      = {}
-        self.thumbnail_mem_dc     = wx.MemoryDC()
-        self.max_cache_size       = 1000                      # max number of thumbnails to cache (per topic)
+        self.max_cache_size       = 200                  # max number of thumbnails to cache (per topic)
+
+        class CacheThread(threading.Thread):
+            def __init__(self, renderer):
+                threading.Thread.__init__(self)
+
+                self.setDaemon(True)
+
+                self.renderer  = renderer
+                self.stop_flag = False
+
+            def run(self):
+                try:
+                    while not self.stop_flag:
+                        self.cache_one()
+                        time.sleep(0.1)
+                except:
+                    pass
+
+            def cache_one(self):
+                if len(self.renderer.to_cache) == 0:
+                    return
+                
+                entry = self.renderer.to_cache[-1]
+
+                thumbnail = self.renderer._load_thumbnail(*entry)
+                if thumbnail:
+                    wx.CallAfter(self.renderer.timeline.invalidate)
+
+                del self.renderer.to_cache[-1]
+
+                # Delete the oldest
+                while len(self.renderer.to_cache) > 5:
+                    del self.renderer.to_cache[0]
+                
+            def stop(self):
+                self.stop_flag = True
+
+        self.cache_thread = CacheThread(self)
+        self.cache_thread.start()
 
     # TimelineRenderer implementation
 
@@ -82,8 +124,7 @@ class ImageTimelineRenderer(TimelineRenderer):
 
         thumbnail_x, thumbnail_y, thumbnail_height = x + 1, y + 1, height - 2 - thumbnail_gap  # leave 1px border
 
-        dc.set_line_width(1)
-        dc.set_source_rgb(0, 0, 0)
+        dc.set_source_rgb(1, 1, 1)
         dc.rectangle(x, y, width, height - thumbnail_gap)
         dc.fill()
 
@@ -91,23 +132,21 @@ class ImageTimelineRenderer(TimelineRenderer):
 
         while True:
             available_width = (x + width) - thumbnail_x
+
+            # Check for enough remaining to draw thumbnail
             if available_width < self.min_thumbnail_width:
-                # No space remaining to draw thumbnail
                 break
-            
+
             stamp = self.timeline.map_x_to_stamp(thumbnail_x)
             
             thumbnail_bitmap = self._get_thumbnail_from_cache(topic, stamp, max_interval_thumbnail)
 
+            # Cache miss.
             if not thumbnail_bitmap:
-                cache_misses += 1
-                if cache_misses > 1:
-                    self.timeline.invalidate()
-                    return True
-                
-                thumbnail_bitmap = self._load_thumbnail(topic, stamp, thumbnail_height, max_interval_thumbnail)
-                if not thumbnail_bitmap:
-                    break
+                entry = (topic, stamp, thumbnail_height, max_interval_thumbnail)
+                if entry not in self.to_cache:
+                    self.to_cache.append(entry)
+                break
 
             thumbnail_width = thumbnail_bitmap.get_width()
 
@@ -120,6 +159,12 @@ class ImageTimelineRenderer(TimelineRenderer):
             dc.fill()
 
             thumbnail_x += thumbnail_width    # 1px border (but overlap adjacent message)
+
+        # Draw 1px black border
+        dc.set_line_width(1)
+        dc.set_source_rgb(0, 0, 0)
+        dc.rectangle(x, y, width, height - thumbnail_gap - 1)
+        dc.stroke()
 
         return True
 
