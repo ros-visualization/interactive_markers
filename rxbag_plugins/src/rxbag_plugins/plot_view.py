@@ -39,6 +39,7 @@ import rospy
 import rosbag
 
 import collections
+import csv
 import string
 import threading
 import time
@@ -106,6 +107,44 @@ class PlotView(TopicMessageView):
         dialog = wx.FileDialog(self.parent.GetParent(), 'Export to PNG...', wildcard='PNG files (*.png)|*.png', style=wx.FD_SAVE)
         if dialog.ShowModal() == wx.ID_OK:
             self.canvas.bitmap.SaveFile(dialog.GetPath(), wx.BITMAP_TYPE_PNG)
+        dialog.Destroy()
+
+    def export_csv(self):
+        dialog = wx.FileDialog(self.parent.GetParent(), 'Export to CSV...', wildcard='CSV files (*.csv)|*.csv', style=wx.FD_SAVE)
+        if dialog.ShowModal() == wx.ID_OK:
+            # Collate data
+            i = 0
+            series_dict = {}
+            unique_stamps = set()
+            for subplot_series in self.series_list:
+                for series in subplot_series:
+                    series_dict[series] = dict(zip(self.datax[i], self.datay[i]))
+                    for stamp in self.datax[i]:
+                        unique_stamps.add(stamp)
+                    i += 1
+            series_columns = sorted(series_dict.keys())
+
+            try:
+                csv_writer = csv.DictWriter(open(dialog.GetPath(), 'w'), ['Timestamp'] + series_columns)
+    
+                # Write header row
+                header_dict = { 'Timestamp' : 'Timestamp' }
+                for column in series_columns:
+                    header_dict[column] = column            
+                csv_writer.writerow(header_dict)
+
+                # Write data
+                for stamp in sorted(unique_stamps):
+                    row = { 'Timestamp' : stamp }
+                    for column in series_dict:
+                        if stamp in series_dict[column]:
+                            row[column] = series_dict[column][stamp]
+    
+                    csv_writer.writerow(row)
+                    
+            except Exception, ex:
+                print >> sys.stderr, 'Error writing to csv file: %s' % str(ex)
+
         dialog.Destroy()
 
     def set_series_data(self, series, datax, datay):
@@ -350,7 +389,7 @@ class PlotPopupMenu(wx.Menu):
                ( 600, '10min'),
                (1800, '30min'),
                (3600, '1hr')]
-
+    
     def __init__(self, parent, plot):
         wx.Menu.__init__(self)
 
@@ -375,6 +414,11 @@ class PlotPopupMenu(wx.Menu):
         export_image_item = wx.MenuItem(self, wx.NewId(), 'Export to PNG...')
         self.AppendItem(export_image_item)
         self.Bind(wx.EVT_MENU, lambda e: self.plot.export_image(), id=export_image_item.GetId())
+        
+        # Export to CSV...
+        export_csv_item = wx.MenuItem(self, wx.NewId(), 'Export to CSV...')
+        self.AppendItem(export_csv_item)
+        self.Bind(wx.EVT_MENU, lambda e: self.plot.export_csv(), id=export_csv_item.GetId())
 
     class PeriodMenuItem(wx.MenuItem):
         def __init__(self, parent, id, label, period, plot):

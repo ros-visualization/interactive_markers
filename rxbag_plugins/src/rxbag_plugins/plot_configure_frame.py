@@ -173,7 +173,7 @@ class PlotConfigureFrame(wx.Frame):
             selected_plot = self.plot_items[-1]
 
         item = self.plot_tree.AppendItem(selected_plot, path)
-        #self.plot_tree.ExpandAll()
+        self.plot_tree.ExpandAll()
 
         self._update_msg_tree()
 
@@ -287,7 +287,7 @@ class PlotConfigureFrame(wx.Frame):
 
             self.plot_tree.SetItemPyData(new_item, data)
 
-        #self.plot_tree.ExpandAll()
+        self.plot_tree.ExpandAll()
 
         self._update_msg_tree()
 
