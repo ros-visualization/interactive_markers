@@ -47,7 +47,7 @@ import wx.lib.wxcairo
 
 import Image
 
-from rxbag import BagHelper, TimelineRenderer, TopicMessageView
+from rxbag import bag_helper, TimelineRenderer, TopicMessageView
 from image_helper import ImageHelper
 
 class ImageTimelineRenderer(TimelineRenderer):
@@ -327,7 +327,7 @@ class ImageView(TopicMessageView):
         font_height = dc.font_extents()[2]
         dc.set_source_rgb(0.2, 0.2, 1)
         dc.move_to(self.indent[0], self.indent[1] + font_height)
-        dc.show_text(BagHelper.stamp_to_str(self._image_stamp))
+        dc.show_text(bag_helper.stamp_to_str(self._image_stamp))
 
     def on_right_down(self, event):
         self.parent.PopupMenu(ImagePopupMenu(self.parent, self), event.GetPosition())
