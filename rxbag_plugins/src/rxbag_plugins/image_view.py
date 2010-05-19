@@ -255,7 +255,6 @@ class ImageTimelineRenderer(TimelineRenderer):
         # Limit cache size - remove the farthest entry in the cache
         cache_size = len(topic_cache)
         if cache_size > self.max_cache_size:
-            print 'cache size exceeded'
             if cache_index < cache_size / 2:
                 del topic_cache[cache_size - 1]
             else:
