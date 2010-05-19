@@ -23,5 +23,8 @@ We apply four patches:
   <cpp lflags="-L${prefix}/propgrid_install/lib -Wl,-rpath,${prefix}/propgrid_install/lib -l`${prefix}/find_lib`" cflags="-I${prefix}/propgrid_install/include -D__NOTWXPYTHON__"/>
 </export>
 <rosdep name="wxwidgets"/>
+  <platform os="ubuntu" version="9.04"/>
+  <platform os="ubuntu" version="9.10"/>
+  <platform os="ubuntu" version="10.04"/>
 </package>
 
