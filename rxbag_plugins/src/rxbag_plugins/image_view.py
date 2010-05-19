@@ -208,8 +208,7 @@ class ImageTimelineRenderer(TimelineRenderer):
         """
         # Find position of stamp using index
         t = roslib.rostime.Time.from_sec(stamp)
-        bag = self.timeline.bag_file
-        entry = bag._get_entry(t, bag._get_connections(topic))
+        bag, entry = self.timeline.get_entry(t, topic)
         if not entry:
             return None
         pos = entry.position
