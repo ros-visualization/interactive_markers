@@ -39,6 +39,7 @@ import bisect
 import numpy
 import os
 import shutil
+import sys
 import threading
 import time
 
@@ -75,18 +76,30 @@ class ImageTimelineRenderer(TimelineRenderer):
 
                 self.renderer  = renderer
                 self.stop_flag = False
+                
+                self.last_cache_success = 0.0
 
             def run(self):
                 try:
+                    # @todo: use condition variables instead
                     while not self.stop_flag:
-                        self.cache_one()
-                        time.sleep(0.1)
-                except:
-                    pass
+                        if self.cache_one():
+                            # Successfully loaded a thumbnail; sleep for 10ms
+                            self.last_cache_success = time.time()
+                            time.sleep(0.01)
+                        elif time.time() - self.last_cache_success > 2.0:
+                            # Over 2s since we last loaded an image; sleep for 1s
+                            time.sleep(1.0)
+                        else:
+                            # Recently loaded a thumbnail; sleep for 50ms
+                            time.sleep(0.05)
+
+                except Exception, ex:
+                    print >> sys.stderr, 'Error getting thumbnail: %s' % str(ex)
 
             def cache_one(self):
                 if len(self.renderer.to_cache) == 0:
-                    return
+                    return False
                 
                 entry = self.renderer.to_cache[-1]
 
@@ -99,6 +112,8 @@ class ImageTimelineRenderer(TimelineRenderer):
                 # Delete the oldest
                 while len(self.renderer.to_cache) > 5:
                     del self.renderer.to_cache[0]
+
+                return True
                 
             def stop(self):
                 self.stop_flag = True
@@ -141,7 +156,7 @@ class ImageTimelineRenderer(TimelineRenderer):
             
             thumbnail_bitmap = self._get_thumbnail_from_cache(topic, stamp, max_interval_thumbnail)
 
-            # Cache miss.
+            # Cache miss
             if not thumbnail_bitmap:
                 entry = (topic, stamp, thumbnail_height, max_interval_thumbnail)
                 if entry not in self.to_cache:
@@ -200,7 +215,8 @@ class ImageTimelineRenderer(TimelineRenderer):
         pos = entry.position
 
         # Not in the cache; load from the bag file
-        msg_topic, msg, msg_stamp = bag._read_message(pos)
+        with self.timeline._bag_lock:
+            msg_topic, msg, msg_stamp = bag._read_message(pos)
 
         # Convert from ROS image to PIL image
         pil_image = ImageHelper.imgmsg_to_pil(msg)
@@ -222,7 +238,8 @@ class ImageTimelineRenderer(TimelineRenderer):
             self._cache_thumbnail(topic, msg_stamp, thumbnail_bitmap)
             
             return thumbnail_bitmap
-        except:
+        except Exception, ex:
+            print >> sys.stderr, 'Error loading image on topic %s: %s' % (topic, str(ex))
             return None
     
     def _cache_thumbnail(self, topic, t, thumbnail):
@@ -232,11 +249,14 @@ class ImageTimelineRenderer(TimelineRenderer):
         topic_cache = self.thumbnail_cache[topic]
 
         # Maintain the cache sorted
-        bisect.insort_right(topic_cache, (t.to_sec(), thumbnail))
+        cache_entry = (t.to_sec(), thumbnail)
+        cache_index = bisect.bisect_right(topic_cache, cache_entry)
+        topic_cache.insert(cache_index, cache_entry)
 
         # Limit cache size - remove the farthest entry in the cache
         cache_size = len(topic_cache)
         if cache_size > self.max_cache_size:
+            print 'cache size exceeded'
             if cache_index < cache_size / 2:
                 del topic_cache[cache_size - 1]
             else:

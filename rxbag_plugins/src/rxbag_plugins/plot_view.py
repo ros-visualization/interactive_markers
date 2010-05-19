@@ -41,6 +41,7 @@ import rosbag
 import collections
 import csv
 import string
+import sys
 import threading
 import time
 
@@ -146,6 +147,22 @@ class PlotView(TopicMessageView):
                 print >> sys.stderr, 'Error writing to csv file: %s' % str(ex)
 
         dialog.Destroy()
+        
+    def set_period(self, period):
+        self.period = period
+        
+        self._update_view_region()
+            
+    def _update_view_region(self):
+        if self._data_thread:
+            if self.period < 0:
+                start_stamp = self.timeline.start_stamp
+                end_stamp   = self.timeline.end_stamp
+            else:
+                start_stamp = self.timeline.start_stamp + self.playhead - (self.period / 2)
+                end_stamp   = self.timeline.start_stamp + self.playhead + (self.period / 2)
+
+            self._data_thread.set_view_region(start_stamp, end_stamp)
 
     def set_series_data(self, series, datax, datay):
         data = sorted([(datax[i], datay[i]) for i in range(len(datax))])
@@ -157,7 +174,7 @@ class PlotView(TopicMessageView):
 
     def set_playhead(self, playhead):
         self.playhead = playhead
-        
+        self._update_view_region()
         self.invalidate()
 
     def message_viewed(self, bag_file, msg_details):
@@ -363,7 +380,6 @@ class PlotView(TopicMessageView):
         
         if not self._data_thread:
             self._data_thread = PlotDataLoader(self, self.bag_file, self.topic)
-            self._data_thread.start()
 
     @staticmethod
     def plot_picker(artist, mouseevent):
@@ -430,7 +446,7 @@ class PlotPopupMenu(wx.Menu):
             parent.Bind(wx.EVT_MENU, self.on_menu, id=self.GetId())
     
         def on_menu(self, event):
-            self.plot.period = self.period
+            self.plot.set_period(self.period)
             self.plot.invalidate()
 
 class PlotDataLoader(threading.Thread):
@@ -447,79 +463,92 @@ class PlotDataLoader(threading.Thread):
         
         self.stop_flag = False
 
+        self.set_view_region(self.plot.timeline.start_stamp, self.plot.timeline.end_stamp)
+
+        self.start()
+
+    def set_view_region(self, start_stamp, end_stamp):
+        self.start_stamp = start_stamp
+        self.end_stamp   = end_stamp
+        
+        self.view_region_dirty = True 
+
     def run(self):
-        try:
-            bag_file = rosbag.Bag(self.bag_file.filename)
-            start_stamp, end_stamp = self.plot.timeline.start_stamp, self.plot.timeline.end_stamp 
-            last_stamp = None
-            datax, datay = None, None
-            load_count = 0
+        bag_file     = self.plot.timeline.bag_file
+        last_stamp   = None
+        datax, datay = None, None
+        load_count   = 0
+
+        while True:
+            if self.view_region_dirty:
+                subdivider = self.subdivide(self.start_stamp, self.end_stamp)
+                self.view_region_dirty = False
+            stamp = subdivider.next()
+
+            t = roslib.rostime.Time.from_sec(stamp)
+
+            with self.plot.timeline._bag_lock:
+                entry = bag_file._get_entry(t, bag_file._get_connections(self.topic))
+                if entry is None:
+                    continue
+                
+                (topic, msg, msg_stamp) = bag_file._read_message(entry.position)
+                if not msg:
+                    continue
             
-            for stamp in self.subdivide(start_stamp, end_stamp):
-                try:
-                    t = roslib.rostime.Time.from_sec(stamp)
+            if datax is None:
+                self.plot._init_plot(self.plot.plot_paths)
+
+                datax, datay = [], []
+                for plot in self.plot.plot_paths:
+                    for plot_path in plot:
+                        datax.append([])
+                        datay.append([])
+
+            # Load the data
+            use_header_stamp = False
+            
+            series_index = 0
+            for plot in self.plot.plot_paths:
+                for plot_path in plot:
+                    if use_header_stamp:
+                        if msg.__class__._has_header:
+                            header = msg.header
+                        else:
+                            header = PlotDataLoader.get_header(msg, plot_path)
+                        
+                        plot_stamp = header.stamp.to_sec()
+                    else:
+                        plot_stamp = stamp
+
+                    value = eval('msg.' + plot_path)
                     
-                    entry = bag_file._get_entry(t, bag_file._get_connections(self.topic))
-                    if entry is None:
-                        continue
-    
-                    (topic, msg, msg_stamp) = bag_file._read_message(entry.position)
-                    if not msg:
-                        continue
+                    if series_index >= len(datax):
+                        datax.append([])
+                        datay.append([])
+
+                    datax[series_index].append(plot_stamp - self.plot.timeline.start_stamp)
+                    datay[series_index].append(value)
+
+                    series_index += 1
                     
-                    if datax is None:
-                        self.plot._init_plot(self.plot.plot_paths)
-        
-                        datax, datay = [], []
-                        for plot in self.plot.plot_paths:
-                            for plot_path in plot:
-                                datax.append([])
-                                datay.append([])
-        
-                    # Load the data
-                    use_header_stamp = False
-                    
-                    series_index = 0
-                    for plot in self.plot.plot_paths:
-                        for plot_path in plot:
-                            if use_header_stamp:
-                                if msg.__class__._has_header:
-                                    header = msg.header
-                                else:
-                                    header = PlotDataLoader.get_header(msg, plot_path)
-                                
-                                plot_stamp = header.stamp.to_sec()
-                            else:
-                                plot_stamp = stamp
-    
-                            value = eval('msg.' + plot_path)
-    
-                            datax[series_index].append(plot_stamp - start_stamp)
-                            datay[series_index].append(value)
-    
-                            series_index += 1
-                            
-                    load_count += 1
-    
-                    if self.stop_flag:
-                        break
-    
-                    # Update the plot
-                    if load_count % self.update_freq == 0:
-                        series_index = 0
-                        for plot in self.plot.plot_paths:
-                            for plot_path in plot:
-                                self.plot.set_series_data(series_index, datax[series_index], datay[series_index])
-                                series_index += 1
-                    
-                    # Stop loading if the resolution is enough
-                    if last_stamp and abs(stamp - last_stamp) < 0.1:
-                        break
-                    last_stamp = stamp
-                except:
-                    pass
-        finally:
-            bag_file.close()
+            load_count += 1
+
+            if self.stop_flag:
+                break
+
+            # Update the plot
+            if load_count % self.update_freq == 0:
+                series_index = 0
+                for plot in self.plot.plot_paths:
+                    for plot_path in plot:
+                        self.plot.set_series_data(series_index, datax[series_index], datay[series_index])
+                        series_index += 1
+            
+            # Stop loading if the resolution is enough
+            if last_stamp and abs(stamp - last_stamp) < 0.1:
+                break
+            last_stamp = stamp
 
     def stop(self):
         self.stop_flag = True
