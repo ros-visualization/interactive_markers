@@ -35,9 +35,11 @@
 PKG = 'rxbag_plugins'
 import roslib; roslib.load_manifest(PKG)
 import rospy
+
 import bisect
 import numpy
 import os
+import Queue
 import shutil
 import sys
 import threading
@@ -64,6 +66,7 @@ class ImageTimelineRenderer(TimelineRenderer):
         self.min_thumbnail_width  = 8                    # don't display thumbnails if less than this many pixels across
         self.quality              = Image.NEAREST        # quality hint for thumbnail scaling
 
+        self.to_cache_condition   = threading.Condition()
         self.to_cache             = []
         self.thumbnail_cache      = {}
         self.max_cache_size       = 200                  # max number of thumbnails to cache (per topic)
@@ -81,18 +84,14 @@ class ImageTimelineRenderer(TimelineRenderer):
 
             def run(self):
                 try:
-                    # @todo: use condition variables instead
                     while not self.stop_flag:
                         if self.cache_one():
                             # Successfully loaded a thumbnail; sleep for 10ms
                             self.last_cache_success = time.time()
                             time.sleep(0.01)
-                        elif time.time() - self.last_cache_success > 2.0:
-                            # Over 2s since we last loaded an image; sleep for 1s
-                            time.sleep(1.0)
                         else:
-                            # Recently loaded a thumbnail; sleep for 50ms
-                            time.sleep(0.05)
+                            self.renderer.to_cache_condition.acquire()
+                            self.renderer.to_cache_condition.wait(2.0)
 
                 except Exception, ex:
                     print >> sys.stderr, 'Error getting thumbnail: %s' % str(ex)
@@ -159,8 +158,11 @@ class ImageTimelineRenderer(TimelineRenderer):
             # Cache miss
             if not thumbnail_bitmap:
                 entry = (topic, stamp, thumbnail_height, max_interval_thumbnail)
+                self.to_cache_condition.acquire()
                 if entry not in self.to_cache:
                     self.to_cache.append(entry)
+                    self.to_cache_condition.notifyAll()
+                self.to_cache_condition.release()
                 break
 
             thumbnail_width = thumbnail_bitmap.get_width()
