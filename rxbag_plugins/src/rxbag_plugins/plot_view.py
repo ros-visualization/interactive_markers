@@ -144,7 +144,7 @@ class PlotView(TopicMessageView):
                     csv_writer.writerow(row)
                     
             except Exception, ex:
-                print >> sys.stderr, 'Error writing to csv file: %s' % str(ex)
+                print >> sys.stderr, 'Error writing to CSV file: %s' % str(ex)
 
         dialog.Destroy()
         
@@ -156,11 +156,11 @@ class PlotView(TopicMessageView):
     def _update_view_region(self):
         if self._data_thread:
             if self.period < 0:
-                start_stamp = self.timeline.start_stamp
-                end_stamp   = self.timeline.end_stamp
+                start_stamp = self.timeline.start_stamp.to_sec()
+                end_stamp   = self.timeline.end_stamp.to_sec()
             else:
-                start_stamp = self.timeline.start_stamp + self.playhead - (self.period / 2)
-                end_stamp   = self.timeline.start_stamp + self.playhead + (self.period / 2)
+                start_stamp = self.timeline.start_stamp.to_sec() + self.playhead - (self.period / 2)
+                end_stamp   = start_stamp + self.period
 
             self._data_thread.set_view_region(start_stamp, end_stamp)
 
@@ -188,7 +188,7 @@ class PlotView(TopicMessageView):
 
         self._msg = msg
 
-        self.set_playhead(t.to_sec() - self.timeline.start_stamp)
+        self.set_playhead((t - self.timeline.start_stamp).to_sec())
 
     def message_cleared(self):
         TopicMessageView.message_cleared(self)
@@ -425,6 +425,9 @@ class PlotPopupMenu(wx.Menu):
             period_item = self.PeriodMenuItem(self.interval_menu, wx.NewId(), label, period, plot)
             self.interval_menu.AppendItem(period_item)
             period_item.Check(plot.period == period_item.period)
+            
+            if label == 'All':
+                self.interval_menu.AppendSeparator()
 
         # Export to PNG...
         export_image_item = wx.MenuItem(self, wx.NewId(), 'Export to PNG...')
@@ -463,7 +466,7 @@ class PlotDataLoader(threading.Thread):
         
         self.stop_flag = False
 
-        self.set_view_region(self.plot.timeline.start_stamp, self.plot.timeline.end_stamp)
+        self.set_view_region(self.plot.timeline.start_stamp.to_sec(), self.plot.timeline.end_stamp.to_sec())
 
         self.start()
 
@@ -474,7 +477,6 @@ class PlotDataLoader(threading.Thread):
         self.view_region_dirty = True 
 
     def run(self):
-        bag_file     = self.plot.timeline.bag_file
         last_stamp   = None
         datax, datay = None, None
         load_count   = 0
@@ -488,11 +490,11 @@ class PlotDataLoader(threading.Thread):
             t = roslib.rostime.Time.from_sec(stamp)
 
             with self.plot.timeline._bag_lock:
-                entry = bag_file._get_entry(t, bag_file._get_connections(self.topic))
+                bag, entry = self.plot.timeline.get_entry(t, self.topic)
                 if entry is None:
                     continue
                 
-                (topic, msg, msg_stamp) = bag_file._read_message(entry.position)
+                (topic, msg, msg_stamp) = self.plot.timeline.read_message(bag, entry.position)
                 if not msg:
                     continue
             
@@ -527,7 +529,7 @@ class PlotDataLoader(threading.Thread):
                         datax.append([])
                         datay.append([])
 
-                    datax[series_index].append(plot_stamp - self.plot.timeline.start_stamp)
+                    datax[series_index].append(plot_stamp - self.plot.timeline.start_stamp.to_sec())
                     datay[series_index].append(value)
 
                     series_index += 1
