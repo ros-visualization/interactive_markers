@@ -50,10 +50,58 @@ import wx.lib.wxcairo
 
 import Image
 
-from rxbag import bag_helper, TimelineRenderer, TopicMessageView
+from rxbag        import bag_helper, TimelineRenderer, TopicMessageView
 from image_helper import ImageHelper
 
 class ImageTimelineRenderer(TimelineRenderer):
+
+    class CacheThread(threading.Thread):
+        def __init__(self, renderer):
+            threading.Thread.__init__(self)
+
+            self.setDaemon(True)
+
+            self.renderer  = renderer
+            self.stop_flag = False
+            
+            self.last_cache_success = 0.0
+            
+            self.start()
+
+        def run(self):
+            try:
+                while not self.stop_flag:
+                    if self.cache_one():
+                        # Successfully loaded a thumbnail; sleep for 10ms
+                        self.last_cache_success = time.time()
+                        time.sleep(0.01)
+                    else:
+                        self.renderer.to_cache_condition.acquire()
+                        self.renderer.to_cache_condition.wait(2.0)
+            except:
+                pass
+
+        def cache_one(self):
+            if len(self.renderer.to_cache) == 0:
+                return False
+            
+            entry = self.renderer.to_cache[-1]
+
+            thumbnail = self.renderer._load_thumbnail(*entry)
+            if thumbnail:
+                wx.CallAfter(self.renderer.timeline.invalidate)
+
+            del self.renderer.to_cache[-1]
+
+            # Delete the oldest
+            while len(self.renderer.to_cache) > 5:
+                del self.renderer.to_cache[0]
+
+            return True
+            
+        def stop(self):
+            self.stop_flag = True    
+    
     """
     Draws thumbnails of sensor_msgs/Image or sensor_msgs/CompressedImage in the timeline.
     """
@@ -71,54 +119,7 @@ class ImageTimelineRenderer(TimelineRenderer):
         self.thumbnail_cache      = {}
         self.max_cache_size       = 200                  # max number of thumbnails to cache (per topic)
 
-        class CacheThread(threading.Thread):
-            def __init__(self, renderer):
-                threading.Thread.__init__(self)
-
-                self.setDaemon(True)
-
-                self.renderer  = renderer
-                self.stop_flag = False
-                
-                self.last_cache_success = 0.0
-
-            def run(self):
-                try:
-                    while not self.stop_flag:
-                        if self.cache_one():
-                            # Successfully loaded a thumbnail; sleep for 10ms
-                            self.last_cache_success = time.time()
-                            time.sleep(0.01)
-                        else:
-                            self.renderer.to_cache_condition.acquire()
-                            self.renderer.to_cache_condition.wait(2.0)
-
-                except Exception, ex:
-                    print >> sys.stderr, 'Error getting thumbnail: %s' % str(ex)
-
-            def cache_one(self):
-                if len(self.renderer.to_cache) == 0:
-                    return False
-                
-                entry = self.renderer.to_cache[-1]
-
-                thumbnail = self.renderer._load_thumbnail(*entry)
-                if thumbnail:
-                    wx.CallAfter(self.renderer.timeline.invalidate)
-
-                del self.renderer.to_cache[-1]
-
-                # Delete the oldest
-                while len(self.renderer.to_cache) > 5:
-                    del self.renderer.to_cache[0]
-
-                return True
-                
-            def stop(self):
-                self.stop_flag = True
-
-        self.cache_thread = CacheThread(self)
-        self.cache_thread.start()
+        self.cache_thread = self.CacheThread(self)
 
     # TimelineRenderer implementation
 
@@ -184,6 +185,12 @@ class ImageTimelineRenderer(TimelineRenderer):
         dc.stroke()
 
         return True
+    
+    def close(self):
+        if self.cache_thread:
+            self.cache_thread.stop()
+            self.cache_thread.join()
+            self.cache_thread = None
 
     #
 
