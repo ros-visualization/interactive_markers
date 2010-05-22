@@ -72,9 +72,9 @@ class ImageTimelineRenderer(TimelineRenderer):
             try:
                 while not self.stop_flag:
                     if self.cache_one():
-                        # Successfully loaded a thumbnail; sleep for 10ms
+                        # Successfully loaded a thumbnail; sleep for 50ms
                         self.last_cache_success = time.time()
-                        time.sleep(0.01)
+                        time.sleep(0.05)
                     else:
                         self.renderer.to_cache_condition.acquire()
                         self.renderer.to_cache_condition.wait(2.0)
@@ -93,8 +93,7 @@ class ImageTimelineRenderer(TimelineRenderer):
 
             del self.renderer.to_cache[-1]
 
-            # Delete the oldest
-            while len(self.renderer.to_cache) > 5:
+            while len(self.renderer.to_cache) > 10:
                 del self.renderer.to_cache[0]
 
             return True
@@ -105,12 +104,12 @@ class ImageTimelineRenderer(TimelineRenderer):
     """
     Draws thumbnails of sensor_msgs/Image or sensor_msgs/CompressedImage in the timeline.
     """
-    def __init__(self, timeline, thumbnail_height=64):
+    def __init__(self, timeline, thumbnail_height=160):
         TimelineRenderer.__init__(self, timeline, msg_combine_px=30.0)
 
         self.thumbnail_height     = thumbnail_height
 
-        self.thumbnail_combine_px = 30.0                 # use cached thumbnail if it's less than this many pixels away
+        self.thumbnail_combine_px = 20.0                 # use cached thumbnail if it's less than this many pixels away
         self.min_thumbnail_width  = 8                    # don't display thumbnails if less than this many pixels across
         self.quality              = Image.NEAREST        # quality hint for thumbnail scaling
 
@@ -124,15 +123,9 @@ class ImageTimelineRenderer(TimelineRenderer):
     # TimelineRenderer implementation
 
     def get_segment_height(self, topic):
-        if not self._valid_image_topic(topic):
-            return None
-
         return self.thumbnail_height
 
     def draw_timeline_segment(self, dc, topic, stamp_start, stamp_end, x, y, width, height):
-        if not self._valid_image_topic(topic):
-            return False
-
         max_interval_thumbnail = self.timeline.map_dx_to_dstamp(self.thumbnail_combine_px)
 
         thumbnail_gap = 6
@@ -144,39 +137,47 @@ class ImageTimelineRenderer(TimelineRenderer):
         dc.fill()
 
         cache_misses = 0
+        
+        thumbnail_width = None
 
         while True:
+            #print thumbnail_x
+            
             available_width = (x + width) - thumbnail_x
 
             # Check for enough remaining to draw thumbnail
             if available_width < self.min_thumbnail_width:
                 break
 
-            stamp = self.timeline.map_x_to_stamp(thumbnail_x)
-            
-            thumbnail_bitmap = self._get_thumbnail_from_cache(topic, stamp, max_interval_thumbnail)
+            # Try to display the thumbnail, if its right edge is to the right of the timeline's left side
+            if not thumbnail_width or thumbnail_x + thumbnail_width >= self.timeline.history_left:
+                stamp = self.timeline.map_x_to_stamp(thumbnail_x, clamp_to_visible=False)
+    
+                thumbnail_bitmap = self._get_thumbnail_from_cache(topic, stamp, max_interval_thumbnail)
+    
+                # Cache miss
+                if not thumbnail_bitmap:
+                    entry = (topic, stamp, thumbnail_height, max_interval_thumbnail)
+                    self.to_cache_condition.acquire()
+                    if entry not in self.to_cache:
+                        self.to_cache.append(entry)
+                        self.to_cache_condition.notifyAll()
+                    self.to_cache_condition.release()
+                    
+                    if not thumbnail_width:
+                        break
+                else:
+                    thumbnail_width = thumbnail_bitmap.get_width()
+        
+                    if available_width < thumbnail_width:
+                        # Space remaining, but have to chop off thumbnail
+                        thumbnail_width = available_width - 1
+        
+                    dc.set_source_surface(thumbnail_bitmap, thumbnail_x, thumbnail_y)
+                    dc.rectangle(thumbnail_x, thumbnail_y, thumbnail_width, thumbnail_height)
+                    dc.fill()
 
-            # Cache miss
-            if not thumbnail_bitmap:
-                entry = (topic, stamp, thumbnail_height, max_interval_thumbnail)
-                self.to_cache_condition.acquire()
-                if entry not in self.to_cache:
-                    self.to_cache.append(entry)
-                    self.to_cache_condition.notifyAll()
-                self.to_cache_condition.release()
-                break
-
-            thumbnail_width = thumbnail_bitmap.get_width()
-
-            if available_width < thumbnail_width:
-                # Space remaining, but have to chop off thumbnail
-                thumbnail_width = available_width - 1
-
-            dc.set_source_surface(thumbnail_bitmap, thumbnail_x, thumbnail_y)
-            dc.rectangle(thumbnail_x, thumbnail_y, thumbnail_width, thumbnail_height)
-            dc.fill()
-
-            thumbnail_x += thumbnail_width    # 1px border (but overlap adjacent message)
+            thumbnail_x += thumbnail_width
 
         # Draw 1px black border
         dc.set_line_width(1)
@@ -193,9 +194,6 @@ class ImageTimelineRenderer(TimelineRenderer):
             self.cache_thread = None
 
     #
-
-    def _valid_image_topic(self, topic):
-        return True
 
     def _get_thumbnail_from_cache(self, topic, stamp, time_threshold):
         # Attempt to get a thumbnail from the cache that's within time_threshold secs from stamp
@@ -227,7 +225,12 @@ class ImageTimelineRenderer(TimelineRenderer):
             msg_topic, msg, msg_stamp = bag._read_message(pos)
 
         # Convert from ROS image to PIL image
-        pil_image = ImageHelper.imgmsg_to_pil(msg)
+        try:
+            pil_image = ImageHelper.imgmsg_to_pil(msg)
+        except Exception, ex:
+            print >> sys.stderr, 'Error loading image on topic %s: %s' % (topic, str(ex)) 
+            return None
+        
         if not pil_image:
             return None
         
