@@ -46,11 +46,15 @@ def imgmsg_to_pil(img_msg):
         io = cStringIO.StringIO(img_msg.data)
         pil_img = Image.open(io)
 
-        return wx.ImageFromData(pil_img.size[0], pil_img.size[1], pil_img.tostring())
+        pil_img = pil_bgr2rgb(pil_img)
+        if pil_img.mode != 'RGBA':
+            pil_img = pil_img.convert('RGBA')
+
+        return pil_img
 
     # Can use rgb8 encoding directly
     if img_msg.encoding == 'rgb8':
-        return wx.ImageFromBuffer(img_msg.width, img_msg.height, img_msg.data)
+        return Image.frombuffer('RGB', (img_msg.width, img_msg.height), img_msg.data, 'raw', 'RGB', 0, 1)
 
     # Otherwise, use PIL to convert image
     alpha = False
@@ -79,7 +83,6 @@ def imgmsg_to_pil(img_msg):
 
         if mode == 'BGR':
             pil_img = pil_bgr2rgb(pil_img)
-        
         if pil_img.mode != 'RGBA':
             pil_img = pil_img.convert('RGBA')
         
@@ -95,6 +98,10 @@ def pil_bgr2rgb(pil_img):
     return pil_img.convert('RGB', rgb2bgr)
 
 def imgmsg_to_wx(img_msg):
+    # Can use rgb8 encoding directly
+    if img_msg.encoding == 'rgb8':
+        return wx.ImageFromBuffer(img_msg.width, img_msg.height, img_msg.data)
+
     pil_img = imgmsg_to_pil(img_msg)
     if not pil_img:
         return None
