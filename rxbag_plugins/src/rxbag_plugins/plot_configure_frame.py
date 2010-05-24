@@ -60,7 +60,6 @@ class PlotConfigureFrame(wx.Frame):
 
         self.msg_tree = wx.TreeCtrl(splitter, style=wx.TR_DEFAULT_STYLE | wx.TR_HIDE_ROOT)
         self.add_msg_object(None, '', 'msg', self.plot._msg, self.plot._msg._type)
-        #self.msg_tree.ExpandAll()
         self.msg_tree.Bind(wx.EVT_LEFT_DCLICK, self.on_msg_left_dclick)
 
         self.plot_tree = wx.TreeCtrl(splitter, style=wx.TR_DEFAULT_STYLE | wx.TR_HIDE_ROOT | wx.TR_HAS_BUTTONS)
@@ -181,9 +180,9 @@ class PlotConfigureFrame(wx.Frame):
         plot_paths = self.get_plot_paths()
         
         if plot_paths != self.plot.plot_paths:
-            self.plot.reload()
             self.plot.plot_paths = plot_paths
-            
+            self.plot.reload()
+
         PlotConfigureFrame.traverse(self.msg_tree, self.msg_tree.GetRootItem(), self._update_msg_tree_item)
 
     def _update_msg_tree_item(self, item):
@@ -204,10 +203,7 @@ class PlotConfigureFrame(wx.Frame):
 
     def plot_delete_selected_msg(self):
         selected_item = self.plot_tree.GetSelection()
-        if not selected_item.IsOk():
-            return
-
-        if selected_item in self.plot_items:
+        if not selected_item.IsOk() or selected_item in self.plot_items:
             return
 
         self.plot_tree.Delete(selected_item)
