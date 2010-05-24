@@ -29,248 +29,24 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-#
-# Revision $Id$
 
 PKG = 'rxbag_plugins'
 import roslib; roslib.load_manifest(PKG)
 import rospy
 
-import bisect
-import numpy
 import os
-import Queue
 import shutil
 import sys
 import threading
 import time
 
+import numpy
 import wx
-import wx.lib.wxcairo
 
 import Image
 
-from rxbag        import bag_helper, TimelineRenderer, TopicMessageView
-from image_helper import ImageHelper
-
-class ImageTimelineRenderer(TimelineRenderer):
-
-    class CacheThread(threading.Thread):
-        def __init__(self, renderer):
-            threading.Thread.__init__(self)
-
-            self.setDaemon(True)
-
-            self.renderer  = renderer
-            self.stop_flag = False
-            
-            self.last_cache_success = 0.0
-            
-            self.start()
-
-        def run(self):
-            try:
-                while not self.stop_flag:
-                    if self.cache_one():
-                        # Successfully loaded a thumbnail; sleep for 50ms
-                        self.last_cache_success = time.time()
-                        time.sleep(0.05)
-                    else:
-                        self.renderer.to_cache_condition.acquire()
-                        self.renderer.to_cache_condition.wait(2.0)
-            except:
-                pass
-
-        def cache_one(self):
-            if len(self.renderer.to_cache) == 0:
-                return False
-            
-            entry = self.renderer.to_cache[-1]
-
-            thumbnail = self.renderer._load_thumbnail(*entry)
-            if thumbnail:
-                wx.CallAfter(self.renderer.timeline.invalidate)
-
-            del self.renderer.to_cache[-1]
-
-            while len(self.renderer.to_cache) > 10:
-                del self.renderer.to_cache[0]
-
-            return True
-            
-        def stop(self):
-            self.stop_flag = True    
-    
-    """
-    Draws thumbnails of sensor_msgs/Image or sensor_msgs/CompressedImage in the timeline.
-    """
-    def __init__(self, timeline, thumbnail_height=160):
-        TimelineRenderer.__init__(self, timeline, msg_combine_px=30.0)
-
-        self.thumbnail_height     = thumbnail_height
-
-        self.thumbnail_combine_px = 20.0                 # use cached thumbnail if it's less than this many pixels away
-        self.min_thumbnail_width  = 8                    # don't display thumbnails if less than this many pixels across
-        self.quality              = Image.NEAREST        # quality hint for thumbnail scaling
-
-        self.to_cache_condition   = threading.Condition()
-        self.to_cache             = []
-        self.thumbnail_cache      = {}
-        self.max_cache_size       = 200                  # max number of thumbnails to cache (per topic)
-
-        self.cache_thread = self.CacheThread(self)
-
-    # TimelineRenderer implementation
-
-    def get_segment_height(self, topic):
-        return self.thumbnail_height
-
-    def draw_timeline_segment(self, dc, topic, stamp_start, stamp_end, x, y, width, height):
-        max_interval_thumbnail = self.timeline.map_dx_to_dstamp(self.thumbnail_combine_px)
-
-        thumbnail_gap = 6
-
-        thumbnail_x, thumbnail_y, thumbnail_height = x + 1, y + 1, height - 2 - thumbnail_gap  # leave 1px border
-
-        dc.set_source_rgb(1, 1, 1)
-        dc.rectangle(x, y, width, height - thumbnail_gap)
-        dc.fill()
-
-        cache_misses = 0
-        
-        thumbnail_width = None
-
-        while True:
-            #print thumbnail_x
-            
-            available_width = (x + width) - thumbnail_x
-
-            # Check for enough remaining to draw thumbnail
-            if available_width < self.min_thumbnail_width:
-                break
-
-            # Try to display the thumbnail, if its right edge is to the right of the timeline's left side
-            if not thumbnail_width or thumbnail_x + thumbnail_width >= self.timeline.history_left:
-                stamp = self.timeline.map_x_to_stamp(thumbnail_x, clamp_to_visible=False)
-    
-                thumbnail_bitmap = self._get_thumbnail_from_cache(topic, stamp, max_interval_thumbnail)
-    
-                # Cache miss
-                if not thumbnail_bitmap:
-                    entry = (topic, stamp, thumbnail_height, max_interval_thumbnail)
-                    self.to_cache_condition.acquire()
-                    if entry not in self.to_cache:
-                        self.to_cache.append(entry)
-                        self.to_cache_condition.notifyAll()
-                    self.to_cache_condition.release()
-                    
-                    if not thumbnail_width:
-                        break
-                else:
-                    thumbnail_width = thumbnail_bitmap.get_width()
-        
-                    if available_width < thumbnail_width:
-                        # Space remaining, but have to chop off thumbnail
-                        thumbnail_width = available_width - 1
-        
-                    dc.set_source_surface(thumbnail_bitmap, thumbnail_x, thumbnail_y)
-                    dc.rectangle(thumbnail_x, thumbnail_y, thumbnail_width, thumbnail_height)
-                    dc.fill()
-
-            thumbnail_x += thumbnail_width
-
-        # Draw 1px black border
-        dc.set_line_width(1)
-        dc.set_source_rgb(0, 0, 0)
-        dc.rectangle(x, y, width, height - thumbnail_gap - 1)
-        dc.stroke()
-
-        return True
-    
-    def close(self):
-        if self.cache_thread:
-            self.cache_thread.stop()
-            self.cache_thread.join()
-            self.cache_thread = None
-
-    #
-
-    def _get_thumbnail_from_cache(self, topic, stamp, time_threshold):
-        # Attempt to get a thumbnail from the cache that's within time_threshold secs from stamp
-        topic_cache = self.thumbnail_cache.get(topic)
-        if topic_cache:
-            cache_index = bisect.bisect_right(topic_cache, (stamp, None)) - 1
-            if cache_index >= 0:
-                (cache_stamp, cache_thumbnail) = topic_cache[cache_index]
-                
-                cache_dist = abs(cache_stamp - stamp)
-                if cache_dist < time_threshold: 
-                    return cache_thumbnail
-
-        return None
-
-    def _load_thumbnail(self, topic, stamp, thumbnail_height, time_threshold):
-        """
-        Loads the thumbnail from the bag
-        """
-        # Find position of stamp using index
-        t = roslib.rostime.Time.from_sec(stamp)
-        bag, entry = self.timeline.get_entry(t, topic)
-        if not entry:
-            return None
-        pos = entry.position
-
-        # Not in the cache; load from the bag file
-        with self.timeline._bag_lock:
-            msg_topic, msg, msg_stamp = bag._read_message(pos)
-
-        # Convert from ROS image to PIL image
-        try:
-            pil_image = ImageHelper.imgmsg_to_pil(msg)
-        except Exception, ex:
-            print >> sys.stderr, 'Error loading image on topic %s: %s' % (topic, str(ex)) 
-            return None
-        
-        if not pil_image:
-            return None
-        
-        # Calculate width to maintain aspect ratio
-        try:
-            pil_image_size = pil_image.size
-            thumbnail_width = int(round(thumbnail_height * (float(pil_image_size[0]) / pil_image_size[1])))
-    
-            # Scale to thumbnail size
-            thumbnail = pil_image.resize((thumbnail_width, thumbnail_height), self.quality)
-    
-            # Convert from PIL Image to Cairo ImageSurface
-            thumbnail_bitmap = ImageHelper.pil_to_cairo(thumbnail)
-            
-            # Store in the cache
-            self._cache_thumbnail(topic, msg_stamp, thumbnail_bitmap)
-            
-            return thumbnail_bitmap
-        except Exception, ex:
-            print >> sys.stderr, 'Error loading image on topic %s: %s' % (topic, str(ex))
-            return None
-    
-    def _cache_thumbnail(self, topic, t, thumbnail):
-        # Store in the cache
-        if topic not in self.thumbnail_cache:
-            self.thumbnail_cache[topic] = []
-        topic_cache = self.thumbnail_cache[topic]
-
-        # Maintain the cache sorted
-        cache_entry = (t.to_sec(), thumbnail)
-        cache_index = bisect.bisect_right(topic_cache, cache_entry)
-        topic_cache.insert(cache_index, cache_entry)
-
-        # Limit cache size - remove the farthest entry in the cache
-        cache_size = len(topic_cache)
-        if cache_size > self.max_cache_size:
-            if cache_index < cache_size / 2:
-                del topic_cache[cache_size - 1]
-            else:
-                del topic_cache[0]
+from rxbag import bag_helper, TopicMessageView
+import image_helper
 
 class ImageView(TopicMessageView):
     name = 'Image'
@@ -278,9 +54,10 @@ class ImageView(TopicMessageView):
     def __init__(self, timeline, parent, title, x, y, width, height):
         TopicMessageView.__init__(self, timeline, parent, title, x, y, width, height)
         
-        self._image         = None
-        self._image_topic   = None
-        self._image_stamp   = None
+        self._image_lock  = threading.RLock()
+        self._image       = None
+        self._image_topic = None
+        self._image_stamp = None
         
         self._image_surface = None
         
@@ -297,7 +74,7 @@ class ImageView(TopicMessageView):
         if not msg:
             self.set_image(None, topic, stamp)
         else:
-            self.set_image(ImageHelper.imgmsg_to_pil(msg), topic, msg.header.stamp)
+            self.set_image(image_helper.imgmsg_to_pil(msg), topic, msg.header.stamp)
     
             if not self.size_set:
                 self.size_set = True
@@ -309,12 +86,13 @@ class ImageView(TopicMessageView):
         self.set_image(None, None, None)
 
     def set_image(self, image, image_topic, image_stamp):
-        self._image         = image
-        self._image_surface = None
-        
-        self._image_topic = image_topic
-        self._image_stamp = image_stamp
-        
+        with self._image_lock:
+            self._image         = image
+            self._image_surface = None
+            
+            self._image_topic = image_topic
+            self._image_stamp = image_stamp
+            
         self.invalidate()
 
     def reset_size(self):
@@ -322,10 +100,11 @@ class ImageView(TopicMessageView):
             self.parent.GetParent().SetSize(self._image.size)
 
     def on_size(self, event):
-        self.resize(*self.parent.GetClientSize())
-
-        self._image_surface = None
-        
+        with self._image_lock:
+            self.resize(*self.parent.GetClientSize())
+    
+            self._image_surface = None
+            
         self.invalidate()
 
     def _get_image_rect(self):
@@ -335,29 +114,30 @@ class ImageView(TopicMessageView):
             return 0, 0, self.width, self.height
 
     def paint(self, dc):
-        if not self._image:
-            return
-        
-        ix, iy, iw, ih = self._get_image_rect()
-
-        # Rescale the bitmap if necessary
-        if not self._image_surface:
-            if self._image.size[0] != iw or self._image.size[1] != ih:
-                self._image_surface = ImageHelper.pil_to_cairo(self._image.resize((iw, ih), self.quality))
-            else:
-                self._image_surface = ImageHelper.pil_to_cairo(self._image)
-
-        # Draw bitmap
-        dc.set_source_surface(self._image_surface, ix, iy)
-        dc.rectangle(ix, iy, iw, ih)
-        dc.fill()
-
-        # Draw overlay
-        dc.set_font_size(14.0)
-        font_height = dc.font_extents()[2]
-        dc.set_source_rgb(0.2, 0.2, 1)
-        dc.move_to(self.indent[0], self.indent[1] + font_height)
-        dc.show_text(bag_helper.stamp_to_str(self._image_stamp))
+        with self._image_lock:
+            if not self._image:
+                return
+            
+            ix, iy, iw, ih = self._get_image_rect()
+    
+            # Rescale the bitmap if necessary
+            if not self._image_surface:
+                if self._image.size[0] != iw or self._image.size[1] != ih:
+                    self._image_surface = image_helper.pil_to_cairo(self._image.resize((iw, ih), self.quality))
+                else:
+                    self._image_surface = image_helper.pil_to_cairo(self._image)
+    
+            # Draw bitmap
+            dc.set_source_surface(self._image_surface, ix, iy)
+            dc.rectangle(ix, iy, iw, ih)
+            dc.fill()
+    
+            # Draw overlay
+            dc.set_font_size(14.0)
+            font_height = dc.font_extents()[2]
+            dc.set_source_rgb(0.2, 0.2, 1)
+            dc.move_to(self.indent[0], self.indent[1] + font_height)
+            dc.show_text(bag_helper.stamp_to_str(self._image_stamp))
 
     def on_right_down(self, event):
         self.parent.PopupMenu(ImagePopupMenu(self.parent, self), event.GetPosition())
@@ -387,9 +167,9 @@ class ImageView(TopicMessageView):
         w, h = None, None
         
         total_frames = len(bag_file.read_messages(self._image_topic, raw=True))
-        
+
         for i, (topic, msg, t) in enumerate(bag_file.read_messages(self._image_topic)):
-            img = ImageHelper.imgmsg_to_wx(msg)
+            img = image_helper.imgmsg_to_wx(msg)
             if img:
                 frame_filename = '%s/frame-%s.png' % (tmpdir, str(t))
                 print '[%d / %d]' % (i + 1, total_frames)
