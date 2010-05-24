@@ -34,12 +34,11 @@
 
 PKG = 'rxbag_plugins'
 import roslib; roslib.load_manifest(PKG)
-import rospy
-import wx
 
-import image_view
-import plot_view
+from image_timeline_renderer import ImageTimelineRenderer
+from image_view              import ImageView
+from plot_view               import PlotView
 
 def get_rxbag_plugins():
-    return [(image_view.ImageView, image_view.ImageTimelineRenderer, ['sensor_msgs/Image']),
-            (plot_view.PlotView,   None,                             ['*'])]
+    return [(ImageView, ImageTimelineRenderer, ['sensor_msgs/Image']),
+            (PlotView,  None,                  ['*'])]
