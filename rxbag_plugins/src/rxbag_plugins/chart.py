@@ -70,8 +70,14 @@ class Chart(object):
     def __init__(self):
         self._lock = threading.RLock()
 
+        ## Rendering info
+
         self._width  = 400
         self._height = 400
+
+        self._palette = [(0,   0,   0.5),
+                         (0,   0.5, 0),
+                         (0.5, 0,   0)]
 
         self._margin_left   = 50
         self._margin_right  = 10
@@ -79,10 +85,23 @@ class Chart(object):
         self._margin_bottom =  2
         
         self._tick_length        = 4
+        self._tick_font_size     = 12.0
         self._tick_label_padding = 30
-        
+
+        self._legend_position       = (10.0, 10.0)   # pixel offset of top-left of legend from top-left of chart
+        self._legend_margin         = ( 4.0,  2.0)   # internal legend margin  
+        self._legend_line_thickness =  3.0           # thickness of series color indicator
+        self._legend_line_width     =  8.0           # width of series color indicator
+        self._legend_font_size      = 13.0           # height of series font
+        self._legend_line_spacing   =  3.0           # spacing between lines on the legend
+
         self._show_lines  = False
         self._show_points = True
+
+        self._x_indicator_color     = (1.0, 0.0, 0.0, 0.8)
+        self._x_indicator_thickness = 2.0
+        
+        ###
 
         self._x_interval   = None
         self._y_interval   = None
@@ -101,6 +120,10 @@ class Chart(object):
         # The displayed viewport (takes into account interval rounding)
         self._x_view = None
         self._y_view = None
+        
+        self.x_indicator = None
+
+        ##
 
         self._layout()
 
@@ -125,7 +148,7 @@ class Chart(object):
     
     @property
     def view_max_y(self): return self._y_view[1]
-    
+
     # show_x_ticks
 
     def _get_show_x_ticks(self):
@@ -231,6 +254,8 @@ class Chart(object):
         #print
 
     def _update_x_interval(self, dc):
+        dc.set_font_size(self._tick_font_size)
+        
         min_x_width = dc.text_extents(self.format_x(self.x_zoom[0]))[2]
         max_x_width = dc.text_extents(self.format_x(self.x_zoom[1]))[2]
         max_label_width = max(min_x_width, max_x_width) * 2 + self._tick_label_padding
@@ -240,6 +265,8 @@ class Chart(object):
         self._x_interval = self._get_axis_interval((self.x_zoom[1] - self.x_zoom[0]) / num_ticks)
 
     def _update_y_interval(self, dc):
+        dc.set_font_size(self._tick_font_size)
+
         label_height = dc.font_extents()[2] + self._tick_label_padding
         
         num_ticks = self.chart_height / label_height
@@ -307,16 +334,21 @@ class Chart(object):
     def paint(self, dc):
         self._draw_border(dc)
 
+        if len(self._data) == 0:
+            return
+
         dc.save()
         dc.rectangle(self.chart_left, self.chart_top, self.chart_width, self.chart_height)
         dc.clip()
         
         self._update_axes(dc)
 
-        self._draw_grid(dc)
-        self._draw_axes(dc)
         with self._lock:
+            self._draw_grid(dc)
+            self._draw_axes(dc)
             self._draw_data(dc)
+            self._draw_x_indicator(dc)
+            self._draw_legend(dc)
 
         dc.restore()
 
@@ -363,6 +395,8 @@ class Chart(object):
     def _draw_ticks(self, dc):
         dc.set_antialias(cairo.ANTIALIAS_NONE)
         dc.set_line_width(1.0)
+        
+        dc.set_font_size(self._tick_font_size)
 
         if self._show_x_ticks:
             if self.view_min_x != self.view_max_x:
@@ -428,19 +462,15 @@ class Chart(object):
                 break
 
     def _draw_data(self, dc):
-        if not any(self._data):
+        if len(self._data) == 0:
             return
 
         # @todo: handle min_x = max_x / min_y = max_y cases
-        
-        palette = [(0,   0,   0.8),
-                   (0,   0.8, 0),
-                   (0.8, 0,   0)]
 
         dc.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
         
         for i, (series, series_data) in enumerate(self._data.items()):
-            dc.set_source_rgb(*palette[i % len(palette)])
+            dc.set_source_rgb(*self._palette[i % len(self._palette)])
 
             coords = [self.coord_data_to_chart(x, y) for x, y in series_data]
 
@@ -462,3 +492,63 @@ class Chart(object):
                     dc.line_to(px - 2, py + 2)
         
                 dc.stroke()
+
+    def _draw_x_indicator(self, dc):
+        if self.x_indicator is None:
+            return
+        
+        dc.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
+
+        dc.set_line_width(self._x_indicator_thickness)
+        dc.set_source_rgba(*self._x_indicator_color)
+
+        px = self.x_data_to_chart(self.x_indicator)
+        
+        dc.move_to(px, self.chart_top)
+        dc.line_to(px, self.chart_bottom)
+        dc.stroke()
+
+    def _draw_legend(self, dc):
+        dc.set_antialias(cairo.ANTIALIAS_NONE)
+
+        dc.set_font_size(self._legend_font_size)
+        font_height = dc.font_extents()[2]
+
+        dc.save()
+        
+        dc.translate(self.chart_left + self._legend_position[0], self.chart_top + self._legend_position[1])
+        
+        legend_width = 0.0
+        for series in self._data.keys():
+            legend_width = max(legend_width, self._legend_margin[0] + self._legend_line_width + 3.0 + dc.text_extents(series)[3] + self._legend_margin[0])
+        legend_width -= 1
+
+        legend_height = self._legend_margin[1] + (font_height * len(self._data)) + (self._legend_line_spacing * (len(self._data) - 1)) + self._legend_margin[1]
+
+        dc.set_source_rgba(1, 1, 1, 0.75)
+        dc.rectangle(0, 0, legend_width, legend_height)
+        dc.fill()
+        dc.set_source_rgba(0, 0, 0, 0.5)
+        dc.set_line_width(1.0)
+        dc.rectangle(0, 0, legend_width, legend_height)
+        dc.stroke()
+
+        dc.set_line_width(self._legend_line_thickness)
+        
+        dc.translate(self._legend_margin[0], self._legend_margin[1])
+        
+        for i, (series, series_data) in enumerate(self._data.items()):
+            dc.set_source_rgb(*self._palette[i % len(self._palette)])
+        
+            dc.move_to(0, font_height / 2)
+            dc.line_to(self._legend_line_width, font_height / 2)
+            dc.stroke()
+
+            dc.translate(0, font_height)
+            dc.move_to(self._legend_line_width + 3.0, -3)
+            dc.show_text(series)
+
+            dc.translate(0, self._legend_line_spacing)
+
+        dc.restore()
+        
