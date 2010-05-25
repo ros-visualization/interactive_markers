@@ -34,6 +34,7 @@ PKG = 'rxbag_plugins'
 import roslib; roslib.load_manifest(PKG)
 
 import bisect
+import math
 import sys
 import threading
 import time
@@ -50,18 +51,8 @@ class ChartWindow(wx.Window):
 
         self._chart = Chart()
 
-        self.Bind(wx.EVT_PAINT,       self._on_paint)
-        self.Bind(wx.EVT_SIZE,        self._on_size)
-        """
-        self.Bind(wx.EVT_LEFT_DOWN,   self.on_left_down)
-        self.Bind(wx.EVT_MIDDLE_DOWN, self.on_middle_down)
-        self.Bind(wx.EVT_RIGHT_DOWN,  self.on_right_down)
-        self.Bind(wx.EVT_LEFT_UP,     self.on_left_up)
-        self.Bind(wx.EVT_MIDDLE_UP,   self.on_middle_up)
-        self.Bind(wx.EVT_RIGHT_UP,    self.on_right_up)
-        self.Bind(wx.EVT_MOTION,      self.on_mouse_move)
-        self.Bind(wx.EVT_MOUSEWHEEL,  self.on_mousewheel)
-        """
+        self.Bind(wx.EVT_PAINT, self._on_paint)
+        self.Bind(wx.EVT_SIZE,  self._on_size)
 
     def _on_size(self, event):
         self._chart.set_size(*self.ClientSize)
@@ -84,20 +75,32 @@ class Chart(object):
 
         self._margin_left   = 50
         self._margin_right  = 10
-        self._margin_top    =  6
+        self._margin_top    =  8
         self._margin_bottom =  2
         
         self._tick_length        = 4
-        self._tick_label_padding = 10
+        self._tick_label_padding = 30
         
-        self._grid_x      = 1.0
-        self._grid_y      = 0.5
         self._show_lines  = True
         self._show_points = False
 
+        self._x_interval   = None
+        self._y_interval   = None
         self._show_x_ticks = True
 
-        self._zoom_interval = None
+        # The range of the data
+        self._min_x = None
+        self._max_x = None
+        self._min_y = None
+        self._max_y = None
+
+        # The desired viewport
+        self._x_zoom = None
+        self._y_zoom = None
+
+        # The displayed viewport (takes into account interval rounding)
+        self._x_view = None
+        self._y_view = None
 
         self._layout()
 
@@ -109,25 +112,19 @@ class Chart(object):
     def view_range_x(self): return self.view_max_x - self.view_min_x
     
     @property
-    def view_min_x(self):
-        if self._zoom_interval:
-            return self._zoom_interval[0]
-            #return min(self._zoom_interval[1], max(self._zoom_interval[0], self._min_x))
-        return self._min_x
+    def view_min_x(self): return self._x_view[0]
 
     @property
-    def view_max_x(self):
-        if self._zoom_interval:
-            return self._zoom_interval[1]
-            #return min(self._zoom_interval[1], max(self._zoom_interval[0], self._max_x))
-        return self._max_x
+    def view_max_x(self): return self._x_view[1]
 
     @property
     def view_range_y(self): return self.view_max_y - self.view_min_y
+
     @property
-    def view_min_y(self): return self._min_y
+    def view_min_y(self): return self._y_view[0]
+    
     @property
-    def view_max_y(self): return self._max_y
+    def view_max_y(self): return self._y_view[1]
     
     # show_x_ticks
 
@@ -143,11 +140,11 @@ class Chart(object):
     # zoom_interval
     
     def _get_zoom_interval(self):
-        return self._zoom_interval
-    
+        return self._x_zoom
+
     def _set_zoom_interval(self, zoom_interval):
-        self._zoom_interval = zoom_interval
-        
+        self._x_zoom = zoom_interval
+
     zoom_interval = property(_get_zoom_interval, _set_zoom_interval)
 
     ## Data
@@ -183,36 +180,100 @@ class Chart(object):
 
     def x_chart_to_data(self, x):        return self.view_min_x + (x - self.chart_left)   / self.chart_width  * self.view_range_x
     def y_chart_to_data(self, y):        return self.view_min_y + (self.chart_bottom - y) / self.chart_height * self.view_range_y
+    
+    def format_x(self, x):
+        if self._x_interval is None:
+            return '%.3f' % x
+        
+        dp = max(0, int(math.ceil(-math.log10(self._x_interval))))
+        return '%.*f' % (dp, x)
+    
+    def format_y(self, y):
+        if self._y_interval is None:
+            return '%.3f' % y
+
+        dp = max(0, int(math.ceil(-math.log10(self._y_interval))))
+        return '%.*f' % (dp, y)
 
     ## Implementation
-    
-    def _get_x_ticks(self, dc):
-        if self.view_min_x == self.view_max_x:
-            return None
+
+    @property
+    def x_zoom(self):
+        if self._x_zoom is None:
+            return (self._min_x, self._max_x)
+        else:
+            return self._x_zoom
+
+    @property
+    def y_zoom(self):
+        if self._y_zoom is None:
+            return (self._min_y, self._max_y)
+        else:
+            return self._y_zoom
+
+    def _update_axes(self, dc):
+        """
+        Calculates intervals and viewport.
+        """
+        self._update_x_interval(dc)
+        self._update_y_interval(dc)
+
+        self._x_view = (self._round_min_to_interval(self.x_zoom[0], self._x_interval),
+                        self._round_max_to_interval(self.x_zoom[1], self._x_interval))
+
+        self._y_view = (self._round_min_to_interval(self.y_zoom[0], self._y_interval),
+                        self._round_max_to_interval(self.y_zoom[1], self._y_interval))
         
-        min_x_width = dc.text_extents(self.format_x(self.view_min_x))[2]
-        max_x_width = dc.text_extents(self.format_x(self.view_max_x))[2]
-        max_label_width = max(min_x_width, max_x_width) + self._tick_label_padding
+        #print 'min_x:', self._min_x, 'zoom_x[0]:', self.x_zoom[0], 'view_x[0]:', self._x_view[0]
+        #print 'max_x:', self._max_x, 'zoom_x[1]:', self.x_zoom[1], 'view_x[1]:', self._x_view[1]
+        #print 'min_y:', self._min_y, 'zoom_y[0]:', self.y_zoom[0], 'view_y[0]:', self._y_view[0]
+        #print 'max_y:', self._max_y, 'zoom_y[1]:', self.y_zoom[1], 'view_y[1]:', self._y_view[1]
+        #print
+
+    def _update_x_interval(self, dc):
+        min_x_width = dc.text_extents(self.format_x(self.x_zoom[0]))[2]
+        max_x_width = dc.text_extents(self.format_x(self.x_zoom[1]))[2]
+        max_label_width = max(min_x_width, max_x_width) * 2 + self._tick_label_padding
 
         num_ticks = self.chart_width / max_label_width
-        
-        return self.view_range_x / num_ticks
 
-    def _get_y_ticks(self, dc):
-        if self.view_min_y == self.view_max_y:
-            return None
+        self._x_interval = self._get_axis_interval((self.x_zoom[1] - self.x_zoom[0]) / num_ticks)
 
+    def _update_y_interval(self, dc):
         label_height = dc.font_extents()[2] + self._tick_label_padding
         
         num_ticks = self.chart_height / label_height
-        
-        return self.view_range_y / num_ticks
 
-    def format_x(self, x):
-        return '%.2f' % x
+        self._y_interval = self._get_axis_interval((self.y_zoom[1] - self.y_zoom[0]) / num_ticks)
 
-    def format_y(self, y):
-        return '%.2f' % y
+    def _get_axis_interval(self, range, intervals=[1.0, 2.0, 5.0]):
+        exp = -8
+        found = False
+        prev_threshold = None
+        while True:
+            multiplier = pow(10, exp)
+            for interval in intervals:
+                threshold = multiplier * interval
+                if threshold > range:
+                    return prev_threshold
+                prev_threshold = threshold
+            exp += 1
+
+    def _round_min_to_interval(self, min_val, interval, extend_touching=False):
+        rounded = interval * math.floor(min_val / interval)
+        if min_val > rounded:
+            return rounded
+        if extend_touching:
+            return min_val - interval
+        return min_val
+
+    def _round_max_to_interval(self, max_val, interval, extend_touching=False):
+        rounded = interval * math.ceil(max_val / interval)
+        if max_val < rounded:
+            return rounded
+        if extend_touching:
+            return max_val + interval
+        return max_val
 
     def _layout(self):
         self.chart_left   = self._margin_left
@@ -245,18 +306,20 @@ class Chart(object):
 
     def paint(self, dc):
         self._draw_border(dc)
-        
+
         dc.save()
         dc.rectangle(self.chart_left, self.chart_top, self.chart_width, self.chart_height)
         dc.clip()
         
+        self._update_axes(dc)
+
         self._draw_grid(dc)
         self._draw_axes(dc)
         with self._lock:
             self._draw_data(dc)
 
         dc.restore()
-        
+
         self._draw_ticks(dc)
 
     def _draw_border(self, dc):
@@ -272,13 +335,11 @@ class Chart(object):
         dc.set_dash([2, 4])
         
         if self.view_min_x != self.view_max_x:
-            min_x_grid = self.view_min_x + ((self.view_min_x + self._grid_x) % self._grid_x)
             dc.set_source_rgba(0, 0, 0, 0.2)
-            self._draw_lines(dc, self._generate_lines_x(min_x_grid, self.view_max_x, self._grid_x))
+            self._draw_lines(dc, self._generate_lines_x(self.view_min_x, self.view_max_x, self._x_interval))
         if self.view_min_y != self.view_max_y:
-            min_y_grid = self.view_min_y + ((self.view_min_y + self._grid_y) % self._grid_y)
             dc.set_source_rgba(0, 0, 0, 0.2)
-            self._draw_lines(dc, self._generate_lines_y(min_y_grid, self.view_max_y, self._grid_y))
+            self._draw_lines(dc, self._generate_lines_y(self.view_min_y, self.view_max_y, self._y_interval))
 
         dc.set_dash([])
 
@@ -304,10 +365,8 @@ class Chart(object):
         dc.set_line_width(1.0)
 
         if self._show_x_ticks:
-            x_tick = self._get_x_ticks(dc)
             if self.view_min_x != self.view_max_x:
-                min_x_tick = self.view_min_x + ((self.view_min_x + x_tick) % x_tick)
-                lines = list(self._generate_lines_x(min_x_tick, self.view_max_x, x_tick, self.chart_bottom, self.chart_bottom + self._tick_length))
+                lines = list(self._generate_lines_x(self.view_min_x, self.view_max_x + self._x_interval, self._x_interval, self.chart_bottom, self.chart_bottom + self._tick_length))
     
                 dc.set_source_rgba(0, 0, 0, 1)
                 self._draw_lines(dc, lines)
@@ -318,10 +377,8 @@ class Chart(object):
                     dc.move_to(x0 - text_width / 2, y1 + 3 + text_height)
                     dc.show_text(s)
 
-        y_tick = self._get_y_ticks(dc)
         if self.view_min_y != self.view_max_y:
-            min_y_tick = self.view_min_y + ((self.view_min_y + y_tick) % y_tick)
-            lines = list(self._generate_lines_y(min_y_tick, self.view_max_y, y_tick, self.chart_left - self._tick_length, self.chart_left))
+            lines = list(self._generate_lines_y(self.view_min_y, self.view_max_y + self._y_interval, self._y_interval, self.chart_left - self._tick_length, self.chart_left))
 
             dc.set_source_rgba(0, 0, 0, 1)
             self._draw_lines(dc, lines)
