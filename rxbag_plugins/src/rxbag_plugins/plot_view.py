@@ -65,10 +65,14 @@ class PlotView(TopicMessageView):
         self._data_thread   = None
         self._zoom_interval = None
 
+        self._configure_frames = []
+
         tb = self.frame.GetToolBar()
         icons_dir = roslib.packages.get_pkg_dir(PKG) + '/icons/'
         tb.AddSeparator()
         tb.Bind(wx.EVT_TOOL, lambda e: self.configure(), tb.AddLabelTool(wx.ID_ANY, '', wx.Bitmap(icons_dir + 'cog.png')))
+        
+        wx.CallAfter(self.configure)
 
     ## TopicMessageView implementation
 
@@ -87,10 +91,6 @@ class PlotView(TopicMessageView):
 
     def message_cleared(self):
         TopicMessageView.message_cleared(self)
-        
-    def close(self):
-        if self._data_thread:
-            self._data_thread.stop()
 
     ## View region
 
@@ -154,8 +154,11 @@ class PlotView(TopicMessageView):
             self.parent.PopupMenu(PlotPopupMenu(self.parent, self), self.clicked_pos)
 
     def on_close(self, event):
-        self.stop_loading()
+        for configure_frame in list(self._configure_frames):
+            configure_frame.Close()
 
+        self.stop_loading()
+        
         TopicMessageView.on_close(self, event)
 
     def reload(self):
@@ -193,7 +196,9 @@ class PlotView(TopicMessageView):
 
     def configure(self):
         if self._msg:
-            PlotConfigureFrame(self).Show()
+            configure_frame = PlotConfigureFrame(self)
+            self._configure_frames.append(configure_frame)
+            configure_frame.Show()
 
 class PlotPopupMenu(wx.Menu):
     periods = [(  -1, 'All'),

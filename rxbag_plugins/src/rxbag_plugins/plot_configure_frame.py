@@ -84,7 +84,13 @@ class PlotConfigureFrame(wx.Frame):
         splitter.SetSashPosition(400)
         splitter.SetMinimumPaneSize(100)
 
+        self.Bind(wx.EVT_CLOSE, self.on_close)
+
         self._create_toolbar()
+
+    def on_close(self, event):
+        self.plot._configure_frames.remove(self)
+        event.Skip()
 
     def _create_toolbar(self):
         icons_dir = roslib.packages.get_pkg_dir(PKG) + '/icons/'

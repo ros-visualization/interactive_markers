@@ -95,10 +95,10 @@ class Chart(object):
         self._legend_font_size      = 13.0           # height of series font
         self._legend_line_spacing   =  3.0           # spacing between lines on the legend
 
-        self._show_lines  = False
+        self._show_lines  = True
         self._show_points = True
 
-        self._x_indicator_color     = (1.0, 0.0, 0.0, 0.8)
+        self._x_indicator_color     = (1.0, 0.2, 0.2, 0.5)
         self._x_indicator_thickness = 2.0
         
         ###
@@ -400,11 +400,11 @@ class Chart(object):
 
         if self._show_x_ticks:
             if self.view_min_x != self.view_max_x:
-                lines = list(self._generate_lines_x(self.view_min_x, self.view_max_x + self._x_interval, self._x_interval, self.chart_bottom, self.chart_bottom + self._tick_length))
-    
+                lines = list(self._generate_lines_x(self.view_min_x, self.view_max_x, self._x_interval, self.chart_bottom, self.chart_bottom + self._tick_length))
+
                 dc.set_source_rgba(0, 0, 0, 1)
                 self._draw_lines(dc, lines)
-    
+
                 for x0, y0, x1, y1 in lines:
                     s = self.format_x(self.x_chart_to_data(x0))
                     text_width, text_height = dc.text_extents(s)[2:4]
@@ -412,7 +412,7 @@ class Chart(object):
                     dc.show_text(s)
 
         if self.view_min_y != self.view_max_y:
-            lines = list(self._generate_lines_y(self.view_min_y, self.view_max_y + self._y_interval, self._y_interval, self.chart_left - self._tick_length, self.chart_left))
+            lines = list(self._generate_lines_y(self.view_min_y, self.view_max_y, self._y_interval, self.chart_left - self._tick_length, self.chart_left))
 
             dc.set_source_rgba(0, 0, 0, 1)
             self._draw_lines(dc, lines)
@@ -442,7 +442,7 @@ class Chart(object):
         while True:
             yield px, py0, px, py1
             px += px_step
-            if px >= px1:
+            if px > px1:
                 break
 
     def _generate_lines_y(self, y0, y1, y_step, px0=None, px1=None):
@@ -458,7 +458,7 @@ class Chart(object):
         while True:
             yield px0, py, px1, py
             py -= py_step
-            if py <= py1:
+            if py < py1:
                 break
 
     def _draw_data(self, dc):
@@ -508,6 +508,24 @@ class Chart(object):
         dc.line_to(px, self.chart_bottom)
         dc.stroke()
 
+        pw, ph = 6, 6
+
+        # Upper triangle
+        py = self.chart_top
+        dc.move_to(px,      py + ph)
+        dc.line_to(px + pw, py)
+        dc.line_to(px - pw, py)
+        dc.line_to(px ,     py + ph)
+        dc.fill()
+
+        # Lower triangle
+        py = self.chart_bottom - ph
+        dc.move_to(px,      py)
+        dc.line_to(px + pw, py + ph)
+        dc.line_to(px - pw, py + ph)
+        dc.line_to(px,      py)
+        dc.fill()
+
     def _draw_legend(self, dc):
         dc.set_antialias(cairo.ANTIALIAS_NONE)
 
@@ -551,4 +569,3 @@ class Chart(object):
             dc.translate(0, self._legend_line_spacing)
 
         dc.restore()
-        
