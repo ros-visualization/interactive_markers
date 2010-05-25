@@ -42,10 +42,8 @@ import wx
 
 import Image
 
-from rxbag import bag_helper, TimelineRenderer
+from rxbag import bag_helper, TimelineCache, TimelineRenderer
 
-#from thumbnail_cache import ThumbnailCache
-from timeline_cache import TimelineCache
 import image_helper
 
 class ImageTimelineRenderer(TimelineRenderer):
@@ -61,7 +59,6 @@ class ImageTimelineRenderer(TimelineRenderer):
         self.min_thumbnail_width  = 8                    # don't display thumbnails if less than this many pixels across
         self.quality              = Image.NEAREST        # quality hint for thumbnail scaling
 
-        #self.thumbnail_cache = ThumbnailCache(self._load_thumbnail, lambda topic, msg_stamp, thumbnail: self.timeline.invalidate())
         self.thumbnail_cache = TimelineCache(self._load_thumbnail, lambda topic, msg_stamp, thumbnail: self.timeline.invalidate())
 
     # TimelineRenderer implementation
@@ -150,7 +147,7 @@ class ImageTimelineRenderer(TimelineRenderer):
         t = rospy.Time.from_sec(stamp)
         bag, entry = self.timeline.get_entry(t, topic)
         if not entry:
-            return None
+            return None, None
         pos = entry.position
 
         # Not in the cache; load from the bag file
@@ -163,10 +160,10 @@ class ImageTimelineRenderer(TimelineRenderer):
             pil_image = image_helper.imgmsg_to_pil(msg)
         except Exception, ex:
             print >> sys.stderr, 'Error loading image on topic %s: %s' % (topic, str(ex)) 
-            return None
+            return None, None
         
         if not pil_image:
-            return None
+            return None, None
         
         # Calculate width to maintain aspect ratio
         try:
