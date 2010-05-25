@@ -128,9 +128,10 @@ class PlotView(TopicMessageView):
 
             for chart_index, plot in enumerate(self.plot_paths):
                 chart = self._charts[chart_index]
-                
+
                 chart.zoom_interval = self._zoom_interval
-                
+                chart.x_indicator   = (self.timeline.playhead - self.timeline.start_stamp).to_sec()
+
                 data = {}
                 for plot_path in plot:
                     if plot_path in self._data_thread._data:
@@ -173,8 +174,9 @@ class PlotView(TopicMessageView):
         
     def layout_charts(self):
         w, h = self.parent.GetClientSize()
-        if any(self._charts):
-            chart_height = h / len(self._charts)
+        num_charts = len(self._charts)
+        if num_charts > 0:
+            chart_height = h / num_charts
             for chart in self._charts:
                 chart.set_size(w, chart_height)
 
