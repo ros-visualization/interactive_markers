@@ -81,8 +81,8 @@ class Chart(object):
         self._tick_length        = 4
         self._tick_label_padding = 30
         
-        self._show_lines  = True
-        self._show_points = False
+        self._show_lines  = False
+        self._show_points = True
 
         self._x_interval   = None
         self._y_interval   = None
