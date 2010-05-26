@@ -67,7 +67,7 @@ class PlotDataLoader(threading.Thread):
     def run(self):
         while not self.stop_flag:
             if self.view_region_dirty:
-                self._view_entries = list(self.plot.timeline.get_entries(self.topic, self.start_stamp, self.end_stamp))
+                self._view_entries = list(self.plot.timeline.get_entries_with_bags(self.topic, self.start_stamp, self.end_stamp))
                 subdivider = self.subdivide(0, len(self._view_entries) - 1)
                 self.view_region_dirty = False
 
@@ -80,8 +80,9 @@ class PlotDataLoader(threading.Thread):
                 continue
 
             with self.plot.timeline._bag_lock:
-                topic, msg, msg_stamp = self.plot.timeline.read_message(bag, self._view_entries[index].position)
-            
+                bag, entry = self._view_entries[index]
+                topic, msg, msg_stamp = self.plot.timeline.read_message(bag, entry.position)
+
             if not msg:
                 continue
 
@@ -98,7 +99,7 @@ class PlotDataLoader(threading.Thread):
                         
                         plot_stamp = header.stamp.to_sec()
                     else:
-                        plot_stamp = stamp
+                        plot_stamp = msg_stamp.to_sec()
 
                     value = eval('msg.' + plot_path)
 
@@ -118,7 +119,6 @@ class PlotDataLoader(threading.Thread):
             time.sleep(0.2)
             
             if len(self._loaded) == len(self._view_entries):
-                print 'Finished loading.'
                 break
 
     def stop(self):
