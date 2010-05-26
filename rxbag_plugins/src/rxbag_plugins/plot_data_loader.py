@@ -53,7 +53,7 @@ class PlotDataLoader(threading.Thread):
         self._loaded = set()
         self._data = {}
 
-        self.set_view_region(self.plot.timeline.start_stamp.to_sec(), self.plot.timeline.end_stamp.to_sec())
+        self.set_view_region(self.plot.timeline.start_stamp, self.plot.timeline.end_stamp)
 
         self.setDaemon(True)
         self.start()
@@ -67,7 +67,7 @@ class PlotDataLoader(threading.Thread):
     def run(self):
         while not self.stop_flag:
             if self.view_region_dirty:
-                self._view_entries = list(self.plot.timeline.get_entries(self.topic, rospy.Time.from_sec(self.start_stamp), rospy.Time.from_sec(self.end_stamp)))
+                self._view_entries = list(self.plot.timeline.get_entries(self.topic, self.start_stamp, self.end_stamp))
                 subdivider = self.subdivide(0, len(self._view_entries) - 1)
                 self.view_region_dirty = False
 
@@ -78,19 +78,12 @@ class PlotDataLoader(threading.Thread):
 
             if index in self._loaded:
                 continue
-            
-            stamp = self._view_entries[index].time.to_sec()
-            
-            t = rospy.Time.from_sec(stamp)
 
             with self.plot.timeline._bag_lock:
-                bag, entry = self.plot.timeline.get_entry(t, self.topic)
-                if entry is None:
-                    continue
-                
-                (topic, msg, msg_stamp) = self.plot.timeline.read_message(bag, entry.position)
-                if not msg:
-                    continue
+                topic, msg, msg_stamp = self.plot.timeline.read_message(bag, self._view_entries[index].position)
+            
+            if not msg:
+                continue
 
             use_header_stamp = False
 
@@ -121,9 +114,8 @@ class PlotDataLoader(threading.Thread):
 
             self._loaded.add(index)
 
-            if len(self._loaded) % 20 == 0:
-                self.plot.invalidate()
-                time.sleep(0.01)
+            self.plot.invalidate()
+            time.sleep(0.2)
             
             if len(self._loaded) == len(self._view_entries):
                 print 'Finished loading.'

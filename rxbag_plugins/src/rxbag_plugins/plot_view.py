@@ -65,7 +65,7 @@ class PlotView(TopicMessageView):
         self._data_thread   = None
         self._zoom_interval = None
 
-        self._configure_frames = []
+        self._configure_frame = None
 
         tb = self.frame.GetToolBar()
         icons_dir = roslib.packages.get_pkg_dir(PKG) + '/icons/'
@@ -90,7 +90,11 @@ class PlotView(TopicMessageView):
         self.set_playhead((t - self.timeline.start_stamp).to_sec())
 
     def message_cleared(self):
+        self._msg = None
+        
         TopicMessageView.message_cleared(self)
+        
+        self.invalidate()
 
     ## View region
 
@@ -102,16 +106,16 @@ class PlotView(TopicMessageView):
     def _update_view_region(self):
         if self._data_thread:
             if self.period < 0:
-                start_stamp = self.timeline.start_stamp.to_sec()
-                end_stamp   = self.timeline.end_stamp.to_sec()
+                start_stamp = self.timeline.start_stamp
+                end_stamp   = self.timeline.end_stamp
             else:
-                start_stamp = self.timeline.start_stamp.to_sec() + self.playhead - (self.period / 2)
-                end_stamp   = start_stamp + self.period
+                start_stamp = self.timeline.start_stamp + rospy.Duration.from_sec(self.playhead - (self.period / 2))
+                end_stamp   = start_stamp + rospy.Duration.from_sec(self.period)
 
             self._data_thread.set_view_region(start_stamp, end_stamp)
-            
-            self._zoom_interval = (start_stamp - self.timeline.start_stamp.to_sec(),
-                                   end_stamp   - self.timeline.start_stamp.to_sec())
+
+            self._zoom_interval = ((start_stamp - self.timeline.start_stamp).to_sec(),
+                                   (end_stamp   - self.timeline.start_stamp).to_sec())
 
     def set_playhead(self, playhead):
         self.playhead = playhead
@@ -119,31 +123,36 @@ class PlotView(TopicMessageView):
         self.invalidate()
 
     def paint(self, dc):
-        if self._data_thread and any(self._charts):
+        if not self._data_thread or len(self._charts) == 0:
+            return
+        
+        data = {}
+
+        chart_height = self.parent.GetClientSize()[1] / len(self._charts)
+
+        dc.save()
+
+        for chart_index, plot in enumerate(self.plot_paths):
+            chart = self._charts[chart_index]
+
+            chart.zoom_interval = self._zoom_interval
+            if self._msg:
+                chart.x_indicator = (self.timeline.playhead - self.timeline.start_stamp).to_sec()
+            else:
+                chart.x_indicator = None
+
             data = {}
+            for plot_path in plot:
+                if plot_path in self._data_thread._data:
+                    data[plot_path] = self._data_thread._data[plot_path]
 
-            chart_height = self.parent.GetClientSize()[1] / len(self._charts)
+            chart._data = data
+            chart._update_ranges()
 
-            dc.save()
+            chart.paint(dc)
+            dc.translate(0, chart_height)
 
-            for chart_index, plot in enumerate(self.plot_paths):
-                chart = self._charts[chart_index]
-
-                chart.zoom_interval = self._zoom_interval
-                chart.x_indicator   = (self.timeline.playhead - self.timeline.start_stamp).to_sec()
-
-                data = {}
-                for plot_path in plot:
-                    if plot_path in self._data_thread._data:
-                        data[plot_path] = self._data_thread._data[plot_path]
-
-                chart._data = data
-                chart._update_ranges()
-
-                chart.paint(dc)
-                dc.translate(0, chart_height)
-
-            dc.restore()
+        dc.restore()
 
     def on_size(self, event):
         self.layout_charts()
@@ -154,8 +163,8 @@ class PlotView(TopicMessageView):
             self.parent.PopupMenu(PlotPopupMenu(self.parent, self), self.clicked_pos)
 
     def on_close(self, event):
-        for configure_frame in list(self._configure_frames):
-            configure_frame.Close()
+        if self._configure_frame:
+            self._configure_frame.Close()
 
         self.stop_loading()
         
@@ -195,10 +204,15 @@ class PlotView(TopicMessageView):
             self._data_thread = PlotDataLoader(self, self.topic)
 
     def configure(self):
+        if self._configure_frame:
+            return
+        
         if self._msg:
-            configure_frame = PlotConfigureFrame(self)
-            self._configure_frames.append(configure_frame)
-            configure_frame.Show()
+            self._configure_frame = PlotConfigureFrame(self)
+            
+            frame = self.parent.GetTopLevelParent()
+            self._configure_frame.SetPosition((frame.Position[0] + frame.Size[0] + 20, frame.Position[1]))
+            self._configure_frame.Show()
 
 class PlotPopupMenu(wx.Menu):
     periods = [(  -1, 'All'),
