@@ -50,7 +50,7 @@ class PlotConfigureFrame(wx.Frame):
     Choose data to extract from messages.
     """
     def __init__(self, plot):
-        wx.Frame.__init__(self, None, title=plot.frame.GetTitle() + ' - Configure', size=(500, 300))
+        wx.Frame.__init__(self, None, title=plot.frame.GetTitle() + ' - Configure', size=(600, 400))
 
         self.plot = plot
 
@@ -81,7 +81,7 @@ class PlotConfigureFrame(wx.Frame):
         self.plot_tree.SelectItem(self.plot_items[0])
 
         splitter.SplitVertically(self.msg_tree, self.plot_tree)
-        splitter.SetSashPosition(250)
+        splitter.SetSashPosition(350)
         splitter.SetMinimumPaneSize(100)
 
         self.Bind(wx.EVT_CLOSE, self.on_close)

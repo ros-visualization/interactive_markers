@@ -34,6 +34,7 @@ PKG = 'rxbag_plugins'
 import roslib; roslib.load_manifest(PKG)
 import rospy
 
+import bisect
 import csv
 import sys
 import threading
@@ -54,13 +55,32 @@ import image_helper
 class PlotView(TopicMessageView):
     name = 'Plot'
 
+    periods = [(  -1, 'All'),
+               ( 0.1, '100ms'),
+               ( 0.2, '200ms'),
+               ( 0.5, '500ms'),
+               (   1, '1s'),
+               (   2, '2s'),
+               (   5, '5s'),
+               (  10, '10s'),
+               (  15, '15s'),
+               (  30, '30s'),
+               (  60, '60s'),
+               (  90, '90s'),
+               ( 120, '2min'),
+               ( 300, '5min'),
+               ( 600, '10min'),
+               (1200, '20min'),
+               (1800, '30min'),
+               (3600, '1hr')]
+    
     def __init__(self, timeline, parent, title, x, y, width, height):
         TopicMessageView.__init__(self, timeline, parent, title, x, y, width, height)
 
         self.topic          = None
         self._msg           = None
         self.plot_paths     = []
-        self.period         = -1
+        self._period        = -1
         self._charts        = []
         self._data_thread   = None
         self._zoom_interval = None
@@ -98,19 +118,23 @@ class PlotView(TopicMessageView):
 
     ## View region
 
-    def set_period(self, period):
-        self.period = period
+    def _get_period(self): return self._period
+    
+    def _set_period(self, period):
+        self._period = period
         
         self._update_view_region()
+        
+    period = property(_get_period, _set_period)
             
     def _update_view_region(self):
         if self._data_thread:
-            if self.period < 0:
+            if self._period < 0:
                 start_stamp = self.timeline.start_stamp
                 end_stamp   = self.timeline.end_stamp
             else:
-                start_stamp = self.timeline.start_stamp + rospy.Duration.from_sec(self.playhead - (self.period / 2))
-                end_stamp   = start_stamp + rospy.Duration.from_sec(self.period)
+                start_stamp = self.timeline.start_stamp + rospy.Duration.from_sec(self.playhead - (self._period / 2))
+                end_stamp   = start_stamp + rospy.Duration.from_sec(self._period)
 
             self._data_thread.set_view_region(start_stamp, end_stamp)
 
@@ -162,28 +186,50 @@ class PlotView(TopicMessageView):
         if self.contains(*self.clicked_pos):
             self.parent.PopupMenu(PlotPopupMenu(self.parent, self), self.clicked_pos)
 
+    def on_mousewheel(self, event):
+        dz = event.GetWheelRotation() / event.GetWheelDelta()
+
+        index = None
+        for i, (period, _) in enumerate(self.periods):
+            if period == self._period:
+                index = i
+                break
+
+        if dz < 0:
+            self.period = self.periods[min(len(self.periods) - 1, index + 1)][0]
+        elif dz > 0:
+            self.period = self.periods[max(1, index - 1)][0]
+
+        self.invalidate()
+
     def on_close(self, event):
         if self._configure_frame:
             self._configure_frame.Close()
 
         self.stop_loading()
-        
+
         TopicMessageView.on_close(self, event)
 
     def reload(self):
         self.stop_loading()
-        
+
         self._charts = []
+        
+        palette_offset = 0
         for i, plot in enumerate(self.plot_paths):
             chart = Chart()
+            chart.palette_offset = palette_offset
             if i < len(self.plot_paths) - 1:
                 chart.show_x_ticks = False
+
+            palette_offset += len(plot)
+
             self._charts.append(chart)
 
         self.layout_charts()
-        
+
         self.start_loading()
-        
+
     def layout_charts(self):
         w, h = self.parent.GetClientSize()
         num_charts = len(self._charts)
@@ -211,22 +257,10 @@ class PlotView(TopicMessageView):
             self._configure_frame = PlotConfigureFrame(self)
             
             frame = self.parent.GetTopLevelParent()
-            self._configure_frame.SetPosition((frame.Position[0] + frame.Size[0] + 20, frame.Position[1]))
+            self._configure_frame.SetPosition((frame.Position[0] + frame.Size[0] + 10, frame.Position[1]))
             self._configure_frame.Show()
 
 class PlotPopupMenu(wx.Menu):
-    periods = [(  -1, 'All'),
-               (   1, '1s'),
-               (   5, '5s'),
-               (  10, '10s'),
-               (  30, '30s'),
-               (  60, '1min'),
-               ( 120, '2min'),
-               ( 300, '5min'),
-               ( 600, '10min'),
-               (1800, '30min'),
-               (3600, '1hr')]
-    
     def __init__(self, parent, plot):
         wx.Menu.__init__(self)
 
@@ -242,7 +276,7 @@ class PlotPopupMenu(wx.Menu):
         self.interval_menu = wx.Menu()
         self.AppendSubMenu(self.interval_menu, 'Interval...', 'Timeline interval to plot')
 
-        for period, label in self.periods:
+        for period, label in plot.periods:
             period_item = self.PeriodMenuItem(self.interval_menu, wx.NewId(), label, period, plot)
             self.interval_menu.AppendItem(period_item)
             period_item.Check(plot.period == period_item.period)
@@ -270,5 +304,5 @@ class PlotPopupMenu(wx.Menu):
             parent.Bind(wx.EVT_MENU, self.on_menu, id=self.GetId())
     
         def on_menu(self, event):
-            self.plot.set_period(self.period)
+            self.plot.period = self.period
             self.plot.invalidate()

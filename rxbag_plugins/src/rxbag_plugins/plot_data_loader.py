@@ -97,14 +97,13 @@ class PlotDataLoader(threading.Thread):
                         else:
                             header = PlotDataLoader.get_header(msg, plot_path)
                         
-                        plot_stamp = header.stamp.to_sec()
+                        plot_stamp = header.stamp
                     else:
-                        plot_stamp = msg_stamp.to_sec()
+                        plot_stamp = msg_stamp
 
-                    value = eval('msg.' + plot_path)
+                    x = (plot_stamp - self.plot.timeline.start_stamp).to_sec()
 
-                    x = plot_stamp - self.plot.timeline.start_stamp.to_sec()
-                    y = value
+                    y = eval('msg.' + plot_path)
 
                     if plot_path not in self._data:
                         self._data[plot_path] = []
@@ -116,7 +115,7 @@ class PlotDataLoader(threading.Thread):
             self._loaded.add(index)
 
             self.plot.invalidate()
-            time.sleep(0.2)
+            #time.sleep(0.05)
             
             if len(self._loaded) == len(self._view_entries):
                 break

@@ -89,14 +89,15 @@ class Chart(object):
         self._tick_label_padding = 30
 
         self._legend_position       = (10.0, 10.0)   # pixel offset of top-left of legend from top-left of chart
-        self._legend_margin         = ( 4.0,  2.0)   # internal legend margin  
+        self._legend_margin         = ( 6.0,  3.0)   # internal legend margin  
         self._legend_line_thickness =  3.0           # thickness of series color indicator
         self._legend_line_width     =  8.0           # width of series color indicator
         self._legend_font_size      = 13.0           # height of series font
         self._legend_line_spacing   =  3.0           # spacing between lines on the legend
 
-        self._show_lines  = True
-        self._show_points = True
+        self._palette_offset = 0
+        self._show_lines     = True
+        self._show_points    = True
 
         self._x_indicator_color     = (1.0, 0.2, 0.2, 0.5)
         self._x_indicator_thickness = 2.0
@@ -106,6 +107,8 @@ class Chart(object):
         self._x_interval   = None
         self._y_interval   = None
         self._show_x_ticks = True
+
+        self._num_points = 0
 
         # The range of the data
         self._min_x = None
@@ -148,6 +151,17 @@ class Chart(object):
     
     @property
     def view_max_y(self): return self._y_view[1]
+
+    # palette_offset
+    
+    def _get_palette_offset(self):
+        return self._palette_offset
+
+    def _set_palette_offset(self, palette_offset):
+        self._palette_offset = palette_offset
+        # @todo: refresh
+
+    palette_offset = property(_get_palette_offset, _set_palette_offset)
 
     # show_x_ticks
 
@@ -246,7 +260,7 @@ class Chart(object):
 
         self._y_view = (self._round_min_to_interval(self.y_zoom[0], self._y_interval),
                         self._round_max_to_interval(self.y_zoom[1], self._y_interval))
-        
+
         #print 'min_x:', self._min_x, 'zoom_x[0]:', self.x_zoom[0], 'view_x[0]:', self._x_view[0]
         #print 'max_x:', self._max_x, 'zoom_x[1]:', self.x_zoom[1], 'view_x[1]:', self._x_view[1]
         #print 'min_y:', self._min_y, 'zoom_y[0]:', self.y_zoom[0], 'view_y[0]:', self._y_view[0]
@@ -268,7 +282,7 @@ class Chart(object):
         dc.set_font_size(self._tick_font_size)
 
         label_height = dc.font_extents()[2] + self._tick_label_padding
-        
+
         num_ticks = self.chart_height / label_height
 
         self._y_interval = self._get_axis_interval((self.y_zoom[1] - self.y_zoom[0]) / num_ticks)
@@ -313,12 +327,17 @@ class Chart(object):
 
     def _update_ranges(self):
         with self._lock:
-            min_x, max_x, min_y, max_y = None, None, None, None
-            if any(self._data):
+            min_x,  max_x,  min_y,  max_y  = None, None, None, None
+            min_dx, max_dx, min_dy, max_dy = None, None, None, None
+            num_points = 0
+
+            if len(self._data) > 0:
                 x, y = self._data.values()[0][0]
                 min_x, max_x, min_y, max_y = x, x, y, y
 
                 for series, data in self._data.items():
+                    prev_x, prev_y = None, None
+                    
                     for x, y in data:
                         if x < min_x:
                             min_x = x
@@ -329,12 +348,33 @@ class Chart(object):
                         elif y > max_y:
                             max_y = y
 
-            self._min_x, self._max_x, self._min_y, self._max_y = min_x, max_x, min_y, max_y
+                        if prev_x is not None:
+                            dx, dy = x - prev_x, y - prev_y
+
+                            if min_dx is None:
+                                min_dx, max_dx, min_dy, max_dy = dx, dx, dy, dy
+                            else:
+                                if dx < min_dx:
+                                    min_dx = dx
+                                elif dx > max_dx:
+                                    max_dx = dx
+                                if dy < min_dy:
+                                    min_dy = dy
+                                elif dy > max_dy:
+                                    max_dy = dy
+
+                        prev_x, prev_y = x, y
+                        
+                        num_points += 1
+
+            self._min_x,  self._max_x,  self._min_y,  self._max_y  = min_x,  max_x,  min_y,  max_y
+            self._min_dx, self._max_dx, self._min_dy, self._max_dy = min_dx, max_dx, min_dy, max_dy
+            self._num_points = num_points
 
     def paint(self, dc):
         self._draw_border(dc)
 
-        if len(self._data) == 0:
+        if self._num_points < 2:
             return
 
         dc.save()
@@ -469,8 +509,8 @@ class Chart(object):
 
         dc.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
         
-        for i, (series, series_data) in enumerate(self._data.items()):
-            dc.set_source_rgb(*self._palette[i % len(self._palette)])
+        for series, series_data in self._data.items():
+            dc.set_source_rgb(*self._get_color(series))
 
             coords = [self.coord_data_to_chart(x, y) for x, y in series_data]
 
@@ -483,14 +523,14 @@ class Chart(object):
                 dc.stroke()
 
             # Draw points
-            if self._show_points:
+            if self._show_points and (self._min_dx is not None and self.dx_data_to_chart(self._min_dx) > 2.0):
                 dc.set_line_width(1.5)
                 for px, py in coords:
-                    dc.move_to(px - 2, py - 2)
-                    dc.line_to(px + 2, py + 2)
-                    dc.move_to(px + 2, py - 2)
-                    dc.line_to(px - 2, py + 2)
-        
+                    dc.move_to(px - 1, py - 1)
+                    dc.line_to(px + 1, py + 1)
+                    dc.move_to(px + 1, py - 1)
+                    dc.line_to(px - 1, py + 1)
+
                 dc.stroke()
 
     def _draw_x_indicator(self, dc):
@@ -538,8 +578,7 @@ class Chart(object):
         
         legend_width = 0.0
         for series in self._data.keys():
-            legend_width = max(legend_width, self._legend_margin[0] + self._legend_line_width + 3.0 + dc.text_extents(series)[3] + self._legend_margin[0])
-        legend_width -= 1
+            legend_width = max(legend_width, self._legend_margin[0] + self._legend_line_width + 3.0 + dc.text_extents(series)[2] + self._legend_margin[0])
 
         legend_height = self._legend_margin[1] + (font_height * len(self._data)) + (self._legend_line_spacing * (len(self._data) - 1)) + self._legend_margin[1]
 
@@ -555,8 +594,8 @@ class Chart(object):
         
         dc.translate(self._legend_margin[0], self._legend_margin[1])
         
-        for i, (series, series_data) in enumerate(self._data.items()):
-            dc.set_source_rgb(*self._palette[i % len(self._palette)])
+        for series, series_data in self._data.items():
+            dc.set_source_rgb(*self._get_color(series))
         
             dc.move_to(0, font_height / 2)
             dc.line_to(self._legend_line_width, font_height / 2)
@@ -569,3 +608,7 @@ class Chart(object):
             dc.translate(0, self._legend_line_spacing)
 
         dc.restore()
+
+    def _get_color(self, series):
+        index = (self._palette_offset + self._data.keys().index(series)) % len(self._palette)
+        return self._palette[index]
