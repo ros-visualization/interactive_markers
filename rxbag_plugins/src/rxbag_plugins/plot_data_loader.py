@@ -41,118 +41,174 @@ import threading
 import time
 
 class PlotDataLoader(threading.Thread):
-    def __init__(self, plot, topic):
-        threading.Thread.__init__(self)
+    def __init__(self, timeline, topic):
+        threading.Thread.__init__(self, target=self._run)
 
-        self.plot  = plot
-        self.topic = topic
-        
-        self.stop_flag = False
+        self._timeline = timeline
+        self._topic    = topic
 
-        self._view_entries = None
-        self._loaded = set()
-        self._data = {}
+        self._start_stamp = self._timeline.start_stamp
+        self._end_stamp   = self._timeline.end_stamp
+        self._paths       = []
+        self._dirty       = True
 
-        self.set_view_region(self.plot.timeline.start_stamp, self.plot.timeline.end_stamp)
+        self._entries = []
+        self._loaded  = set()
+        self._data    = {}
 
+        self._listeners = []
+
+        self._stop_flag = False
         self.setDaemon(True)
         self.start()
 
-    def set_view_region(self, start_stamp, end_stamp):
-        self.start_stamp = start_stamp
-        self.end_stamp   = end_stamp
+    # listeners
 
-        self.view_region_dirty = True
+    def add_listener(self, listener):
+        self._listeners.append(listener)
 
-    def run(self):
-        while not self.stop_flag:
-            if self.view_region_dirty:
-                self._view_entries = list(self.plot.timeline.get_entries_with_bags(self.topic, self.start_stamp, self.end_stamp))
-                subdivider = self.subdivide(0, len(self._view_entries) - 1)
-                self.view_region_dirty = False
+    def remove_listener(self, listener):
+        self._listeners.remove(listener)
+
+    # property: start_stamp
+
+    def _get_start_stamp(self): return self._start_stamp
+    
+    def _set_start_stamp(self, start_stamp):
+        if start_stamp == self._start_stamp:
+            return
+
+        self._start_stamp = start_stamp
+        self._dirty = True
+        
+    start_stamp = property(_get_start_stamp, _set_start_stamp)
+
+    # property: end_stamp
+
+    def _get_end_stamp(self): return self._end_stamp
+    
+    def _set_end_stamp(self, end_stamp):
+        if end_stamp == self._end_stamp:
+            return
+        
+        self._end_stamp = end_stamp
+        self._dirty = True
+        
+    end_stamp = property(_get_end_stamp, _set_end_stamp)
+
+    # property: paths
+        
+    def _get_paths(self): return self._paths
+    
+    def _set_paths(self, paths):
+        if set(paths) == set(self._paths):
+            return
+
+        self._paths = paths
+        self._dirty = True
+
+    paths = property(_get_paths, _set_paths)
+
+    def stop(self):
+        self._stop_flag = True
+        self.join()
+
+    ##
+
+    def _run(self):
+        while not self._stop_flag:
+            if self._dirty:
+                self._entries = list(self._timeline.get_entries_with_bags(self._topic, self._start_stamp, self._end_stamp))
+                self._loaded  = set()
+                subdivider = _subdivide(0, len(self._entries) - 1)
+                self._dirty = False
+
+            if subdivider is None or len(self._paths) == 0:
+                print 'sleeping...'
+                time.sleep(0.2)
+                continue
 
             try:
                 index = subdivider.next()
             except StopIteration:
-                break
+                subdivider = None
 
             if index in self._loaded:
                 continue
 
-            with self.plot.timeline._bag_lock:
-                bag, entry = self._view_entries[index]
-                topic, msg, msg_stamp = self.plot.timeline.read_message(bag, entry.position)
+            with self._timeline._bag_lock:
+                bag, entry = self._entries[index]
+                topic, msg, msg_stamp = self._timeline.read_message(bag, entry.position)
 
             if not msg:
                 continue
 
             use_header_stamp = False
 
-            series_index = 0
-            for plot in self.plot.plot_paths:
-                for plot_path in plot:
-                    if use_header_stamp:
-                        if msg.__class__._has_header:
-                            header = msg.header
-                        else:
-                            header = PlotDataLoader.get_header(msg, plot_path)
-                        
-                        plot_stamp = header.stamp
+            for path in self._paths:
+                if use_header_stamp:
+                    if msg.__class__._has_header:
+                        header = msg.header
                     else:
-                        plot_stamp = msg_stamp
+                        header = _get_header(msg, plot_path)
+                    
+                    plot_stamp = header.stamp
+                else:
+                    plot_stamp = msg_stamp
 
-                    x = (plot_stamp - self.plot.timeline.start_stamp).to_sec()
+                try:
+                    y = eval('msg.' + path)
+                except Exception:
+                    continue
 
-                    y = eval('msg.' + plot_path)
+                x = (plot_stamp - self._timeline.start_stamp).to_sec()
 
-                    if plot_path not in self._data:
-                        self._data[plot_path] = []
+                if path not in self._data:
+                    self._data[path] = []
 
-                    bisect.insort_right(self._data[plot_path], (x, y))
-
-                    series_index += 1
+                bisect.insort_right(self._data[path], (x, y))
 
             self._loaded.add(index)
 
-            self.plot.invalidate()
-            #time.sleep(0.05)
-            
-            if len(self._loaded) == len(self._view_entries):
-                break
+            for listener in self._listeners:
+                listener()
 
-    def stop(self):
-        self.stop_flag = True
-        self.join()
+def _get_header(msg, path):
+    fields = path.split('.')
+    if len(fields) <= 1:
+        return None
 
-    @staticmethod
-    def get_header(msg, path):
-        fields = path.split('.')
-        if len(fields) <= 1:
-            return None
-        
-        parent_path = '.'.join(fields[:-1])
+    parent_path = '.'.join(fields[:-1])
 
-        parent = eval('msg.' + parent_path)
-        
-        for slot in parent.__slots__:
-            subobj = getattr(parent, slot)
-            if subobj is not None and hasattr(subobj, '_type') and getattr(subobj, '_type') == 'roslib/Header':
-                return subobj
+    parent = eval('msg.' + parent_path)
+    
+    for slot in parent.__slots__:
+        subobj = getattr(parent, slot)
+        if subobj is not None and hasattr(subobj, '_type') and getattr(subobj, '_type') == 'roslib/Header':
+            return subobj
 
-        return PlotDataLoader.get_header(msg, parent_path)
+    return _get_header(msg, parent_path)
 
-    @staticmethod
-    def subdivide(left, right):
-        yield left
-        yield right
+def _subdivide(left, right):
+    yield left
+    yield right
 
-        intervals = collections.deque([(left, right)])
-        while True:
+    intervals = collections.deque([(left, right)])
+    while True:
+        try:
             (left, right) = intervals.popleft()
-            
-            mid = (left + right) / 2
-            
-            intervals.append((left, mid))
-            intervals.append((mid,  right))
-            
-            yield mid
+        except Exception:
+            break
+
+        mid = (left + right) / 2
+
+        if right - left <= 1:
+            continue
+
+        yield mid
+
+        if right - left <= 2:
+            continue
+
+        intervals.append((left, mid))
+        intervals.append((mid,  right))

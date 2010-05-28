@@ -56,33 +56,34 @@ class PlotView(TopicMessageView):
     name = 'Plot'
 
     periods = [(  -1, 'All'),
-               ( 0.1, '100ms'),
-               ( 0.2, '200ms'),
-               ( 0.5, '500ms'),
-               (   1, '1s'),
-               (   2, '2s'),
-               (   5, '5s'),
-               (  10, '10s'),
-               (  15, '15s'),
-               (  30, '30s'),
-               (  60, '60s'),
-               (  90, '90s'),
-               ( 120, '2min'),
-               ( 300, '5min'),
-               ( 600, '10min'),
-               (1200, '20min'),
-               (1800, '30min'),
-               (3600, '1hr')]
+               ( 0.1, '0.1 s'),
+               ( 0.2, '0.2 s'),
+               ( 0.5, '0.5 s'),
+               (   1, '1 s'),
+               (   2, '2 s'),
+               (   5, '5 s'),
+               (  10, '10 s'),
+               (  15, '15 s'),
+               (  30, '30 s'),
+               (  60, '60 s'),
+               (  90, '90 s'),
+               ( 120, '2 m'),
+               ( 300, '5 m'),
+               ( 600, '10 m'),
+               (1200, '20 m'),
+               (1800, '30 m'),
+               (3600, '1 h')]
     
     def __init__(self, timeline, parent, title, x, y, width, height):
         TopicMessageView.__init__(self, timeline, parent, title, x, y, width, height)
 
-        self.topic          = None
-        self._msg           = None
-        self.plot_paths     = []
+        self._topic         = None
+        self._message       = None
+        self._plot_paths    = []
         self._period        = -1
+        self._playhead      = None
         self._charts        = []
-        self._data_thread   = None
+        self._data_loader   = None
         self._zoom_interval = None
 
         self._configure_frame = None
@@ -94,6 +95,26 @@ class PlotView(TopicMessageView):
         
         wx.CallAfter(self.configure)
 
+    # property: plot_paths
+    
+    def _get_plot_paths(self): return self._plot_paths
+    
+    def _set_plot_paths(self, plot_paths):
+        self._plot_paths = plot_paths
+        
+        if self._data_loader:
+            paths = []
+            for plot in self._plot_paths:
+                for path in plot:
+                    if path not in paths:
+                        paths.append(path)
+
+            self._data_loader.paths = paths
+
+        self._setup_charts()
+
+    plot_paths = property(_get_plot_paths, _set_plot_paths)
+
     ## TopicMessageView implementation
 
     def message_viewed(self, bag, msg_details):
@@ -101,53 +122,65 @@ class PlotView(TopicMessageView):
 
         topic, msg, t = msg_details
 
-        if not self._data_thread:
-            self.topic = topic
+        if not self._data_loader:
+            self._topic = topic
             self.start_loading()
 
-        self._msg = msg
+        self._message = msg
 
-        self.set_playhead((t - self.timeline.start_stamp).to_sec())
+        self.playhead = (t - self.timeline.start_stamp).to_sec()
 
     def message_cleared(self):
-        self._msg = None
+        self._message = None
         
         TopicMessageView.message_cleared(self)
         
         self.invalidate()
+        
+    def timeline_changed(self):
+        self._update_view_region()
 
-    ## View region
+    # property: period
 
     def _get_period(self): return self._period
     
     def _set_period(self, period):
-        self._period = period
-        
+        self._period = period        
         self._update_view_region()
-        
+
     period = property(_get_period, _set_period)
-            
-    def _update_view_region(self):
-        if self._data_thread:
-            if self._period < 0:
-                start_stamp = self.timeline.start_stamp
-                end_stamp   = self.timeline.end_stamp
-            else:
-                start_stamp = self.timeline.start_stamp + rospy.Duration.from_sec(self.playhead - (self._period / 2))
-                end_stamp   = start_stamp + rospy.Duration.from_sec(self._period)
 
-            self._data_thread.set_view_region(start_stamp, end_stamp)
+    # property: playhead
 
-            self._zoom_interval = ((start_stamp - self.timeline.start_stamp).to_sec(),
-                                   (end_stamp   - self.timeline.start_stamp).to_sec())
-
-    def set_playhead(self, playhead):
-        self.playhead = playhead
+    def _get_playhead(self): return self._playhead
+    
+    def _set_playhead(self, playhead):
+        self._playhead = playhead
         self._update_view_region()
+
+    playhead = property(_get_playhead, _set_playhead)
+
+    def _update_view_region(self):
+        if not self._data_loader:
+            return
+        
+        if self._period < 0:
+            start_stamp = self.timeline.start_stamp
+            end_stamp   = self.timeline.end_stamp
+        else:
+            start_stamp = self.timeline.start_stamp + rospy.Duration.from_sec(self._playhead - (self._period / 2))
+            end_stamp   = start_stamp + rospy.Duration.from_sec(self._period)
+
+        self._data_loader.start_stamp = start_stamp
+        self._data_loader.end_stamp   = end_stamp
+
+        self._zoom_interval = ((start_stamp - self.timeline.start_stamp).to_sec(),
+                               (end_stamp   - self.timeline.start_stamp).to_sec())
+        
         self.invalidate()
 
     def paint(self, dc):
-        if not self._data_thread or len(self._charts) == 0:
+        if not self._data_loader or len(self._charts) == 0:
             return
         
         data = {}
@@ -156,21 +189,22 @@ class PlotView(TopicMessageView):
 
         dc.save()
 
-        for chart_index, plot in enumerate(self.plot_paths):
+        for chart_index, plot in enumerate(self._plot_paths):
             chart = self._charts[chart_index]
 
             chart.zoom_interval = self._zoom_interval
-            if self._msg:
-                chart.x_indicator = (self.timeline.playhead - self.timeline.start_stamp).to_sec()
+            if self._message:
+                chart.x_indicator = self._playhead
             else:
                 chart.x_indicator = None
 
             data = {}
             for plot_path in plot:
-                if plot_path in self._data_thread._data:
-                    data[plot_path] = self._data_thread._data[plot_path]
-
+                if plot_path in self._data_loader._data:
+                    data[plot_path] = self._data_loader._data[plot_path]
             chart._data = data
+
+            # todo: data loader should handle this (timeseries object?)
             chart._update_ranges()
 
             chart.paint(dc)
@@ -179,7 +213,7 @@ class PlotView(TopicMessageView):
         dc.restore()
 
     def on_size(self, event):
-        self.layout_charts()
+        self._layout_charts()
 
     def on_right_down(self, event):
         self.clicked_pos = event.GetPosition()
@@ -210,27 +244,24 @@ class PlotView(TopicMessageView):
 
         TopicMessageView.on_close(self, event)
 
-    def reload(self):
-        self.stop_loading()
-
+    def _setup_charts(self):
         self._charts = []
         
         palette_offset = 0
-        for i, plot in enumerate(self.plot_paths):
+        for i, plot in enumerate(self._plot_paths):
             chart = Chart()
-            chart.palette_offset = palette_offset
-            if i < len(self.plot_paths) - 1:
-                chart.show_x_ticks = False
 
+            chart.palette_offset = palette_offset
             palette_offset += len(plot)
+            
+            if i < len(self._plot_paths) - 1:
+                chart.show_x_ticks = False
 
             self._charts.append(chart)
 
-        self.layout_charts()
+        self._layout_charts()
 
-        self.start_loading()
-
-    def layout_charts(self):
+    def _layout_charts(self):
         w, h = self.parent.GetClientSize()
         num_charts = len(self._charts)
         if num_charts > 0:
@@ -241,19 +272,23 @@ class PlotView(TopicMessageView):
         self.invalidate()
 
     def stop_loading(self):
-        if self._data_thread:
-            self._data_thread.stop()
-            self._data_thread = None
+        if self._data_loader:
+            self._data_loader.stop()
+            self._data_loader = None
 
     def start_loading(self):
-        if self.topic and not self._data_thread:
-            self._data_thread = PlotDataLoader(self, self.topic)
+        if self._topic and not self._data_loader:
+            self._data_loader = PlotDataLoader(self.timeline, self._topic)
+            self._data_loader.add_listener(self._data_loader_updated)
+
+    def _data_loader_updated(self):
+        self.invalidate()
 
     def configure(self):
         if self._configure_frame:
             return
         
-        if self._msg:
+        if self._message:
             self._configure_frame = PlotConfigureFrame(self)
             
             frame = self.parent.GetTopLevelParent()
