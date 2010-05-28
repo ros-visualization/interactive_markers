@@ -306,17 +306,35 @@ class PlotView(TopicMessageView):
 
     def export_csv(self, rows):
         dialog = wx.FileDialog(self.parent.GetParent(), 'Export to CSV...', wildcard='CSV files (*.csv)|*.csv', style=wx.FD_SAVE)
-        if dialog.ShowModal() != wx.ID_OK:
-            return
+        if dialog.ShowModal() == wx.ID_OK:
+            csv_path = dialog.GetPath()
+    
+            export_series = set()
+            for plot in self._plot_paths:
+                for path in plot:
+                    export_series.add(path)
+    
+            self._data_loader.export_csv(csv_path, export_series, self._zoom_interval[0], self._zoom_interval[1], rows)
 
-        csv_path = dialog.GetPath()
+        dialog.Destroy()
+        
+    def export_image(self):
+        dialog = wx.FileDialog(self.parent.GetParent(), 'Save plot to...', wildcard='PNG files (*.png)|*.png', style=wx.FD_SAVE)
+        if dialog.ShowModal() == wx.ID_OK:
+            path = dialog.GetPath()
 
-        export_series = set()
-        for plot in self._plot_paths:
-            for path in plot:
-                export_series.add(path)
+            bitmap = wx.EmptyBitmap(self.width, self.height)
+            mem_dc = wx.MemoryDC()
+            mem_dc.SelectObject(bitmap)
+            mem_dc.SetBackground(wx.WHITE_BRUSH)
+            mem_dc.Clear()
+            cairo_dc = wx.lib.wxcairo.ContextFromDC(mem_dc)
+            self.paint(cairo_dc)
+            mem_dc.SelectObject(wx.NullBitmap)
 
-        self._data_loader.export_csv(csv_path, export_series, self._zoom_interval[0], self._zoom_interval[1], rows)
+            bitmap.SaveFile(path, wx.BITMAP_TYPE_PNG)
+            
+        dialog.Destroy()
 
 class PlotPopupMenu(wx.Menu):
     def __init__(self, parent, plot):
