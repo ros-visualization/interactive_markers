@@ -36,9 +36,12 @@ import rospy
 
 import bisect
 import collections
+import csv
 import sys
 import threading
 import time
+
+from dataset import DataSet
 
 class PlotDataLoader(threading.Thread):
     def __init__(self, timeline, topic):
@@ -113,6 +116,46 @@ class PlotDataLoader(threading.Thread):
         self._stop_flag = True
         self.join()
 
+    def export_csv(self, path, series_list, x_min, x_max, rows):
+        # Collate data
+        i = 0
+        series_dict = {}
+        unique_stamps = set()
+        for series in series_list:
+            d = {}
+            series_dict[series] = d
+
+            point_num = 0
+            for x, y in self._data[series].points:
+                if x >= x_min and x <= x_max:
+                    if point_num % rows == 0:
+                        d[x] = y
+                        unique_stamps.add(x)
+                    point_num += 1
+            i += 1
+        series_columns = sorted(series_dict.keys())
+
+        try:
+            csv_writer = csv.DictWriter(open(path, 'w'), ['Timestamp'] + series_columns)
+ 
+            # Write header row
+            header_dict = { 'Timestamp' : 'Timestamp' }
+            for column in series_columns:
+                header_dict[column] = column            
+            csv_writer.writerow(header_dict)
+
+            # Write data
+            for stamp in sorted(unique_stamps):
+                row = { 'Timestamp' : stamp }
+                for column in series_dict:
+                    if stamp in series_dict[column]:
+                        row[column] = series_dict[column][stamp]
+ 
+                csv_writer.writerow(row)
+
+        except Exception, ex:
+            print >> sys.stderr, 'Error writing to CSV file: %s' % str(ex)
+
     ##
 
     def _run(self):
@@ -164,9 +207,9 @@ class PlotDataLoader(threading.Thread):
                 x = (plot_stamp - self._timeline.start_stamp).to_sec()
 
                 if path not in self._data:
-                    self._data[path] = []
+                    self._data[path] = DataSet()
 
-                bisect.insort_right(self._data[path], (x, y))
+                self._data[path].add(x, y)
 
             self._loaded.add(index)
 

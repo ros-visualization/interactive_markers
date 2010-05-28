@@ -73,7 +73,18 @@ class PlotView(TopicMessageView):
                (1200, '20 m'),
                (1800, '30 m'),
                (3600, '1 h')]
-    
+
+    rows = [(   1, 'All'),
+            (   2, 'Every 2nd message'),
+            (   3, 'Every 3rd message'),
+            (   4, 'Every 4th message'),
+            (   5, 'Every 5th message'),
+            (  10, 'Every 10th message'),
+            (  20, 'Every 20th message'),
+            (  50, 'Every 50th message'),
+            ( 100, 'Every 100th message'),
+            (1000, 'Every 1000th message')]
+
     def __init__(self, timeline, parent, title, x, y, width, height):
         TopicMessageView.__init__(self, timeline, parent, title, x, y, width, height)
 
@@ -182,7 +193,7 @@ class PlotView(TopicMessageView):
     def paint(self, dc):
         if not self._data_loader or len(self._charts) == 0:
             return
-        
+
         data = {}
 
         chart_height = self.parent.GetClientSize()[1] / len(self._charts)
@@ -202,10 +213,8 @@ class PlotView(TopicMessageView):
             for plot_path in plot:
                 if plot_path in self._data_loader._data:
                     data[plot_path] = self._data_loader._data[plot_path]
-            chart._data = data
-
-            # todo: data loader should handle this (timeseries object?)
-            chart._update_ranges()
+            chart._series_list = plot
+            chart._series_data = data
 
             chart.paint(dc)
             dc.translate(0, chart_height)
@@ -295,6 +304,20 @@ class PlotView(TopicMessageView):
             self._configure_frame.SetPosition((frame.Position[0] + frame.Size[0] + 10, frame.Position[1]))
             self._configure_frame.Show()
 
+    def export_csv(self, rows):
+        dialog = wx.FileDialog(self.parent.GetParent(), 'Export to CSV...', wildcard='CSV files (*.csv)|*.csv', style=wx.FD_SAVE)
+        if dialog.ShowModal() != wx.ID_OK:
+            return
+
+        csv_path = dialog.GetPath()
+
+        export_series = set()
+        for plot in self._plot_paths:
+            for path in plot:
+                export_series.add(path)
+
+        self._data_loader.export_csv(csv_path, export_series, self._zoom_interval[0], self._zoom_interval[1], rows)
+
 class PlotPopupMenu(wx.Menu):
     def __init__(self, parent, plot):
         wx.Menu.__init__(self)
@@ -325,9 +348,15 @@ class PlotPopupMenu(wx.Menu):
         self.Bind(wx.EVT_MENU, lambda e: self.plot.export_image(), id=export_image_item.GetId())
         
         # Export to CSV...
-        export_csv_item = wx.MenuItem(self, wx.NewId(), 'Export to CSV...')
-        self.AppendItem(export_csv_item)
-        self.Bind(wx.EVT_MENU, lambda e: self.plot.export_csv(), id=export_csv_item.GetId())
+        self.export_csv_menu = wx.Menu()
+        self.AppendSubMenu(self.export_csv_menu, 'Export to CSV...', 'Export data to CSV file')
+
+        for rows, label in plot.rows:
+            rows_item = self.ExportCSVMenuItem(self.export_csv_menu, wx.NewId(), label, rows, plot)
+            self.export_csv_menu.AppendItem(rows_item)
+            
+            if label == 'All':
+                self.export_csv_menu.AppendSeparator()
 
     class PeriodMenuItem(wx.MenuItem):
         def __init__(self, parent, id, label, period, plot):
@@ -341,3 +370,15 @@ class PlotPopupMenu(wx.Menu):
         def on_menu(self, event):
             self.plot.period = self.period
             self.plot.invalidate()
+    
+    class ExportCSVMenuItem(wx.MenuItem):
+        def __init__(self, parent, id, label, rows, plot):
+            wx.MenuItem.__init__(self, parent, id, label)
+            
+            self.rows = rows
+            self.plot = plot
+
+            parent.Bind(wx.EVT_MENU, self.on_menu, id=self.GetId())
+    
+        def on_menu(self, event):
+            self.plot.export_csv(self.rows)
