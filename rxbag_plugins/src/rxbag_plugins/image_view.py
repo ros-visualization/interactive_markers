@@ -58,14 +58,15 @@ class ImageView(TopicMessageView):
         self._image       = None
         self._image_topic = None
         self._image_stamp = None
-        
+
         self._image_surface = None
-        
-        self.quality = Image.NEAREST
-        self.indent  = (4, 4)
-        
-        self.size_set = False
-        
+
+        self._overlay_font_size = 14.0
+        self._overlay_indent    = (4, 4)
+        self._overlay_color     = (0.2, 0.2, 1.0)
+
+        self._size_set = False
+
     def message_viewed(self, bag, msg_details):
         TopicMessageView.message_viewed(self, bag, msg_details)
         
@@ -76,8 +77,8 @@ class ImageView(TopicMessageView):
         else:
             self.set_image(image_helper.imgmsg_to_pil(msg), topic, msg.header.stamp)
     
-            if not self.size_set:
-                self.size_set = True
+            if not self._size_set:
+                self._size_set = True
                 self.reset_size()
 
     def message_cleared(self):
@@ -107,23 +108,17 @@ class ImageView(TopicMessageView):
             
         self.invalidate()
 
-    def _get_image_rect(self):
-        if self.border:
-            return 1, 1, self.width - 2, self.height - 2
-        else:
-            return 0, 0, self.width, self.height
-
     def paint(self, dc):
         with self._image_lock:
             if not self._image:
                 return
-            
-            ix, iy, iw, ih = self._get_image_rect()
-    
+
+            ix, iy, iw, ih = 0, 0, self.width, self.height
+
             # Rescale the bitmap if necessary
             if not self._image_surface:
                 if self._image.size[0] != iw or self._image.size[1] != ih:
-                    self._image_surface = image_helper.pil_to_cairo(self._image.resize((iw, ih), self.quality))
+                    self._image_surface = image_helper.pil_to_cairo(self._image.resize((iw, ih), Image.NEAREST))
                 else:
                     self._image_surface = image_helper.pil_to_cairo(self._image)
     
@@ -133,10 +128,10 @@ class ImageView(TopicMessageView):
             dc.fill()
     
             # Draw overlay
-            dc.set_font_size(14.0)
+            dc.set_font_size(self._overlay_font_size)
             font_height = dc.font_extents()[2]
-            dc.set_source_rgb(0.2, 0.2, 1)
-            dc.move_to(self.indent[0], self.indent[1] + font_height)
+            dc.set_source_rgb(*self._overlay_color)
+            dc.move_to(self._overlay_indent[0], self._overlay_indent[1] + font_height)
             dc.show_text(bag_helper.stamp_to_str(self._image_stamp))
 
     def on_right_down(self, event):
