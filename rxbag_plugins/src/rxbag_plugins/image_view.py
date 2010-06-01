@@ -68,11 +68,19 @@ class ImageView(TopicMessageView):
 
         self._size_set = False
         
+        self._next_frame_num = 1
+        
         tb = self.parent.GetToolBar()
         icons_dir = roslib.packages.get_pkg_dir(PKG) + '/icons/'
         tb.AddSeparator()
-        tb.Bind(wx.EVT_TOOL, lambda e: self.save_frame(),           tb.AddLabelTool(wx.ID_ANY, '', wx.Bitmap(icons_dir + 'picture_save.png')))
-        tb.Bind(wx.EVT_TOOL, lambda e: self.save_selected_frames(), tb.AddLabelTool(wx.ID_ANY, '', wx.Bitmap(icons_dir + 'pictures_save.png')))
+
+        self.save_frame_tool           = tb.AddLabelTool(wx.ID_ANY, '', wx.Bitmap(icons_dir + 'picture_save.png'))
+        self.file_spec_tool            = wx.TextCtrl(tb, wx.ID_ANY, 'frame%04d.png', size=(200, 22))
+        tb.AddControl(self.file_spec_tool)
+        self.save_selected_frames_tool = tb.AddLabelTool(wx.ID_ANY, '', wx.Bitmap(icons_dir + 'pictures_save.png'))
+
+        tb.Bind(wx.EVT_TOOL, lambda e: self.save_frame(),           self.save_frame_tool)
+        tb.Bind(wx.EVT_TOOL, lambda e: self.save_selected_frames(), self.save_selected_frames_tool)
         
         self.parent.Bind(wx.EVT_SIZE,       self.on_size)
         self.parent.Bind(wx.EVT_PAINT,      self.on_paint)
@@ -88,7 +96,7 @@ class ImageView(TopicMessageView):
         if not msg:
             self.set_image(None, topic, stamp)
         else:
-            self.set_image(image_helper.imgmsg_to_pil(msg), topic, msg.header.stamp)
+            self.set_image(msg, topic, msg.header.stamp)
     
             if not self._size_set:
                 self._size_set = True
@@ -101,9 +109,13 @@ class ImageView(TopicMessageView):
 
     ##
     
-    def set_image(self, image, image_topic, image_stamp):
+    def set_image(self, image_msg, image_topic, image_stamp):
         with self._image_lock:
-            self._image         = image
+            self._image_msg     = image_msg
+            if image_msg:
+                self._image = image_helper.imgmsg_to_pil(image_msg)
+            else:
+                self._image = None
             self._image_surface = None
             
             self._image_topic = image_topic
@@ -162,15 +174,33 @@ class ImageView(TopicMessageView):
         if not self._image:
             return
 
+        file_spec = self.file_spec_tool.Value
+        try:
+            filename = file_spec % self._next_frame_num
+        except Exception:
+            wx.MessageDialog(None, 'Error with filename specification.\n\nPlease include a frame number format, e.g. frame%04d.png', 'Error', wx.OK | wx.ICON_ERROR).ShowModal()
+            return
+
+        with self._image_lock:
+            if self._image_msg:
+                _save_image_msg(self._image_msg, filename)
+                self._next_frame_num += 1
+                
+                self.parent.SetStatusText('%s written' % filename)
+
+    def save_frame_as(self):
+        if not self._image:
+            return
+
         dialog = wx.FileDialog(self.parent.Parent, 'Save frame to...', wildcard='PNG files (*.png)|*.png', style=wx.FD_SAVE)
         if dialog.ShowModal() == wx.ID_OK:
             with self._image_lock:
-                if self._image:
-                    self._image.save(dialog.Path, 'png')
+                if self._image_msg:
+                    _save_image_msg(self._image_msg, dialog.Path)
         dialog.Destroy()
 
     def save_selected_frames(self):
-        if not self._image:
+        if not self._image or not self.image_view.timeline.has_selected_region:
             return
         
         dialog = ExportFramesDialog(self.parent.Parent, -1, 'Export frames', self.timeline, self._image_topic)
@@ -247,9 +277,9 @@ class ImagePopupMenu(wx.Menu):
         self.Bind(wx.EVT_MENU, lambda e: self.image_view.reset_size(), id=reset_item.Id)
 
         # Save Frame...
-        save_frame_item = wx.MenuItem(self, wx.NewId(), 'Save Frame...')
-        self.AppendItem(save_frame_item)
-        self.Bind(wx.EVT_MENU, lambda e: self.image_view.export_frame(), id=save_frame_item.Id)
+        save_frame_as_item = wx.MenuItem(self, wx.NewId(), 'Save Frame...')
+        self.AppendItem(save_frame_as_item)
+        self.Bind(wx.EVT_MENU, lambda e: self.image_view.save_frame_as(), id=save_frame_as_item.Id)
 
         # Save Selected Frames...
         save_selected_frames_item = wx.MenuItem(self, wx.NewId(), 'Save Selected Frames...')
@@ -330,15 +360,13 @@ class ExportFramesDialog(wx.Dialog):
         for i, (bag, entry) in enumerate(bag_entries):
             try:
                 topic, msg, t = self.timeline.read_message(bag, entry.position)
-                
-                pil_img = image_helper.imgmsg_to_pil(msg)
-                if pil_img:
-                    filename = file_spec % frame_num
-                    try:
-                        pil_img.save(filename)
-                        frame_num += 1
-                    except Exception, ex:
-                        print >> sys.stderr, 'Error saving frame at %s to disk: %s' % (str(t), str(ex))
+
+                filename = file_spec % frame_num
+                try:
+                    _save_image_msg(msg, filename)
+                    frame_num += 1
+                except Exception, ex:
+                    print >> sys.stderr, 'Error saving frame at %s to disk: %s' % (str(t), str(ex))
             except Exception, ex:
                 print >> sys.stderr, 'Error saving frame %d: %s' % (i, str(ex))
 
@@ -354,3 +382,8 @@ class ExportFramesDialog(wx.Dialog):
 
     def _on_cancel(self, event):
         self.Close()
+
+def _save_image_msg(img_msg, filename):
+    pil_img = image_helper.imgmsg_to_pil(img_msg, rgba=False)
+    pil_img = image_helper.pil_bgr2rgb(pil_img)
+    pil_img.save(filename)

@@ -120,6 +120,7 @@ class PlotView(TopicMessageView):
     def _set_plot_paths(self, plot_paths):
         self._plot_paths = plot_paths
         
+        # Update the data loader with the paths to plot
         if self._data_loader:
             paths = []
             for plot in self._plot_paths:
@@ -313,7 +314,7 @@ class PlotView(TopicMessageView):
     def start_loading(self):
         if self._topic and not self._data_loader:
             self._data_loader = PlotDataLoader(self.timeline, self._topic)
-            self._data_loader.add_listener(self._data_loader_updated)
+            self._data_loader.add_progress_listener(self._data_loader_updated)
 
     def _data_loader_updated(self):
         wx.CallAfter(self.parent.Refresh)
@@ -342,6 +343,49 @@ class PlotView(TopicMessageView):
             self._data_loader.export_csv(csv_path, export_series, self._zoom_interval[0], self._zoom_interval[1], rows)
 
         dialog.Destroy()
+
+    # @todo
+    def do_export_csv(self, path, series_list, x_min, x_max, rows):
+        plot_loader = PlotDataLoader(self._topic)
+        
+        # Collate data
+        i = 0
+        series_dict = {}
+        unique_stamps = set()
+        for series in series_list:
+            d = {}
+            series_dict[series] = d
+
+            point_num = 0
+            for x, y in self. data[series].points:
+                if x >= x_min and x <= x_max:
+                    if point_num % rows == 0:
+                        d[x] = y
+                        unique_stamps.add(x)
+                    point_num += 1
+            i += 1
+        series_columns = sorted(series_dict.keys())
+
+        try:
+            csv_writer = csv.DictWriter(open(path, 'w'), ['Timestamp'] + series_columns)
+ 
+            # Write header row
+            header_dict = { 'Timestamp' : 'Timestamp' }
+            for column in series_columns:
+                header_dict[column] = column            
+            csv_writer.writerow(header_dict)
+
+            # Write data
+            for stamp in sorted(unique_stamps):
+                row = { 'Timestamp' : stamp }
+                for column in series_dict:
+                    if stamp in series_dict[column]:
+                        row[column] = series_dict[column][stamp]
+ 
+                csv_writer.writerow(row)
+
+        except Exception, ex:
+            print >> sys.stderr, 'Error writing to CSV file: %s' % str(ex)
         
     def export_image(self):
         dialog = wx.FileDialog(self.parent.GetParent(), 'Save plot to...', wildcard='PNG files (*.png)|*.png', style=wx.FD_SAVE)

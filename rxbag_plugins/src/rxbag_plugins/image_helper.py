@@ -40,7 +40,7 @@ import Image
 import wx
 import cairo
 
-def imgmsg_to_pil(img_msg):
+def imgmsg_to_pil(img_msg, rgba=True):
     if img_msg._type == 'sensor_msgs/CompressedImage':
         import cStringIO
         io = cStringIO.StringIO(img_msg.data)
@@ -83,7 +83,7 @@ def imgmsg_to_pil(img_msg):
 
         if mode == 'BGR':
             pil_img = pil_bgr2rgb(pil_img)
-        if pil_img.mode != 'RGBA':
+        if rgba and pil_img.mode != 'RGBA':
             pil_img = pil_img.convert('RGBA')
         
         return pil_img

@@ -30,6 +30,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import with_statement
+
 PKG = 'rxbag_plugins'
 import roslib; roslib.load_manifest(PKG)
 import rospy
@@ -50,39 +52,45 @@ class PlotDataLoader(threading.Thread):
         self._timeline = timeline
         self._topic    = topic
 
+        self._use_header_stamp = False
+
         self._start_stamp  = self._timeline.start_stamp
         self._end_stamp    = self._timeline.end_stamp
         self._paths        = []
         self._max_interval = 0.0
         self._dirty        = True
+        self._dirty_cv     = threading.Condition()
 
-        self._entries = []
-        self._data    = {}
+        self._data = {}
 
-        self._listeners = []
+        self._progress_listeners = []
+        self._complete_listeners = []
 
         self._stop_flag = False
         self.setDaemon(True)
         self.start()
 
+    @property
+    def data(self): return self._data
+
     # listeners
 
-    def add_listener(self, listener):
-        self._listeners.append(listener)
+    def add_progress_listener(self, listener):    self._progress_listeners.append(listener)
+    def remove_progress_listener(self, listener): self._progress_listeners.remove(listener)
 
-    def remove_listener(self, listener):
-        self._listeners.remove(listener)
+    def add_complete_listener(self, listener):    self._complete_listeners.append(listener)
+    def remove_complete_listener(self, listener): self._complete_listeners.remove(listener)
 
     # property: start_stamp
 
     def _get_start_stamp(self): return self._start_stamp
     
     def _set_start_stamp(self, start_stamp):
-        if start_stamp == self._start_stamp:
-            return
-
-        self._start_stamp = start_stamp
-        self._dirty = True
+        with self._dirty_cv:
+            if start_stamp != self._start_stamp:
+                self._start_stamp = start_stamp
+                self._dirty = True
+                self._dirty_cv.notify()
         
     start_stamp = property(_get_start_stamp, _set_start_stamp)
 
@@ -91,11 +99,11 @@ class PlotDataLoader(threading.Thread):
     def _get_end_stamp(self): return self._end_stamp
     
     def _set_end_stamp(self, end_stamp):
-        if end_stamp == self._end_stamp:
-            return
-        
-        self._end_stamp = end_stamp
-        self._dirty = True
+        with self._dirty_cv:
+            if end_stamp != self._end_stamp:
+                self._end_stamp = end_stamp
+                self._dirty = True
+                self._dirty_cv.notify()
         
     end_stamp = property(_get_end_stamp, _set_end_stamp)
 
@@ -104,11 +112,11 @@ class PlotDataLoader(threading.Thread):
     def _get_paths(self): return self._paths
     
     def _set_paths(self, paths):
-        if set(paths) == set(self._paths):
-            return
-
-        self._paths = paths
-        self._dirty = True
+        with self._dirty_cv:
+            if set(paths) != set(self._paths):
+                self._paths = paths
+                self._dirty = True
+                self._dirty_cv.notify()
 
     paths = property(_get_paths, _set_paths)
 
@@ -117,11 +125,11 @@ class PlotDataLoader(threading.Thread):
     def _get_max_interval(self): return self._max_interval
     
     def _set_max_interval(self, max_interval):
-        if max_interval == self._max_interval:
-            return
-        
-        self._max_interval = max_interval
-        self._dirty = True
+        with self._dirty_cv:
+            if max_interval != self._max_interval:
+                self._max_interval = max_interval
+                self._dirty = True
+                self._dirty_cv.notify()
 
     max_interval = property(_get_max_interval, _set_max_interval)
 
@@ -129,70 +137,39 @@ class PlotDataLoader(threading.Thread):
         self._stop_flag = True
         self.join()
 
-    def export_csv(self, path, series_list, x_min, x_max, rows):
-        # Collate data
-        i = 0
-        series_dict = {}
-        unique_stamps = set()
-        for series in series_list:
-            d = {}
-            series_dict[series] = d
-
-            point_num = 0
-            for x, y in self._data[series].points:
-                if x >= x_min and x <= x_max:
-                    if point_num % rows == 0:
-                        d[x] = y
-                        unique_stamps.add(x)
-                    point_num += 1
-            i += 1
-        series_columns = sorted(series_dict.keys())
-
-        try:
-            csv_writer = csv.DictWriter(open(path, 'w'), ['Timestamp'] + series_columns)
- 
-            # Write header row
-            header_dict = { 'Timestamp' : 'Timestamp' }
-            for column in series_columns:
-                header_dict[column] = column            
-            csv_writer.writerow(header_dict)
-
-            # Write data
-            for stamp in sorted(unique_stamps):
-                row = { 'Timestamp' : stamp }
-                for column in series_dict:
-                    if stamp in series_dict[column]:
-                        row[column] = series_dict[column][stamp]
- 
-                csv_writer.writerow(row)
-
-        except Exception, ex:
-            print >> sys.stderr, 'Error writing to CSV file: %s' % str(ex)
-
     ##
 
     def _run(self):
         while not self._stop_flag:
-            if self._dirty:
-                self._entries = list(self._timeline.get_entries_with_bags(self._topic, self._start_stamp, self._end_stamp))
-                loaded_indexes = set()
-                loaded_stamps = []
-                subdivider = _subdivide(0, len(self._entries) - 1)
-                self._dirty = False
+            with self._dirty_cv:
+                # If dirty, then regenerate the entries to load, and re-initialize the loaded indexes
+                if self._dirty:
+                    entries        = list(self._timeline.get_entries_with_bags(self._topic, self._start_stamp, self._end_stamp))
+                    loaded_indexes = set()
+                    loaded_stamps  = []
+                    subdivider     = _subdivide(0, len(entries) - 1)
+                    self._dirty = False
 
-            if subdivider is None or len(self._paths) == 0:
-                time.sleep(0.2)
-                continue
+                if subdivider is None or len(self._paths) == 0:
+                    # Wait for dirty flag
+                    self._dirty_cv.acquire()
+                    while not self._dirty:
+                        self._dirty_cv.wait()
+                    continue
 
             try:
                 index = subdivider.next()
             except StopIteration:
+                # Notify listeners of completion
+                for listener in self._complete_listeners:
+                    listener()
+
                 subdivider = None
 
             if index in loaded_indexes:
                 continue
 
-            bag, entry = self._entries[index]
+            bag, entry = entries[index]
 
             # If the timestamp is too close to an existing index, don't load it
             closest_stamp_index = bisect.bisect_left(loaded_stamps, entry.time)
@@ -203,20 +180,18 @@ class PlotDataLoader(threading.Thread):
                     continue
 
             topic, msg, msg_stamp = self._timeline.read_message(bag, entry.position)
-
-            bisect.insort_left(loaded_stamps, msg_stamp)
-
             if not msg:
                 continue
 
-            use_header_stamp = False
+            bisect.insort_left(loaded_stamps, msg_stamp)
 
+            # Extract the field data from the message
             for path in self._paths:
-                if use_header_stamp:
+                if self._use_header_stamp:
                     if msg.__class__._has_header:
                         header = msg.header
                     else:
-                        header = _get_header(msg, plot_path)
+                        header = _get_header(msg, path)
                     
                     plot_stamp = header.stamp
                 else:
@@ -236,7 +211,8 @@ class PlotDataLoader(threading.Thread):
 
             loaded_indexes.add(index)
 
-            for listener in self._listeners:
+            # Notify listeners of progress
+            for listener in self._progress_listeners:
                 listener()
 
 def _get_header(msg, path):
