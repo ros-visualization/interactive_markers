@@ -77,12 +77,12 @@ class Chart(object):
         self._width  = 400
         self._height = 400
 
-        self._palette = [(0.7, 0.0, 0.0),
-                         (0.0, 0.0, 0.7),
+        self._palette = [(0.0, 0.0, 0.7),
                          (0.0, 0.7, 0.0),
-                         (0.7, 0.7, 0.0),
+                         (0.7, 0.0, 0.0),
+                         (0.0, 0.7, 0.7),
                          (0.7, 0.0, 0.7),
-                         (0.0, 0.7, 0.7)]
+                         (0.7, 0.7, 0.0)]
 
         self._margin_left   = 50
         self._margin_right  = 10
@@ -104,7 +104,7 @@ class Chart(object):
         self._show_lines     = True
         self._show_points    = True
 
-        self._x_indicator_color     = (1.0, 0.2, 0.2, 0.5)
+        self._x_indicator_color     = (1.0, 0.2, 0.2, 0.8)
         self._x_indicator_thickness = 2.0
         
         ###
@@ -542,7 +542,7 @@ class Chart(object):
         if self.x_indicator is None:
             return
         
-        dc.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
+        dc.set_antialias(cairo.ANTIALIAS_NONE)
 
         dc.set_line_width(self._x_indicator_thickness)
         dc.set_source_rgba(*self._x_indicator_color)
@@ -552,24 +552,6 @@ class Chart(object):
         dc.move_to(px, self.chart_top)
         dc.line_to(px, self.chart_bottom)
         dc.stroke()
-
-        pw, ph = 6, 6
-
-        # Upper triangle
-        py = self.chart_top
-        dc.move_to(px,      py + ph)
-        dc.line_to(px + pw, py)
-        dc.line_to(px - pw, py)
-        dc.line_to(px ,     py + ph)
-        dc.fill()
-
-        # Lower triangle
-        py = self.chart_bottom - ph
-        dc.move_to(px,      py)
-        dc.line_to(px + pw, py + ph)
-        dc.line_to(px - pw, py + ph)
-        dc.line_to(px,      py)
-        dc.fill()
 
     def _draw_legend(self, dc):
         dc.set_antialias(cairo.ANTIALIAS_NONE)

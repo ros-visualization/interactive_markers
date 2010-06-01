@@ -346,7 +346,7 @@ class ExportFramesDialog(wx.Dialog):
             if not self.keep_going:
                 wx.CallAfter(self.progress.Close)
                 break
-            
+
         wx.CallAfter(self.Close)
 
     def _update_progress(self, i):

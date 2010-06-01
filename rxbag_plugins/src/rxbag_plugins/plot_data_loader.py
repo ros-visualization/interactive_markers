@@ -50,13 +50,13 @@ class PlotDataLoader(threading.Thread):
         self._timeline = timeline
         self._topic    = topic
 
-        self._start_stamp = self._timeline.start_stamp
-        self._end_stamp   = self._timeline.end_stamp
-        self._paths       = []
-        self._dirty       = True
+        self._start_stamp  = self._timeline.start_stamp
+        self._end_stamp    = self._timeline.end_stamp
+        self._paths        = []
+        self._max_interval = 0.0
+        self._dirty        = True
 
         self._entries = []
-        self._loaded  = set()
         self._data    = {}
 
         self._listeners = []
@@ -112,6 +112,19 @@ class PlotDataLoader(threading.Thread):
 
     paths = property(_get_paths, _set_paths)
 
+    # property: max_interval
+    
+    def _get_max_interval(self): return self._max_interval
+    
+    def _set_max_interval(self, max_interval):
+        if max_interval == self._max_interval:
+            return
+        
+        self._max_interval = max_interval
+        self._dirty = True
+
+    max_interval = property(_get_max_interval, _set_max_interval)
+
     def stop(self):
         self._stop_flag = True
         self.join()
@@ -162,12 +175,12 @@ class PlotDataLoader(threading.Thread):
         while not self._stop_flag:
             if self._dirty:
                 self._entries = list(self._timeline.get_entries_with_bags(self._topic, self._start_stamp, self._end_stamp))
-                self._loaded  = set()
+                loaded_indexes = set()
+                loaded_stamps = []
                 subdivider = _subdivide(0, len(self._entries) - 1)
                 self._dirty = False
 
             if subdivider is None or len(self._paths) == 0:
-                print 'sleeping...'
                 time.sleep(0.2)
                 continue
 
@@ -176,12 +189,22 @@ class PlotDataLoader(threading.Thread):
             except StopIteration:
                 subdivider = None
 
-            if index in self._loaded:
+            if index in loaded_indexes:
                 continue
 
-            with self._timeline._bag_lock:
-                bag, entry = self._entries[index]
-                topic, msg, msg_stamp = self._timeline.read_message(bag, entry.position)
+            bag, entry = self._entries[index]
+
+            # If the timestamp is too close to an existing index, don't load it
+            closest_stamp_index = bisect.bisect_left(loaded_stamps, entry.time)
+            if closest_stamp_index < len(loaded_stamps):
+                dist_to_closest_msg = abs((entry.time - loaded_stamps[closest_stamp_index]).to_sec())
+                if dist_to_closest_msg < self._max_interval:
+                    loaded_indexes.add(index)
+                    continue
+
+            topic, msg, msg_stamp = self._timeline.read_message(bag, entry.position)
+
+            bisect.insort_left(loaded_stamps, msg_stamp)
 
             if not msg:
                 continue
@@ -211,7 +234,7 @@ class PlotDataLoader(threading.Thread):
 
                 self._data[path].add(x, y)
 
-            self._loaded.add(index)
+            loaded_indexes.add(index)
 
             for listener in self._listeners:
                 listener()

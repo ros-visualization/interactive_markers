@@ -191,11 +191,18 @@ class PlotView(TopicMessageView):
 
         self._data_loader.start_stamp = start_stamp
         self._data_loader.end_stamp   = end_stamp
+        
+        self._update_max_interval()
 
         self._zoom_interval = ((start_stamp - self.timeline.start_stamp).to_sec(),
                                (end_stamp   - self.timeline.start_stamp).to_sec())
-        
+
         wx.CallAfter(self.parent.Refresh)
+
+    def _update_max_interval(self):
+        secs_per_px = (self._data_loader.end_stamp - self._data_loader.start_stamp).to_sec() / self.parent.Size[0]  # conservative: use entire width of control instead of just plot area
+
+        self._data_loader.max_interval = secs_per_px * 1.5
 
     ## Events
 
@@ -239,10 +246,11 @@ class PlotView(TopicMessageView):
     def _on_size(self, event):
         self._layout_charts()
 
+        self._update_max_interval()
+
     def _on_right_down(self, event):
         self.clicked_pos = event.GetPosition()
-        if self.contains(*self.clicked_pos):
-            self.parent.PopupMenu(PlotPopupMenu(self.parent, self), self.clicked_pos)
+        self.parent.PopupMenu(PlotPopupMenu(self.parent, self), self.clicked_pos)
 
     def _on_mousewheel(self, event):
         dz = event.GetWheelRotation() / event.GetWheelDelta()
@@ -266,7 +274,7 @@ class PlotView(TopicMessageView):
 
         self.stop_loading()
 
-        TopicMessageView._on_close(self, event)
+        event.Skip()
 
     ##
 
@@ -363,7 +371,7 @@ class PlotPopupMenu(wx.Menu):
         # Configure...
         configure_item = wx.MenuItem(self, wx.NewId(), 'Configure...')
         self.AppendItem(configure_item)
-        self.Bind(wx.EVT_MENU, lambda e: self.plot.configure(), id=configure_item.GetId())
+        self.Bind(wx.EVT_MENU, lambda e: self.plot.configure(), id=configure_item.Id)
 
         # Interval...
         self.interval_menu = wx.Menu()
@@ -380,7 +388,7 @@ class PlotPopupMenu(wx.Menu):
         # Export to PNG...
         export_image_item = wx.MenuItem(self, wx.NewId(), 'Export to PNG...')
         self.AppendItem(export_image_item)
-        self.Bind(wx.EVT_MENU, lambda e: self.plot.export_image(), id=export_image_item.GetId())
+        self.Bind(wx.EVT_MENU, lambda e: self.plot.export_image(), id=export_image_item.Id)
         
         # Export to CSV...
         self.export_csv_menu = wx.Menu()
@@ -400,7 +408,7 @@ class PlotPopupMenu(wx.Menu):
             self.period = period
             self.plot   = plot
 
-            parent.Bind(wx.EVT_MENU, self._on_menu, id=self.GetId())
+            parent.Bind(wx.EVT_MENU, self._on_menu, id=self.Id)
     
         def _on_menu(self, event):
             self.plot.period = self.period
@@ -413,7 +421,7 @@ class PlotPopupMenu(wx.Menu):
             self.rows = rows
             self.plot = plot
 
-            parent.Bind(wx.EVT_MENU, self._on_menu, id=self.GetId())
-    
+            parent.Bind(wx.EVT_MENU, self._on_menu, id=self.Id)
+
         def _on_menu(self, event):
             self.plot.export_csv(self.rows)
