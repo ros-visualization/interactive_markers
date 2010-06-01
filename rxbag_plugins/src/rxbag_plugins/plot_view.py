@@ -44,6 +44,7 @@ import Image
 import numpy
 import pylab
 import wx
+import wx.lib.wxcairo
 
 from rxbag import TopicMessageView
 
@@ -85,8 +86,8 @@ class PlotView(TopicMessageView):
             ( 100, 'Every 100th message'),
             (1000, 'Every 1000th message')]
 
-    def __init__(self, timeline, parent, title, x, y, width, height):
-        TopicMessageView.__init__(self, timeline, parent, title, x, y, width, height)
+    def __init__(self, timeline, parent):
+        TopicMessageView.__init__(self, timeline, parent)
 
         self._topic         = None
         self._message       = None
@@ -99,11 +100,17 @@ class PlotView(TopicMessageView):
 
         self._configure_frame = None
 
-        tb = self.frame.GetToolBar()
+        tb = self.parent.GetToolBar()
         icons_dir = roslib.packages.get_pkg_dir(PKG) + '/icons/'
         tb.AddSeparator()
         tb.Bind(wx.EVT_TOOL, lambda e: self.configure(), tb.AddLabelTool(wx.ID_ANY, '', wx.Bitmap(icons_dir + 'cog.png')))
-        
+
+        self.parent.Bind(wx.EVT_SIZE,       self._on_size)
+        self.parent.Bind(wx.EVT_PAINT,      self._on_paint)
+        self.parent.Bind(wx.EVT_RIGHT_DOWN, self._on_right_down)
+        self.parent.Bind(wx.EVT_MOUSEWHEEL, self._on_mousewheel)
+        self.parent.Bind(wx.EVT_CLOSE,      self._on_close)
+
         wx.CallAfter(self.configure)
 
     # property: plot_paths
@@ -146,7 +153,7 @@ class PlotView(TopicMessageView):
         
         TopicMessageView.message_cleared(self)
         
-        self.invalidate()
+        wx.CallAfter(self.parent.Refresh)
         
     def timeline_changed(self):
         self._update_view_region()
@@ -188,11 +195,19 @@ class PlotView(TopicMessageView):
         self._zoom_interval = ((start_stamp - self.timeline.start_stamp).to_sec(),
                                (end_stamp   - self.timeline.start_stamp).to_sec())
         
-        self.invalidate()
+        wx.CallAfter(self.parent.Refresh)
 
-    def paint(self, dc):
+    ## Events
+
+    def _on_paint(self, event):
         if not self._data_loader or len(self._charts) == 0:
             return
+
+        dc = wx.lib.wxcairo.ContextFromDC(wx.PaintDC(self.parent))
+        
+        dc.set_source_rgb(1, 1, 1)
+        dc.rectangle(0, 0, self.parent.Size[0], self.parent.Size[1])
+        dc.fill()
 
         data = {}
 
@@ -221,15 +236,15 @@ class PlotView(TopicMessageView):
 
         dc.restore()
 
-    def on_size(self, event):
+    def _on_size(self, event):
         self._layout_charts()
 
-    def on_right_down(self, event):
+    def _on_right_down(self, event):
         self.clicked_pos = event.GetPosition()
         if self.contains(*self.clicked_pos):
             self.parent.PopupMenu(PlotPopupMenu(self.parent, self), self.clicked_pos)
 
-    def on_mousewheel(self, event):
+    def _on_mousewheel(self, event):
         dz = event.GetWheelRotation() / event.GetWheelDelta()
 
         index = None
@@ -243,15 +258,17 @@ class PlotView(TopicMessageView):
         elif dz > 0:
             self.period = self.periods[max(1, index - 1)][0]
 
-        self.invalidate()
+        wx.CallAfter(self.parent.Refresh)
 
-    def on_close(self, event):
+    def _on_close(self, event):
         if self._configure_frame:
             self._configure_frame.Close()
 
         self.stop_loading()
 
-        TopicMessageView.on_close(self, event)
+        TopicMessageView._on_close(self, event)
+
+    ##
 
     def _setup_charts(self):
         self._charts = []
@@ -278,7 +295,7 @@ class PlotView(TopicMessageView):
             for chart in self._charts:
                 chart.set_size(w, chart_height)
 
-        self.invalidate()
+        wx.CallAfter(self.parent.Refresh)
 
     def stop_loading(self):
         if self._data_loader:
@@ -291,7 +308,7 @@ class PlotView(TopicMessageView):
             self._data_loader.add_listener(self._data_loader_updated)
 
     def _data_loader_updated(self):
-        self.invalidate()
+        wx.CallAfter(self.parent.Refresh)
 
     def configure(self):
         if self._configure_frame:
@@ -383,11 +400,11 @@ class PlotPopupMenu(wx.Menu):
             self.period = period
             self.plot   = plot
 
-            parent.Bind(wx.EVT_MENU, self.on_menu, id=self.GetId())
+            parent.Bind(wx.EVT_MENU, self._on_menu, id=self.GetId())
     
-        def on_menu(self, event):
+        def _on_menu(self, event):
             self.plot.period = self.period
-            self.plot.invalidate()
+            wx.CallAfter(self.plot.parent.Refresh)
     
     class ExportCSVMenuItem(wx.MenuItem):
         def __init__(self, parent, id, label, rows, plot):
@@ -396,7 +413,7 @@ class PlotPopupMenu(wx.Menu):
             self.rows = rows
             self.plot = plot
 
-            parent.Bind(wx.EVT_MENU, self.on_menu, id=self.GetId())
+            parent.Bind(wx.EVT_MENU, self._on_menu, id=self.GetId())
     
-        def on_menu(self, event):
+        def _on_menu(self, event):
             self.plot.export_csv(self.rows)

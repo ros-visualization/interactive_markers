@@ -50,7 +50,7 @@ class PlotConfigureFrame(wx.Frame):
     Choose data to extract from messages.
     """
     def __init__(self, plot):
-        wx.Frame.__init__(self, None, title=plot.frame.GetTitle() + ' - Configure', size=(600, 400))
+        wx.Frame.__init__(self, None, title=plot.parent.GetTitle() + ' - Configure', size=(600, 400))
 
         self.plot = plot
 

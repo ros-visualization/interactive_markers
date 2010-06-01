@@ -59,7 +59,7 @@ class ImageTimelineRenderer(TimelineRenderer):
         self.min_thumbnail_width  = 8                    # don't display thumbnails if less than this many pixels across
         self.quality              = Image.NEAREST        # quality hint for thumbnail scaling
 
-        self.thumbnail_cache = TimelineCache(self._load_thumbnail, lambda topic, msg_stamp, thumbnail: self.timeline.invalidate())
+        self.thumbnail_cache = TimelineCache(self._load_thumbnail, lambda topic, msg_stamp, thumbnail: wx.CallAfter(self.timeline.Refresh))
 
     # TimelineRenderer implementation
 
