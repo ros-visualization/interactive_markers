@@ -272,8 +272,8 @@ class ExportFramesDialog(wx.Dialog):
 
         panel = wx.Panel(self, -1)
 
-        self.file_spec_label = wx.StaticText(panel, -1, 'File spec:',     (5, 10))
-        self.file_spec_text  = wx.TextCtrl  (panel, -1, 'frame_%03d.png', (65, 7), (210, 22))
+        self.file_spec_label = wx.StaticText(panel, -1, 'File spec:',    (5, 10))
+        self.file_spec_text  = wx.TextCtrl  (panel, -1, 'frame%04d.png', (65, 7), (210, 22))
 
         self.steps_label = wx.StaticText(panel, -1, 'Every:', (5, 35))
         self.steps_text  = wx.lib.masked.NumCtrl(panel, -1, pos=(65, 32), size=(34, 22), value=1, integerWidth=3, allowNegative=False)
@@ -304,7 +304,7 @@ class ExportFramesDialog(wx.Dialog):
         try:
             test_filename = file_spec % 0
         except Exception:
-            wx.MessageDialog(None, 'Error with filename specification.\n\nPlease include a frame number format, e.g. frame_%03d.png', 'Error', wx.OK | wx.ICON_ERROR).ShowModal()
+            wx.MessageDialog(None, 'Error with filename specification.\n\nPlease include a frame number format, e.g. frame%04d.png', 'Error', wx.OK | wx.ICON_ERROR).ShowModal()
             return
 
         try:
