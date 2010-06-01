@@ -351,6 +351,7 @@ class ExportFramesDialog(wx.Dialog):
                                           style=wx.PD_CAN_ABORT | wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME | wx.PD_ESTIMATED_TIME | wx.PD_REMAINING_TIME | wx.PD_SMOOTH | wx.PD_AUTO_HIDE)
 
         self.export_thread = threading.Thread(target=self._run, args=(file_spec, bag_entries))
+        self.export_thread.setDaemon(True)
         self.export_thread.start()
         
     def _run(self, file_spec, bag_entries):

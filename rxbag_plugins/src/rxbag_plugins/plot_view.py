@@ -37,7 +37,6 @@ import rospy
 import bisect
 import csv
 import sys
-import threading
 import time
 
 import Image

@@ -135,6 +135,8 @@ class PlotDataLoader(threading.Thread):
 
     def stop(self):
         self._stop_flag = True
+        with self._dirty_cv:
+            self._dirty_cv.notify()
         self.join()
 
     ##
