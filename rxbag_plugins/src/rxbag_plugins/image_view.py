@@ -111,7 +111,7 @@ class ImageView(TopicMessageView):
     
     def set_image(self, image_msg, image_topic, image_stamp):
         with self._image_lock:
-            self._image_msg     = image_msg
+            self._image_msg = image_msg
             if image_msg:
                 self._image = image_helper.imgmsg_to_pil(image_msg)
             else:
@@ -200,7 +200,7 @@ class ImageView(TopicMessageView):
         dialog.Destroy()
 
     def save_selected_frames(self):
-        if not self._image or not self.image_view.timeline.has_selected_region:
+        if not self._image or not self.timeline.has_selected_region:
             return
         
         dialog = ExportFramesDialog(self.parent.Parent, -1, 'Export frames', self.timeline, self._image_topic)

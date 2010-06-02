@@ -115,9 +115,9 @@ class PlotView(TopicMessageView):
         wx.CallAfter(self.configure)
 
     # property: plot_paths
-    
+
     def _get_plot_paths(self): return self._plot_paths
-    
+
     def _set_plot_paths(self, plot_paths):
         self._plot_paths = plot_paths
 
