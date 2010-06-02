@@ -99,6 +99,8 @@ class PlotView(TopicMessageView):
 
         self._configure_frame = None
 
+        self._max_interval_secs = 1.5
+
         tb = self.parent.GetToolBar()
         icons_dir = roslib.packages.get_pkg_dir(PKG) + '/icons/'
         tb.AddSeparator()
@@ -118,7 +120,7 @@ class PlotView(TopicMessageView):
     
     def _set_plot_paths(self, plot_paths):
         self._plot_paths = plot_paths
-        
+
         # Update the data loader with the paths to plot
         if self._data_loader:
             paths = []
@@ -202,7 +204,7 @@ class PlotView(TopicMessageView):
     def _update_max_interval(self):
         secs_per_px = (self._data_loader.end_stamp - self._data_loader.start_stamp).to_sec() / self.parent.Size[0]  # conservative: use entire width of control instead of just plot area
 
-        self._data_loader.max_interval = secs_per_px * 1.5
+        self._data_loader.max_interval = secs_per_px * self._max_interval_secs
 
     ## Events
 

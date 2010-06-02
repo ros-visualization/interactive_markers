@@ -394,6 +394,10 @@ class Chart(object):
                 self._draw_x_indicator(dc)
                 self._draw_legend(dc)
 
+            #for i, (series, series_data) in enumerate(self._series_data.items()):
+            #    dc.move_to(self.chart_left, self.chart_top + 200 + i * 20)
+            #    dc.show_text('%s: %s' % (series, series_data.num_points))
+
         finally:
             dc.restore()
 

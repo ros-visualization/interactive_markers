@@ -141,6 +141,18 @@ class PlotDataLoader(threading.Thread):
 
     ##
 
+    def _trim_data(self):
+        min_x = (self._start_stamp - self._timeline.start_stamp).to_sec()
+        max_x = (self._end_stamp   - self._timeline.start_stamp).to_sec()
+        
+        for series in list(self._data.keys()):
+            new_data = DataSet()
+            for x, y in self._data[series].points:
+                if x >= min_x and x <= max_x:
+                    new_data.add(x, y)
+
+            self._data[series] = new_data
+
     def _run(self):
         while not self._stop_flag:
             with self._dirty_cv:
@@ -150,6 +162,9 @@ class PlotDataLoader(threading.Thread):
                     loaded_indexes = set()
                     loaded_stamps  = []
                     subdivider     = _subdivide(0, len(entries) - 1)
+
+                    self._trim_data()
+
                     self._dirty = False
 
                 if subdivider is None or len(self._paths) == 0:
@@ -212,7 +227,7 @@ class PlotDataLoader(threading.Thread):
                 self._data[path].add(x, y)
 
             loaded_indexes.add(index)
-
+            
             # Notify listeners of progress
             for listener in self._progress_listeners:
                 listener()
