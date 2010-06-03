@@ -74,10 +74,10 @@ class ImageView(TopicMessageView):
         icons_dir = roslib.packages.get_pkg_dir(PKG) + '/icons/'
         tb.AddSeparator()
 
-        self.save_frame_tool           = tb.AddLabelTool(wx.ID_ANY, '', wx.Bitmap(icons_dir + 'picture_save.png'))
+        self.save_frame_tool           = tb.AddLabelTool(wx.ID_ANY, '',              wx.Bitmap(icons_dir + 'picture_save.png'),  shortHelp='Save frame',    longHelp='Save frame using filename spec')
         self.file_spec_tool            = wx.TextCtrl(tb, wx.ID_ANY, 'frame%04d.png', size=(200, 22))
         tb.AddControl(self.file_spec_tool)
-        self.save_selected_frames_tool = tb.AddLabelTool(wx.ID_ANY, '', wx.Bitmap(icons_dir + 'pictures_save.png'))
+        self.save_selected_frames_tool = tb.AddLabelTool(wx.ID_ANY, '',              wx.Bitmap(icons_dir + 'pictures_save.png'), shortHelp='Save frames',   longHelp='Save frames from selected region')
 
         tb.Bind(wx.EVT_TOOL, lambda e: self.save_frame(),           self.save_frame_tool)
         tb.Bind(wx.EVT_TOOL, lambda e: self.save_selected_frames(), self.save_selected_frames_tool)
@@ -202,11 +202,14 @@ class ImageView(TopicMessageView):
     def save_selected_frames(self):
         if not self._image or not self.timeline.has_selected_region:
             return
-        
-        dialog = ExportFramesDialog(self.parent.Parent, -1, 'Export frames', self.timeline, self._image_topic)
-        dialog.ShowModal()
-        dialog.Destroy()
 
+        wx.CallAfter(self._show_export_dialog)
+
+    def _show_export_dialog(self):
+        dialog = ExportFramesDialog(None, -1, 'Export frames', self.timeline, self._image_topic)
+        dialog.Show()
+
+"""
     def export_video(self):
         bag_file = self.timeline.bag_file
 
@@ -264,6 +267,7 @@ class ImageView(TopicMessageView):
                 shutil.rmtree(tmpdir)
 
         dialog.Destroy()
+"""
 
 class ImagePopupMenu(wx.Menu):
     def __init__(self, parent, image_view):
@@ -345,18 +349,22 @@ class ExportFramesDialog(wx.Dialog):
         bag_entries = list(self.timeline.get_entries_with_bags(self.topic, self.timeline.play_region[0], self.timeline.play_region[1]))[::step]
         total_frames = len(bag_entries)
 
-        self.progress = wx.ProgressDialog('Saving frames from selected region...', 'Saving %d frames from %s...' % (total_frames, self.topic),
-                                          maximum=total_frames,
-                                          parent=self,
-                                          style=wx.PD_CAN_ABORT | wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME | wx.PD_ESTIMATED_TIME | wx.PD_REMAINING_TIME | wx.PD_SMOOTH | wx.PD_AUTO_HIDE)
-
         self.export_thread = threading.Thread(target=self._run, args=(file_spec, bag_entries))
         self.export_thread.setDaemon(True)
         self.export_thread.start()
         
-    def _run(self, file_spec, bag_entries):
-        self.keep_going = True
+        self.Close()
         
+    def _run(self, file_spec, bag_entries):
+        total_frames = len(bag_entries)
+        
+        wx.CallAfter(wx.GetApp().GetTopWindow().StatusBar.gauge.Show)
+        
+        progress = 0
+
+        def update_progress(v):
+            wx.GetApp().GetTopWindow().StatusBar.progress = v
+
         frame_num = 1
         for i, (bag, entry) in enumerate(bag_entries):
             try:
@@ -368,21 +376,20 @@ class ExportFramesDialog(wx.Dialog):
                     frame_num += 1
                 except Exception, ex:
                     print >> sys.stderr, 'Error saving frame at %s to disk: %s' % (str(t), str(ex))
+
+                new_progress = int(100.0 * (float(frame_num) / total_frames))
+                if new_progress != progress:
+                    progress = new_progress
+                    wx.CallAfter(update_progress, progress)
             except Exception, ex:
                 print >> sys.stderr, 'Error saving frame %d: %s' % (i, str(ex))
 
-            wx.CallAfter(self._update_progress, i)
-            if not self.keep_going:
-                wx.CallAfter(self.progress.Close)
-                break
+        wx.CallAfter(wx.GetApp().GetTopWindow().StatusBar.gauge.Hide)
 
-        wx.CallAfter(self.Close)
-
-    def _update_progress(self, i):
-        self.keep_going, _ = self.progress.Update(i + 1)
+        wx.CallAfter(self.Destroy)
 
     def _on_cancel(self, event):
-        self.Close()
+        self.Destroy()
 
 def _save_image_msg(img_msg, filename):
     pil_img = image_helper.imgmsg_to_pil(img_msg, rgba=False)
@@ -391,4 +398,3 @@ def _save_image_msg(img_msg, filename):
         pil_img = image_helper.pil_bgr2rgb(pil_img)
         
     pil_img.save(filename)
-    
