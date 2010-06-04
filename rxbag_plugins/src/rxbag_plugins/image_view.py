@@ -29,243 +29,224 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-#
-# Revision $Id$
 
 PKG = 'rxbag_plugins'
 import roslib; roslib.load_manifest(PKG)
-import rospy
-import bisect
-import numpy
+
 import os
 import shutil
+import sys
+import threading
 import time
 
-import wxversion
-WXVER = '2.8'
-if wxversion.checkInstalled(WXVER):
-    wxversion.select(WXVER)
-else:
-    print >> sys.stderr, 'This application requires wxPython version %s' % WXVER
-    sys.exit(1)
+import numpy
 import wx
+import wx.lib.masked
+import wx.lib.wxcairo
 
-from rxbag import bag_index, msg_view
-from image_helper import ImageHelper
+import Image
 
-## Draws thumbnails of sensor_msgs/Image or sensor_msgs/CompressedImage in the timeline
-class ImageTimelineRenderer(msg_view.TimelineRenderer):
-    def __init__(self, timeline, thumbnail_height=48):
-        msg_view.TimelineRenderer.__init__(self, timeline, msg_combine_px=10.0)
+from rxbag import bag_helper, TopicMessageView
+import image_helper
 
-        self.thumbnail_height     = thumbnail_height
-
-        self.thumbnail_combine_px = 20.0                      # use cached thumbnail if it's less than this many pixels away
-        self.min_thumbnail_width  = 8                         # don't display thumbnails if less than this many pixels across
-        self.quality              = wx.IMAGE_QUALITY_NORMAL   # quality hint for thumbnail scaling
-
-        self.thumbnail_cache      = {}
-        self.thumbnail_mem_dc     = wx.MemoryDC()
-        self.max_cache_size       = 200                       # max number of thumbnails to cache (per topic)
-
-    # TimelineRenderer implementation
-
-    def get_segment_height(self, topic):
-        if not self._valid_image_topic(topic):
-            return None
-
-        return self.thumbnail_height
-
-    def draw_timeline_segment(self, dc, topic, stamp_start, stamp_end, x, y, width, height):
-        if not self._valid_image_topic(topic):
-            return False
-
-        max_interval_thumbnail = self.timeline.map_dx_to_dstamp(self.thumbnail_combine_px)
-
-        dc.DrawRectangle(x, y, width, height)
-
-        thumbnail_x, thumbnail_y, thumbnail_height = x + 1, y + 1, height - 2   # leave 1px border
-
-        while True:
-            available_width = (x + width) - thumbnail_x
-            if available_width < self.min_thumbnail_width:
-                # No space remaining to draw thumbnail
-                break
-
-            # Load a thumbnail at (or near) this timestamp 
-            thumbnail_bitmap = self._get_thumbnail(topic, self.timeline.map_x_to_stamp(thumbnail_x), thumbnail_height, max_interval_thumbnail)
-            if not thumbnail_bitmap:
-                break
-
-            thumbnail_width = thumbnail_bitmap.GetWidth()
-
-            if available_width < thumbnail_width:
-                # Space remaining, but have to chop off thumbnail
-                thumbnail_width = available_width - 2
-
-                self.thumbnail_mem_dc.SelectObject(thumbnail_bitmap)
-                dc.Blit(thumbnail_x, thumbnail_y, thumbnail_width, thumbnail_height, self.thumbnail_mem_dc, 0, 0)
-                self.thumbnail_mem_dc.SelectObject(wx.NullBitmap)
-            else:
-                # Enough space to draw entire thumbnail
-                dc.DrawBitmap(thumbnail_bitmap, thumbnail_x, thumbnail_y)
-
-            thumbnail_x += thumbnail_width + 1    # 1px border (but overlap adjacent message)
-
-        return True
-
-    #
-
-    def _valid_image_topic(self, topic):
-        return True
-
-    ## Loads the thumbnail from either the bag file or the cache
-    def _get_thumbnail(self, topic, stamp, thumbnail_height, time_threshold):
-        # Attempt to get a thumbnail from the cache that's within time_threshold secs from stamp
-        topic_cache = self.thumbnail_cache.get(topic)
-        if topic_cache:
-            cache_index = bisect.bisect_right(topic_cache, (stamp, None))
-            if cache_index < len(topic_cache):
-                (cache_stamp, cache_thumbnail) = topic_cache[cache_index]
-                
-                cache_dist = abs(cache_stamp - stamp)
-                if cache_dist < time_threshold: 
-                    return cache_thumbnail
-
-        # Find position of stamp using index
-        pos = self.timeline.bag_index._data.find_stamp_position(topic, stamp)
-        if not pos:
-            return None
-
-        # Not in the cache; load from the bag file
-        (msg_datatype, msg, msg_stamp) = self.timeline.bag_file.load_message(pos)
-        
-        # Convert from ROS image to wxImage
-        wx_image = ImageHelper.imgmsg_to_wx(msg)
-        if not wx_image:
-            return None
-
-        # Calculate width to maintain aspect ratio
-        thumbnail_width = int(round(thumbnail_height * (float(wx_image.GetWidth()) / wx_image.GetHeight())))
-        
-        # Scale to thumbnail size
-        thumbnail = wx_image.Scale(thumbnail_width, thumbnail_height, self.quality)
-
-        # Convert to bitmap
-        thumbnail_bitmap = thumbnail.ConvertToBitmap()
-
-        # Store in the cache
-        if not topic_cache:
-            topic_cache = []
-            self.thumbnail_cache[topic] = topic_cache
-
-        cache_value = (msg_stamp.to_sec(), thumbnail_bitmap)
-
-        # Maintain the cache sorted
-        cache_index = bisect.bisect_right(topic_cache, cache_value)
-        topic_cache.insert(cache_index, cache_value)
-
-        # Limit cache size - remove the farthest entry in the cache
-        cache_size = len(topic_cache)
-        if cache_size > self.max_cache_size:
-            if cache_index < cache_size / 2:
-                del topic_cache[cache_size - 1]
-            else:
-                del topic_cache[0]
-        
-        return thumbnail_bitmap
-
-class ImageView(msg_view.TopicMsgView):
+class ImageView(TopicMessageView):
     name = 'Image'
     
-    def __init__(self, timeline, parent, title, x, y, width, height, max_repaint=None):
-        msg_view.TopicMsgView.__init__(self, timeline, parent, title, x, y, width, height, max_repaint)
+    def __init__(self, timeline, parent):
+        TopicMessageView.__init__(self, timeline, parent)
         
-        self._image        = None
-        self._image_topic  = None
-        self._image_stamp  = None
+        self._image_lock  = threading.RLock()
+        self._image       = None
+        self._image_topic = None
+        self._image_stamp = None
+
+        self._image_surface = None
+
+        self._overlay_font_size = 14.0
+        self._overlay_indent    = (4, 4)
+        self._overlay_color     = (0.2, 0.2, 1.0)
+
+        self._size_set = False
         
-        self._image_bitmap = None
+        self._next_frame_num = 1
         
-        self.quality       = wx.IMAGE_QUALITY_NORMAL
-        self.indent        = (4, 4)
-        self.font          = wx.Font(9, wx.FONTFAMILY_SCRIPT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
-        self.header_color  = wx.BLUE
+        tb = self.parent.GetToolBar()
+        icons_dir = roslib.packages.get_pkg_dir(PKG) + '/icons/'
+        tb.AddSeparator()
+
+        self.save_frame_tool           = tb.AddLabelTool(wx.ID_ANY, '',              wx.Bitmap(icons_dir + 'picture_save.png'),  shortHelp='Save frame',    longHelp='Save frame using filename spec')
+        self.file_spec_tool            = wx.TextCtrl(tb, wx.ID_ANY, 'frame%04d.png', size=(200, 22))
+        tb.AddControl(self.file_spec_tool)
+        self.save_selected_frames_tool = tb.AddLabelTool(wx.ID_ANY, '',              wx.Bitmap(icons_dir + 'pictures_save.png'), shortHelp='Save frames',   longHelp='Save frames from selected region')
+
+        tb.Bind(wx.EVT_TOOL, lambda e: self.save_frame(),           self.save_frame_tool)
+        tb.Bind(wx.EVT_TOOL, lambda e: self.save_selected_frames(), self.save_selected_frames_tool)
         
-        self.size_set = False
+        self.parent.Bind(wx.EVT_SIZE,       self.on_size)
+        self.parent.Bind(wx.EVT_PAINT,      self.on_paint)
+        self.parent.Bind(wx.EVT_RIGHT_DOWN, self.on_right_down)
+
+    ## MessageView implementation
+    
+    def message_viewed(self, bag, msg_details):
+        TopicMessageView.message_viewed(self, bag, msg_details)
         
-    def message_viewed(self, bag_file, bag_index, topic, stamp, datatype, msg_index, msg):
-        msg_view.TopicMsgView.message_viewed(self, bag_file, bag_index, topic, stamp, datatype, msg_index, msg)
-        
+        topic, msg, t = msg_details[:3]
+
         if not msg:
             self.set_image(None, topic, stamp)
         else:
-            self.set_image(ImageHelper.imgmsg_to_wx(msg), topic, msg.header.stamp)
-                        
-            if not self.size_set:
-                self.size_set = True
-                self.reset_size()
+            self.set_image(msg, topic, msg.header.stamp)
+    
+            if not self._size_set:
+                self._size_set = True
+                wx.CallAfter(self.reset_size)
 
     def message_cleared(self):
-        msg_view.TopicMsgView.message_cleared(self)
+        TopicMessageView.message_cleared(self)
 
         self.set_image(None, None, None)
 
-    def set_image(self, image, image_topic, image_stamp):
-        self._image        = image
-        self._image_bitmap = None
-        
-        self._image_topic = image_topic
-        self._image_stamp = image_stamp
-        
-        self.invalidate()
+    ##
+    
+    def set_image(self, image_msg, image_topic, image_stamp):
+        with self._image_lock:
+            self._image_msg = image_msg
+            if image_msg:
+                self._image = image_helper.imgmsg_to_pil(image_msg)
+            else:
+                self._image = None
+            self._image_surface = None
+            
+            self._image_topic = image_topic
+            self._image_stamp = image_stamp
+
+        wx.CallAfter(self.parent.Refresh)
 
     def reset_size(self):
-        if self._image:
-            self.parent.GetParent().SetSize(self._image.GetSize())
+        with self._image_lock:
+            if self._image:
+                self.parent.ClientSize = self._image.size
 
-    def export_frame(self):
-        dialog = wx.FileDialog(self.parent.GetParent(), 'Save frame to...', wildcard='PNG files (*.png)|*.png', style=wx.FD_SAVE)
+    ## Events
+
+    def on_size(self, event):
+        with self._image_lock:
+            self._image_surface = None
+            
+        self.parent.Refresh()
+
+    def on_paint(self, event):
+        dc = wx.lib.wxcairo.ContextFromDC(wx.PaintDC(self.parent))
+        
+        with self._image_lock:
+            if not self._image:
+                return
+
+            ix, iy, iw, ih = 0, 0, self.parent.ClientSize[0], self.parent.ClientSize[1]
+
+            # Rescale the bitmap if necessary
+            if not self._image_surface:
+                if self._image.size[0] != iw or self._image.size[1] != ih:
+                    self._image_surface = image_helper.pil_to_cairo(self._image.resize((iw, ih), Image.NEAREST))
+                else:
+                    self._image_surface = image_helper.pil_to_cairo(self._image)
+    
+            # Draw bitmap
+            dc.set_source_surface(self._image_surface, ix, iy)
+            dc.rectangle(ix, iy, iw, ih)
+            dc.fill()
+    
+            # Draw overlay
+            dc.set_font_size(self._overlay_font_size)
+            font_height = dc.font_extents()[2]
+            dc.set_source_rgb(*self._overlay_color)
+            dc.move_to(self._overlay_indent[0], self._overlay_indent[1] + font_height)
+            dc.show_text(bag_helper.stamp_to_str(self._image_stamp))
+
+    def on_right_down(self, event):
+        if self._image:
+            self.parent.PopupMenu(ImagePopupMenu(self.parent, self), event.GetPosition())
+
+    ##
+
+    def save_frame(self):
+        if not self._image:
+            return
+
+        file_spec = self.file_spec_tool.Value
+        try:
+            filename = file_spec % self._next_frame_num
+        except Exception:
+            wx.MessageDialog(None, 'Error with filename specification.\n\nPlease include a frame number format, e.g. frame%04d.png', 'Error', wx.OK | wx.ICON_ERROR).ShowModal()
+            return
+
+        with self._image_lock:
+            if self._image_msg:
+                _save_image_msg(self._image_msg, filename)
+                self._next_frame_num += 1
+                
+                self.parent.SetStatusText('%s written' % filename)
+
+    def save_frame_as(self):
+        if not self._image:
+            return
+
+        dialog = wx.FileDialog(self.parent.Parent, 'Save frame to...', wildcard='PNG files (*.png)|*.png', style=wx.FD_SAVE)
         if dialog.ShowModal() == wx.ID_OK:
-            self._image.SaveFile(dialog.GetPath(), wx.BITMAP_TYPE_PNG)
+            with self._image_lock:
+                if self._image_msg:
+                    _save_image_msg(self._image_msg, dialog.Path)
         dialog.Destroy()
 
+    def save_selected_frames(self):
+        if not self._image or not self.timeline.has_selected_region:
+            return
+
+        wx.CallAfter(self._show_export_dialog)
+
+    def _show_export_dialog(self):
+        dialog = ExportFramesDialog(None, -1, 'Export frames', self.timeline, self._image_topic)
+        dialog.Show()
+
+"""
     def export_video(self):
-        bag_index, bag_file = self.timeline.bag_index, self.timeline.bag_file
+        bag_file = self.timeline.bag_file
 
         msg_positions = bag_index.msg_positions[self._image_topic]
         if len(msg_positions) == 0:
             return
         
-        dialog = wx.FileDialog(self.parent.GetParent(), 'Save video to...', wildcard='AVI files (*.avi)|*.avi', style=wx.FD_SAVE)
+        dialog = wx.FileDialog(self.parent.Parent, 'Save video to...', wildcard='AVI files (*.avi)|*.avi', style=wx.FD_SAVE)
         if dialog.ShowModal() != wx.ID_OK:
             return
-        video_filename = dialog.GetPath()
+        video_filename = dialog.Path
 
         import tempfile
         tmpdir = tempfile.mkdtemp()
 
         frame_count = 0
         w, h = None, None
-        for i, (stamp, pos) in enumerate(msg_positions):
-            datatype, msg, msg_stamp = bag_file.load_message(pos, bag_index)
-            if msg:
-                img = ImageHelper.imgmsg_to_wx(msg)
-                if img:
-                    frame_filename = '%s/frame-%s.png' % (tmpdir, str(stamp)) 
-                    print '[%d / %d]' % (i + 1, len(msg_positions))
-                    img.SaveFile(frame_filename, wx.BITMAP_TYPE_PNG)
-                    frame_count += 1
-                    
-                    if w is None:
-                        w, h = img.GetWidth(), img.GetHeight()
+        
+        total_frames = len(bag_file.read_messages(self._image_topic, raw=True))
+
+        for i, (topic, msg, t) in enumerate(bag_file.read_messages(self._image_topic)):
+            img = image_helper.imgmsg_to_wx(msg)
+            if img:
+                frame_filename = '%s/frame-%s.png' % (tmpdir, str(t))
+                print '[%d / %d]' % (i + 1, total_frames)
+                img.SaveFile(frame_filename, wx.BITMAP_TYPE_PNG)
+                frame_count += 1
+
+                if w is None:
+                    w, h = img.GetWidth(), img.GetHeight()
 
         if frame_count > 0:
             positions = numpy.array([stamp for (stamp, pos) in msg_positions])
             if len(positions) > 1:
                 spacing = positions[1:] - positions[:-1]
                 fps = 1.0 / numpy.median(spacing)
-                
+
             print 'Encoding %dx%d at %d fps' % (w, h, fps)
 
             try:
@@ -286,51 +267,7 @@ class ImageView(msg_view.TopicMsgView):
                 shutil.rmtree(tmpdir)
 
         dialog.Destroy()
-
-    def on_size(self, event):
-        self.resize(*self.parent.GetClientSize())
-
-        self._image_bitmap = None
-        
-        self.force_repaint()
-
-    def _get_image_rect(self):
-        if self.border:
-            return 1, 1, self.width - 2, self.height - 2
-        else:
-            return 0, 0, self.width, self.height
-
-    def paint(self, dc):
-        dc.SetBrush(wx.WHITE_BRUSH)
-        if self.border:
-            dc.SetPen(wx.BLACK_PEN)
-            dc.DrawRectangle(0, 0, self.width, self.height)
-        else:
-            dc.Clear()
-
-        if not self._image:
-            return
-        
-        ix, iy, iw, ih = self._get_image_rect()
-
-        # Rescale the bitmap if necessary
-        if not self._image_bitmap:
-            if self._image.GetWidth() != iw or self._image.GetHeight() != ih:
-                self._image_bitmap = self._image.Scale(iw, ih, self.quality).ConvertToBitmap()
-            else:
-                self._image_bitmap = self._image.ConvertToBitmap()
-
-        # Draw bitmap
-        dc.DrawBitmap(self._image_bitmap, ix, iy)
-
-        # Draw overlay
-        dc.SetFont(self.font)
-        dc.SetTextForeground(self.header_color)
-        dc.DrawText(self._image_topic, self.indent[0], self.indent[1])
-        dc.DrawText(bag_index.BagIndex.stamp_to_str(self._image_stamp.to_sec()), self.indent[0], self.indent[1] + dc.GetTextExtent(self._image_topic)[1])
-
-    def on_right_down(self, event):
-        self.parent.PopupMenu(ImagePopupMenu(self.parent, self), event.GetPosition())
+"""
 
 class ImagePopupMenu(wx.Menu):
     def __init__(self, parent, image_view):
@@ -341,14 +278,123 @@ class ImagePopupMenu(wx.Menu):
         # Reset Size
         reset_item = wx.MenuItem(self, wx.NewId(), 'Reset Size')
         self.AppendItem(reset_item)
-        self.Bind(wx.EVT_MENU, lambda e: self.image_view.reset_size(), id=reset_item.GetId())
+        self.Bind(wx.EVT_MENU, lambda e: self.image_view.reset_size(), id=reset_item.Id)
 
-        # Export to PNG...
-        export_frame_item = wx.MenuItem(self, wx.NewId(), 'Export to PNG...')
-        self.AppendItem(export_frame_item)
-        self.Bind(wx.EVT_MENU, lambda e: self.image_view.export_frame(), id=export_frame_item.GetId())
+        # Save Frame...
+        save_frame_as_item = wx.MenuItem(self, wx.NewId(), 'Save Frame...')
+        self.AppendItem(save_frame_as_item)
+        self.Bind(wx.EVT_MENU, lambda e: self.image_view.save_frame_as(), id=save_frame_as_item.Id)
+
+        # Save Selected Frames...
+        save_selected_frames_item = wx.MenuItem(self, wx.NewId(), 'Save Selected Frames...')
+        self.AppendItem(save_selected_frames_item)
+        self.Bind(wx.EVT_MENU, lambda e: self.image_view.save_selected_frames(), id=save_selected_frames_item.Id)
+        if not self.image_view.timeline.has_selected_region:
+            save_selected_frames_item.Enable(False)
 
         # Export to AVI...
         #export_video_item = wx.MenuItem(self, wx.NewId(), 'Export to AVI...')
         #self.AppendItem(export_video_item)
-        #self.Bind(wx.EVT_MENU, lambda e: self.image_view.export_video(), id=export_video_item.GetId())
+        #self.Bind(wx.EVT_MENU, lambda e: self.image_view.export_video(), id=export_video_item.Id)
+
+class ExportFramesDialog(wx.Dialog):
+    def __init__(self, parent, id, title, timeline, topic):
+        wx.Dialog.__init__(self, parent, id, title, size=(280, 90))
+
+        self.timeline = timeline
+        self.topic    = topic
+
+        panel = wx.Panel(self, -1)
+
+        self.file_spec_label = wx.StaticText(panel, -1, 'File spec:',    (5, 10))
+        self.file_spec_text  = wx.TextCtrl  (panel, -1, 'frame%04d.png', (65, 7), (210, 22))
+
+        self.steps_label = wx.StaticText(panel, -1, 'Every:', (5, 35))
+        self.steps_text  = wx.lib.masked.NumCtrl(panel, -1, pos=(65, 32), size=(34, 22), value=1, integerWidth=3, allowNegative=False)
+        self.steps_text.SetMin(1)
+
+        self.frames_label = wx.StaticText(panel, -1, 'frame(s)', (102, 36))
+
+        self.export_button = wx.Button(self, -1, 'Export', size=(68, 26))
+        self.cancel_button = wx.Button(self, -1, 'Cancel', size=(68, 26))
+
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        hbox.Add(self.export_button, 1)
+        hbox.Add(self.cancel_button, 1, wx.LEFT, 5)
+
+        vbox = wx.BoxSizer(wx.VERTICAL)
+        vbox.Add(panel)
+        vbox.Add(hbox, 1, wx.ALIGN_CENTER | wx.TOP | wx.BOTTOM, 5)
+        self.SetSizer(vbox)
+
+        self.Bind(wx.EVT_BUTTON, self._on_export, id=self.export_button.Id)
+        self.Bind(wx.EVT_BUTTON, self._on_cancel, id=self.cancel_button.Id)
+
+        self.progress      = None
+        self.export_thread = None
+
+    def _on_export(self, event):
+        file_spec = self.file_spec_text.Value
+        try:
+            test_filename = file_spec % 0
+        except Exception:
+            wx.MessageDialog(None, 'Error with filename specification.\n\nPlease include a frame number format, e.g. frame%04d.png', 'Error', wx.OK | wx.ICON_ERROR).ShowModal()
+            return
+
+        try:
+            step = max(1, int(self.steps_text.Value))
+        except ValueError:
+            step = 1
+
+        bag_entries = list(self.timeline.get_entries_with_bags(self.topic, self.timeline.play_region[0], self.timeline.play_region[1]))[::step]
+        total_frames = len(bag_entries)
+
+        self.export_thread = threading.Thread(target=self._run, args=(file_spec, bag_entries))
+        self.export_thread.setDaemon(True)
+        self.export_thread.start()
+        
+        self.Close()
+        
+    def _run(self, file_spec, bag_entries):
+        total_frames = len(bag_entries)
+        
+        wx.CallAfter(wx.GetApp().GetTopWindow().StatusBar.gauge.Show)
+        
+        progress = 0
+
+        def update_progress(v):
+            wx.GetApp().GetTopWindow().StatusBar.progress = v
+
+        frame_num = 1
+        for i, (bag, entry) in enumerate(bag_entries):
+            try:
+                topic, msg, t = self.timeline.read_message(bag, entry.position)
+
+                filename = file_spec % frame_num
+                try:
+                    _save_image_msg(msg, filename)
+                    frame_num += 1
+                except Exception, ex:
+                    print >> sys.stderr, 'Error saving frame at %s to disk: %s' % (str(t), str(ex))
+
+                new_progress = int(100.0 * (float(frame_num) / total_frames))
+                if new_progress != progress:
+                    progress = new_progress
+                    wx.CallAfter(update_progress, progress)
+            except Exception, ex:
+                print >> sys.stderr, 'Error saving frame %d: %s' % (i, str(ex))
+
+        wx.CallAfter(wx.GetApp().GetTopWindow().StatusBar.gauge.Hide)
+
+        wx.CallAfter(self.Destroy)
+
+    def _on_cancel(self, event):
+        self.Destroy()
+
+def _save_image_msg(img_msg, filename):
+    pil_img = image_helper.imgmsg_to_pil(img_msg, rgba=False)
+    
+    if pil_img.mode == 'RGB':
+        pil_img = image_helper.pil_bgr2rgb(pil_img)
+        
+    pil_img.save(filename)

@@ -29,312 +29,449 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-#
-# Revision $Id$
 
 PKG = 'rxbag_plugins'
 import roslib; roslib.load_manifest(PKG)
 import rospy
 
-import rosrecord
-
-import collections
-import string
-import threading
+import bisect
+import csv
+import sys
 import time
 
-import rxtools.vizutil
-rxtools.vizutil.check_matplotlib_deps()
-
-import matplotlib
-matplotlib.use('WXAgg')
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigCanvas, NavigationToolbar2WxAgg as NavigationToolbar
-
+import Image
 import numpy
 import pylab
 import wx
+import wx.lib.wxcairo
 
-from rxbag import msg_view
+from rxbag import TopicMessageView
 
+from chart import Chart
 from plot_configure_frame import PlotConfigureFrame
+from plot_data_loader     import PlotDataLoader
+import image_helper
 
-class PlotView(msg_view.TopicMsgView):
+class PlotView(TopicMessageView):
     name = 'Plot'
 
-    def __init__(self, timeline, parent, title, x, y, width, height, max_repaint=0.1):
-        msg_view.TopicMsgView.__init__(self, timeline, parent, title, x, y, width, height, max_repaint)
+    rows = [(   1, 'All'),
+            (   2, 'Every 2nd message'),
+            (   3, 'Every 3rd message'),
+            (   4, 'Every 4th message'),
+            (   5, 'Every 5th message'),
+            (  10, 'Every 10th message'),
+            (  20, 'Every 20th message'),
+            (  50, 'Every 50th message'),
+            ( 100, 'Every 100th message'),
+            (1000, 'Every 1000th message')]
 
-        self.bag_file  = None
-        self.bag_index = None
-        self.topic     = None
+    def __init__(self, timeline, parent):
+        TopicMessageView.__init__(self, timeline, parent)
 
-        # Input data
-        self.series_list = []
-        self.datax       = []
-        self.datay       = []
-        self.playhead    = 0
+        self._topic         = None
+        self._message       = None
+        self._plot_paths    = []
+        self._playhead      = None
+        self._charts        = []
+        self._data_loader   = None
+        self._zoom_interval = None
         
-        self._msg = None
-        
-        self.plot_paths = []
+        self._clicked_pos = None
+        self._dragged_pos = None
 
-        # View parameters
-        self.period = -1
-        self.marker = 'o'
+        self._configure_frame = None
 
-        # Drawing objects
-        self._axes          = None
-        self._series_data   = None
-        self._playhead_line = None
+        self._max_interval_secs = 1.5
 
-        # Create window, figure, canvas
-        self._create_figure()
-
-        self._init_plot([])
-        
-        self._data_thread = None
-
-        # Toolbar
-        tb = self.frame.GetToolBar()
+        tb = self.parent.GetToolBar()
         icons_dir = roslib.packages.get_pkg_dir(PKG) + '/icons/'
         tb.AddSeparator()
         tb.Bind(wx.EVT_TOOL, lambda e: self.configure(), tb.AddLabelTool(wx.ID_ANY, '', wx.Bitmap(icons_dir + 'cog.png')))
 
-    def set_series_data(self, series, datax, datay):
-        data = sorted([(datax[i], datay[i]) for i in range(len(datax))])
+        self.parent.Bind(wx.EVT_SIZE,        self._on_size)
+        self.parent.Bind(wx.EVT_PAINT,       self._on_paint)
+        self.parent.Bind(wx.EVT_LEFT_DOWN,   self._on_left_down)
+        self.parent.Bind(wx.EVT_MIDDLE_DOWN, self._on_middle_down)
+        self.parent.Bind(wx.EVT_RIGHT_DOWN,  self._on_right_down)
+        self.parent.Bind(wx.EVT_LEFT_UP,     self._on_left_up)
+        self.parent.Bind(wx.EVT_MIDDLE_UP,   self._on_middle_up)
+        self.parent.Bind(wx.EVT_RIGHT_UP,    self._on_right_up)
+        self.parent.Bind(wx.EVT_MOTION,      self._on_mouse_move)
+        self.parent.Bind(wx.EVT_MOUSEWHEEL,  self._on_mousewheel)
+        self.parent.Bind(wx.EVT_CLOSE,       self._on_close)
 
-        self.datax[series] = [x for (x, y) in data]
-        self.datay[series] = [y for (x, y) in data]
+        wx.CallAfter(self.configure)
 
-        self.invalidate()
+    # property: plot_paths
 
-    def set_playhead(self, playhead):
-        self.playhead = playhead
-        
-        self.invalidate()
+    def _get_plot_paths(self): return self._plot_paths
 
-    def message_viewed(self, bag_file, bag_index, topic, stamp, datatype, msg_index, msg):
-        msg_view.TopicMsgView.message_viewed(self, bag_file, bag_index, topic, stamp, datatype, msg_index, msg)
+    def _set_plot_paths(self, plot_paths):
+        self._plot_paths = plot_paths
 
-        if not self._data_thread:
-            self.bag_file, self.bag_index, self.topic = bag_file, bag_index, topic
+        # Update the data loader with the paths to plot
+        if self._data_loader:
+            paths = []
+            for plot in self._plot_paths:
+                for path in plot:
+                    if path not in paths:
+                        paths.append(path)
+
+            self._data_loader.paths = paths
+
+        self._setup_charts()
+
+    plot_paths = property(_get_plot_paths, _set_plot_paths)
+
+    ## TopicMessageView implementation
+
+    def message_viewed(self, bag, msg_details):
+        TopicMessageView.message_viewed(self, bag, msg_details)
+
+        topic, msg, t = msg_details
+
+        if not self._data_loader:
+            self._topic = topic
             self.start_loading()
 
-        self._msg = msg
+        self._message = msg
 
-        self.set_playhead(stamp.to_sec() - bag_index.start_stamp)
-        
+        self.playhead = (t - self.timeline.start_stamp).to_sec()
+
     def message_cleared(self):
-        msg_view.TopicMsgView.message_cleared(self)
-
-    def _create_figure(self):
-        self._window = wx.Window(self.parent, -1, (self._x, self._y), (self._width, self._height))
-        self._window.Show(False)
-
-        self.dpi = 100
-        figsize = (float(self.width) / self.dpi, float(self.height) / self.dpi)  # 1px border
-        rc      = matplotlib.figure.SubplotParams(left=0.05, bottom=0.08, right=0.99, top=0.98, hspace=0.03)
-        self.figure = Figure(figsize, dpi=self.dpi, subplotpars=rc, facecolor='w')
-
-        self.canvas = FigCanvas(self._window, -1, self.figure)
-        self.canvas.mpl_connect('pick_event', self.on_pick)
-
-    def _init_plot(self, series_list):
-        self.figure.clear()
+        self._message = None
         
-        self.series_list = series_list
-
-        self.series_data = []
-        self.axes        = []
-
-        fp = matplotlib.font_manager.FontProperties(size=9)
+        TopicMessageView.message_cleared(self)
         
-        for subplot_series in self.series_list:
-            # Create axes for this plot
-            first_axes = None
-            if len(self.axes) > 0:
-                first_axes = self.axes[0]
-            axes = self.figure.add_subplot(len(self.series_list), 1, len(self.axes) + 1, sharex=first_axes)
-            axes.set_axis_bgcolor('white')
-            axes.grid(True, color='gray')
-            pylab.setp(axes.get_xticklabels(), fontsize=9)
-            pylab.setp(axes.get_yticklabels(), fontsize=9)
-            self.axes.append(axes)
+        wx.CallAfter(self.parent.Refresh)
 
-            # Create the series data
-            if len(subplot_series) == 0:
-                continue
+    def timeline_changed(self):
+        if self._data_loader:
+            self._data_loader.invalidate()
+        
+        wx.CallAfter(self.parent.Refresh)
 
-            subplot_series_data = []
-            
-            for series in subplot_series:
-                series_index = len(self.series_data)
-                
-                self.datax.append([])
-                self.datay.append([])
-                
-                series_data = axes.plot(self.datax[series_index],
-                                        self.datay[series_index],
-                                        marker=self.marker,
-                                        markersize=3,
-                                        linewidth=1,
-                                        picker=self.plot_picker)[0]
-                                        
-                subplot_series_data.append(series_data)
+    # property: playhead
 
-            self.series_data.extend(subplot_series_data)
-
-            # ros:#2588 handle matplotlib's incompatible API's
-            use_get_position = matplotlib.__version__ >= '0.98.3'
-            if use_get_position:
-                left   = (axes.get_position().xmin + 10) / self.figure.get_window_extent().width
-                bottom = (axes.get_position().ymin + 10) / self.figure.get_window_extent().height 
-            else:
-                left   = (axes.left.get()   + 10) / self.figure.get_window_extent().width()
-                bottom = (axes.bottom.get() + 10) / self.figure.get_window_extent().height()
-
-            use_handlelength = matplotlib.__version__ >= '0.98.5.2'
-            if use_handlelength:
-                subplot_legend = self.figure.legend(subplot_series_data, subplot_series, loc=(left, bottom), prop=fp, handlelength=0.02, handletextpad=0.02, borderaxespad=0.0, labelspacing=0.002, borderpad=0.2)
-            else:
-                subplot_legend = self.figure.legend(subplot_series_data, subplot_series, loc=(left, bottom), prop=fp, handlelen=0.02, handletextsep=0.02, axespad=0.0, labelsep=0.002, pad=0.2)
-
-            #subplot_legend.draw_frame(False)
-            subplot_legend.set_axes(axes)
-
-        # Hide the x tick labels for every subplot except for the last
-        for ax in self.axes:
-            pylab.setp(ax.get_xticklabels(), visible=(ax == self.axes[-1]))
-
-    def paint(self, dc):
-        dc.SetBrush(wx.WHITE_BRUSH)
-        dc.SetPen(wx.BLACK_PEN)
-        dc.DrawRectangle(0, 0, self.width, self.height)
-
-        # Draw plot (not visible)
-        self._draw_plot(True)
-
-        dc.DrawBitmap(self.canvas.bitmap, 0, 0)
-
-    def _draw_plot(self, relimit=False):
-        if self.series_data and relimit and self.datax[0]:
-            axes_index = 0
-            plot_index = 0
-            # axes are indexed by topic_list, plots are indexed by topic number
-            for subplot_series in self.series_list:
-                axes = self.axes[axes_index] 
-                axes_index += 1
-                
-                xmin = xmax = None
-                ymin = ymax = None
-                for series in subplot_series:
-                    datax = self.datax[plot_index]
-                    datay = self.datay[plot_index]
-                    plot_index += 1
-
-                    if len(datax) == 0 or len(datay) == 0:
-                        continue
-
-                    if self.period < 0:
-                        if xmin is None:
-                            xmin = min(datax)
-                            xmax = max(datax)
-                        else:
-                            xmin = min(min(datax), xmin)
-                            xmax = max(max(datax), xmax)
-                    else:
-                        xmax = self.playhead + (self.period / 2)
-                        xmin = xmax - self.period
-
-                    if ymin is None:
-                        ymin = min(datay)
-                        ymax = max(datay)
-                    else:
-                        ymin = min(min(datay), ymin)
-                        ymax = max(max(datay), ymax)
-
-                    # Pad the min/max
-                    delta = ymax - ymin
-                    ymin -= 0.1 * delta
-                    ymax += 0.1 * delta
-                    
-                    axes.set_xbound(lower=xmin, upper=xmax)
-                    axes.set_ybound(lower=ymin, upper=ymax)
-
-        if self.series_data:
-            for plot_index in xrange(0, len(self.series_data)):
-                datax = self.datax[plot_index]
-                datay = self.datay[plot_index]
+    def _get_playhead(self): return self._playhead
     
-                series_data = self.series_data[plot_index]
-                series_data.set_data(numpy.array(datax), numpy.array(datay))
+    def _set_playhead(self, playhead):
+        self._playhead = playhead
+        
+        # Check if playhead is visible. If not, then move the view region.
+        if self._zoom_interval is not None:
+            if self._playhead < self._zoom_interval[0]:
+                zoom_interval = self._zoom_interval[1] - self._zoom_interval[0]
+                self._zoom_interval = (self._playhead, self._playhead + zoom_interval)
+                self._update_data_loader_interval()
+                
+            elif self._playhead > self._zoom_interval[1]:
+                zoom_interval = self._zoom_interval[1] - self._zoom_interval[0]
+                self._zoom_interval = (self._playhead - zoom_interval, self._playhead)
+                self._update_data_loader_interval()
+        
+        wx.CallAfter(self.parent.Refresh)
 
-        self.canvas.draw()
+    playhead = property(_get_playhead, _set_playhead)
 
-    # Events
+    def _update_max_interval(self):
+        if not self._data_loader:
+            return
 
-    def on_size(self, event):
-        self.resize_figure()
+        secs_per_px = (self._data_loader.end_stamp - self._data_loader.start_stamp).to_sec() / self.parent.Size[0]  # conservative: use entire width of control instead of just plot area
 
-    def resize_figure(self):
+        self._data_loader.max_interval = secs_per_px * self._max_interval_secs
+
+    ## Events
+
+    def _on_paint(self, event):
+        if not self._data_loader or len(self._charts) == 0:
+            return
+
+        dc = wx.lib.wxcairo.ContextFromDC(wx.PaintDC(self.parent))
+        
+        dc.set_source_rgb(1, 1, 1)
+        dc.rectangle(0, 0, self.parent.Size[0], self.parent.Size[1])
+        dc.fill()
+
+        data = {}
+
+        chart_height = self.parent.GetClientSize()[1] / len(self._charts)
+
+        dc.save()
+
+        for chart_index, plot in enumerate(self._plot_paths):
+            chart = self._charts[chart_index]
+
+            chart.zoom_interval = self._zoom_interval
+            if self._message:
+                chart.x_indicator = self._playhead
+            else:
+                chart.x_indicator = None
+            chart.x_range = (0.0, (self.timeline.end_stamp - self.timeline.start_stamp).to_sec())
+            if self._data_loader.is_load_complete:
+                chart.data_alpha = 1.0
+            else:
+                chart.data_alpha = 0.4
+
+            data = {}
+            for plot_path in plot:
+                if plot_path in self._data_loader._data:
+                    data[plot_path] = self._data_loader._data[plot_path]
+            chart._series_list = plot
+            chart._series_data = data
+
+            chart.paint(dc)
+            dc.translate(0, chart_height)
+
+        dc.restore()
+
+    def _on_size(self, event):
+        self._layout_charts()
+
+        self._update_max_interval()
+
+    def _on_left_down(self, event):
+        self._clicked_pos = self._dragged_pos = event.Position
+        if len(self._charts) > 0:
+            self.timeline.playhead = self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._charts[0].x_chart_to_data(event.Position[0])))
+    
+    def _on_middle_down(self, event):
+        self._clicked_pos = self._dragged_pos = event.Position
+
+    def _on_right_down(self, event):
+        self._clicked_pos = self._dragged_pos = event.Position
+        self.parent.PopupMenu(PlotPopupMenu(self.parent, self), self._clicked_pos)
+
+    def _on_left_up  (self, event): self._on_mouse_up(event)
+    def _on_middle_up(self, event): self._on_mouse_up(event)
+    def _on_right_up (self, event): self._on_mouse_up(event)
+
+    def _on_mouse_up(self, event): self.parent.Cursor = wx.StockCursor(wx.CURSOR_ARROW)
+    
+    def _on_mouse_move(self, event):
+        x, y = event.Position
+        
+        if event.Dragging():
+            if event.MiddleIsDown() or event.ShiftDown():
+                # Middle or shift: zoom
+                
+                dx_click, dy_click = x - self._clicked_pos[0], y - self._clicked_pos[1]
+                dx_drag,  dy_drag  = x - self._dragged_pos[0], y - self._dragged_pos[1]
+
+                if dx_drag != 0 and len(self._charts) > 0:
+                    dsecs = self._charts[0].dx_chart_to_data(dx_drag)  # assuming charts share x axis
+                    self._translate_plot(dsecs)
+
+                if dy_drag != 0:
+                    self._zoom_plot(1.0 + 0.005 * dy_drag)
+
+                self._update_data_loader_interval()
+
+                wx.CallAfter(self.parent.Refresh)
+
+                self.parent.Cursor = wx.StockCursor(wx.CURSOR_HAND)
+
+            elif event.LeftIsDown():
+                if len(self._charts) > 0:
+                    self.timeline.playhead = self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._charts[0].x_chart_to_data(x)))
+
+                wx.CallAfter(self.parent.Refresh)
+            
+            self._dragged_pos = event.Position
+
+    def _on_mousewheel(self, event):
+        dz = event.GetWheelRotation() / event.GetWheelDelta()
+        self._zoom_plot(1.0 - dz * 0.2)
+
+        self._update_data_loader_interval()
+
+        wx.CallAfter(self.parent.Refresh)
+
+    def _on_close(self, event):
+        if self._configure_frame:
+            self._configure_frame.Close()
+
+        self.stop_loading()
+
+        event.Skip()
+
+    ##
+
+    def _update_data_loader_interval(self):
+        self._data_loader.set_interval(self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._zoom_interval[0])),
+                                       self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._zoom_interval[1])))
+
+    def _zoom_plot(self, zoom):
+        if self._zoom_interval is None:
+            self._zoom_interval = (0.0, (self.timeline.end_stamp - self.timeline.start_stamp).to_sec())
+
+        zoom_interval     = self._zoom_interval[1] - self._zoom_interval[0]
+        playhead_fraction = (self._playhead - self._zoom_interval[0]) / zoom_interval
+
+        new_zoom_interval = zoom * zoom_interval
+
+        # Enforce zoom limits (0.1s, 4 * range)
+        max_zoom_interval = (self.timeline.end_stamp - self.timeline.start_stamp).to_sec() * 4.0
+        if new_zoom_interval > max_zoom_interval:
+            new_zoom_interval = max_zoom_interval
+        elif new_zoom_interval < 0.1:
+            new_zoom_interval = 0.1
+
+        interval_0 = self._playhead - playhead_fraction * new_zoom_interval
+        interval_1 = interval_0 + new_zoom_interval
+
+        timeline_range = (self.timeline.end_stamp - self.timeline.start_stamp).to_sec()
+        interval_0 = min(interval_0, timeline_range - 0.1)
+        interval_1 = max(interval_1, 0.1)
+
+        self._zoom_interval = (interval_0, interval_1)
+
+        self._update_max_interval()
+
+    def _translate_plot(self, dsecs):
+        if self._zoom_interval is None:
+            self._zoom_interval = (0.0, (self.timeline.end_stamp - self.timeline.start_stamp).to_sec())
+
+        new_start = self._zoom_interval[0] - dsecs
+        new_end   = self._zoom_interval[1] - dsecs
+
+        timeline_range = (self.timeline.end_stamp - self.timeline.start_stamp).to_sec()
+        new_start = min(new_start, timeline_range - 0.1)
+        new_end   = max(new_end,   0.1)
+
+        self._zoom_interval = (new_start, new_end)
+
+    ##
+
+    def _setup_charts(self):
+        self._charts = []
+        
+        palette_offset = 0
+        for i, plot in enumerate(self._plot_paths):
+            chart = Chart()
+
+            chart.palette_offset = palette_offset
+            palette_offset += len(plot)
+            
+            if i < len(self._plot_paths) - 1:
+                chart.show_x_ticks = False
+
+            self._charts.append(chart)
+
+        self._layout_charts()
+
+    def _layout_charts(self):
         w, h = self.parent.GetClientSize()
+        num_charts = len(self._charts)
+        if num_charts > 0:
+            chart_height = h / num_charts
+            for chart in self._charts:
+                chart.set_size(w, chart_height)
 
-        self._window.SetSize((w, h))
-        self.figure.set_size_inches((float(w) / self.dpi, float(h) / self.dpi))
-        self.resize(w, h)
-
-    def on_right_down(self, event):
-        self.clicked_pos = event.GetPosition()
-
-        if self.contains(*self.clicked_pos):
-            self.parent.PopupMenu(PlotPopupMenu(self.parent, self), self.clicked_pos)
-
-    def on_close(self, event):
-        self.stop_loading()
-
-    def reload(self):
-        self.stop_loading()
-        self.resize_figure()
-        self.start_loading()
+        wx.CallAfter(self.parent.Refresh)
 
     def stop_loading(self):
-        if self._data_thread:
-            self._data_thread.stop()
-            self._data_thread = None
+        if self._data_loader:
+            self._data_loader.stop()
+            self._data_loader = None
 
     def start_loading(self):
-        if self.bag_file is None or self.bag_index is None or self.topic is None:
-            return
-        
-        if not self._data_thread:
-            self._data_thread = PlotDataLoader(self, self.bag_file, self.bag_index, self.topic)
-            self._data_thread.start()
+        if self._topic and not self._data_loader:
+            self._data_loader = PlotDataLoader(self.timeline, self._topic)
+            self._data_loader.add_progress_listener(self._data_loader_updated)
 
-    @staticmethod
-    def plot_picker(artist, mouseevent):
-        return True, {}
-
-    def on_pick(self, event):
-        print event.artist.get_xdata()
+    def _data_loader_updated(self):
+        wx.CallAfter(self.parent.Refresh)
 
     def configure(self):
-        frame = PlotConfigureFrame(self)
-        frame.Show()
+        if self._configure_frame:
+            return
+        
+        if self._message:
+            self._configure_frame = PlotConfigureFrame(self)
+            
+            frame = self.parent.GetTopLevelParent()
+            self._configure_frame.SetPosition((frame.Position[0] + frame.Size[0] + 10, frame.Position[1]))
+            self._configure_frame.Show()
+
+    def export_csv(self, rows):
+        dialog = wx.FileDialog(self.parent.GetParent(), 'Export to CSV...', wildcard='CSV files (*.csv)|*.csv', style=wx.FD_SAVE)
+        if dialog.ShowModal() == wx.ID_OK:
+            csv_path = dialog.GetPath()
+    
+            export_series = set()
+            for plot in self._plot_paths:
+                for path in plot:
+                    export_series.add(path)
+    
+            self._data_loader.export_csv(csv_path, export_series, self._zoom_interval[0], self._zoom_interval[1], rows)
+
+        dialog.Destroy()
+
+    # @todo
+    def do_export_csv(self, path, series_list, x_min, x_max, rows):
+        plot_loader = PlotDataLoader(self._topic)
+        
+        # Collate data
+        i = 0
+        series_dict = {}
+        unique_stamps = set()
+        for series in series_list:
+            d = {}
+            series_dict[series] = d
+
+            point_num = 0
+            for x, y in self. data[series].points:
+                if x >= x_min and x <= x_max:
+                    if point_num % rows == 0:
+                        d[x] = y
+                        unique_stamps.add(x)
+                    point_num += 1
+            i += 1
+        series_columns = sorted(series_dict.keys())
+
+        try:
+            csv_writer = csv.DictWriter(open(path, 'w'), ['Timestamp'] + series_columns)
+ 
+            # Write header row
+            header_dict = { 'Timestamp' : 'Timestamp' }
+            for column in series_columns:
+                header_dict[column] = column            
+            csv_writer.writerow(header_dict)
+
+            # Write data
+            for stamp in sorted(unique_stamps):
+                row = { 'Timestamp' : stamp }
+                for column in series_dict:
+                    if stamp in series_dict[column]:
+                        row[column] = series_dict[column][stamp]
+ 
+                csv_writer.writerow(row)
+
+        except Exception, ex:
+            print >> sys.stderr, 'Error writing to CSV file: %s' % str(ex)
+        
+    def export_image(self):
+        dialog = wx.FileDialog(self.parent.GetParent(), 'Save plot to...', wildcard='PNG files (*.png)|*.png', style=wx.FD_SAVE)
+        if dialog.ShowModal() == wx.ID_OK:
+            path = dialog.GetPath()
+
+            bitmap = wx.EmptyBitmap(self.width, self.height)
+            mem_dc = wx.MemoryDC()
+            mem_dc.SelectObject(bitmap)
+            mem_dc.SetBackground(wx.WHITE_BRUSH)
+            mem_dc.Clear()
+            cairo_dc = wx.lib.wxcairo.ContextFromDC(mem_dc)
+            self.paint(cairo_dc)
+            mem_dc.SelectObject(wx.NullBitmap)
+
+            bitmap.SaveFile(path, wx.BITMAP_TYPE_PNG)
+            
+        dialog.Destroy()
 
 class PlotPopupMenu(wx.Menu):
-    periods = [(  -1, 'All'),
-               (   1, '1s'),
-               (   5, '5s'),
-               (  10, '10s'),
-               (  30, '30s'),
-               (  60, '1min'),
-               ( 120, '2min'),
-               ( 300, '5min'),
-               ( 600, '10min'),
-               (1800, '30min'),
-               (3600, '1hr')]
-
     def __init__(self, parent, plot):
         wx.Menu.__init__(self)
 
@@ -344,138 +481,32 @@ class PlotPopupMenu(wx.Menu):
         # Configure...
         configure_item = wx.MenuItem(self, wx.NewId(), 'Configure...')
         self.AppendItem(configure_item)
-        self.Bind(wx.EVT_MENU, lambda e: self.plot.configure(), id=configure_item.GetId())
+        self.Bind(wx.EVT_MENU, lambda e: self.plot.configure(), id=configure_item.Id)
 
-        # Interval...
-        self.interval_menu = wx.Menu()
-        self.AppendSubMenu(self.interval_menu, 'Interval...', 'Timeline interval to plot')
-
-        for period, label in self.periods:
-            period_item = self.PeriodMenuItem(self.interval_menu, wx.NewId(), label, period, plot)
-            self.interval_menu.AppendItem(period_item)
-            period_item.Check(plot.period == period_item.period)
-            
-    class PeriodMenuItem(wx.MenuItem):
-        def __init__(self, parent, id, label, period, plot):
-            wx.MenuItem.__init__(self, parent, id, label, kind=wx.ITEM_CHECK)
-            
-            self.period = period
-            self.plot   = plot
-
-            parent.Bind(wx.EVT_MENU, self.on_menu, id=self.GetId())
-    
-        def on_menu(self, event):
-            self.plot.period = self.period
-            self.plot.force_repaint()
-
-class PlotDataLoader(threading.Thread):
-    def __init__(self, plot, bag_file, bag_index, topic):
-        threading.Thread.__init__(self)
-
-        self.setDaemon(True)
-
-        self.plot      = plot
-        self.bag_file  = bag_file
-        self.bag_index = bag_index
-        self.topic     = topic
+        # Export to PNG...
+        export_image_item = wx.MenuItem(self, wx.NewId(), 'Export to PNG...')
+        self.AppendItem(export_image_item)
+        self.Bind(wx.EVT_MENU, lambda e: self.plot.export_image(), id=export_image_item.Id)
         
-        self.update_freq = 20   # how many msgs to load before updating the plot
+        # Export to CSV...
+        self.export_csv_menu = wx.Menu()
+        self.AppendSubMenu(self.export_csv_menu, 'Export to CSV...', 'Export data to CSV file')
 
-    def run(self):
-        bag_file = rosrecord.BagReader(self.bag_file.filename)
-        start_stamp, end_stamp = self.bag_index.start_stamp, self.bag_index.end_stamp 
-        last_stamp = None
-        datax, datay = None, None
-        load_count = 0
-        
-        for stamp in self.subdivide(start_stamp, end_stamp):
-            if not self.bag_index:
-                break
+        for rows, label in plot.rows:
+            rows_item = self.ExportCSVMenuItem(self.export_csv_menu, wx.NewId(), label, rows, plot)
+            self.export_csv_menu.AppendItem(rows_item)
             
-            index = self.bag_index._data.find_stamp_index(self.topic, stamp)
-            if index is None:
-                continue
+            if label == 'All':
+                self.export_csv_menu.AppendSeparator()
 
-            pos = self.bag_index._data.msg_positions[self.topic][index][1]
-
-            (datatype, msg, msg_stamp) = bag_file.load_message(pos, self.bag_index)
-            if not msg:
-                continue
-
-            if datax is None:
-                self.plot._init_plot(self.plot.plot_paths)
-
-                datax, datay = [], []
-                for plot in self.plot.plot_paths:
-                    for plot_path in plot:
-                        datax.append([])
-                        datay.append([])
-
-            # Load the data
-            series_index = 0
-            for plot in self.plot.plot_paths:
-                for plot_path in plot:
-                    if msg.__class__._has_header:
-                        header = msg.header
-                    else:
-                        header = PlotDataLoader.get_header(msg, plot_path)
-
-                    value = eval('msg.' + plot_path)
-
-                    datax[series_index].append(header.stamp.to_sec() - start_stamp)
-                    datay[series_index].append(value)
-
-                    series_index += 1
-                    
-            load_count += 1
-
-            # Update the plot
-            if load_count % self.update_freq == 0:
-                series_index = 0
-                for plot in self.plot.plot_paths:
-                    for plot_path in plot:
-                        self.plot.set_series_data(series_index, datax[series_index], datay[series_index])
-                        series_index += 1
+    class ExportCSVMenuItem(wx.MenuItem):
+        def __init__(self, parent, id, label, rows, plot):
+            wx.MenuItem.__init__(self, parent, id, label)
             
-            # Stop loading if the resolution is enough
-            if last_stamp and abs(stamp - last_stamp) < 0.1:
-                break
-            last_stamp = stamp
+            self.rows = rows
+            self.plot = plot
 
-            time.sleep(0.001)
+            parent.Bind(wx.EVT_MENU, self._on_menu, id=self.Id)
 
-    def stop(self):
-        self.bag_index = None
-
-    @staticmethod
-    def get_header(msg, path):
-        fields = path.split('.')
-        if len(fields) <= 1:
-            return None
-        
-        parent_path = '.'.join(fields[:-1])
-
-        parent = eval('msg.' + parent_path)
-        
-        for slot in parent.__slots__:
-            subobj = getattr(parent, slot)
-            if subobj is not None and hasattr(subobj, '_type') and getattr(subobj, '_type') == 'roslib/Header':
-                return subobj
-
-        return PlotDataLoader.get_header(msg, parent_path)
-
-    @staticmethod
-    def subdivide(left, right):
-        yield left
-        yield right
-
-        intervals = collections.deque([(left, right)])
-        while True:
-            (left, right) = intervals.popleft()
-            
-            mid = (left + right) / 2
-            
-            intervals.append((left, mid))
-            intervals.append((mid,  right))
-            
-            yield mid
+        def _on_menu(self, event):
+            self.plot.export_csv(self.rows)

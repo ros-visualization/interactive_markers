@@ -13,6 +13,7 @@
   <depend package="rospy"/>
   <depend package="roslib"/>
   <depend package="std_msgs"/>
+  <depend package="rosbag"/>  
   <depend package="rxbag"/> 
   <depend package="geometry_msgs"/>
   <depend package="sensor_msgs"/>
@@ -20,4 +21,7 @@
     <rxbag plugin="rxbag_plugins.plugins" />
   </export>
 
+  <platform os="ubuntu" version="9.04"/>
+  <platform os="ubuntu" version="9.10"/>
+  <platform os="ubuntu" version="10.04"/>
 </package>

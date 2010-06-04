@@ -29,13 +29,12 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-#
-# Revision $Id$
 
 PKG = 'rxbag_plugins'
 import roslib; roslib.load_manifest(PKG)
 import rospy
 
+import codecs
 import collections
 import string
 import threading
@@ -44,12 +43,12 @@ import time
 import numpy
 import wx
 
-from rxbag import msg_view
-
-## Choose data to extract from messages
 class PlotConfigureFrame(wx.Frame):
+    """
+    Choose data to extract from messages.
+    """
     def __init__(self, plot):
-        wx.Frame.__init__(self, None, title=plot.frame.GetTitle() + ' - Configure', size=(750, 600))
+        wx.Frame.__init__(self, None, title=plot.parent.GetTitle() + ' - Configure', size=(600, 400))
 
         self.plot = plot
 
@@ -58,8 +57,7 @@ class PlotConfigureFrame(wx.Frame):
         self.font = wx.Font(9, wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
 
         self.msg_tree = wx.TreeCtrl(splitter, style=wx.TR_DEFAULT_STYLE | wx.TR_HIDE_ROOT)
-        self.add_msg_object(None, '', 'msg', self.plot._msg, self.plot._msg._type)
-        self.msg_tree.ExpandAll()
+        self.add_msg_object(None, '', 'msg', self.plot._message, self.plot._message._type)
         self.msg_tree.Bind(wx.EVT_LEFT_DCLICK, self.on_msg_left_dclick)
 
         self.plot_tree = wx.TreeCtrl(splitter, style=wx.TR_DEFAULT_STYLE | wx.TR_HIDE_ROOT | wx.TR_HAS_BUTTONS)
@@ -77,14 +75,20 @@ class PlotConfigureFrame(wx.Frame):
         self._update_msg_tree()
 
         self.add_plot()
-        
+
         self.plot_tree.SelectItem(self.plot_items[0])
 
         splitter.SplitVertically(self.msg_tree, self.plot_tree)
-        splitter.SetSashPosition(400)
+        splitter.SetSashPosition(350)
         splitter.SetMinimumPaneSize(100)
 
+        self.Bind(wx.EVT_CLOSE, self.on_close)
+
         self._create_toolbar()
+
+    def on_close(self, event):
+        self.plot._configure_frames = None
+        event.Skip()
 
     def _create_toolbar(self):
         icons_dir = roslib.packages.get_pkg_dir(PKG) + '/icons/'
@@ -105,7 +109,15 @@ class PlotConfigureFrame(wx.Frame):
             subobjs = [('[%d]' % i, subobj) for (i, subobj) in enumerate(obj)]
         else:
             subobjs = []
-            label += ': ' + str(obj)
+            
+            # Ignore any binary data
+            obj_repr = codecs.utf_8_decode(str(obj), 'ignore')[0]
+            
+            # Truncate long representations
+            if len(obj_repr) >= 50:
+                obj_repr = obj_repr[:50] + '...'
+            
+            label += ': ' + obj_repr
 
         if parent is None:
             item = self.msg_tree.AddRoot(label)
@@ -172,7 +184,6 @@ class PlotConfigureFrame(wx.Frame):
         plot_paths = self.get_plot_paths()
         
         if plot_paths != self.plot.plot_paths:
-            self.plot.reload()
             self.plot.plot_paths = plot_paths
 
         PlotConfigureFrame.traverse(self.msg_tree, self.msg_tree.GetRootItem(), self._update_msg_tree_item)
@@ -195,10 +206,7 @@ class PlotConfigureFrame(wx.Frame):
 
     def plot_delete_selected_msg(self):
         selected_item = self.plot_tree.GetSelection()
-        if not selected_item.IsOk():
-            return
-
-        if selected_item in self.plot_items:
+        if not selected_item.IsOk() or selected_item in self.plot_items:
             return
 
         self.plot_tree.Delete(selected_item)
@@ -229,6 +237,8 @@ class PlotConfigureFrame(wx.Frame):
         self.plot_items.append(item)
         
         self._update_msg_tree()
+        
+        self.plot_tree.SelectItem(item)
 
         return item
 

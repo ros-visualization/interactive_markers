@@ -29,60 +29,98 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-#
-# Revision $Id$
 
 PKG = 'rxbag_plugins'
 import roslib; roslib.load_manifest(PKG)
 import rospy
 
+import array
+from cStringIO import StringIO
 import Image
 import wx
+import cairo
 
-## Helper class for converting ROS sensor_msgs/Image <-> wxImage
-class ImageHelper:
-    @staticmethod
-    def imgmsg_to_wx(img_msg):
-        if img_msg._type == 'sensor_msgs/CompressedImage':
-            import cStringIO
-            io = cStringIO.StringIO(img_msg.data)
-            pil_img = Image.open(io)
+def imgmsg_to_pil(img_msg, rgba=True):
+    if img_msg._type == 'sensor_msgs/CompressedImage':
+        import cStringIO
+        io = cStringIO.StringIO(img_msg.data)
+        pil_img = Image.open(io)
 
-            return wx.ImageFromData(pil_img.size[0], pil_img.size[1], pil_img.tostring())
+        pil_img = pil_bgr2rgb(pil_img)
+        if pil_img.mode != 'RGBA':
+            pil_img = pil_img.convert('RGBA')
 
-        # Can use rgb8 encoding directly
-        if img_msg.encoding == 'rgb8':
-            return wx.ImageFromBuffer(img_msg.width, img_msg.height, img_msg.data)
+        return pil_img
 
-        # Otherwise, use PIL to convert image
-        alpha = False
-        if img_msg.encoding == 'mono8':
-            mode = 'L'
-        elif img_msg.encoding == 'rgb8':
-            mode = 'RGB'
-        elif img_msg.encoding == 'bgr8':
-            mode = 'BGR'
-        elif img_msg.encoding in ['bayer_rggb8', 'bayer_bggr8', 'bayer_gbrg8', 'bayer_grbg8']:
-            mode = 'L'
-        elif img_msg.encoding == 'mono16':
-            if img_msg.is_bigendian:
-                mode = 'F;16B'
-            else:
-                mode = 'F:16'
-        elif img_msg.encoding == 'rgba8':
-            mode = 'RGB'
-            alpha = True
-        elif img_msg.encoding == 'bgra8':
-            mode = 'BGR'
-            alpha = True
+    # Can use rgb8 encoding directly
+    if img_msg.encoding == 'rgb8':
+        return Image.frombuffer('RGB', (img_msg.width, img_msg.height), img_msg.data, 'raw', 'RGB', 0, 1)
 
-        # TODO: handle alpha
-        try:
-            pil_img = Image.frombuffer('RGB', (img_msg.width, img_msg.height), img_msg.data, 'raw', mode, 0, 1)
-            if pil_img.mode != 'RGB':
-                pil_img = pil_img.convert('RGB')
+    # Otherwise, use PIL to convert image
+    alpha = False
+    if img_msg.encoding == 'mono8':
+        mode = 'L'
+    elif img_msg.encoding == 'rgb8':
+        mode = 'RGB'
+    elif img_msg.encoding == 'bgr8':
+        mode = 'BGR'
+    elif img_msg.encoding in ['bayer_rggb8', 'bayer_bggr8', 'bayer_gbrg8', 'bayer_grbg8']:
+        mode = 'L'
+    elif img_msg.encoding == 'mono16':
+        if img_msg.is_bigendian:
+            mode = 'F;16B'
+        else:
+            mode = 'F:16'
+    elif img_msg.encoding == 'rgba8':
+        mode = 'RGB'
+        alpha = True
+    elif img_msg.encoding == 'bgra8':
+        mode = 'BGR'
+        alpha = True
+
+    try:
+        pil_img = Image.frombuffer('RGB', (img_msg.width, img_msg.height), img_msg.data, 'raw', mode, 0, 1)
+
+        if mode == 'BGR':
+            pil_img = pil_bgr2rgb(pil_img)
+        if rgba and pil_img.mode != 'RGBA':
+            pil_img = pil_img.convert('RGBA')
+        
+        return pil_img
+    except Exception, ex:
+        print 'Can\'t convert:', mode, ex
+        return None
+
+def pil_bgr2rgb(pil_img):
+    rgb2bgr = (0, 0, 1, 0,
+               0, 1, 0, 0,
+               1, 0, 0, 0)
+    return pil_img.convert('RGB', rgb2bgr)
+
+def imgmsg_to_wx(img_msg):
+    # Can use rgb8 encoding directly
+    if img_msg.encoding == 'rgb8':
+        return wx.ImageFromBuffer(img_msg.width, img_msg.height, img_msg.data)
+
+    pil_img = imgmsg_to_pil(img_msg)
+    if not pil_img:
+        return None
     
-            return wx.ImageFromData(pil_img.size[0], pil_img.size[1], pil_img.tostring())
-        except:
-            print 'Can\'t convert:', mode
-            return None
+    return wx.ImageFromData(pil_img.size[0], pil_img.size[1], pil_img.tostring())
+
+def pil_to_cairo(pil_img):
+    w, h = pil_img.size
+    data = array.array('c')
+    data.fromstring(pil_img.tostring())
+    return cairo.ImageSurface.create_for_data(data, cairo.FORMAT_ARGB32, w, h)
+
+def wxbitmap_to_cairo(bitmap):
+    image = wx.ImageFromBitmap(bitmap)
+    pil_img = Image.new('RGB', (image.GetWidth(), image.GetHeight()))
+    pil_img.fromstring(image.GetData())
+
+    pil_img = pil_bgr2rgb(pil_img)
+    if pil_img.mode != 'RGBA':
+        pil_img = pil_img.convert('RGBA')
+    
+    return pil_to_cairo(pil_img)
