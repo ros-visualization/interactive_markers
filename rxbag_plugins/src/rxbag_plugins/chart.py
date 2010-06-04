@@ -93,7 +93,7 @@ class Chart(object):
         self._tick_font_size     = 12.0
         self._tick_label_padding = 30
 
-        self._legend_position       = ( 8.0, 8.0)   # pixel offset of top-left of legend from top-left of chart
+        self._legend_position       = ( 7.0, 6.0)   # pixel offset of top-left of legend from top-left of chart
         self._legend_margin         = ( 6.0, 3.0)   # internal legend margin  
         self._legend_line_thickness =  3.0          # thickness of series color indicator
         self._legend_line_width     =  9.0          # width of series color indicator
@@ -122,6 +122,9 @@ class Chart(object):
         self._y_view = None
         
         self.x_indicator = None
+        self.x_range     = None
+        
+        self.data_alpha = 1.0
 
         ##
 
@@ -223,12 +226,8 @@ class Chart(object):
 
     # zoom_interval
     
-    def _get_zoom_interval(self):
-        return self._x_zoom
-
-    def _set_zoom_interval(self, zoom_interval):
-        self._x_zoom = zoom_interval
-
+    def _get_zoom_interval(self):         return self._x_zoom
+    def _set_zoom_interval(self, x_zoom): self._x_zoom = x_zoom
     zoom_interval = property(_get_zoom_interval, _set_zoom_interval)
 
     ## Data
@@ -326,7 +325,7 @@ class Chart(object):
         
         min_x_width = dc.text_extents(self.format_x(self.x_zoom[0]))[2]
         max_x_width = dc.text_extents(self.format_x(self.x_zoom[1]))[2]
-        max_label_width = max(min_x_width, max_x_width) * 2 + self._tick_label_padding
+        max_label_width = 100 #max(min_x_width, max_x_width) + self._tick_label_padding
 
         num_ticks = self.chart_width / max_label_width
 
@@ -391,17 +390,13 @@ class Chart(object):
 
         try:
             self._update_axes(dc)
-    
             with self._lock:
+                self._draw_data_extents(dc)
                 self._draw_grid(dc)
                 self._draw_axes(dc)
                 self._draw_data(dc)
                 self._draw_x_indicator(dc)
                 self._draw_legend(dc)
-
-            #for i, (series, series_data) in enumerate(self._series_data.items()):
-            #    dc.move_to(self.chart_left, self.chart_top + 200 + i * 20)
-            #    dc.show_text('%s: %s' % (series, series_data.num_points))
 
         finally:
             dc.restore()
@@ -415,17 +410,35 @@ class Chart(object):
         dc.rectangle(self.chart_left, self.chart_top - 1, self.chart_width, self.chart_height + 1)
         dc.stroke()
 
+    def _draw_data_extents(self, dc):
+        x_start, x_end = self.x_data_to_chart(self.min_x), self.x_data_to_chart(self.max_x)
+        dc.set_source_rgba(0.5, 0.5, 0.5, 0.1)
+        dc.rectangle(self.chart_left, self.chart_top, x_start - self.chart_left,                  self.chart_bottom - self.chart_top)
+        dc.rectangle(x_end,           self.chart_top, self.chart_left + self.chart_width - x_end, self.chart_bottom - self.chart_top)
+        dc.fill()
+
+        if self.x_range is not None:
+            x_range_start, x_range_end = self.x_data_to_chart(self.x_range[0]), self.x_data_to_chart(self.x_range[1])
+            dc.set_source_rgba(0.2, 0.2, 0.2, 0.1)
+            dc.rectangle(self.chart_left, self.chart_top, x_range_start - self.chart_left,                  self.chart_bottom - self.chart_top)
+            dc.rectangle(x_range_end,     self.chart_top, self.chart_left + self.chart_width - x_range_end, self.chart_bottom - self.chart_top)
+            dc.fill()
+
     def _draw_grid(self, dc):
         dc.set_antialias(cairo.ANTIALIAS_NONE)
         dc.set_line_width(1.0)
         dc.set_dash([2, 4])
         
         if self.view_min_x != self.view_max_x:
-            dc.set_source_rgba(0, 0, 0, 0.2)
-            self._draw_lines(dc, self._generate_lines_x(self.view_min_x, self.view_max_x, self._x_interval))
+            dc.set_source_rgba(0, 0, 0, 0.4)
+            x_tick_range = (self._round_min_to_interval(self.view_min_x, self._x_interval),
+                            self._round_max_to_interval(self.view_max_x, self._x_interval))
+            self._draw_lines(dc, self._generate_lines_x(x_tick_range[0], x_tick_range[1], self._x_interval))
         if self.view_min_y != self.view_max_y:
-            dc.set_source_rgba(0, 0, 0, 0.2)
-            self._draw_lines(dc, self._generate_lines_y(self.view_min_y, self.view_max_y, self._y_interval))
+            dc.set_source_rgba(0, 0, 0, 0.4)
+            y_tick_range = (self._round_min_to_interval(self.view_min_y, self._y_interval),
+                            self._round_max_to_interval(self.view_max_y, self._y_interval))
+            self._draw_lines(dc, self._generate_lines_y(y_tick_range[0], y_tick_range[1], self._y_interval))
 
         dc.set_dash([])
 
@@ -454,8 +467,8 @@ class Chart(object):
 
         if self._show_x_ticks:
             if self.view_min_x != self.view_max_x:
-                x_tick_range = (self._round_max_to_interval(self.view_min_x, self._x_interval),
-                                self._round_min_to_interval(self.view_max_x, self._x_interval))
+                x_tick_range = (self._round_min_to_interval(self.view_min_x, self._x_interval),
+                                self._round_max_to_interval(self.view_max_x, self._x_interval))
                 
                 lines = list(self._generate_lines_x(x_tick_range[0], x_tick_range[1], self._x_interval, self.chart_bottom, self.chart_bottom + self._tick_length))
 
@@ -469,8 +482,8 @@ class Chart(object):
                     dc.show_text(s)
 
         if self.view_min_y != self.view_max_y:
-            y_tick_range = (self._round_max_to_interval(self.view_min_y, self._y_interval),
-                            self._round_min_to_interval(self.view_max_y, self._y_interval))
+            y_tick_range = (self._round_min_to_interval(self.view_min_y, self._y_interval),
+                            self._round_max_to_interval(self.view_max_y, self._y_interval))
             
             lines = list(self._generate_lines_y(y_tick_range[0], y_tick_range[1], self._y_interval, self.chart_left - self._tick_length, self.chart_left))
 
@@ -500,7 +513,8 @@ class Chart(object):
 
         px = px0
         while True:
-            yield px, py0, px, py1
+            if px >= self.chart_left and px <= self.chart_right:
+                yield px, py0, px, py1
             px += px_step
             if px > px1:
                 break
@@ -516,7 +530,8 @@ class Chart(object):
         
         py = py0
         while True:
-            yield px0, py, px1, py
+            if py >= self.chart_top and py <= self.chart_bottom:
+                yield px0, py, px1, py
             py -= py_step
             if py < py1:
                 break
@@ -530,7 +545,7 @@ class Chart(object):
         dc.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
 
         for series, series_data in self._series_data.items():
-            dc.set_source_rgb(*self._get_color(series))
+            dc.set_source_rgba(*self._get_color(series))
 
             coords = [self.coord_data_to_chart(x, y) for x, y in series_data.points]
 
@@ -543,13 +558,17 @@ class Chart(object):
                 dc.stroke()
 
             # Draw points
-            if self._show_points and (series_data.min_dx is not None and self.dx_data_to_chart(series_data.min_dx) > 2.0):
+            if self._show_points:
+                # and (series_data.min_dx is not None and self.dx_data_to_chart(series_data.min_dx) > 1.0):
                 dc.set_line_width(1.5)
+                last_px, last_py = None, None
                 for px, py in coords:
-                    dc.move_to(px - 1, py - 1)
-                    dc.line_to(px + 1, py + 1)
-                    dc.move_to(px + 1, py - 1)
-                    dc.line_to(px - 1, py + 1)
+                    if last_px is None or abs(px - last_px) > 1.5 or abs(py - last_py) > 1.5:
+                        dc.move_to(px - 1, py - 1)
+                        dc.line_to(px + 1, py + 1)
+                        dc.move_to(px + 1, py - 1)
+                        dc.line_to(px - 1, py + 1)
+                        last_px, last_py = px, py
 
                 dc.stroke()
 
@@ -584,12 +603,19 @@ class Chart(object):
 
         legend_height = self._legend_margin[1] + (font_height * len(self._series_list)) + (self._legend_line_spacing * (len(self._series_list) - 1)) + self._legend_margin[1]
 
-        dc.set_source_rgba(1, 1, 1, 0.75)
+        dc.set_source_rgba(0.95, 0.95, 0.95, 0.5)
         dc.rectangle(0, 0, legend_width, legend_height)
         dc.fill()
-        dc.set_source_rgba(0, 0, 0, 0.5)
+        dc.set_source_rgba(0, 0, 0, 0.2)
         dc.set_line_width(1.0)
         dc.rectangle(0, 0, legend_width, legend_height)
+        dc.stroke()
+        
+        # Drop shadow
+        dc.set_source_rgba(0.5, 0.5, 0.5, 0.1)
+        dc.move_to(1, legend_height + 1)
+        dc.line_to(legend_width + 1, legend_height + 1)
+        dc.line_to(legend_width + 1, 1)
         dc.stroke()
 
         dc.set_line_width(self._legend_line_thickness)
@@ -597,7 +623,7 @@ class Chart(object):
         dc.translate(self._legend_margin[0], self._legend_margin[1])
 
         for series in self._series_list:
-            dc.set_source_rgb(*self._get_color(series))
+            dc.set_source_rgba(*self._get_color(series, alpha=1.0))
 
             dc.move_to(0, font_height / 2)
             dc.line_to(self._legend_line_width, font_height / 2)
@@ -611,6 +637,10 @@ class Chart(object):
 
         dc.restore()
 
-    def _get_color(self, series):
+    def _get_color(self, series, alpha=None):
         index = (self._palette_offset + self._series_list.index(series)) % len(self._palette)
-        return self._palette[index]
+        r, g, b = self._palette[index]
+        if alpha is None:
+            return (r, g, b, self.data_alpha)
+        else:
+            return (r, g, b, alpha)

@@ -55,25 +55,6 @@ import image_helper
 class PlotView(TopicMessageView):
     name = 'Plot'
 
-    periods = [(  -1, 'All'),
-               ( 0.1, '0.1 s'),
-               ( 0.2, '0.2 s'),
-               ( 0.5, '0.5 s'),
-               (   1, '1 s'),
-               (   2, '2 s'),
-               (   5, '5 s'),
-               (  10, '10 s'),
-               (  15, '15 s'),
-               (  30, '30 s'),
-               (  60, '60 s'),
-               (  90, '90 s'),
-               ( 120, '2 m'),
-               ( 300, '5 m'),
-               ( 600, '10 m'),
-               (1200, '20 m'),
-               (1800, '30 m'),
-               (3600, '1 h')]
-
     rows = [(   1, 'All'),
             (   2, 'Every 2nd message'),
             (   3, 'Every 3rd message'),
@@ -91,7 +72,6 @@ class PlotView(TopicMessageView):
         self._topic         = None
         self._message       = None
         self._plot_paths    = []
-        self._period        = -1
         self._playhead      = None
         self._charts        = []
         self._data_loader   = None
@@ -114,6 +94,9 @@ class PlotView(TopicMessageView):
         self.parent.Bind(wx.EVT_LEFT_DOWN,   self._on_left_down)
         self.parent.Bind(wx.EVT_MIDDLE_DOWN, self._on_middle_down)
         self.parent.Bind(wx.EVT_RIGHT_DOWN,  self._on_right_down)
+        self.parent.Bind(wx.EVT_LEFT_UP,     self._on_left_up)
+        self.parent.Bind(wx.EVT_MIDDLE_UP,   self._on_middle_up)
+        self.parent.Bind(wx.EVT_RIGHT_UP,    self._on_right_up)
         self.parent.Bind(wx.EVT_MOTION,      self._on_mouse_move)
         self.parent.Bind(wx.EVT_MOUSEWHEEL,  self._on_mousewheel)
         self.parent.Bind(wx.EVT_CLOSE,       self._on_close)
@@ -162,19 +145,12 @@ class PlotView(TopicMessageView):
         TopicMessageView.message_cleared(self)
         
         wx.CallAfter(self.parent.Refresh)
-        
+
     def timeline_changed(self):
-        self._update_view_region()
-
-    # property: period
-
-    def _get_period(self): return self._period
-    
-    def _set_period(self, period):
-        self._period = period        
-        self._update_view_region()
-
-    period = property(_get_period, _set_period)
+        if self._data_loader:
+            self._data_loader.invalidate()
+        
+        wx.CallAfter(self.parent.Refresh)
 
     # property: playhead
 
@@ -182,30 +158,22 @@ class PlotView(TopicMessageView):
     
     def _set_playhead(self, playhead):
         self._playhead = playhead
-        self._update_view_region()
+        
+        # Check if playhead is visible. If not, then move the view region.
+        if self._zoom_interval is not None:
+            if self._playhead < self._zoom_interval[0]:
+                zoom_interval = self._zoom_interval[1] - self._zoom_interval[0]
+                self._zoom_interval = (self._playhead, self._playhead + zoom_interval)
+                self._update_data_loader_interval()
+                
+            elif self._playhead > self._zoom_interval[1]:
+                zoom_interval = self._zoom_interval[1] - self._zoom_interval[0]
+                self._zoom_interval = (self._playhead - zoom_interval, self._playhead)
+                self._update_data_loader_interval()
+        
+        wx.CallAfter(self.parent.Refresh)
 
     playhead = property(_get_playhead, _set_playhead)
-
-    def _update_view_region(self):
-        if not self._data_loader:
-            return
-        
-        if self._period < 0:
-            start_stamp = self.timeline.start_stamp
-            end_stamp   = self.timeline.end_stamp
-        else:
-            start_stamp = self.timeline.start_stamp + rospy.Duration.from_sec(self._playhead - (self._period / 2))
-            end_stamp   = start_stamp + rospy.Duration.from_sec(self._period)
-
-        self._data_loader.start_stamp = start_stamp
-        self._data_loader.end_stamp   = end_stamp
-
-        self._update_max_interval()
-
-        self._zoom_interval = ((start_stamp - self.timeline.start_stamp).to_sec(),
-                               (end_stamp   - self.timeline.start_stamp).to_sec())
-
-        wx.CallAfter(self.parent.Refresh)
 
     def _update_max_interval(self):
         if not self._data_loader:
@@ -241,6 +209,11 @@ class PlotView(TopicMessageView):
                 chart.x_indicator = self._playhead
             else:
                 chart.x_indicator = None
+            chart.x_range = (0.0, (self.timeline.end_stamp - self.timeline.start_stamp).to_sec())
+            if self._data_loader.is_load_complete:
+                chart.data_alpha = 1.0
+            else:
+                chart.data_alpha = 0.4
 
             data = {}
             for plot_path in plot:
@@ -261,6 +234,8 @@ class PlotView(TopicMessageView):
 
     def _on_left_down(self, event):
         self._clicked_pos = self._dragged_pos = event.Position
+        if len(self._charts) > 0:
+            self.timeline.playhead = self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._charts[0].x_chart_to_data(event.Position[0])))
     
     def _on_middle_down(self, event):
         self._clicked_pos = self._dragged_pos = event.Position
@@ -269,6 +244,12 @@ class PlotView(TopicMessageView):
         self._clicked_pos = self._dragged_pos = event.Position
         self.parent.PopupMenu(PlotPopupMenu(self.parent, self), self._clicked_pos)
 
+    def _on_left_up  (self, event): self._on_mouse_up(event)
+    def _on_middle_up(self, event): self._on_mouse_up(event)
+    def _on_right_up (self, event): self._on_mouse_up(event)
+
+    def _on_mouse_up(self, event): self.parent.Cursor = wx.StockCursor(wx.CURSOR_ARROW)
+    
     def _on_mouse_move(self, event):
         x, y = event.Position
         
@@ -279,57 +260,32 @@ class PlotView(TopicMessageView):
                 dx_click, dy_click = x - self._clicked_pos[0], y - self._clicked_pos[1]
                 dx_drag,  dy_drag  = x - self._dragged_pos[0], y - self._dragged_pos[1]
 
-                if dx_drag != 0:
-                    if len(self._charts) > 0:
-                        dx_chart = self._charts[0].dx_chart_to_data(dx_drag)
+                if dx_drag != 0 and len(self._charts) > 0:
+                    dsecs = self._charts[0].dx_chart_to_data(dx_drag)  # assuming charts share x axis
+                    self._translate_plot(dsecs)
 
-                        self._zoom_interval = (self._zoom_interval[0] - dx_chart,
-                                               self._zoom_interval[1] - dx_chart)
+                if dy_drag != 0:
+                    self._zoom_plot(1.0 + 0.005 * dy_drag)
 
-                        self._zoom(1.0 + 0.005 * dy_drag)
-    
-                        wx.CallAfter(self.parent.Refresh)
-                
-                #if (dx_drag == 0 and abs(dy_drag) > 0) or (dx_drag != 0 and abs(float(dy_drag) / dx_drag) > 0.2 and abs(dy_drag) > 1):
-                #    zoom = min(self._max_zoom_speed, max(self._min_zoom_speed, 1.0 + self._zoom_sensitivity * dy_drag))
-                #    self.zoom_timeline(zoom)
-    
-                self.Cursor = wx.StockCursor(wx.CURSOR_HAND)
+                self._update_data_loader_interval()
+
+                wx.CallAfter(self.parent.Refresh)
+
+                self.parent.Cursor = wx.StockCursor(wx.CURSOR_HAND)
+
+            elif event.LeftIsDown():
+                if len(self._charts) > 0:
+                    self.timeline.playhead = self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._charts[0].x_chart_to_data(x)))
+
+                wx.CallAfter(self.parent.Refresh)
             
             self._dragged_pos = event.Position
 
     def _on_mousewheel(self, event):
         dz = event.GetWheelRotation() / event.GetWheelDelta()
-        self._zoom(1.0 - dz * 0.2)
+        self._zoom_plot(1.0 - dz * 0.2)
 
-        #index = None
-        #for i, (period, _) in enumerate(self.periods):
-        #    if period == self._period:
-        #        index = i
-        #        break
-
-        #if dz < 0:
-        #    self.period = self.periods[min(len(self.periods) - 1, index + 1)][0]
-        #elif dz > 0:
-        #    self.period = self.periods[max(1, index - 1)][0]
-
-    def _zoom(self, zoom):
-        zoom_interval     = self._zoom_interval[1] - self._zoom_interval[0]
-        playhead_fraction = (self._playhead - self._zoom_interval[0]) / zoom_interval
-
-        new_zoom_interval = zoom * zoom_interval
-
-        # Enforce zoom limits
-        #px_per_sec = self._history_width / new_stamp_interval
-        #if px_per_sec < self._min_zoom:
-        #    new_stamp_interval = self._history_width / self._min_zoom
-        #elif px_per_sec > self._max_zoom:
-        #    new_stamp_interval = self._history_width / self._max_zoom
-
-        interval_0 = self._playhead - playhead_fraction * new_zoom_interval
-        interval_1 = interval_0 + new_zoom_interval
-
-        self._zoom_interval = (interval_0, interval_1)
+        self._update_data_loader_interval()
 
         wx.CallAfter(self.parent.Refresh)
 
@@ -340,6 +296,52 @@ class PlotView(TopicMessageView):
         self.stop_loading()
 
         event.Skip()
+
+    ##
+
+    def _update_data_loader_interval(self):
+        self._data_loader.set_interval(self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._zoom_interval[0])),
+                                       self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._zoom_interval[1])))
+
+    def _zoom_plot(self, zoom):
+        if self._zoom_interval is None:
+            self._zoom_interval = (0.0, (self.timeline.end_stamp - self.timeline.start_stamp).to_sec())
+
+        zoom_interval     = self._zoom_interval[1] - self._zoom_interval[0]
+        playhead_fraction = (self._playhead - self._zoom_interval[0]) / zoom_interval
+
+        new_zoom_interval = zoom * zoom_interval
+
+        # Enforce zoom limits (0.1s, 4 * range)
+        max_zoom_interval = (self.timeline.end_stamp - self.timeline.start_stamp).to_sec() * 4.0
+        if new_zoom_interval > max_zoom_interval:
+            new_zoom_interval = max_zoom_interval
+        elif new_zoom_interval < 0.1:
+            new_zoom_interval = 0.1
+
+        interval_0 = self._playhead - playhead_fraction * new_zoom_interval
+        interval_1 = interval_0 + new_zoom_interval
+
+        timeline_range = (self.timeline.end_stamp - self.timeline.start_stamp).to_sec()
+        interval_0 = min(interval_0, timeline_range - 0.1)
+        interval_1 = max(interval_1, 0.1)
+
+        self._zoom_interval = (interval_0, interval_1)
+
+        self._update_max_interval()
+
+    def _translate_plot(self, dsecs):
+        if self._zoom_interval is None:
+            self._zoom_interval = (0.0, (self.timeline.end_stamp - self.timeline.start_stamp).to_sec())
+
+        new_start = self._zoom_interval[0] - dsecs
+        new_end   = self._zoom_interval[1] - dsecs
+
+        timeline_range = (self.timeline.end_stamp - self.timeline.start_stamp).to_sec()
+        new_start = min(new_start, timeline_range - 0.1)
+        new_end   = max(new_end,   0.1)
+
+        self._zoom_interval = (new_start, new_end)
 
     ##
 
@@ -481,18 +483,6 @@ class PlotPopupMenu(wx.Menu):
         self.AppendItem(configure_item)
         self.Bind(wx.EVT_MENU, lambda e: self.plot.configure(), id=configure_item.Id)
 
-        # Interval...
-        self.interval_menu = wx.Menu()
-        self.AppendSubMenu(self.interval_menu, 'Interval...', 'Timeline interval to plot')
-
-        for period, label in plot.periods:
-            period_item = self.PeriodMenuItem(self.interval_menu, wx.NewId(), label, period, plot)
-            self.interval_menu.AppendItem(period_item)
-            period_item.Check(plot.period == period_item.period)
-            
-            if label == 'All':
-                self.interval_menu.AppendSeparator()
-
         # Export to PNG...
         export_image_item = wx.MenuItem(self, wx.NewId(), 'Export to PNG...')
         self.AppendItem(export_image_item)
@@ -509,19 +499,6 @@ class PlotPopupMenu(wx.Menu):
             if label == 'All':
                 self.export_csv_menu.AppendSeparator()
 
-    class PeriodMenuItem(wx.MenuItem):
-        def __init__(self, parent, id, label, period, plot):
-            wx.MenuItem.__init__(self, parent, id, label, kind=wx.ITEM_CHECK)
-            
-            self.period = period
-            self.plot   = plot
-
-            parent.Bind(wx.EVT_MENU, self._on_menu, id=self.Id)
-    
-        def _on_menu(self, event):
-            self.plot.period = self.period
-            wx.CallAfter(self.plot.parent.Refresh)
-    
     class ExportCSVMenuItem(wx.MenuItem):
         def __init__(self, parent, id, label, rows, plot):
             wx.MenuItem.__init__(self, parent, id, label)

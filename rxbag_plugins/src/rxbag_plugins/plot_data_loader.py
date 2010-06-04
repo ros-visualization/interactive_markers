@@ -39,6 +39,7 @@ import rospy
 import bisect
 import collections
 import csv
+import itertools
 import sys
 import threading
 import time
@@ -54,14 +55,18 @@ class PlotDataLoader(threading.Thread):
 
         self._use_header_stamp = False
 
-        self._start_stamp  = self._timeline.start_stamp
-        self._end_stamp    = self._timeline.end_stamp
-        self._paths        = []
-        self._max_interval = 0.0
-        self._dirty        = True
-        self._dirty_cv     = threading.Condition()
+        self._start_stamp     = self._timeline.start_stamp
+        self._end_stamp       = self._timeline.end_stamp
+        self._paths           = []
+        self._max_interval    = 0.0
+        self._dirty           = True
+        self._dirty_cv        = threading.Condition()
+        self._last_reload     = None                           # time that entries were reloaded
+        self._min_reload_secs = 0.5                            # minimum time to wait before loading entries
 
         self._data = {}
+
+        self._load_complete = False
 
         self._progress_listeners = []
         self._complete_listeners = []
@@ -73,6 +78,9 @@ class PlotDataLoader(threading.Thread):
     @property
     def data(self): return self._data
 
+    @property
+    def is_load_complete(self): return self._load_complete
+
     # listeners
 
     def add_progress_listener(self, listener):    self._progress_listeners.append(listener)
@@ -80,6 +88,11 @@ class PlotDataLoader(threading.Thread):
 
     def add_complete_listener(self, listener):    self._complete_listeners.append(listener)
     def remove_complete_listener(self, listener): self._complete_listeners.remove(listener)
+
+    def invalidate(self):
+        with self._dirty_cv:
+            self._dirty = True
+            self._dirty_cv.notify()
 
     # property: start_stamp
 
@@ -107,10 +120,23 @@ class PlotDataLoader(threading.Thread):
         
     end_stamp = property(_get_end_stamp, _set_end_stamp)
 
+    def set_interval(self, start_stamp, end_stamp):
+        with self._dirty_cv:
+            updated = False
+            if start_stamp != self._start_stamp:
+                self._start_stamp = start_stamp
+                updated = True
+            if end_stamp != self._end_stamp:
+                self._end_stamp = end_stamp
+                updated = True
+            if updated:
+                self._dirty = True
+                self._dirty_cv.notify()
+
     # property: paths
-        
+
     def _get_paths(self): return self._paths
-    
+
     def _set_paths(self, paths):
         with self._dirty_cv:
             if set(paths) != set(self._paths):
@@ -147,9 +173,12 @@ class PlotDataLoader(threading.Thread):
         
         for series in list(self._data.keys()):
             new_data = DataSet()
+
+            last_x = None
             for x, y in self._data[series].points:
-                if x >= min_x and x <= max_x:
+                if (last_x is None or x - last_x >= self._max_interval) and x >= min_x and x <= max_x:
                     new_data.add(x, y)
+                    last_x = x
 
             self._data[series] = new_data
 
@@ -157,7 +186,7 @@ class PlotDataLoader(threading.Thread):
         while not self._stop_flag:
             with self._dirty_cv:
                 # If dirty, then regenerate the entries to load, and re-initialize the loaded indexes
-                if self._dirty:
+                if self._dirty and (self._last_reload is None or time.time() - self._last_reload >= self._min_reload_secs):
                     entries        = list(self._timeline.get_entries_with_bags(self._topic, self._start_stamp, self._end_stamp))
                     loaded_indexes = set()
                     loaded_stamps  = []
@@ -165,6 +194,8 @@ class PlotDataLoader(threading.Thread):
 
                     self._trim_data()
 
+                    self._last_reload = time.time()
+                    self._load_complete = False
                     self._dirty = False
 
                 if subdivider is None or len(self._paths) == 0:
@@ -176,11 +207,14 @@ class PlotDataLoader(threading.Thread):
             try:
                 index = subdivider.next()
             except StopIteration:
+                self._load_complete = True
+                
                 # Notify listeners of completion
-                for listener in self._complete_listeners:
+                for listener in itertools.chain(self._progress_listeners, self._complete_listeners):
                     listener()
 
                 subdivider = None
+                continue
 
             if index in loaded_indexes:
                 continue
