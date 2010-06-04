@@ -264,8 +264,10 @@ class Chart(object):
     def dx_data_to_chart(self, dx):      return dx / self.view_range_x * self.chart_width
     def dy_data_to_chart(self, dy):      return dy / self.view_range_y * self.chart_height
 
-    def x_chart_to_data(self, x):        return self.view_min_x + (x - self.chart_left)   / self.chart_width  * self.view_range_x
-    def y_chart_to_data(self, y):        return self.view_min_y + (self.chart_bottom - y) / self.chart_height * self.view_range_y
+    def x_chart_to_data(self, x):        return self.view_min_x + (float(x) - self.chart_left)   / self.chart_width  * self.view_range_x
+    def y_chart_to_data(self, y):        return self.view_min_y + (self.chart_bottom - float(y)) / self.chart_height * self.view_range_y
+    def dx_chart_to_data(self, dx):      return float(dx) / self.chart_width  * self.view_range_x
+    def dy_chart_to_data(self, dy):      return float(dy) / self.chart_height * self.view_range_y
     
     def format_x(self, x):
         if self._x_interval is None:
@@ -304,11 +306,14 @@ class Chart(object):
         self._update_x_interval(dc)
         self._update_y_interval(dc)
 
-        self._x_view = (self._round_min_to_interval(self.x_zoom[0], self._x_interval),
-                        self._round_max_to_interval(self.x_zoom[1], self._x_interval))
+        #self._x_view = (self._round_min_to_interval(self.x_zoom[0], self._x_interval),
+        #                self._round_max_to_interval(self.x_zoom[1], self._x_interval))
 
-        self._y_view = (self._round_min_to_interval(self.y_zoom[0], self._y_interval),
-                        self._round_max_to_interval(self.y_zoom[1], self._y_interval))
+        #self._y_view = (self._round_min_to_interval(self.y_zoom[0], self._y_interval),
+        #                self._round_max_to_interval(self.y_zoom[1], self._y_interval))
+
+        self._x_view = self.x_zoom[:]
+        self._y_view = self.y_zoom[:]
 
         #print 'min_x:', self._min_x, 'zoom_x[0]:', self.x_zoom[0], 'view_x[0]:', self._x_view[0]
         #print 'max_x:', self._max_x, 'zoom_x[1]:', self.x_zoom[1], 'view_x[1]:', self._x_view[1]
@@ -449,7 +454,10 @@ class Chart(object):
 
         if self._show_x_ticks:
             if self.view_min_x != self.view_max_x:
-                lines = list(self._generate_lines_x(self.view_min_x, self.view_max_x, self._x_interval, self.chart_bottom, self.chart_bottom + self._tick_length))
+                x_tick_range = (self._round_max_to_interval(self.view_min_x, self._x_interval),
+                                self._round_min_to_interval(self.view_max_x, self._x_interval))
+                
+                lines = list(self._generate_lines_x(x_tick_range[0], x_tick_range[1], self._x_interval, self.chart_bottom, self.chart_bottom + self._tick_length))
 
                 dc.set_source_rgba(0, 0, 0, 1)
                 self._draw_lines(dc, lines)
@@ -461,7 +469,10 @@ class Chart(object):
                     dc.show_text(s)
 
         if self.view_min_y != self.view_max_y:
-            lines = list(self._generate_lines_y(self.view_min_y, self.view_max_y, self._y_interval, self.chart_left - self._tick_length, self.chart_left))
+            y_tick_range = (self._round_max_to_interval(self.view_min_y, self._y_interval),
+                            self._round_min_to_interval(self.view_max_y, self._y_interval))
+            
+            lines = list(self._generate_lines_y(y_tick_range[0], y_tick_range[1], self._y_interval, self.chart_left - self._tick_length, self.chart_left))
 
             dc.set_source_rgba(0, 0, 0, 1)
             self._draw_lines(dc, lines)

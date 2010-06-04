@@ -96,6 +96,9 @@ class PlotView(TopicMessageView):
         self._charts        = []
         self._data_loader   = None
         self._zoom_interval = None
+        
+        self._clicked_pos = None
+        self._dragged_pos = None
 
         self._configure_frame = None
 
@@ -106,11 +109,14 @@ class PlotView(TopicMessageView):
         tb.AddSeparator()
         tb.Bind(wx.EVT_TOOL, lambda e: self.configure(), tb.AddLabelTool(wx.ID_ANY, '', wx.Bitmap(icons_dir + 'cog.png')))
 
-        self.parent.Bind(wx.EVT_SIZE,       self._on_size)
-        self.parent.Bind(wx.EVT_PAINT,      self._on_paint)
-        self.parent.Bind(wx.EVT_RIGHT_DOWN, self._on_right_down)
-        self.parent.Bind(wx.EVT_MOUSEWHEEL, self._on_mousewheel)
-        self.parent.Bind(wx.EVT_CLOSE,      self._on_close)
+        self.parent.Bind(wx.EVT_SIZE,        self._on_size)
+        self.parent.Bind(wx.EVT_PAINT,       self._on_paint)
+        self.parent.Bind(wx.EVT_LEFT_DOWN,   self._on_left_down)
+        self.parent.Bind(wx.EVT_MIDDLE_DOWN, self._on_middle_down)
+        self.parent.Bind(wx.EVT_RIGHT_DOWN,  self._on_right_down)
+        self.parent.Bind(wx.EVT_MOTION,      self._on_mouse_move)
+        self.parent.Bind(wx.EVT_MOUSEWHEEL,  self._on_mousewheel)
+        self.parent.Bind(wx.EVT_CLOSE,       self._on_close)
 
         wx.CallAfter(self.configure)
 
@@ -193,7 +199,7 @@ class PlotView(TopicMessageView):
 
         self._data_loader.start_stamp = start_stamp
         self._data_loader.end_stamp   = end_stamp
-        
+
         self._update_max_interval()
 
         self._zoom_interval = ((start_stamp - self.timeline.start_stamp).to_sec(),
@@ -202,6 +208,9 @@ class PlotView(TopicMessageView):
         wx.CallAfter(self.parent.Refresh)
 
     def _update_max_interval(self):
+        if not self._data_loader:
+            return
+
         secs_per_px = (self._data_loader.end_stamp - self._data_loader.start_stamp).to_sec() / self.parent.Size[0]  # conservative: use entire width of control instead of just plot area
 
         self._data_loader.max_interval = secs_per_px * self._max_interval_secs
@@ -250,23 +259,77 @@ class PlotView(TopicMessageView):
 
         self._update_max_interval()
 
+    def _on_left_down(self, event):
+        self._clicked_pos = self._dragged_pos = event.Position
+    
+    def _on_middle_down(self, event):
+        self._clicked_pos = self._dragged_pos = event.Position
+
     def _on_right_down(self, event):
-        self.clicked_pos = event.GetPosition()
-        self.parent.PopupMenu(PlotPopupMenu(self.parent, self), self.clicked_pos)
+        self._clicked_pos = self._dragged_pos = event.Position
+        self.parent.PopupMenu(PlotPopupMenu(self.parent, self), self._clicked_pos)
+
+    def _on_mouse_move(self, event):
+        x, y = event.Position
+        
+        if event.Dragging():
+            if event.MiddleIsDown() or event.ShiftDown():
+                # Middle or shift: zoom
+                
+                dx_click, dy_click = x - self._clicked_pos[0], y - self._clicked_pos[1]
+                dx_drag,  dy_drag  = x - self._dragged_pos[0], y - self._dragged_pos[1]
+
+                if dx_drag != 0:
+                    if len(self._charts) > 0:
+                        dx_chart = self._charts[0].dx_chart_to_data(dx_drag)
+
+                        self._zoom_interval = (self._zoom_interval[0] - dx_chart,
+                                               self._zoom_interval[1] - dx_chart)
+
+                        self._zoom(1.0 + 0.005 * dy_drag)
+    
+                        wx.CallAfter(self.parent.Refresh)
+                
+                #if (dx_drag == 0 and abs(dy_drag) > 0) or (dx_drag != 0 and abs(float(dy_drag) / dx_drag) > 0.2 and abs(dy_drag) > 1):
+                #    zoom = min(self._max_zoom_speed, max(self._min_zoom_speed, 1.0 + self._zoom_sensitivity * dy_drag))
+                #    self.zoom_timeline(zoom)
+    
+                self.Cursor = wx.StockCursor(wx.CURSOR_HAND)
+            
+            self._dragged_pos = event.Position
 
     def _on_mousewheel(self, event):
         dz = event.GetWheelRotation() / event.GetWheelDelta()
+        self._zoom(1.0 - dz * 0.2)
 
-        index = None
-        for i, (period, _) in enumerate(self.periods):
-            if period == self._period:
-                index = i
-                break
+        #index = None
+        #for i, (period, _) in enumerate(self.periods):
+        #    if period == self._period:
+        #        index = i
+        #        break
 
-        if dz < 0:
-            self.period = self.periods[min(len(self.periods) - 1, index + 1)][0]
-        elif dz > 0:
-            self.period = self.periods[max(1, index - 1)][0]
+        #if dz < 0:
+        #    self.period = self.periods[min(len(self.periods) - 1, index + 1)][0]
+        #elif dz > 0:
+        #    self.period = self.periods[max(1, index - 1)][0]
+
+    def _zoom(self, zoom):
+        zoom_interval     = self._zoom_interval[1] - self._zoom_interval[0]
+        playhead_fraction = (self._playhead - self._zoom_interval[0]) / zoom_interval
+
+        new_zoom_interval = zoom * zoom_interval
+
+        # Enforce zoom limits
+        #px_per_sec = self._history_width / new_stamp_interval
+        #if px_per_sec < self._min_zoom:
+        #    new_stamp_interval = self._history_width / self._min_zoom
+        #elif px_per_sec > self._max_zoom:
+        #    new_stamp_interval = self._history_width / self._max_zoom
+
+        interval_0 = self._playhead - playhead_fraction * new_zoom_interval
+        interval_1 = interval_0 + new_zoom_interval
+
+        self._zoom_interval = (interval_0, interval_1)
 
         wx.CallAfter(self.parent.Refresh)
 

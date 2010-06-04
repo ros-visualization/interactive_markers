@@ -169,8 +169,7 @@ class PlotDataLoader(threading.Thread):
 
                 if subdivider is None or len(self._paths) == 0:
                     # Wait for dirty flag
-                    self._dirty_cv.acquire()
-                    while not self._dirty:
+                    if not self._dirty:
                         self._dirty_cv.wait()
                     continue
 
