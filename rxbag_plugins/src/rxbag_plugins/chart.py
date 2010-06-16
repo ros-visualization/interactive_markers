@@ -209,7 +209,7 @@ class Chart(object):
             return (self.min_x, self.max_x)
         else:
             return self._x_view
-        
+
     def _set_x_view(self, x_view):
         self._x_view = x_view
 
@@ -218,7 +218,10 @@ class Chart(object):
     @property
     def y_view(self):
         if self._y_view is None:
-            return (self.min_y, self.max_y)
+            if self.min_y == self.max_y:
+                return (self.min_y - 0.01, self.max_y + 0.01)
+            else:
+                return (self.min_y, self.max_y)
         else:
             return self._y_view
 
@@ -236,7 +239,7 @@ class Chart(object):
 
     @property
     def view_min_y(self): return self.y_view[0]
-    
+
     @property
     def view_max_y(self): return self.y_view[1]
 
