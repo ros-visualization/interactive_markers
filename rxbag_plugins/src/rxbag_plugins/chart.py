@@ -113,11 +113,7 @@ class Chart(object):
         self._y_interval   = None
         self._show_x_ticks = True
 
-        # The desired viewport
-        self._x_zoom = None
-        self._y_zoom = None
-
-        # The displayed viewport (takes into account interval rounding)
+        # The viewport
         self._x_view = None
         self._y_view = None
         
@@ -184,24 +180,6 @@ class Chart(object):
                     max_y = max(max_y, dataset.max_y)
         return max_y
 
-    @property
-    def view_range_x(self): return self.view_max_x - self.view_min_x
-    
-    @property
-    def view_min_x(self): return self._x_view[0]
-
-    @property
-    def view_max_x(self): return self._x_view[1]
-
-    @property
-    def view_range_y(self): return self.view_max_y - self.view_min_y
-
-    @property
-    def view_min_y(self): return self._y_view[0]
-    
-    @property
-    def view_max_y(self): return self._y_view[1]
-
     # palette_offset
     
     def _get_palette_offset(self):
@@ -224,11 +202,43 @@ class Chart(object):
 
     show_x_ticks = property(_get_show_x_ticks, _set_show_x_ticks)
 
-    # zoom_interval
+    # x_view
     
-    def _get_zoom_interval(self):         return self._x_zoom
-    def _set_zoom_interval(self, x_zoom): self._x_zoom = x_zoom
-    zoom_interval = property(_get_zoom_interval, _set_zoom_interval)
+    def _get_x_view(self):
+        if self._x_view is None:
+            return (self.min_x, self.max_x)
+        else:
+            return self._x_view
+        
+    def _set_x_view(self, x_view):
+        self._x_view = x_view
+
+    x_view = property(_get_x_view, _set_x_view)
+
+    @property
+    def y_view(self):
+        if self._y_view is None:
+            return (self.min_y, self.max_y)
+        else:
+            return self._y_view
+
+    @property
+    def view_range_x(self): return self.view_max_x - self.view_min_x
+    
+    @property
+    def view_min_x(self): return self.x_view[0]
+
+    @property
+    def view_max_x(self): return self.x_view[1]
+
+    @property
+    def view_range_y(self): return self.view_max_y - self.view_min_y
+
+    @property
+    def view_min_y(self): return self.y_view[0]
+    
+    @property
+    def view_max_y(self): return self.y_view[1]
 
     ## Data
 
@@ -284,52 +294,16 @@ class Chart(object):
 
     ## Implementation
 
-    @property
-    def x_zoom(self):
-        if self._x_zoom is None:
-            return (self.min_x, self.max_x)
-        else:
-            return self._x_zoom
-
-    @property
-    def y_zoom(self):
-        if self._y_zoom is None:
-            return (self.min_y, self.max_y)
-        else:
-            return self._y_zoom
-
-    def _update_axes(self, dc):
-        """
-        Calculates intervals and viewport.
-        """
-        self._update_x_interval(dc)
-        self._update_y_interval(dc)
-
-        #self._x_view = (self._round_min_to_interval(self.x_zoom[0], self._x_interval),
-        #                self._round_max_to_interval(self.x_zoom[1], self._x_interval))
-
-        #self._y_view = (self._round_min_to_interval(self.y_zoom[0], self._y_interval),
-        #                self._round_max_to_interval(self.y_zoom[1], self._y_interval))
-
-        self._x_view = self.x_zoom[:]
-        self._y_view = self.y_zoom[:]
-
-        #print 'min_x:', self._min_x, 'zoom_x[0]:', self.x_zoom[0], 'view_x[0]:', self._x_view[0]
-        #print 'max_x:', self._max_x, 'zoom_x[1]:', self.x_zoom[1], 'view_x[1]:', self._x_view[1]
-        #print 'min_y:', self._min_y, 'zoom_y[0]:', self.y_zoom[0], 'view_y[0]:', self._y_view[0]
-        #print 'max_y:', self._max_y, 'zoom_y[1]:', self.y_zoom[1], 'view_y[1]:', self._y_view[1]
-        #print
-
     def _update_x_interval(self, dc):
         dc.set_font_size(self._tick_font_size)
         
-        min_x_width = dc.text_extents(self.format_x(self.x_zoom[0]))[2]
-        max_x_width = dc.text_extents(self.format_x(self.x_zoom[1]))[2]
+        min_x_width = dc.text_extents(self.format_x(self.x_view[0]))[2]
+        max_x_width = dc.text_extents(self.format_x(self.x_view[1]))[2]
         max_label_width = 100 #max(min_x_width, max_x_width) + self._tick_label_padding
 
         num_ticks = self.chart_width / max_label_width
 
-        self._x_interval = self._get_axis_interval((self.x_zoom[1] - self.x_zoom[0]) / num_ticks)
+        self._x_interval = self._get_axis_interval((self.x_view[1] - self.x_view[0]) / num_ticks)
 
     def _update_y_interval(self, dc):
         dc.set_font_size(self._tick_font_size)
@@ -338,7 +312,7 @@ class Chart(object):
 
         num_ticks = self.chart_height / label_height
 
-        self._y_interval = self._get_axis_interval((self.y_zoom[1] - self.y_zoom[0]) / num_ticks)
+        self._y_interval = self._get_axis_interval((self.y_view[1] - self.y_view[0]) / num_ticks)
 
     def _get_axis_interval(self, range, intervals=[1.0, 2.0, 5.0]):
         exp = -8
@@ -389,7 +363,8 @@ class Chart(object):
         dc.clip()
 
         try:
-            self._update_axes(dc)
+            self._update_x_interval(dc)
+            self._update_y_interval(dc)
             with self._lock:
                 self._draw_data_extents(dc)
                 self._draw_grid(dc)

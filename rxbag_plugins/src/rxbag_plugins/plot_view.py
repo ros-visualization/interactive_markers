@@ -69,13 +69,13 @@ class PlotView(TopicMessageView):
     def __init__(self, timeline, parent):
         TopicMessageView.__init__(self, timeline, parent)
 
-        self._topic         = None
-        self._message       = None
-        self._plot_paths    = []
-        self._playhead      = None
-        self._charts        = []
-        self._data_loader   = None
-        self._zoom_interval = None
+        self._topic       = None
+        self._message     = None
+        self._plot_paths  = []
+        self._playhead    = None
+        self._charts      = []
+        self._data_loader = None
+        self._x_view      = None
         
         self._clicked_pos = None
         self._dragged_pos = None
@@ -160,15 +160,15 @@ class PlotView(TopicMessageView):
         self._playhead = playhead
         
         # Check if playhead is visible. If not, then move the view region.
-        if self._zoom_interval is not None:
-            if self._playhead < self._zoom_interval[0]:
-                zoom_interval = self._zoom_interval[1] - self._zoom_interval[0]
-                self._zoom_interval = (self._playhead, self._playhead + zoom_interval)
+        if self._x_view is not None:
+            if self._playhead < self._x_view[0]:
+                x_view = self._x_view[1] - self._x_view[0]
+                self._x_view = (self._playhead, self._playhead + x_view)
                 self._update_data_loader_interval()
                 
-            elif self._playhead > self._zoom_interval[1]:
-                zoom_interval = self._zoom_interval[1] - self._zoom_interval[0]
-                self._zoom_interval = (self._playhead - zoom_interval, self._playhead)
+            elif self._playhead > self._x_view[1]:
+                x_view = self._x_view[1] - self._x_view[0]
+                self._x_view = (self._playhead - x_view, self._playhead)
                 self._update_data_loader_interval()
         
         wx.CallAfter(self.parent.Refresh)
@@ -204,7 +204,7 @@ class PlotView(TopicMessageView):
         for chart_index, plot in enumerate(self._plot_paths):
             chart = self._charts[chart_index]
 
-            chart.zoom_interval = self._zoom_interval
+            chart.x_view = self._x_view
             if self._message:
                 chart.x_indicator = self._playhead
             else:
@@ -300,48 +300,48 @@ class PlotView(TopicMessageView):
     ##
 
     def _update_data_loader_interval(self):
-        self._data_loader.set_interval(self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._zoom_interval[0])),
-                                       self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._zoom_interval[1])))
+        self._data_loader.set_interval(self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._x_view[0])),
+                                       self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._x_view[1])))
 
     def _zoom_plot(self, zoom):
-        if self._zoom_interval is None:
-            self._zoom_interval = (0.0, (self.timeline.end_stamp - self.timeline.start_stamp).to_sec())
+        if self._x_view is None:
+            self._x_view = (0.0, (self.timeline.end_stamp - self.timeline.start_stamp).to_sec())
 
-        zoom_interval     = self._zoom_interval[1] - self._zoom_interval[0]
-        playhead_fraction = (self._playhead - self._zoom_interval[0]) / zoom_interval
+        x_view_interval   = self._x_view[1] - self._x_view[0]
+        playhead_fraction = (self._playhead - self._x_view[0]) / x_view_interval
 
-        new_zoom_interval = zoom * zoom_interval
+        new_x_view_interval = zoom * x_view_interval
 
         # Enforce zoom limits (0.1s, 4 * range)
         max_zoom_interval = (self.timeline.end_stamp - self.timeline.start_stamp).to_sec() * 4.0
-        if new_zoom_interval > max_zoom_interval:
-            new_zoom_interval = max_zoom_interval
-        elif new_zoom_interval < 0.1:
-            new_zoom_interval = 0.1
+        if new_x_view_interval > max_zoom_interval:
+            new_x_view_interval = max_zoom_interval
+        elif new_x_view_interval < 0.1:
+            new_x_view_interval = 0.1
 
-        interval_0 = self._playhead - playhead_fraction * new_zoom_interval
-        interval_1 = interval_0 + new_zoom_interval
+        interval_0 = self._playhead - playhead_fraction * new_x_view_interval
+        interval_1 = interval_0 + new_x_view_interval
 
         timeline_range = (self.timeline.end_stamp - self.timeline.start_stamp).to_sec()
         interval_0 = min(interval_0, timeline_range - 0.1)
         interval_1 = max(interval_1, 0.1)
 
-        self._zoom_interval = (interval_0, interval_1)
+        self._x_view = (interval_0, interval_1)
 
         self._update_max_interval()
 
     def _translate_plot(self, dsecs):
-        if self._zoom_interval is None:
-            self._zoom_interval = (0.0, (self.timeline.end_stamp - self.timeline.start_stamp).to_sec())
+        if self._x_view is None:
+            self._x_view = (0.0, (self.timeline.end_stamp - self.timeline.start_stamp).to_sec())
 
-        new_start = self._zoom_interval[0] - dsecs
-        new_end   = self._zoom_interval[1] - dsecs
+        new_start = self._x_view[0] - dsecs
+        new_end   = self._x_view[1] - dsecs
 
         timeline_range = (self.timeline.end_stamp - self.timeline.start_stamp).to_sec()
         new_start = min(new_start, timeline_range - 0.1)
         new_end   = max(new_end,   0.1)
 
-        self._zoom_interval = (new_start, new_end)
+        self._x_view = (new_start, new_end)
 
     ##
 
@@ -406,7 +406,7 @@ class PlotView(TopicMessageView):
                 for path in plot:
                     export_series.add(path)
     
-            self._data_loader.export_csv(csv_path, export_series, self._zoom_interval[0], self._zoom_interval[1], rows)
+            self._data_loader.export_csv(csv_path, export_series, self._x_view[0], self._x_view[1], rows)
 
         dialog.Destroy()
 
