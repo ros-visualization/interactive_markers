@@ -62,7 +62,7 @@ class PlotDataLoader(threading.Thread):
         self._dirty           = True
         self._dirty_cv        = threading.Condition()
         self._last_reload     = None                           # time that entries were reloaded
-        self._min_reload_secs = 0.5                            # minimum time to wait before loading entries
+        self._min_reload_secs = 0.1                            # minimum time to wait before loading entries
 
         self._data = {}
 
