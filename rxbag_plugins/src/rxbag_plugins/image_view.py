@@ -393,8 +393,10 @@ class ExportFramesDialog(wx.Dialog):
 
 def _save_image_msg(img_msg, filename):
     pil_img = image_helper.imgmsg_to_pil(img_msg, rgba=False)
-    
-    if pil_img.mode == 'RGB':
+
+    if pil_img.mode in ('RGB', 'RGBA'):
+        pil_img = pil_img.convert('RGB')
         pil_img = image_helper.pil_bgr2rgb(pil_img)
-        
+        pil_img = pil_img.convert('RGB')
+
     pil_img.save(filename)

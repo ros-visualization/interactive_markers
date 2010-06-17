@@ -149,7 +149,7 @@ class PlotView(TopicMessageView):
     def timeline_changed(self):
         if self._data_loader:
             self._data_loader.invalidate()
-        
+
         wx.CallAfter(self.parent.Refresh)
 
     # property: playhead
@@ -213,7 +213,7 @@ class PlotView(TopicMessageView):
             if self._data_loader.is_load_complete:
                 chart.data_alpha = 1.0
             else:
-                chart.data_alpha = 0.4
+                chart.data_alpha = 0.5
 
             data = {}
             for plot_path in plot:

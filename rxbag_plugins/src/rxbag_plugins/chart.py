@@ -284,44 +284,79 @@ class Chart(object):
     def dx_chart_to_data(self, dx):      return float(dx) / self.chart_width  * self.view_range_x
     def dy_chart_to_data(self, dy):      return float(dy) / self.chart_height * self.view_range_y
     
-    def format_x(self, x):
+    def format_x(self, x, x_interval=None):
+        if x_interval is None:
+            x_interval = self._x_interval
+        
         if self._x_interval is None:
             return '%.3f' % x
         
-        dp = max(0, int(math.ceil(-math.log10(self._x_interval))))
-        return '%.*f' % (dp, x)
+        dp = max(0, int(math.ceil(-math.log10(x_interval))))
+        if dp == 0:
+            return self.format_group(x)
+        else:
+            return '%.*f' % (dp, x)
     
-    def format_y(self, y):
-        if self._y_interval is None:
+    def format_y(self, y, y_interval=None):
+        if y_interval is None:
+            y_interval = self._y_interval
+        
+        if y_interval is None:
             return '%.3f' % y
 
-        dp = max(0, int(math.ceil(-math.log10(self._y_interval))))
-        return '%.*f' % (dp, y)
+        dp = max(0, int(math.ceil(-math.log10(y_interval))))
+        if dp == 0:
+            return self.format_group(y)
+        else:
+            return '%.*f' % (dp, y)
+
+    def format_group(self, number):
+        """Formats integer with thousands separator."""
+        s = '%d' % round(number)
+        groups = []
+        while s and s[-1].isdigit():
+            groups.append(s[-3:])
+            s = s[:-3]
+            
+        return s + ','.join(reversed(groups))
 
     ## Implementation
 
     def _update_x_interval(self, dc):
-        max_width = None
-        if self.view_min_x is not None and self.view_max_x is not None and self._x_interval is not None:            
+        num_ticks = None
+        if self.view_min_x is not None and self.view_max_x is not None and self._x_interval is not None:
             dc.set_font_size(self._tick_font_size)
-            for x0, y0, x1, y1 in self._generate_lines_x(self._round_min_to_interval(self.view_min_x, self._x_interval),
-                                                         self._round_max_to_interval(self.view_max_x, self._x_interval),
-                                                         self._x_interval,
-                                                         self.chart_bottom,
-                                                         self.chart_bottom + self._tick_length):
-                s = self.format_x(self.x_chart_to_data(x0))
-                text_width = dc.text_extents(s)[2]
-                width = text_width + 10
-
-                if max_width is None or width > max_width:
-                    max_width = width 
-
-        if max_width is None:
-            max_width = 100
-
-        num_ticks = self.chart_width / max_width
+            for test_num_ticks in range(20, 1, -1):
+                test_x_interval = self._get_axis_interval((self.x_view[1] - self.x_view[0]) / test_num_ticks)
+                max_width = self._get_max_label_width(dc, test_x_interval)
+                
+                max_width += 50   # add padding
+                
+                if max_width * test_num_ticks < self.chart_width:
+                    num_ticks = test_num_ticks
+                    break
+        
+        if num_ticks is None:
+            num_ticks = self.chart_width / 100
 
         self._x_interval = self._get_axis_interval((self.x_view[1] - self.x_view[0]) / num_ticks)
+
+    def _get_max_label_width(self, dc, x_interval):
+        max_width = None
+
+        for x0, y0, x1, y1 in self._generate_lines_x(self._round_min_to_interval(self.view_min_x, x_interval),
+                                                     self._round_max_to_interval(self.view_max_x, x_interval),
+                                                     x_interval,
+                                                     self.chart_bottom,
+                                                     self.chart_bottom + self._tick_length):
+            s = self.format_x(self.x_chart_to_data(x0), x_interval)
+            text_width = dc.text_extents(s)[2]
+            width = text_width
+
+            if max_width is None or width > max_width:
+                max_width = width 
+
+        return max_width
 
     def _update_y_interval(self, dc):
         dc.set_font_size(self._tick_font_size)
@@ -384,8 +419,8 @@ class Chart(object):
             self.chart_left = self._margin_left
 
         self.chart_top    = self._margin_top
-        self.chart_width  = self._width  - self._margin_left - self._margin_right
-        self.chart_height = self._height - self._margin_top  - self._margin_bottom
+        self.chart_width  = self._width  - self.chart_left - self._margin_right
+        self.chart_height = self._height - self.chart_top  - self._margin_bottom
 
         if self._show_x_ticks:
             self.chart_height -= 18
@@ -498,8 +533,10 @@ class Chart(object):
                 tick_x = x0 - text_width / 2
                 tick_y = y1 + 3 + text_height
 
-                dc.move_to(tick_x, tick_y)
-                dc.show_text(s)
+                # Only show label if it's not outside the chart bounds
+                if tick_x + text_width < self._width - 2:
+                    dc.move_to(tick_x, tick_y)
+                    dc.show_text(s)
 
         # Draw Y axis ticks
         if self.view_min_y != self.view_max_y:
@@ -565,14 +602,13 @@ class Chart(object):
         if len(self._series_data) == 0:
             return
 
-        dc.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
-
         for series, series_data in self._series_data.items():
             dc.set_source_rgba(*self._get_color(series))
 
             coords = [self.coord_data_to_chart(x, y) for x, y in series_data.points]
 
             # Draw lines
+            dc.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
             if self._show_lines:
                 dc.set_line_width(1.0)
                 dc.move_to(*coords[0])
@@ -581,19 +617,20 @@ class Chart(object):
                 dc.stroke()
 
             # Draw points
+            dc.set_antialias(cairo.ANTIALIAS_NONE)
             if self._show_points:
-                # and (series_data.min_dx is not None and self.dx_data_to_chart(series_data.min_dx) > 1.0):
-                dc.set_line_width(1.5)
-                last_px, last_py = None, None
+                dc.set_line_width(1.0)
+                dc.set_source_rgb(1, 1, 1)
                 for px, py in coords:
-                    if last_px is None or abs(px - last_px) > 1.5 or abs(py - last_py) > 1.5:
-                        dc.move_to(px - 1, py - 1)
-                        dc.line_to(px + 1, py + 1)
-                        dc.move_to(px + 1, py - 1)
-                        dc.line_to(px - 1, py + 1)
-                        last_px, last_py = px, py
+                    dc.rectangle(px - 1, py - 1, 2, 2)
+                dc.fill()
 
+                dc.set_source_rgba(*self._get_color(series))
+                for px, py in coords:
+                    dc.rectangle(px - 1, py - 1, 2, 2)
                 dc.stroke()
+
+        dc.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
 
     def _draw_x_indicator(self, dc):
         if self.x_indicator is None:

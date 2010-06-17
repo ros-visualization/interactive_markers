@@ -36,6 +36,8 @@ import rospy
 
 import array
 from cStringIO import StringIO
+import sys
+
 import Image
 import wx
 import cairo
@@ -88,7 +90,7 @@ def imgmsg_to_pil(img_msg, rgba=True):
         
         return pil_img
     except Exception, ex:
-        print 'Can\'t convert:', mode, ex
+        print >> sys.stderr, 'Can\'t convert:', mode, ex
         return None
 
 def pil_bgr2rgb(pil_img):
