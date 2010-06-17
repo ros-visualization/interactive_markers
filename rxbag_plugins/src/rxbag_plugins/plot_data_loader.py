@@ -190,7 +190,10 @@ class PlotDataLoader(threading.Thread):
                     entries        = list(self._timeline.get_entries_with_bags(self._topic, self._start_stamp, self._end_stamp))
                     loaded_indexes = set()
                     loaded_stamps  = []
-                    subdivider     = _subdivide(0, len(entries) - 1)
+                    if len(entries) == 0:
+                        subdivider = None
+                    else:
+                        subdivider = _subdivide(0, len(entries) - 1)
 
                     self._trim_data()
 
@@ -282,6 +285,10 @@ def _get_header(msg, path):
     return _get_header(msg, parent_path)
 
 def _subdivide(left, right):
+    if left == right:
+        yield left
+        return
+    
     yield left
     yield right
 

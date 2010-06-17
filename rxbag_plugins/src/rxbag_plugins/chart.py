@@ -84,7 +84,7 @@ class Chart(object):
                          (0.7, 0.0, 0.7),
                          (0.7, 0.7, 0.0)]
 
-        self._margin_left   = 50
+        self._margin_left   = 10
         self._margin_right  = 10
         self._margin_top    =  8
         self._margin_bottom =  2
@@ -124,10 +124,10 @@ class Chart(object):
 
         ##
 
-        self._layout()
-
         self._series_list = []    # [series0, ...]
         self._series_data = {}    # str -> DataSet
+
+        self._layout()
 
     @property
     def num_points(self):
@@ -206,7 +206,10 @@ class Chart(object):
     
     def _get_x_view(self):
         if self._x_view is None:
-            return (self.min_x, self.max_x)
+            if self.min_x == self.max_x and self.min_x is not None:
+                return (self.min_x - 0.01, self.max_x + 0.01)
+            else:
+                return (self.min_x, self.max_x)
         else:
             return self._x_view
 
@@ -218,7 +221,7 @@ class Chart(object):
     @property
     def y_view(self):
         if self._y_view is None:
-            if self.min_y == self.max_y:
+            if self.min_y == self.max_y and self.min_y is not None:
                 return (self.min_y - 0.01, self.max_y + 0.01)
             else:
                 return (self.min_y, self.max_y)
@@ -298,13 +301,25 @@ class Chart(object):
     ## Implementation
 
     def _update_x_interval(self, dc):
-        dc.set_font_size(self._tick_font_size)
-        
-        min_x_width = dc.text_extents(self.format_x(self.x_view[0]))[2]
-        max_x_width = dc.text_extents(self.format_x(self.x_view[1]))[2]
-        max_label_width = 100 #max(min_x_width, max_x_width) + self._tick_label_padding
+        max_width = None
+        if self.view_min_x is not None and self.view_max_x is not None and self._x_interval is not None:            
+            dc.set_font_size(self._tick_font_size)
+            for x0, y0, x1, y1 in self._generate_lines_x(self._round_min_to_interval(self.view_min_x, self._x_interval),
+                                                         self._round_max_to_interval(self.view_max_x, self._x_interval),
+                                                         self._x_interval,
+                                                         self.chart_bottom,
+                                                         self.chart_bottom + self._tick_length):
+                s = self.format_x(self.x_chart_to_data(x0))
+                text_width = dc.text_extents(s)[2]
+                width = text_width + 10
 
-        num_ticks = self.chart_width / max_label_width
+                if max_width is None or width > max_width:
+                    max_width = width 
+
+        if max_width is None:
+            max_width = 100
+
+        num_ticks = self.chart_width / max_width
 
         self._x_interval = self._get_axis_interval((self.x_view[1] - self.x_view[0]) / num_ticks)
 
@@ -346,8 +361,28 @@ class Chart(object):
             return max_val + interval
         return max_val
 
-    def _layout(self):
-        self.chart_left   = self._margin_left
+    def _layout(self, dc=None):
+        # Calculate the maximum width taken up by the Y tick labels
+        max_width = None
+        if dc is not None and self.num_points > 0 and self.view_min_y is not None and self.view_max_y is not None and self._y_interval is not None:
+            dc.set_font_size(self._tick_font_size)
+            for x0, y0, x1, y1 in self._generate_lines_y(self._round_min_to_interval(self.view_min_y, self._y_interval),
+                                                         self._round_max_to_interval(self.view_max_y, self._y_interval),
+                                                         self._y_interval,
+                                                         self.chart_left - self._tick_length,
+                                                         self.chart_left):
+                s = self.format_y(self.y_chart_to_data(y0))
+                text_width = dc.text_extents(s)[2]
+                width = text_width + 3
+
+                if max_width is None or width > max_width:
+                    max_width = width
+
+        if max_width is not None:
+            self.chart_left = self._margin_left + max_width
+        else:
+            self.chart_left = self._margin_left
+
         self.chart_top    = self._margin_top
         self.chart_width  = self._width  - self._margin_left - self._margin_right
         self.chart_height = self._height - self._margin_top  - self._margin_bottom
@@ -356,6 +391,8 @@ class Chart(object):
             self.chart_height -= 18
 
     def paint(self, dc):
+        self._layout(dc)
+        
         self._draw_border(dc)
 
         if self.num_points < 2:
@@ -406,12 +443,13 @@ class Chart(object):
         dc.set_antialias(cairo.ANTIALIAS_NONE)
         dc.set_line_width(1.0)
         dc.set_dash([2, 4])
-        
+
         if self.view_min_x != self.view_max_x:
             dc.set_source_rgba(0, 0, 0, 0.4)
             x_tick_range = (self._round_min_to_interval(self.view_min_x, self._x_interval),
                             self._round_max_to_interval(self.view_max_x, self._x_interval))
             self._draw_lines(dc, self._generate_lines_x(x_tick_range[0], x_tick_range[1], self._x_interval))
+
         if self.view_min_y != self.view_max_y:
             dc.set_source_rgba(0, 0, 0, 0.4)
             y_tick_range = (self._round_min_to_interval(self.view_min_y, self._y_interval),
@@ -443,22 +481,27 @@ class Chart(object):
         
         dc.set_font_size(self._tick_font_size)
 
-        if self._show_x_ticks:
-            if self.view_min_x != self.view_max_x:
-                x_tick_range = (self._round_min_to_interval(self.view_min_x, self._x_interval),
-                                self._round_max_to_interval(self.view_max_x, self._x_interval))
-                
-                lines = list(self._generate_lines_x(x_tick_range[0], x_tick_range[1], self._x_interval, self.chart_bottom, self.chart_bottom + self._tick_length))
+        # Draw X axis ticks
+        if self._show_x_ticks and self.view_min_x != self.view_max_x:
+            x_tick_range = (self._round_min_to_interval(self.view_min_x, self._x_interval),
+                            self._round_max_to_interval(self.view_max_x, self._x_interval))
+            
+            lines = list(self._generate_lines_x(x_tick_range[0], x_tick_range[1], self._x_interval, self.chart_bottom, self.chart_bottom + self._tick_length))
 
-                dc.set_source_rgba(0, 0, 0, 1)
-                self._draw_lines(dc, lines)
+            dc.set_source_rgba(0, 0, 0, 1)
+            self._draw_lines(dc, lines)
 
-                for x0, y0, x1, y1 in lines:
-                    s = self.format_x(self.x_chart_to_data(x0))
-                    text_width, text_height = dc.text_extents(s)[2:4]
-                    dc.move_to(x0 - text_width / 2, y1 + 3 + text_height)
-                    dc.show_text(s)
+            for x0, y0, x1, y1 in lines:
+                s = self.format_x(self.x_chart_to_data(x0))
+                text_width, text_height = dc.text_extents(s)[2:4]
 
+                tick_x = x0 - text_width / 2
+                tick_y = y1 + 3 + text_height
+
+                dc.move_to(tick_x, tick_y)
+                dc.show_text(s)
+
+        # Draw Y axis ticks
         if self.view_min_y != self.view_max_y:
             y_tick_range = (self._round_min_to_interval(self.view_min_y, self._y_interval),
                             self._round_max_to_interval(self.view_max_y, self._y_interval))
@@ -471,7 +514,11 @@ class Chart(object):
             for x0, y0, x1, y1 in lines:
                 s = self.format_y(self.y_chart_to_data(y0))
                 text_width, text_height = dc.text_extents(s)[2:4]
-                dc.move_to(x0 - text_width - 3, y0 + text_height / 2)
+
+                tick_x = x0 - text_width - 3
+                tick_y = y0 + text_height / 2
+
+                dc.move_to(tick_x, tick_y)
                 dc.show_text(s)
 
     def _draw_lines(self, dc, lines):
@@ -517,8 +564,6 @@ class Chart(object):
     def _draw_data(self, dc):
         if len(self._series_data) == 0:
             return
-
-        # @todo: handle min_x = max_x / min_y = max_y cases
 
         dc.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
 

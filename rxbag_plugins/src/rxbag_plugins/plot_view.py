@@ -307,7 +307,10 @@ class PlotView(TopicMessageView):
         if self._x_view is None:
             self._x_view = (0.0, (self.timeline.end_stamp - self.timeline.start_stamp).to_sec())
 
-        x_view_interval   = self._x_view[1] - self._x_view[0]
+        x_view_interval = self._x_view[1] - self._x_view[0]
+        if x_view_interval == 0.0:
+            return
+
         playhead_fraction = (self._playhead - self._x_view[0]) / x_view_interval
 
         new_x_view_interval = zoom * x_view_interval
