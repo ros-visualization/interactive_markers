@@ -318,8 +318,8 @@ class PlotView(TopicMessageView):
 
         new_x_view_interval = zoom * x_view_interval
 
-        # Enforce zoom limits (0.1s, 4 * range)
-        max_zoom_interval = (self.timeline.end_stamp - self.timeline.start_stamp).to_sec() * 4.0
+        # Enforce zoom limits (0.1s, 1.5 * range)
+        max_zoom_interval = (self.timeline.end_stamp - self.timeline.start_stamp).to_sec() * 1.5
         if new_x_view_interval > max_zoom_interval:
             new_x_view_interval = max_zoom_interval
         elif new_x_view_interval < 0.1:

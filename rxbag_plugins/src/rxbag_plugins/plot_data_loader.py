@@ -62,7 +62,7 @@ class PlotDataLoader(threading.Thread):
         self._dirty           = True
         self._dirty_cv        = threading.Condition()
         self._last_reload     = None                           # time that entries were reloaded
-        self._min_reload_secs = 0.1                            # minimum time to wait before loading entries
+        self._min_reload_secs = 0.2                            # minimum time to wait before loading entries
 
         self._data = {}
 
@@ -140,6 +140,7 @@ class PlotDataLoader(threading.Thread):
     def _set_paths(self, paths):
         with self._dirty_cv:
             if set(paths) != set(self._paths):
+                self._data = {}
                 self._paths = paths
                 self._dirty = True
                 self._dirty_cv.notify()
