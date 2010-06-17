@@ -82,9 +82,9 @@ class PlotView(TopicMessageView):
 
         self._configure_frame = None
 
-        self._max_interval_secs = 1.5
+        self._max_interval_pixels = 1.5
 
-        tb = self.parent.GetToolBar()
+        tb = self.parent.ToolBar
         icons_dir = roslib.packages.get_pkg_dir(PKG) + '/icons/'
         tb.AddSeparator()
         tb.Bind(wx.EVT_TOOL, lambda e: self.configure(), tb.AddLabelTool(wx.ID_ANY, '', wx.Bitmap(icons_dir + 'cog.png')))
@@ -182,9 +182,9 @@ class PlotView(TopicMessageView):
         if not self._data_loader:
             return
 
-        secs_per_px = (self._data_loader.end_stamp - self._data_loader.start_stamp).to_sec() / self.parent.Size[0]  # conservative: use entire width of control instead of just plot area
-
-        self._data_loader.max_interval = secs_per_px * self._max_interval_secs
+        if len(self._charts) > 0:
+            secs_per_px = (self._data_loader.end_stamp - self._data_loader.start_stamp).to_sec() / self._charts[0].chart_width
+            self._data_loader.max_interval = secs_per_px * self._max_interval_pixels
 
     ## Events
 
@@ -200,7 +200,7 @@ class PlotView(TopicMessageView):
 
         data = {}
 
-        chart_height = self.parent.GetClientSize()[1] / len(self._charts)
+        chart_height = self.parent.ClientSize[1] / len(self._charts)
 
         dc.save()
 
@@ -285,7 +285,7 @@ class PlotView(TopicMessageView):
             self._dragged_pos = event.Position
 
     def _on_mousewheel(self, event):
-        dz = event.GetWheelRotation() / event.GetWheelDelta()
+        dz = event.WheelRotation / event.WheelDelta
         self._zoom_plot(1.0 - dz * 0.2)
 
         self._update_data_loader_interval()
@@ -367,9 +367,11 @@ class PlotView(TopicMessageView):
             self._charts.append(chart)
 
         self._layout_charts()
+        
+        self._update_max_interval()
 
     def _layout_charts(self):
-        w, h = self.parent.GetClientSize()
+        w, h = self.parent.ClientSize
         num_charts = len(self._charts)
         if num_charts > 0:
             chart_height = h / num_charts
@@ -398,21 +400,19 @@ class PlotView(TopicMessageView):
         if self._message:
             self._configure_frame = PlotConfigureFrame(self)
             
-            frame = self.parent.GetTopLevelParent()
-            self._configure_frame.SetPosition((frame.Position[0] + frame.Size[0] + 10, frame.Position[1]))
+            frame = self.parent.TopLevelParent
+            self._configure_frame.Position = (frame.Position[0] + frame.Size[0] + 10, frame.Position[1])
             self._configure_frame.Show()
 
     def export_csv(self, rows):
-        dialog = wx.FileDialog(self.parent.GetParent(), 'Export to CSV...', wildcard='CSV files (*.csv)|*.csv', style=wx.FD_SAVE)
+        dialog = wx.FileDialog(self.parent.Parent, 'Export to CSV...', wildcard='CSV files (*.csv)|*.csv', style=wx.FD_SAVE)
         if dialog.ShowModal() == wx.ID_OK:
-            csv_path = dialog.GetPath()
-    
             export_series = set()
             for plot in self._plot_paths:
                 for path in plot:
                     export_series.add(path)
     
-            self._data_loader.export_csv(csv_path, export_series, self._x_view[0], self._x_view[1], rows)
+            self._data_loader.export_csv(dialog.Path, export_series, self._x_view[0], self._x_view[1], rows)
 
         dialog.Destroy()
 
@@ -460,9 +460,9 @@ class PlotView(TopicMessageView):
             print >> sys.stderr, 'Error writing to CSV file: %s' % str(ex)
         
     def export_image(self):
-        dialog = wx.FileDialog(self.parent.GetParent(), 'Save plot to...', wildcard='PNG files (*.png)|*.png', style=wx.FD_SAVE)
+        dialog = wx.FileDialog(self.parent.Parent, 'Save plot to...', wildcard='PNG files (*.png)|*.png', style=wx.FD_SAVE)
         if dialog.ShowModal() == wx.ID_OK:
-            path = dialog.GetPath()
+            path = dialog.Path
 
             bitmap = wx.EmptyBitmap(self.width, self.height)
             mem_dc = wx.MemoryDC()

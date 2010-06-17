@@ -168,21 +168,44 @@ class PlotDataLoader(threading.Thread):
     ##
 
     def _trim_data(self):
-        # Keep data 25% outside of view range
+        """
+        Toss out data more than 25% outside of view range, and closer than max_interval seconds apart.
+        """
         extension = rospy.Duration((self._end_stamp - self._start_stamp).to_sec() * 0.25)
+        if extension.to_sec() >= self._start_stamp.to_sec():
+            start_stamp = rospy.Time(0, 1)
+        else:
+            start_stamp = self._start_stamp - extension
 
-        min_x = (self._start_stamp - extension - self._timeline.start_stamp).to_sec()
-        max_x = (self._end_stamp   + extension - self._timeline.start_stamp).to_sec()
+        end_stamp = self._end_stamp + extension
+        
+        min_x = (start_stamp - self._timeline.start_stamp).to_sec()
+        max_x = (end_stamp   - self._timeline.start_stamp).to_sec()
 
         for series in list(self._data.keys()):
-            new_data = DataSet()
-
             points     = self._data[series].points
             num_points = len(points)
 
-            for i, (x, y) in enumerate(points):
-                if x >= min_x and x <= max_x and (i == 0 or x - points[i - 1][0] >= self._max_interval):
-                    new_data.add(x, y)
+            trimmed_points = []
+
+            if num_points > 0 and points[0][0] < max_x and points[-1][0] > min_x:
+                first_index = None
+                for i, (x, y) in enumerate(points):
+                    if x >= min_x:
+                        trimmed_points.append((x, y))
+                        first_index = i
+                        break
+
+                if first_index is not None:
+                    for i, (x, y) in enumerate(points[first_index + 1:]):
+                        if x > max_x:
+                            break
+
+                        if x - points[i - 1][0] >= self._max_interval:
+                            trimmed_points.append((x, y))
+
+            new_data = DataSet()
+            new_data.set(trimmed_points)
 
             self._data[series] = new_data
 
@@ -193,16 +216,32 @@ class PlotDataLoader(threading.Thread):
                 if self._dirty and (self._last_reload is None or time.time() - self._last_reload >= self._min_reload_secs):
                     # Load data outside of the view range
                     extension = rospy.Duration((self._end_stamp - self._start_stamp).to_sec() * 0.25)
+
+                    if extension.to_sec() >= self._start_stamp.to_sec():
+                        start_stamp = rospy.Time(0, 1)
+                    else:
+                        start_stamp = self._start_stamp - extension
+                        
+                    end_stamp = self._end_stamp + extension
+
+                    entries = list(self._timeline.get_entries_with_bags(self._topic, start_stamp, end_stamp))
                     
-                    entries        = list(self._timeline.get_entries_with_bags(self._topic, self._start_stamp - extension, self._end_stamp + extension))
                     loaded_indexes = set()
-                    loaded_stamps  = []
                     if len(entries) == 0:
                         subdivider = None
                     else:
                         subdivider = _subdivide(0, len(entries) - 1)
 
                     self._trim_data()
+
+                    #loaded_stamps = []
+                    loaded_xs = set()
+                    for series in list(self._data.keys()):
+                        for x, y in self._data[series].points:
+                            loaded_xs.add(x)
+                    loaded_xs = list(loaded_xs)
+                    loaded_xs.sort()
+                    loaded_stamps = [self._timeline.start_stamp + rospy.Duration(x) for x in loaded_xs]
 
                     self._last_reload = time.time()
                     self._load_complete = False
@@ -232,12 +271,14 @@ class PlotDataLoader(threading.Thread):
             bag, entry = entries[index]
 
             # If the timestamp is too close to an existing index, don't load it
-            closest_stamp_index = bisect.bisect_left(loaded_stamps, entry.time)
-            if closest_stamp_index < len(loaded_stamps):
-                dist_to_closest_msg = abs((entry.time - loaded_stamps[closest_stamp_index]).to_sec())
-                if dist_to_closest_msg < self._max_interval:
-                    loaded_indexes.add(index)
-                    continue
+            closest_stamp_left_index = bisect.bisect_left(loaded_stamps, entry.time) - 1
+            if closest_stamp_left_index >= 0 and abs((entry.time - loaded_stamps[closest_stamp_left_index]).to_sec()) < self._max_interval:
+                loaded_indexes.add(index)
+                continue
+            closest_stamp_right_index = closest_stamp_left_index + 1
+            if closest_stamp_right_index < len(loaded_stamps) - 1 and abs((entry.time - loaded_stamps[closest_stamp_right_index]).to_sec()) < self._max_interval:
+                loaded_indexes.add(index)
+                continue
 
             topic, msg, msg_stamp = self._timeline.read_message(bag, entry.position)
             if not msg:
