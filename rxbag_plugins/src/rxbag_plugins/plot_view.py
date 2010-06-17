@@ -147,8 +147,11 @@ class PlotView(TopicMessageView):
         wx.CallAfter(self.parent.Refresh)
 
     def timeline_changed(self):
-        if self._data_loader:
-            self._data_loader.invalidate()
+        # If timeline end_stamp is within the plot view, then invalidate the data loader
+        if self._x_view is not None: 
+            end_elapsed = (self.timeline.end_stamp - self.timeline.start_stamp).to_sec()
+            if end_elapsed > self._x_view[0] and end_elapsed < self._x_view[1] and self._data_loader:
+                self._data_loader.invalidate()
 
         wx.CallAfter(self.parent.Refresh)
 

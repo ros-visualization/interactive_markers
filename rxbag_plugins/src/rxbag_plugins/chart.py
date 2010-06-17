@@ -607,6 +607,20 @@ class Chart(object):
 
             coords = [self.coord_data_to_chart(x, y) for x, y in series_data.points]
 
+            # Only display points with the chart bounds (or 1 off)
+            filtered_coords = []
+            x_min, x_max = self.chart_left, self.chart_right
+            for i, (x, y) in enumerate(coords):
+                if x < x_min:
+                    if i < len(coords) - 1 and coords[i + 1][0] >= x_min:
+                        filtered_coords.append((x, y))
+                elif x > x_max:
+                    if i > 0 and coords[i - 1][0] <= x_max:
+                        filtered_coords.append((x, y))
+                else:
+                    filtered_coords.append((x, y))
+            coords = filtered_coords
+
             # Draw lines
             dc.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
             if self._show_lines:

@@ -168,17 +168,21 @@ class PlotDataLoader(threading.Thread):
     ##
 
     def _trim_data(self):
-        min_x = (self._start_stamp - self._timeline.start_stamp).to_sec()
-        max_x = (self._end_stamp   - self._timeline.start_stamp).to_sec()
-        
+        # Keep data 25% outside of view range
+        extension = rospy.Duration((self._end_stamp - self._start_stamp).to_sec() * 0.25)
+
+        min_x = (self._start_stamp - extension - self._timeline.start_stamp).to_sec()
+        max_x = (self._end_stamp   + extension - self._timeline.start_stamp).to_sec()
+
         for series in list(self._data.keys()):
             new_data = DataSet()
 
-            last_x = None
-            for x, y in self._data[series].points:
-                if (last_x is None or x - last_x >= self._max_interval) and x >= min_x and x <= max_x:
+            points     = self._data[series].points
+            num_points = len(points)
+
+            for i, (x, y) in enumerate(points):
+                if x >= min_x and x <= max_x and (i == 0 or x - points[i - 1][0] >= self._max_interval):
                     new_data.add(x, y)
-                    last_x = x
 
             self._data[series] = new_data
 
@@ -187,7 +191,10 @@ class PlotDataLoader(threading.Thread):
             with self._dirty_cv:
                 # If dirty, then regenerate the entries to load, and re-initialize the loaded indexes
                 if self._dirty and (self._last_reload is None or time.time() - self._last_reload >= self._min_reload_secs):
-                    entries        = list(self._timeline.get_entries_with_bags(self._topic, self._start_stamp, self._end_stamp))
+                    # Load data outside of the view range
+                    extension = rospy.Duration((self._end_stamp - self._start_stamp).to_sec() * 0.25)
+                    
+                    entries        = list(self._timeline.get_entries_with_bags(self._topic, self._start_stamp - extension, self._end_stamp + extension))
                     loaded_indexes = set()
                     loaded_stamps  = []
                     if len(entries) == 0:

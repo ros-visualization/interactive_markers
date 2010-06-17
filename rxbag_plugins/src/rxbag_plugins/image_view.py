@@ -363,7 +363,7 @@ class ExportFramesDialog(wx.Dialog):
         progress = 0
 
         def update_progress(v):
-            wx.GetApp().GetTopWindow().StatusBar.progress = v
+            wx.GetApp().TopWindow.StatusBar.progress = v
 
         frame_num = 1
         for i, (bag, entry) in enumerate(bag_entries):
@@ -384,7 +384,7 @@ class ExportFramesDialog(wx.Dialog):
             except Exception, ex:
                 print >> sys.stderr, 'Error saving frame %d: %s' % (i, str(ex))
 
-        wx.CallAfter(wx.GetApp().GetTopWindow().StatusBar.gauge.Hide)
+        wx.CallAfter(wx.GetApp().TopWindow.StatusBar.gauge.Hide)
 
         wx.CallAfter(self.Destroy)
 
