@@ -277,7 +277,7 @@ class PlotView(TopicMessageView):
                 self.parent.Cursor = wx.StockCursor(wx.CURSOR_HAND)
 
             elif event.LeftIsDown():
-                if len(self._charts) > 0:
+                if len(self._charts) > 0 and self._charts[0].view_min_x is not None and self._charts[0].view_max_x is not None:
                     self.timeline.playhead = self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._charts[0].x_chart_to_data(x)))
 
                 wx.CallAfter(self.parent.Refresh)
