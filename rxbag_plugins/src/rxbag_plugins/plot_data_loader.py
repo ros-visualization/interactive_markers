@@ -232,6 +232,8 @@ class PlotDataLoader(threading.Thread):
                     self._dirty = False
 
                 if len(self._entries) == 0 or len(self._paths) == 0:
+                    self._load_complete = True
+                    
                     # Wait for dirty flag
                     if not self._dirty:
                         self._dirty_cv.wait()

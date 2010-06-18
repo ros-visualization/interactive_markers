@@ -73,7 +73,7 @@ class PlotView(TopicMessageView):
         self._message     = None
         self._plot_paths  = []
         self._playhead    = None
-        self._charts      = []
+        self._chart       = Chart()
         self._data_loader = None
         self._x_view      = None
         
@@ -102,27 +102,6 @@ class PlotView(TopicMessageView):
         self.parent.Bind(wx.EVT_CLOSE,       self._on_close)
 
         wx.CallAfter(self.configure)
-
-    # property: plot_paths
-
-    def _get_plot_paths(self): return self._plot_paths
-
-    def _set_plot_paths(self, plot_paths):
-        self._plot_paths = plot_paths
-
-        # Update the data loader with the paths to plot
-        if self._data_loader:
-            paths = []
-            for plot in self._plot_paths:
-                for path in plot:
-                    if path not in paths:
-                        paths.append(path)
-
-            self._data_loader.paths = paths
-
-        self._setup_charts()
-
-    plot_paths = property(_get_plot_paths, _set_plot_paths)
 
     ## TopicMessageView implementation
 
@@ -155,10 +134,36 @@ class PlotView(TopicMessageView):
 
         wx.CallAfter(self.parent.Refresh)
 
+    # property: plot_paths
+
+    def _get_plot_paths(self): return self._plot_paths
+
+    def _set_plot_paths(self, plot_paths):
+        self._plot_paths = plot_paths
+
+        # Update the data loader with the paths to plot
+        if self._data_loader:
+            paths = []
+            for plot in self._plot_paths:
+                for path in plot:
+                    if path not in paths:
+                        paths.append(path)
+
+            self._data_loader.paths = paths
+
+        # Update the chart with the new areas
+        self._chart.create_areas(self._plot_paths)
+
+        self._update_max_interval()
+        
+        wx.CallAfter(self.parent.Refresh)
+
+    plot_paths = property(_get_plot_paths, _set_plot_paths)
+
     # property: playhead
 
     def _get_playhead(self): return self._playhead
-    
+
     def _set_playhead(self, playhead):
         self._playhead = playhead
         
@@ -168,7 +173,7 @@ class PlotView(TopicMessageView):
                 x_view = self._x_view[1] - self._x_view[0]
                 self._x_view = (self._playhead, self._playhead + x_view)
                 self._update_data_loader_interval()
-                
+
             elif self._playhead > self._x_view[1]:
                 x_view = self._x_view[1] - self._x_view[0]
                 self._x_view = (self._playhead - x_view, self._playhead)
@@ -182,64 +187,58 @@ class PlotView(TopicMessageView):
         if not self._data_loader:
             return
 
-        if len(self._charts) > 0:
-            secs_per_px = (self._data_loader.end_stamp - self._data_loader.start_stamp).to_sec() / self._charts[0].chart_width
+        if len(self._chart.areas) > 0:
+            secs_per_px = (self._data_loader.end_stamp - self._data_loader.start_stamp).to_sec() / self._chart._width
             self._data_loader.max_interval = secs_per_px * self._max_interval_pixels
 
     ## Events
 
     def _on_paint(self, event):
-        if not self._data_loader or len(self._charts) == 0:
+        if not self._data_loader or len(self._chart._areas) == 0:
             return
 
+        self._update_chart_info()
+
         dc = wx.lib.wxcairo.ContextFromDC(wx.PaintDC(self.parent))
-        
-        dc.set_source_rgb(1, 1, 1)
-        dc.rectangle(0, 0, self.parent.Size[0], self.parent.Size[1])
-        dc.fill()
 
-        data = {}
+        self._chart.paint(dc)
 
-        chart_height = self.parent.ClientSize[1] / len(self._charts)
+    def _update_chart_info(self):
+        for area_index, plot in enumerate(self._plot_paths):
+            area = self._chart.areas[area_index]
 
-        dc.save()
-
-        for chart_index, plot in enumerate(self._plot_paths):
-            chart = self._charts[chart_index]
-
-            chart.x_view = self._x_view
-            if self._message:
-                chart.x_indicator = self._playhead
+            area.x_view = self._x_view
+            
+            if self._message is not None:
+                area.x_indicator = self._playhead
             else:
-                chart.x_indicator = None
-            chart.x_range = (0.0, (self.timeline.end_stamp - self.timeline.start_stamp).to_sec())
+                area.x_indicator = None
+
+            area.x_range = (0.0, (self.timeline.end_stamp - self.timeline.start_stamp).to_sec())
+            
             if self._data_loader.is_load_complete:
-                chart.data_alpha = 1.0
+                area.data_alpha = 1.0
             else:
-                chart.data_alpha = 0.5
+                area.data_alpha = 0.5
+
+            area._series_list = plot
 
             data = {}
             for plot_path in plot:
                 if plot_path in self._data_loader._data:
                     data[plot_path] = self._data_loader._data[plot_path]
-            chart._series_list = plot
-            chart._series_data = data
-
-            chart.paint(dc)
-            dc.translate(0, chart_height)
-
-        dc.restore()
-
+            area._series_data = data
+            
     def _on_size(self, event):
-        self._layout_charts()
+        self._chart.set_size(self.parent.ClientSize)
 
         self._update_max_interval()
 
     def _on_left_down(self, event):
         self._clicked_pos = self._dragged_pos = event.Position
-        if len(self._charts) > 0 and self._charts[0].view_min_x is not None and self._charts[0].view_max_x is not None:
-            self.timeline.playhead = self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._charts[0].x_chart_to_data(event.Position[0])))
-    
+        if len(self._chart.areas) > 0 and self._chart.areas[0].view_min_x is not None and self._chart.areas[0].view_max_x is not None:
+            self.timeline.playhead = self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._chart.areas[0].x_chart_to_data(event.Position[0])))
+
     def _on_middle_down(self, event):
         self._clicked_pos = self._dragged_pos = event.Position
 
@@ -263,8 +262,8 @@ class PlotView(TopicMessageView):
                 dx_click, dy_click = x - self._clicked_pos[0], y - self._clicked_pos[1]
                 dx_drag,  dy_drag  = x - self._dragged_pos[0], y - self._dragged_pos[1]
 
-                if dx_drag != 0 and len(self._charts) > 0:
-                    dsecs = self._charts[0].dx_chart_to_data(dx_drag)  # assuming charts share x axis
+                if dx_drag != 0 and len(self._chart.areas) > 0:
+                    dsecs = self._chart.areas[0].dx_chart_to_data(dx_drag)  # assuming areas share x axis
                     self._translate_plot(dsecs)
 
                 if dy_drag != 0:
@@ -277,8 +276,8 @@ class PlotView(TopicMessageView):
                 self.parent.Cursor = wx.StockCursor(wx.CURSOR_HAND)
 
             elif event.LeftIsDown():
-                if len(self._charts) > 0 and self._charts[0].view_min_x is not None and self._charts[0].view_max_x is not None:
-                    self.timeline.playhead = self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._charts[0].x_chart_to_data(x)))
+                if len(self._chart.areas) > 0 and self._chart.areas[0].view_min_x is not None and self._chart.areas[0].view_max_x is not None:
+                    self.timeline.playhead = self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._chart.areas[0].x_chart_to_data(x)))
 
                 wx.CallAfter(self.parent.Refresh)
             
@@ -351,35 +350,6 @@ class PlotView(TopicMessageView):
 
     ##
 
-    def _setup_charts(self):
-        self._charts = []
-        
-        palette_offset = 0
-        for i, plot in enumerate(self._plot_paths):
-            chart = Chart()
-
-            chart.palette_offset = palette_offset
-            palette_offset += len(plot)
-            
-            if i < len(self._plot_paths) - 1:
-                chart.show_x_ticks = False
-
-            self._charts.append(chart)
-
-        self._layout_charts()
-        
-        self._update_max_interval()
-
-    def _layout_charts(self):
-        w, h = self.parent.ClientSize
-        num_charts = len(self._charts)
-        if num_charts > 0:
-            chart_height = h / num_charts
-            for chart in self._charts:
-                chart.set_size(w, chart_height)
-
-        wx.CallAfter(self.parent.Refresh)
-
     def stop_loading(self):
         if self._data_loader:
             self._data_loader.stop()
@@ -410,7 +380,7 @@ class PlotView(TopicMessageView):
             for plot in self._plot_paths:
                 for path in plot:
                     export_series.add(path)
-    
+
             self._data_loader.export_csv(dialog.Path, export_series, self._x_view[0], self._x_view[1], rows)
 
         dialog.Destroy()
