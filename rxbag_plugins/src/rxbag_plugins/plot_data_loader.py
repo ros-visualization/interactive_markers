@@ -179,7 +179,7 @@ class PlotDataLoader(threading.Thread):
                     self._trim_data()
 
                     # Load data outside of the view range
-                    extension = rospy.Duration((self._end_stamp - self._start_stamp).to_sec() * 0.25)
+                    extension = rospy.Duration((self._end_stamp - self._start_stamp).to_sec() * 0.1)
                     if extension.to_sec() >= self._start_stamp.to_sec():
                         start_stamp = rospy.Time(0, 1)
                     else:
@@ -283,9 +283,9 @@ class PlotDataLoader(threading.Thread):
 
     def _trim_data(self):
         """
-        Toss out data more than 25% outside of view range, and closer than max_interval seconds apart.
+        Toss out data more than 10% outside of view range, and closer than max_interval seconds apart.
         """
-        extension = rospy.Duration((self._end_stamp - self._start_stamp).to_sec() * 0.25)
+        extension = rospy.Duration((self._end_stamp - self._start_stamp).to_sec() * 0.1)
         if extension.to_sec() >= self._start_stamp.to_sec():
             start_stamp = rospy.Time(0, 1)
         else:

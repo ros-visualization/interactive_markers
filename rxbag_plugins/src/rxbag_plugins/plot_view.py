@@ -364,7 +364,7 @@ class PlotView(TopicMessageView):
 
     def _data_loader_updated(self):
         self._dirty_count += 1
-        if self._dirty_count > 10:
+        if self._dirty_count > 5:
             wx.CallAfter(self.parent.Refresh)
             self._dirty_count = 0
 
