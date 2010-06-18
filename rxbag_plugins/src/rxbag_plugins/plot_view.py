@@ -76,6 +76,7 @@ class PlotView(TopicMessageView):
         self._chart       = Chart()
         self._data_loader = None
         self._x_view      = None
+        self._dirty_count = 0
         
         self._clicked_pos = None
         self._dragged_pos = None
@@ -228,7 +229,7 @@ class PlotView(TopicMessageView):
                 if plot_path in self._data_loader._data:
                     data[plot_path] = self._data_loader._data[plot_path]
             area._series_data = data
-            
+
     def _on_size(self, event):
         self._chart.set_size(self.parent.ClientSize)
 
@@ -359,8 +360,15 @@ class PlotView(TopicMessageView):
         if self._topic and not self._data_loader:
             self._data_loader = PlotDataLoader(self.timeline, self._topic)
             self._data_loader.add_progress_listener(self._data_loader_updated)
+            self._data_loader.add_complete_listener(self._data_loader_complete)
 
     def _data_loader_updated(self):
+        self._dirty_count += 1
+        if self._dirty_count > 10:
+            wx.CallAfter(self.parent.Refresh)
+            self._dirty_count = 0
+
+    def _data_loader_complete(self):
         wx.CallAfter(self.parent.Refresh)
 
     def configure(self):

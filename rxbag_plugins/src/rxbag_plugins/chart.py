@@ -343,20 +343,7 @@ class ChartArea(object):
     @property
     def view_max_y(self): return self.y_view[1]
 
-    ## Data
-
-    def add_datum(self, series, x, y):
-        with self._lock:
-            if series not in self._series_data:
-                self._series_list.append(series)
-                self._series_data[series] = DataSet()
-
-            self._series_data[series].add(x, y)
-
-    def clear(self):
-        with self._lock:
-            self._series_list = []
-            self._series_data = {}
+    ## Layout
 
     @property
     def bounds_left(self): return self._bounds_left
@@ -375,6 +362,21 @@ class ChartArea(object):
 
     @property
     def bounds_bottom(self): return self._bounds_top + self._bounds_height
+
+    ## Data
+
+    def add_datum(self, series, x, y):
+        with self._lock:
+            if series not in self._series_data:
+                self._series_list.append(series)
+                self._series_data[series] = DataSet()
+
+            self._series_data[series].add(x, y)
+
+    def clear(self):
+        with self._lock:
+            self._series_list = []
+            self._series_data = {}
 
     ## Coordinate transformations
 
@@ -426,7 +428,7 @@ class ChartArea(object):
             
         return s + ','.join(reversed(groups))
 
-    ## Implementation
+    ## Layout
 
     def _update_x_interval(self, dc):
         if self.num_points == 0:
@@ -513,6 +515,8 @@ class ChartArea(object):
         if extend_touching:
             return max_val + interval
         return max_val
+
+    ## Painting
 
     def paint(self, dc):
         self._draw_border(dc)

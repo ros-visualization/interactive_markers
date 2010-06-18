@@ -64,10 +64,7 @@ class PlotDataLoader(threading.Thread):
         self._last_reload     = None                           # time that entries were reloaded
         self._min_reload_secs = 0.4                            # minimum time to wait before loading entries
 
-        self._entries        = []
-        self._loaded_indexes = set()
-        self._loaded_stamps  = []
-        self._data           = {}
+        self._data = {}
 
         self._load_complete = False
 
@@ -172,19 +169,14 @@ class PlotDataLoader(threading.Thread):
     ##
 
     def _run(self):
+        entry_queue = []
+        
         while not self._stop_flag:
             with self._dirty_cv:
                 # If dirty, then regenerate the entries to load, and re-initialize the loaded indexes
                 if self._dirty and (self._last_reload is None or time.time() - self._last_reload >= self._min_reload_secs):
+                    # Trim the data
                     self._trim_data()
-
-                    loaded_xs = set()
-                    for series in list(self._data.keys()):
-                        for x, y in self._data[series].points:
-                            loaded_xs.add(x)
-                    loaded_xs = list(loaded_xs)
-                    loaded_xs.sort()
-                    self._loaded_stamps = [self._timeline.start_stamp + rospy.Duration(x) for x in loaded_xs]
 
                     # Load data outside of the view range
                     extension = rospy.Duration((self._end_stamp - self._start_stamp).to_sec() * 0.25)
@@ -207,32 +199,38 @@ class PlotDataLoader(threading.Thread):
 
                     # Toss out entries too close to existing data
                     far_entries = []
+                    loaded_xs = set()
+                    for series in list(self._data.keys()):
+                        for x, y in self._data[series].points:
+                            loaded_xs.add(x)
+                    loaded_xs = list(loaded_xs)
+                    loaded_xs.sort()
+                    loaded_stamps = [self._timeline.start_stamp + rospy.Duration(x) for x in loaded_xs]
                     for bag, entry in spaced_entries:
-                        closest_stamp_left_index = bisect.bisect_left(self._loaded_stamps, entry.time) - 1
-                        if closest_stamp_left_index >= 0 and abs((entry.time - self._loaded_stamps[closest_stamp_left_index]).to_sec()) < self._max_interval / 2:
+                        closest_stamp_left_index = bisect.bisect_left(loaded_stamps, entry.time) - 1
+                        if closest_stamp_left_index >= 0 and abs((entry.time - loaded_stamps[closest_stamp_left_index]).to_sec()) < self._max_interval / 2:
                             continue
                         closest_stamp_right_index = closest_stamp_left_index + 1
-                        if closest_stamp_right_index < len(self._loaded_stamps) - 1 and abs((entry.time - self._loaded_stamps[closest_stamp_right_index]).to_sec()) < self._max_interval / 2:
+                        if closest_stamp_right_index < len(loaded_stamps) - 1 and abs((entry.time - loaded_stamps[closest_stamp_right_index]).to_sec()) < self._max_interval / 2:
                             continue
-
                         far_entries.append((bag, entry))
 
-                    # Reorder to load in binary search fashion
+                    # Reorder to load using bisection
                     bin_search_entries = []
                     if len(far_entries) > 0:
-                        bin_search_indexes = set()
                         for i in _subdivide(0, len(far_entries) - 1):
                             bin_search_entries.append(far_entries[i])
-                            bin_search_indexes.add(i)
 
-                    self._entries = list(reversed(bin_search_entries))  # reverse so that pop from front of list
+                    entry_queue = list(reversed(bin_search_entries))  # reversed so that pop from front of list
 
                     self._last_reload = time.time()
                     self._load_complete = False
                     self._dirty = False
 
-                if len(self._entries) == 0 or len(self._paths) == 0:
+                if len(entry_queue) == 0 or len(self._paths) == 0:
                     self._load_complete = True
+                    for listener in itertools.chain(self._progress_listeners, self._complete_listeners):
+                        listener()
                     
                     # Wait for dirty flag
                     if not self._dirty:
@@ -240,13 +238,8 @@ class PlotDataLoader(threading.Thread):
                     continue
 
             try:
-                bag, entry = self._entries.pop()
+                bag, entry = entry_queue.pop()
             except Exception:
-                self._load_complete = True
-
-                # Notify listeners of completion
-                for listener in itertools.chain(self._progress_listeners, self._complete_listeners):
-                    listener()
                 continue
 
             self._process(bag, entry)
@@ -257,11 +250,15 @@ class PlotDataLoader(threading.Thread):
         if not msg:
             return False
 
-        # Remember the stamp
-        bisect.insort_left(self._loaded_stamps, msg_stamp)
-
         # Extract the field data from the message
         for path in self._paths:
+            # Get Y value
+            try:
+                y = eval('msg.' + path)
+            except Exception:
+                continue
+
+            # Get X value
             if self._use_header_stamp:
                 if msg.__class__._has_header:
                     header = msg.header
@@ -271,17 +268,11 @@ class PlotDataLoader(threading.Thread):
                 plot_stamp = header.stamp
             else:
                 plot_stamp = msg_stamp
-
-            try:
-                y = eval('msg.' + path)
-            except Exception:
-                continue
-
             x = (plot_stamp - self._timeline.start_stamp).to_sec()
 
+            # Store data
             if path not in self._data:
                 self._data[path] = DataSet()
-
             self._data[path].add(x, y)
 
         # Notify listeners of progress
