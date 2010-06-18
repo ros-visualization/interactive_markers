@@ -82,7 +82,7 @@ class PlotView(TopicMessageView):
 
         self._configure_frame = None
 
-        self._max_interval_pixels = 1.5
+        self._max_interval_pixels = 1.0
 
         tb = self.parent.ToolBar
         icons_dir = roslib.packages.get_pkg_dir(PKG) + '/icons/'
@@ -237,7 +237,7 @@ class PlotView(TopicMessageView):
 
     def _on_left_down(self, event):
         self._clicked_pos = self._dragged_pos = event.Position
-        if len(self._charts) > 0:
+        if len(self._charts) > 0 and self._charts[0].view_min_x is not None and self._charts[0].view_max_x is not None:
             self.timeline.playhead = self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._charts[0].x_chart_to_data(event.Position[0])))
     
     def _on_middle_down(self, event):
@@ -394,15 +394,14 @@ class PlotView(TopicMessageView):
         wx.CallAfter(self.parent.Refresh)
 
     def configure(self):
-        if self._configure_frame:
+        if self._configure_frame is not None or self._message is None:
             return
-        
-        if self._message:
-            self._configure_frame = PlotConfigureFrame(self)
-            
-            frame = self.parent.TopLevelParent
-            self._configure_frame.Position = (frame.Position[0] + frame.Size[0] + 10, frame.Position[1])
-            self._configure_frame.Show()
+
+        self._configure_frame = PlotConfigureFrame(self)
+
+        frame = self.parent.TopLevelParent
+        self._configure_frame.Position = (frame.Position[0] + frame.Size[0] + 10, frame.Position[1])
+        self._configure_frame.Show()
 
     def export_csv(self, rows):
         dialog = wx.FileDialog(self.parent.Parent, 'Export to CSV...', wildcard='CSV files (*.csv)|*.csv', style=wx.FD_SAVE)

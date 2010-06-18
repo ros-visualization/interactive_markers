@@ -621,6 +621,9 @@ class Chart(object):
                     filtered_coords.append((x, y))
             coords = filtered_coords
 
+            if len(coords) == 0:
+                continue
+
             # Draw lines
             dc.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
             if self._show_lines:
@@ -635,12 +638,20 @@ class Chart(object):
             if self._show_points:
                 dc.set_line_width(1.0)
                 dc.set_source_rgb(1, 1, 1)
+
+                drawn_points = []
+                last_x, last_y = -1, -1
                 for px, py in coords:
+                    if abs(px - last_x) > 4 or abs(py - last_y) > 4:
+                        drawn_points.append((px, py))
+                        last_x, last_y = px, py
+
+                for px, py in drawn_points:
                     dc.rectangle(px - 1, py - 1, 2, 2)
                 dc.fill()
 
                 dc.set_source_rgba(*self._get_color(series))
-                for px, py in coords:
+                for px, py in drawn_points:
                     dc.rectangle(px - 1, py - 1, 2, 2)
                 dc.stroke()
 
