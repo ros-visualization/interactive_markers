@@ -69,15 +69,18 @@ class PlotView(TopicMessageView):
     def __init__(self, timeline, parent):
         TopicMessageView.__init__(self, timeline, parent)
 
-        self._topic       = None
-        self._message     = None
-        self._plot_paths  = []
-        self._playhead    = None
-        self._chart       = Chart()
-        self._data_loader = None
-        self._x_view      = None
-        self._dirty_count = 0
-        
+        self._topic           = None
+        self._message         = None
+        self._plot_paths      = []
+        self._playhead        = None
+        self._chart           = Chart()
+        self._data_loader     = None
+        self._x_view          = None
+        self._dirty_count     = 0
+        self._csv_data_loader = None
+        self._csv_path        = None
+        self._csv_row_stride  = None
+
         self._clicked_pos = None
         self._dragged_pos = None
 
@@ -361,6 +364,7 @@ class PlotView(TopicMessageView):
             self._data_loader = PlotDataLoader(self.timeline, self._topic)
             self._data_loader.add_progress_listener(self._data_loader_updated)
             self._data_loader.add_complete_listener(self._data_loader_complete)
+            self._data_loader.start()
 
     def _data_loader_updated(self):
         self._dirty_count += 1
@@ -381,6 +385,8 @@ class PlotView(TopicMessageView):
         self._configure_frame.Position = (frame.Position[0] + frame.Size[0] + 10, frame.Position[1])
         self._configure_frame.Show()
 
+    ## Export to CSV...
+
     def export_csv(self, rows):
         dialog = wx.FileDialog(self.parent.Parent, 'Export to CSV...', wildcard='CSV files (*.csv)|*.csv', style=wx.FD_SAVE)
         if dialog.ShowModal() == wx.ID_OK:
@@ -389,52 +395,78 @@ class PlotView(TopicMessageView):
                 for path in plot:
                     export_series.add(path)
 
-            self._data_loader.export_csv(dialog.Path, export_series, self._x_view[0], self._x_view[1], rows)
+            if self._x_view is None:
+                self._x_view = (0.0, (self.timeline.end_stamp - self.timeline.start_stamp).to_sec())
+
+            self._csv_path       = dialog.Path
+            self._csv_row_stride = rows
+
+            self._csv_data_loader = PlotDataLoader(self.timeline, self._topic)
+            self._csv_data_loader.add_complete_listener(self._csv_data_loaded)
+            self._csv_data_loader.paths = export_series
+            self._csv_data_loader.set_interval(self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._x_view[0])),
+                                               self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._x_view[1])))
+            self._csv_data_loader.start()
 
         dialog.Destroy()
 
-    # @todo
-    def do_export_csv(self, path, series_list, x_min, x_max, rows):
-        plot_loader = PlotDataLoader(self._topic)
-        
+    def _csv_data_loaded(self):
         # Collate data
         i = 0
         series_dict = {}
         unique_stamps = set()
-        for series in series_list:
+        for series in self._csv_data_loader._data:
             d = {}
             series_dict[series] = d
-
             point_num = 0
-            for x, y in self. data[series].points:
-                if x >= x_min and x <= x_max:
-                    if point_num % rows == 0:
-                        d[x] = y
-                        unique_stamps.add(x)
-                    point_num += 1
+            for x, y in self._csv_data_loader._data[series].points:
+                if point_num % self._csv_row_stride == 0:
+                    d[x] = y
+                    unique_stamps.add(x)
+                point_num += 1
             i += 1
         series_columns = sorted(series_dict.keys())
 
         try:
-            csv_writer = csv.DictWriter(open(path, 'w'), ['Timestamp'] + series_columns)
+            csv_writer = csv.DictWriter(open(self._csv_path, 'w'), ['elapsed'] + series_columns)
  
             # Write header row
-            header_dict = { 'Timestamp' : 'Timestamp' }
+            header_dict = { 'elapsed' : 'elapsed' }
             for column in series_columns:
                 header_dict[column] = column            
             csv_writer.writerow(header_dict)
 
+            # Initialize progress monitoring
+            wx.CallAfter(wx.GetApp().GetTopWindow().StatusBar.gauge.Show)
+            progress = 0
+            def update_progress(v):
+                wx.GetApp().TopWindow.StatusBar.progress = v
+            total_stamps = len(unique_stamps)
+            stamp_num = 0
+            
             # Write data
             for stamp in sorted(unique_stamps):
-                row = { 'Timestamp' : stamp }
+                row = { 'elapsed' : stamp }
                 for column in series_dict:
                     if stamp in series_dict[column]:
                         row[column] = series_dict[column][stamp]
- 
+
                 csv_writer.writerow(row)
+
+                new_progress = int(100.0 * (float(stamp_num) / total_stamps))
+                if new_progress != progress:
+                    progress = new_progress
+                    wx.CallAfter(update_progress, progress)
+
+                stamp_num += 1
 
         except Exception, ex:
             print >> sys.stderr, 'Error writing to CSV file: %s' % str(ex)
+
+        # Hide progress monitoring
+        wx.CallAfter(wx.GetApp().TopWindow.StatusBar.gauge.Hide)
+        
+    ## Save plot to...
         
     def export_image(self):
         dialog = wx.FileDialog(self.parent.Parent, 'Save plot to...', wildcard='PNG files (*.png)|*.png', style=wx.FD_SAVE)
