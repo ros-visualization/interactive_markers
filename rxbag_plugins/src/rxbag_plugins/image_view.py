@@ -341,6 +341,11 @@ class ExportFramesDialog(wx.Dialog):
             wx.MessageDialog(None, 'Error with filename specification.\n\nPlease include a frame number format, e.g. frame%04d.png', 'Error', wx.OK | wx.ICON_ERROR).ShowModal()
             return
 
+        if not self.timeline.start_background_task('Exporting frames to "%s"' % file_spec):
+            return
+
+        wx.CallAfter(wx.GetApp().GetTopWindow().StatusBar.gauge.Show)
+
         try:
             step = max(1, int(self.steps_text.Value))
         except ValueError:
@@ -349,17 +354,16 @@ class ExportFramesDialog(wx.Dialog):
         bag_entries = list(self.timeline.get_entries_with_bags(self.topic, self.timeline.play_region[0], self.timeline.play_region[1]))[::step]
         total_frames = len(bag_entries)
 
-        self.export_thread = threading.Thread(target=self._run, args=(file_spec, bag_entries))
-        self.export_thread.setDaemon(True)
-        self.export_thread.start()
-        
+        if not self.timeline.background_task_cancel:
+            self.export_thread = threading.Thread(target=self._run, args=(file_spec, bag_entries))
+            self.export_thread.setDaemon(True)
+            self.export_thread.start()
+
         self.Close()
-        
+
     def _run(self, file_spec, bag_entries):
         total_frames = len(bag_entries)
-        
-        wx.CallAfter(wx.GetApp().GetTopWindow().StatusBar.gauge.Show)
-        
+
         progress = 0
 
         def update_progress(v):
@@ -367,6 +371,9 @@ class ExportFramesDialog(wx.Dialog):
 
         frame_num = 1
         for i, (bag, entry) in enumerate(bag_entries):
+            if self.timeline.background_task_cancel:
+                break
+            
             try:
                 topic, msg, t = self.timeline.read_message(bag, entry.position)
 
@@ -387,6 +394,8 @@ class ExportFramesDialog(wx.Dialog):
         wx.CallAfter(wx.GetApp().TopWindow.StatusBar.gauge.Hide)
 
         wx.CallAfter(self.Destroy)
+
+        self.timeline.stop_background_task()
 
     def _on_cancel(self, event):
         self.Destroy()

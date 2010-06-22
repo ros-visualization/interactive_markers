@@ -390,23 +390,26 @@ class PlotView(TopicMessageView):
     def export_csv(self, rows):
         dialog = wx.FileDialog(self.parent.Parent, 'Export to CSV...', wildcard='CSV files (*.csv)|*.csv', style=wx.FD_SAVE)
         if dialog.ShowModal() == wx.ID_OK:
-            export_series = set()
-            for plot in self._plot_paths:
-                for path in plot:
-                    export_series.add(path)
-
-            if self._x_view is None:
-                self._x_view = (0.0, (self.timeline.end_stamp - self.timeline.start_stamp).to_sec())
-
-            self._csv_path       = dialog.Path
-            self._csv_row_stride = rows
-
-            self._csv_data_loader = PlotDataLoader(self.timeline, self._topic)
-            self._csv_data_loader.add_complete_listener(self._csv_data_loaded)
-            self._csv_data_loader.paths = export_series
-            self._csv_data_loader.set_interval(self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._x_view[0])),
-                                               self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._x_view[1])))
-            self._csv_data_loader.start()
+            if self.timeline.start_background_task('Exporting to "%s"' % dialog.Path):
+                wx.CallAfter(wx.GetApp().GetTopWindow().StatusBar.gauge.Show)
+                
+                export_series = set()
+                for plot in self._plot_paths:
+                    for path in plot:
+                        export_series.add(path)
+    
+                if self._x_view is None:
+                    self._x_view = (0.0, (self.timeline.end_stamp - self.timeline.start_stamp).to_sec())
+    
+                self._csv_path       = dialog.Path
+                self._csv_row_stride = rows
+    
+                self._csv_data_loader = PlotDataLoader(self.timeline, self._topic)
+                self._csv_data_loader.add_complete_listener(self._csv_data_loaded)
+                self._csv_data_loader.paths = export_series
+                self._csv_data_loader.set_interval(self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._x_view[0])),
+                                                   self.timeline.start_stamp + rospy.Duration.from_sec(max(0.01, self._x_view[1])))
+                self._csv_data_loader.start()
 
         dialog.Destroy()
 
@@ -437,7 +440,6 @@ class PlotView(TopicMessageView):
             csv_writer.writerow(header_dict)
 
             # Initialize progress monitoring
-            wx.CallAfter(wx.GetApp().GetTopWindow().StatusBar.gauge.Show)
             progress = 0
             def update_progress(v):
                 wx.GetApp().TopWindow.StatusBar.progress = v
@@ -446,6 +448,9 @@ class PlotView(TopicMessageView):
             
             # Write data
             for stamp in sorted(unique_stamps):
+                if self.timeline.background_task_cancel:
+                    break
+                
                 row = { 'elapsed' : stamp }
                 for column in series_dict:
                     if stamp in series_dict[column]:
@@ -464,8 +469,11 @@ class PlotView(TopicMessageView):
             print >> sys.stderr, 'Error writing to CSV file: %s' % str(ex)
 
         # Hide progress monitoring
-        wx.CallAfter(wx.GetApp().TopWindow.StatusBar.gauge.Hide)
-        
+        if not self.timeline.background_task_cancel:
+            wx.CallAfter(wx.GetApp().TopWindow.StatusBar.gauge.Hide)
+
+        self.timeline.stop_background_task()
+
     ## Save plot to...
         
     def export_image(self):

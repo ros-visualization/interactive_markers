@@ -161,8 +161,8 @@ class Chart(object):
         new_bounds_width  = self._width - new_bounds_left - self._margin_right
 
         for area in self._areas:
-            area._bounds_left   = new_bounds_left
-            area._bounds_width  = new_bounds_width
+            area._bounds_left  = new_bounds_left
+            area._bounds_width = new_bounds_width
 
         # Calculate X interval
         for area in self._areas:
