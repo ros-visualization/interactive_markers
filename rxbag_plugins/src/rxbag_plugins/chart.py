@@ -629,7 +629,7 @@ class ChartArea(object):
         if self.view_min_y != self.view_max_y and self._y_interval is not None:
             y_tick_range = (self._round_min_to_interval(self.view_min_y, self._y_interval),
                             self._round_max_to_interval(self.view_max_y, self._y_interval))
-            
+
             lines = list(self._generate_lines_y(y_tick_range[0], y_tick_range[1], self._y_interval, self.bounds_left - self._tick_length, self.bounds_left))
 
             dc.set_source_rgba(0, 0, 0, 1)

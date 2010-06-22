@@ -173,9 +173,9 @@ class PlotDataLoader(threading.Thread):
             # If dirty, then throw away data which doesn't fit in current view, and regenerate the entries to load
             with self._dirty_cv:
                 if self._dirty and (self._last_reload is None or time.time() - self._last_reload >= self._min_reload_secs):
-                    self._trim_data()
+                    self._trim_data(self._extension_fraction, self._max_interval)
 
-                    entry_queue = self._get_entries_to_load()
+                    entry_queue = self._get_entries_to_load(self._extension_fraction, self._max_interval)
 
                     self._last_reload = time.time()
                     self._load_complete = False
@@ -207,15 +207,16 @@ class PlotDataLoader(threading.Thread):
         Toss out data outside of (extended) view range, and closer than max_interval seconds apart.
         """
         if extension_fraction is None:
-            extension_fraction = self._extension_fraction
-        extension = rospy.Duration((self._end_stamp - self._start_stamp).to_sec() * extension_fraction)
-        if extension.to_sec() >= self._start_stamp.to_sec():
-            start_stamp = rospy.Time(0, 1)
+            start_stamp = self._start_stamp
+            end_stamp   = self._end_stamp
         else:
-            start_stamp = self._start_stamp - extension
+            extension = rospy.Duration((self._end_stamp - self._start_stamp).to_sec() * extension_fraction)
+            if extension.to_sec() >= self._start_stamp.to_sec():
+                start_stamp = rospy.Time(0, 1)
+            else:
+                start_stamp = self._start_stamp - extension
+            end_stamp = self._end_stamp + extension
 
-        end_stamp = self._end_stamp + extension
-        
         min_x = (start_stamp - self._timeline.start_stamp).to_sec()
         max_x = (end_stamp   - self._timeline.start_stamp).to_sec()
 
@@ -258,13 +259,15 @@ class PlotDataLoader(threading.Thread):
         """
         # Load data outside of the view range
         if extension_fraction is None:
-            extension_fraction = self._extension_fraction
-        extension = rospy.Duration((self._end_stamp - self._start_stamp).to_sec() * extension_fraction)
-        if extension.to_sec() >= self._start_stamp.to_sec():
-            start_stamp = rospy.Time(0, 1)
+        	start_stamp = self._start_stamp
+        	end_stamp   = self._end_stamp
         else:
-            start_stamp = self._start_stamp - extension
-        end_stamp = self._end_stamp + extension
+            extension = rospy.Duration((self._end_stamp - self._start_stamp).to_sec() * extension_fraction)
+            if extension.to_sec() >= self._start_stamp.to_sec():
+                start_stamp = rospy.Time(0, 1)
+            else:
+                start_stamp = self._start_stamp - extension
+            end_stamp = self._end_stamp + extension
 
         # Get the entries
         view_entries = list(self._timeline.get_entries_with_bags(self._topic, start_stamp, end_stamp))
@@ -273,6 +276,7 @@ class PlotDataLoader(threading.Thread):
         if max_interval is not None:
             spaced_entries = []
             max_interval_duration = rospy.Duration(max_interval)
+            
             last_time = None
             for bag, entry in view_entries:
                 if last_time is None or (entry.time - last_time) > max_interval_duration:
