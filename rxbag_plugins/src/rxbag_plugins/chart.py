@@ -432,7 +432,6 @@ class ChartArea(object):
 
     def _update_x_interval(self, dc):
         if self.num_points == 0:
-            self._x_interval = None
             return
 
         num_ticks = None
@@ -452,8 +451,8 @@ class ChartArea(object):
             num_ticks = self.bounds_width / 100
 
         new_x_interval = self._get_axis_interval((self.x_view[1] - self.x_view[0]) / num_ticks)
-
-        self._x_interval = new_x_interval 
+        if new_x_interval is not None:
+        	self._x_interval = new_x_interval 
 
     def _get_max_label_width(self, dc, x_interval):
         max_width = None
@@ -474,7 +473,6 @@ class ChartArea(object):
 
     def _update_y_interval(self, dc):
         if self.num_points == 0:
-            self._y_interval = None
             return
         
         dc.set_font_size(self._tick_font_size)
@@ -484,8 +482,8 @@ class ChartArea(object):
         num_ticks = self.bounds_height / label_height
 
         new_y_interval = self._get_axis_interval((self.y_view[1] - self.y_view[0]) / num_ticks)
-        if new_y_interval != self._y_interval:
-            self._y_interval = new_y_interval
+        if new_y_interval is not None:
+        	self._y_interval = new_y_interval
 
     def _get_axis_interval(self, range, intervals=[1.0, 2.0, 5.0]):
         exp = -8
@@ -521,9 +519,6 @@ class ChartArea(object):
     def paint(self, dc):
         self._draw_border(dc)
 
-        if self.num_points == 0:
-            return
-
         dc.save()
         dc.rectangle(self.bounds_left, self.bounds_top, self.bounds_width, self.bounds_height)
         dc.clip()
@@ -550,13 +545,16 @@ class ChartArea(object):
         dc.stroke()
 
     def _draw_data_extents(self, dc):
-        x_start, x_end = self.x_data_to_chart(self.min_x), self.x_data_to_chart(self.max_x)
         dc.set_source_rgba(0.5, 0.5, 0.5, 0.1)
-        dc.rectangle(self.bounds_left, self.bounds_top, x_start - self.bounds_left,                   self.bounds_height)
-        dc.rectangle(x_end,            self.bounds_top, self.bounds_left + self.bounds_width - x_end, self.bounds_height)
+    	if self.num_points == 0:
+    		dc.rectangle(self.bounds_left, self.bounds_top, self.bounds_width, self.bounds_height)
+    	else:
+    		x_start, x_end = self.x_data_to_chart(self.min_x), self.x_data_to_chart(self.max_x)
+    		dc.rectangle(self.bounds_left, self.bounds_top, x_start - self.bounds_left,                   self.bounds_height)
+    		dc.rectangle(x_end,            self.bounds_top, self.bounds_left + self.bounds_width - x_end, self.bounds_height)
         dc.fill()
 
-        if self.x_range is not None:
+        if self.x_range is not None and self.num_points > 0:
             x_range_start, x_range_end = self.x_data_to_chart(self.x_range[0]), self.x_data_to_chart(self.x_range[1])
             dc.set_source_rgba(0.2, 0.2, 0.2, 0.1)
             dc.rectangle(self.bounds_left, self.bounds_top, x_range_start - self.bounds_left,                   self.bounds_height)
@@ -606,7 +604,7 @@ class ChartArea(object):
         dc.set_font_size(self._tick_font_size)
 
         # Draw X axis ticks
-        if self._show_x_ticks and self.view_min_x != self.view_max_x:
+        if self._show_x_ticks and self.view_min_x != self.view_max_x and self._x_interval is not None:
             x_tick_range = (self._round_min_to_interval(self.view_min_x, self._x_interval),
                             self._round_max_to_interval(self.view_max_x, self._x_interval))
             
@@ -628,7 +626,7 @@ class ChartArea(object):
                     dc.show_text(s)
 
         # Draw Y axis ticks
-        if self.view_min_y != self.view_max_y:
+        if self.view_min_y != self.view_max_y and self._y_interval is not None:
             y_tick_range = (self._round_min_to_interval(self.view_min_y, self._y_interval),
                             self._round_max_to_interval(self.view_max_y, self._y_interval))
             
@@ -657,9 +655,9 @@ class ChartArea(object):
         px0 = self.x_data_to_chart(x0)
         px1 = self.x_data_to_chart(x1)
         if py0 is None:
-            py0 = self.y_data_to_chart(self.view_min_y)
+            py0 = self.bounds_bottom
         if py1 is None:
-            py1 = self.y_data_to_chart(self.view_max_y)
+            py1 = self.bounds_top
         px_step = self.dx_data_to_chart(x_step)
 
         px = px0
@@ -674,9 +672,9 @@ class ChartArea(object):
         py0 = self.y_data_to_chart(y0)
         py1 = self.y_data_to_chart(y1)
         if px0 is None:
-            px0 = self.x_data_to_chart(self.view_min_x)
+            px0 = self.bounds_left
         if px1 is None:
-            px1 = self.x_data_to_chart(self.view_max_x)
+            px1 = self.bounds_right
         py_step = self.dy_data_to_chart(y_step)
         
         py = py0
@@ -747,7 +745,7 @@ class ChartArea(object):
         dc.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
 
     def _draw_x_indicator(self, dc):
-        if self.x_indicator is None:
+        if self.x_indicator is None or self.view_min_x is None:
             return
         
         dc.set_antialias(cairo.ANTIALIAS_NONE)
@@ -762,6 +760,9 @@ class ChartArea(object):
         dc.stroke()
 
     def _draw_legend(self, dc):
+    	if len(self._series_list) == 0:
+    		return
+    	
         dc.set_antialias(cairo.ANTIALIAS_NONE)
 
         dc.set_font_size(self._legend_font_size)
