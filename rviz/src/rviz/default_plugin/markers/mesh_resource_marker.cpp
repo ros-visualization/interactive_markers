@@ -40,6 +40,7 @@
 #include <OGRE/OgreSceneNode.h>
 #include <OGRE/OgreSceneManager.h>
 #include <OGRE/OgreEntity.h>
+#include <OGRE/OgreSubEntity.h>
 #include <OGRE/OgreMaterialManager.h>
 #include <OGRE/OgreTextureManager.h>
 
@@ -63,21 +64,28 @@ MeshResourceMarker::MeshResourceMarker(MarkerDisplay* owner, VisualizationManage
 MeshResourceMarker::~MeshResourceMarker()
 {
   vis_manager_->getSceneManager()->destroySceneNode(scene_node_->getName());
-  vis_manager_->getSceneManager()->destroyEntity( entity_ );
 
-  for (size_t i = 0; i < material_->getNumTechniques(); ++i)
+  if (entity_)
   {
-    Ogre::Technique* t = material_->getTechnique(i);
-    // hack hack hack, really need to do a shader-based way of picking, rather than
-    // creating a texture for each object
-    if (t->getSchemeName() == "Pick")
-    {
-      Ogre::TextureManager::getSingleton().remove(t->getPass(0)->getTextureUnitState(0)->getTextureName());
-    }
+    vis_manager_->getSceneManager()->destroyEntity( entity_ );
   }
 
-  material_->unload();
-  Ogre::MaterialManager::getSingleton().remove(material_->getName());
+  if (!material_.isNull())
+  {
+    for (size_t i = 0; i < material_->getNumTechniques(); ++i)
+    {
+      Ogre::Technique* t = material_->getTechnique(i);
+      // hack hack hack, really need to do a shader-based way of picking, rather than
+      // creating a texture for each object
+      if (t->getSchemeName() == "Pick")
+      {
+        Ogre::TextureManager::getSingleton().remove(t->getPass(0)->getTextureUnitState(0)->getTextureName());
+      }
+    }
+
+    material_->unload();
+    Ogre::MaterialManager::getSingleton().remove(material_->getName());
+  }
 }
 
 void MeshResourceMarker::onNewMessage(const MarkerConstPtr& old_message, const MarkerConstPtr& new_message)
@@ -86,8 +94,14 @@ void MeshResourceMarker::onNewMessage(const MarkerConstPtr& old_message, const M
 
   scene_node_->setVisible(false);
 
-  if (!entity_)
+  if (!entity_ || old_message->mesh_resource != new_message->mesh_resource)
   {
+    if (entity_)
+    {
+      vis_manager_->getSceneManager()->destroyEntity(entity_);
+      entity_ = 0;
+    }
+
     if (new_message->mesh_resource.empty())
     {
       return;
@@ -108,14 +122,30 @@ void MeshResourceMarker::onNewMessage(const MarkerConstPtr& old_message, const M
     entity_ = vis_manager_->getSceneManager()->createEntity(ss.str(), new_message->mesh_resource);
     scene_node_->attachObject(entity_);
 
-    ss << "Material";
-    material_name_ = ss.str();
-    material_ = Ogre::MaterialManager::getSingleton().create( material_name_, ROS_PACKAGE_NAME );
-    material_->setReceiveShadows(false);
-    material_->getTechnique(0)->setLightingEnabled(true);
-    material_->getTechnique(0)->setAmbient( 0.5, 0.5, 0.5 );
+    if (material_.isNull())
+    {
+      ss << "Material";
+      material_name_ = ss.str();
+      material_ = Ogre::MaterialManager::getSingleton().create( material_name_, ROS_PACKAGE_NAME );
+      material_->setReceiveShadows(false);
+      material_->getTechnique(0)->setLightingEnabled(true);
+      material_->getTechnique(0)->setAmbient( 0.5, 0.5, 0.5 );
+    }
 
-    entity_->setMaterialName(material_name_);
+    original_material_names_.clear();
+    for (uint32_t i = 0; i < entity_->getNumSubEntities(); ++i)
+    {
+      std::string name = entity_->getSubEntity(i)->getMaterialName();
+      ss << name;
+      if (!Ogre::MaterialManager::getSingleton().resourceExists(ss.str()))
+      {
+        Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().getByName(name);
+        mat->clone(ss.str());
+      }
+
+      entity_->getSubEntity(i)->setMaterialName(ss.str());
+      original_material_names_.push_back(ss.str());
+    }
 
     coll_ = vis_manager_->getSelectionManager()->createCollisionForEntity(entity_, SelectionHandlerPtr(new MarkerSelectionHandler(this, MarkerID(new_message->ns, new_message->id))), coll_);
   }
@@ -128,6 +158,18 @@ void MeshResourceMarker::onNewMessage(const MarkerConstPtr& old_message, const M
   scene_node_->setPosition(pos);
   scene_node_->setOrientation(orient);
   scene_node_->setScale(scale);
+
+  if (new_message->mesh_use_embedded_materials)
+  {
+    for (uint32_t i = 0; i < entity_->getNumSubEntities(); ++i)
+    {
+      entity_->getSubEntity(i)->setMaterialName(original_material_names_[i]);
+    }
+  }
+  else
+  {
+    entity_->setMaterialName(material_name_);
+  }
 
   float r = new_message->color.r;
   float g = new_message->color.g;

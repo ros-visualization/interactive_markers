@@ -13,6 +13,7 @@ void emitRow(const std::string type_name, uint32_t type, int32_t x_pos, float r,
     ros::Duration lifetime, ros::Publisher& pub, bool frame_locked = false, std::string frame_id = std::string("/base_link"),
     float sx = 1.0, float sy = 1.0, float sz = 1.0)
 {
+  static uint32_t count = 0;
   for (int i = -5; i < 5; ++i)
   {
     visualization_msgs::Marker marker;
@@ -36,12 +37,16 @@ void emitRow(const std::string type_name, uint32_t type, int32_t x_pos, float r,
     marker.color.g = g;
     marker.color.b = b;
     marker.color.a = 1.0;
+
     marker.lifetime = lifetime;
     marker.frame_locked = frame_locked;
     marker.text = "This is some text";
-    marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.stl";
+    marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
+    marker.mesh_use_embedded_materials = count % 2 == 0;
     pub.publish(marker);
   }
+
+  ++count;
 }
 
 void publishCallback(const ros::TimerEvent&)

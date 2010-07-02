@@ -48,11 +48,13 @@ class PlotConfigureFrame(wx.Frame):
     Choose data to extract from messages.
     """
     def __init__(self, plot):
-        wx.Frame.__init__(self, None, title=plot.parent.GetTitle() + ' - Configure', size=(600, 400))
+        wx.Frame.__init__(self, None, title=plot.parent.Title + ' - Configure', size=(600, 400))
 
         self.plot = plot
 
         splitter = wx.SplitterWindow(self)
+        
+        self._drag_item = None
 
         self.font = wx.Font(9, wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
 
@@ -61,33 +63,44 @@ class PlotConfigureFrame(wx.Frame):
         self.msg_tree.Bind(wx.EVT_LEFT_DCLICK, self.on_msg_left_dclick)
 
         self.plot_tree = wx.TreeCtrl(splitter, style=wx.TR_DEFAULT_STYLE | wx.TR_HIDE_ROOT | wx.TR_HAS_BUTTONS)
-        self.plot_tree.Bind(wx.EVT_TREE_BEGIN_DRAG, self.on_plot_begin_drag)
-        self.plot_tree.Bind(wx.EVT_TREE_END_DRAG,   self.on_plot_end_drag)
+        
+        # Disabling dragging of messages between plots - caused weird behavior whereby top frame won't receive EVT_CLOSE after drag event is Allow'ed
+        #self.plot_tree.Bind(wx.EVT_TREE_BEGIN_DRAG, self.on_plot_begin_drag)
+        #self.plot_tree.Bind(wx.EVT_TREE_END_DRAG,   self.on_plot_end_drag)
+        
         self.plot_tree.Bind(wx.EVT_LEFT_DCLICK,     self.on_plot_left_dclick)
-        self.plot_root = self.plot_tree.AddRoot('Plots')
-        self.plot_items = []
 
         size = (16, 16)
         self.imagelist = wx.ImageList(*size)
         self.plot_image_index = self.imagelist.Add(wx.Bitmap(roslib.packages.get_pkg_dir(PKG) + '/icons/chart_line.png'))
         self.plot_tree.SetImageList(self.imagelist)
 
-        self._update_msg_tree()
-
-        self.add_plot()
-
-        self.plot_tree.SelectItem(self.plot_items[0])
-
         splitter.SplitVertically(self.msg_tree, self.plot_tree)
-        splitter.SetSashPosition(350)
-        splitter.SetMinimumPaneSize(100)
+        splitter.SashPosition    = 350
+        splitter.MinimumPaneSize = 100
 
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
         self._create_toolbar()
 
+        #
+
+        self.plot_root = self.plot_tree.AddRoot('Plots')
+
+        self.plot_items = []
+        if len(self.plot.plot_paths) > 0:
+            for plot in self.plot.plot_paths:
+                self.plot_items.append(self.add_plot())
+                for path in plot:
+                    self.plot_add_msg(path)
+        else:
+            self.add_plot()
+            self.plot_tree.SelectItem(self.plot_items[0])
+
+        self._update_msg_tree()
+
     def on_close(self, event):
-        self.plot._configure_frames = None
+        self.plot._configure_frame = None
         event.Skip()
 
     def _create_toolbar(self):
@@ -130,7 +143,7 @@ class PlotConfigureFrame(wx.Frame):
         if self.msg_item_is_plottable(item):
             self.msg_tree.SetItemTextColour(item, wx.Colour(0, 0, 0))
         else:
-            self.msg_tree.SetItemTextColour(item, wx.Colour(120, 120, 120))
+            self.msg_tree.SetItemTextColour(item, wx.Colour(100, 100, 100))
 
         for subobj_name, subobj in subobjs:
             if subobj is None:
@@ -153,51 +166,7 @@ class PlotConfigureFrame(wx.Frame):
     def msg_item_is_plottable(self, item):
         (path, obj_type) = self.msg_tree.GetItemPyData(item)
 
-        return obj_type in ['int', 'float', 'long', 'complex']
-
-    ### Message ###
-    
-    def on_msg_left_dclick(self, event):
-        self.plot_add_selected_msg()
-
-    def plot_add_selected_msg(self):
-        selected_item = self.msg_tree.GetSelection()
-        if not selected_item.IsOk():
-            return
-        if not self.msg_item_is_plottable(selected_item):
-            return
-
-        (path, obj_type) = self.msg_tree.GetItemPyData(selected_item)
-        if len(self.plot_items) == 0:
-            return
-
-        selected_plot = self.plot_tree.GetSelection()
-        if not selected_plot.IsOk() or selected_plot == self.plot_tree.GetRootItem():
-            selected_plot = self.plot_items[-1]
-
-        item = self.plot_tree.AppendItem(selected_plot, path)
-        self.plot_tree.ExpandAll()
-
-        self._update_msg_tree()
-
-    def _update_msg_tree(self):
-        plot_paths = self.get_plot_paths()
-        
-        if plot_paths != self.plot.plot_paths:
-            self.plot.plot_paths = plot_paths
-
-        PlotConfigureFrame.traverse(self.msg_tree, self.msg_tree.GetRootItem(), self._update_msg_tree_item)
-
-    def _update_msg_tree_item(self, item):
-        (path, obj_type) = self.msg_tree.GetItemPyData(item)
-
-        plotted = False
-        for paths in self.plot.plot_paths:
-            if path in paths:
-                plotted = True
-                break
-
-        self.msg_tree.SetItemBold(item, plotted)
+        return obj_type in ['int', 'float', 'long']
 
     ### Plots ###
 
@@ -205,7 +174,7 @@ class PlotConfigureFrame(wx.Frame):
         self.plot_delete_selected_msg()
 
     def plot_delete_selected_msg(self):
-        selected_item = self.plot_tree.GetSelection()
+        selected_item = self.plot_tree.Selection
         if not selected_item.IsOk() or selected_item in self.plot_items:
             return
 
@@ -215,11 +184,11 @@ class PlotConfigureFrame(wx.Frame):
 
     def get_plot_paths(self):
         items = []
-        PlotConfigureFrame.traverse(self.plot_tree, self.plot_tree.GetRootItem(), items.append)
+        PlotConfigureFrame.traverse(self.plot_tree, self.plot_tree.RootItem, items.append)
         
         plot_paths = []
         for item in items:
-            if item == self.plot_tree.GetRootItem():
+            if item == self.plot_tree.RootItem:
                 continue
             
             text = str(self.plot_tree.GetItemText(item))
@@ -243,11 +212,8 @@ class PlotConfigureFrame(wx.Frame):
         return item
 
     def delete_plot(self):
-        selected_item = self.plot_tree.GetSelection()
-        if not selected_item.IsOk():
-            return
-        
-        if selected_item not in self.plot_items:
+        selected_item = self.plot_tree.Selection
+        if not selected_item.IsOk() or selected_item not in self.plot_items:
             return
 
         self.plot_tree.Delete(selected_item)
@@ -255,29 +221,71 @@ class PlotConfigureFrame(wx.Frame):
 
         self._update_msg_tree()
 
+    ### Message ###
+    
+    def on_msg_left_dclick(self, event):
+        self.plot_add_selected_msg()
+
+    def plot_add_selected_msg(self):
+        if len(self.plot_items) == 0:
+            return
+        selected_item = self.msg_tree.Selection
+        if not selected_item.IsOk() or not self.msg_item_is_plottable(selected_item):
+            return
+
+        (path, obj_type) = self.msg_tree.GetItemPyData(selected_item)
+
+        self.plot_add_msg(path)
+
+    def plot_add_msg(self, path):
+        selected_plot = self.plot_tree.Selection
+        if not selected_plot.IsOk() or selected_plot == self.plot_tree.RootItem:
+            selected_plot = self.plot_items[-1]
+
+        self.plot_tree.AppendItem(selected_plot, path)
+        self.plot_tree.ExpandAll()
+
+        self._update_msg_tree()
+
+    def _update_msg_tree(self):
+        plot_paths = self.get_plot_paths()
+        
+        if plot_paths != self.plot.plot_paths:
+            self.plot.plot_paths = plot_paths
+
+        PlotConfigureFrame.traverse(self.msg_tree, self.msg_tree.RootItem, self._update_msg_tree_item)
+
+    def _update_msg_tree_item(self, item):
+        (path, obj_type) = self.msg_tree.GetItemPyData(item)
+
+        plotted = False
+        for paths in self.plot.plot_paths:
+            if path in paths:
+                plotted = True
+                break
+
+        self.msg_tree.SetItemBold(item, plotted)
+
     def on_plot_begin_drag(self, event):
-        if not self.plot_tree.ItemHasChildren(event.GetItem()):
+        if not self.plot_tree.ItemHasChildren(event.Item):
+            self._drag_item = event.Item
             event.Allow()
-            self.dragItem = event.GetItem()
 
     def on_plot_end_drag(self, event):
-        dest = event.GetItem()
+        dest = event.Item
 
-        try:
-            src = self.dragItem
-        except:
+        src = self._drag_item
+
+        if src is None or dest == src:
             return
 
-        if dest == src:
-            return
-        
         text = self.plot_tree.GetItemText(src)
         data = self.plot_tree.GetItemPyData(src)
 
         self.plot_tree.Delete(src)
 
         if dest.IsOk():
-            is_plot_item = (self.plot_tree.GetItemParent(dest) == self.plot_tree.GetRootItem()) 
+            is_plot_item = (self.plot_tree.GetItemParent(dest) == self.plot_tree.RootItem) 
             if is_plot_item:
                 new_item = self.plot_tree.InsertItemBefore(dest, 0, text)
             else:

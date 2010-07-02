@@ -53,19 +53,18 @@ class PlotDataLoader(threading.Thread):
         self._timeline = timeline
         self._topic    = topic
 
-        self._use_header_stamp = False
+        self._start_stamp        = self._timeline.start_stamp
+        self._end_stamp          = self._timeline.end_stamp
+        self._paths              = []
+        self._max_interval       = 0.0
+        self._extension_fraction = 0.1
+        self._min_reload_secs    = 0.4                            # minimum time to wait before loading entries
+        self._use_header_stamp   = False                          # use the timestamp from the header
 
-        self._start_stamp     = self._timeline.start_stamp
-        self._end_stamp       = self._timeline.end_stamp
-        self._paths           = []
-        self._max_interval    = 0.0
-        self._dirty           = True
-        self._dirty_cv        = threading.Condition()
-        self._last_reload     = None                           # time that entries were reloaded
-        self._min_reload_secs = 0.5                            # minimum time to wait before loading entries
-
-        self._data = {}
-
+        self._dirty         = True
+        self._dirty_cv      = threading.Condition()
+        self._last_reload   = None                           # time that entries were reloaded
+        self._data          = {}
         self._load_complete = False
 
         self._progress_listeners = []
@@ -73,7 +72,6 @@ class PlotDataLoader(threading.Thread):
 
         self._stop_flag = False
         self.setDaemon(True)
-        self.start()
 
     @property
     def data(self): return self._data
@@ -104,7 +102,7 @@ class PlotDataLoader(threading.Thread):
                 self._start_stamp = start_stamp
                 self._dirty = True
                 self._dirty_cv.notify()
-        
+
     start_stamp = property(_get_start_stamp, _set_start_stamp)
 
     # property: end_stamp
@@ -140,6 +138,7 @@ class PlotDataLoader(threading.Thread):
     def _set_paths(self, paths):
         with self._dirty_cv:
             if set(paths) != set(self._paths):
+                self._data = {}
                 self._paths = paths
                 self._dirty = True
                 self._dirty_cv.notify()
@@ -167,103 +166,192 @@ class PlotDataLoader(threading.Thread):
 
     ##
 
-    def _trim_data(self):
-        min_x = (self._start_stamp - self._timeline.start_stamp).to_sec()
-        max_x = (self._end_stamp   - self._timeline.start_stamp).to_sec()
-        
-        for series in list(self._data.keys()):
-            new_data = DataSet()
-
-            last_x = None
-            for x, y in self._data[series].points:
-                if (last_x is None or x - last_x >= self._max_interval) and x >= min_x and x <= max_x:
-                    new_data.add(x, y)
-                    last_x = x
-
-            self._data[series] = new_data
-
     def _run(self):
+        entry_queue = []
+        
         while not self._stop_flag:
+            # If dirty, then throw away data which doesn't fit in current view, and regenerate the entries to load
             with self._dirty_cv:
-                # If dirty, then regenerate the entries to load, and re-initialize the loaded indexes
                 if self._dirty and (self._last_reload is None or time.time() - self._last_reload >= self._min_reload_secs):
-                    entries        = list(self._timeline.get_entries_with_bags(self._topic, self._start_stamp, self._end_stamp))
-                    loaded_indexes = set()
-                    loaded_stamps  = []
-                    subdivider     = _subdivide(0, len(entries) - 1)
+                    self._trim_data(self._extension_fraction, self._max_interval)
 
-                    self._trim_data()
+                    entry_queue = self._get_entries_to_load(self._extension_fraction, self._max_interval)
 
                     self._last_reload = time.time()
                     self._load_complete = False
                     self._dirty = False
 
-                if subdivider is None or len(self._paths) == 0:
-                    # Wait for dirty flag
-                    if not self._dirty:
-                        self._dirty_cv.wait()
-                    continue
-
-            try:
-                index = subdivider.next()
-            except StopIteration:
+            # Check to see if we've finished loading
+            if len(entry_queue) == 0 or len(self._paths) == 0:
                 self._load_complete = True
-                
-                # Notify listeners of completion
                 for listener in itertools.chain(self._progress_listeners, self._complete_listeners):
                     listener()
 
-                subdivider = None
+                # Wait for dirty flag to be set
+                with self._dirty_cv:
+                    if not self._dirty:
+                        self._dirty_cv.wait()
+                        
                 continue
 
-            if index in loaded_indexes:
-                continue
+            # Pop the next entry to load, and process it (insert it into _data)
+            try:
+                bag, entry = entry_queue.pop()
 
-            bag, entry = entries[index]
+                self._process(bag, entry)
+            except Exception:
+                pass
 
-            # If the timestamp is too close to an existing index, don't load it
-            closest_stamp_index = bisect.bisect_left(loaded_stamps, entry.time)
-            if closest_stamp_index < len(loaded_stamps):
-                dist_to_closest_msg = abs((entry.time - loaded_stamps[closest_stamp_index]).to_sec())
-                if dist_to_closest_msg < self._max_interval:
-                    loaded_indexes.add(index)
-                    continue
+    def _trim_data(self, extension_fraction=None, max_interval=None):
+        """
+        Toss out data outside of (extended) view range, and closer than max_interval seconds apart.
+        """
+        if extension_fraction is None:
+            start_stamp = self._start_stamp
+            end_stamp   = self._end_stamp
+        else:
+            extension = rospy.Duration((self._end_stamp - self._start_stamp).to_sec() * extension_fraction)
+            if extension.to_sec() >= self._start_stamp.to_sec():
+                start_stamp = rospy.Time(0, 1)
+            else:
+                start_stamp = self._start_stamp - extension
+            end_stamp = self._end_stamp + extension
 
-            topic, msg, msg_stamp = self._timeline.read_message(bag, entry.position)
-            if not msg:
-                continue
+        min_x = (start_stamp - self._timeline.start_stamp).to_sec()
+        max_x = (end_stamp   - self._timeline.start_stamp).to_sec()
 
-            bisect.insort_left(loaded_stamps, msg_stamp)
+        for series in list(self._data.keys()):
+            points     = self._data[series].points
+            num_points = len(points)
 
-            # Extract the field data from the message
-            for path in self._paths:
-                if self._use_header_stamp:
-                    if msg.__class__._has_header:
-                        header = msg.header
-                    else:
-                        header = _get_header(msg, path)
-                    
-                    plot_stamp = header.stamp
-                else:
-                    plot_stamp = msg_stamp
+            trimmed_points = []
 
-                try:
-                    y = eval('msg.' + path)
-                except Exception:
-                    continue
+            if num_points > 0 and points[0][0] < max_x and points[-1][0] > min_x:
+                first_index = None
+                last_x = None
+                for i, (x, y) in enumerate(points):
+                    if x >= min_x:
+                        trimmed_points.append((x, y))
+                        first_index = i
+                        last_x = x
+                        break
 
-                x = (plot_stamp - self._timeline.start_stamp).to_sec()
+                if first_index is not None:
+                    for i, (x, y) in enumerate(points[first_index + 1:]):
+                        if x > max_x:
+                            break
 
-                if path not in self._data:
-                    self._data[path] = DataSet()
+                        if (max_interval is None) or (x - last_x >= max_interval):
+                            trimmed_points.append((x, y))
+                            last_x = x
 
-                self._data[path].add(x, y)
+            new_data = DataSet()
+            new_data.set(trimmed_points)
 
-            loaded_indexes.add(index)
+            self._data[series] = new_data
+
+    def _get_entries_to_load(self, extension_fraction=None, max_interval=None):
+        """
+        Returns a list of (Bag, IndexEntry) tuples to load.
+
+        @param extension: extra proportion of the view range to load
+        @param max_interval: maximum 
+        """
+        # Load data outside of the view range
+        if extension_fraction is None:
+        	start_stamp = self._start_stamp
+        	end_stamp   = self._end_stamp
+        else:
+            extension = rospy.Duration((self._end_stamp - self._start_stamp).to_sec() * extension_fraction)
+            if extension.to_sec() >= self._start_stamp.to_sec():
+                start_stamp = rospy.Time(0, 1)
+            else:
+                start_stamp = self._start_stamp - extension
+            end_stamp = self._end_stamp + extension
+
+        # Get the entries
+        view_entries = list(self._timeline.get_entries_with_bags(self._topic, start_stamp, end_stamp))
+
+        # Toss out those entries too close to each other
+        if max_interval is not None:
+            spaced_entries = []
+            max_interval_duration = rospy.Duration(max_interval)
             
-            # Notify listeners of progress
-            for listener in self._progress_listeners:
-                listener()
+            last_time = None
+            for bag, entry in view_entries:
+                if last_time is None or (entry.time - last_time) > max_interval_duration:
+                    spaced_entries.append((bag, entry))
+                    last_time = entry.time
+        else:
+            spaced_entries = view_entries
+
+        # Toss out entries too close to existing data
+        if max_interval is not None:
+            far_entries = []
+            loaded_xs = set()
+            for series in list(self._data.keys()):
+                for x, y in self._data[series].points:
+                    loaded_xs.add(x)
+            loaded_xs = list(loaded_xs)
+            loaded_xs.sort()
+            loaded_stamps = [self._timeline.start_stamp + rospy.Duration(x) for x in loaded_xs]
+            for bag, entry in spaced_entries:
+                closest_stamp_left_index = bisect.bisect_left(loaded_stamps, entry.time) - 1
+                if closest_stamp_left_index >= 0 and abs((entry.time - loaded_stamps[closest_stamp_left_index]).to_sec()) < max_interval / 2:
+                    continue
+                closest_stamp_right_index = closest_stamp_left_index + 1
+                if closest_stamp_right_index < len(loaded_stamps) - 1 and abs((entry.time - loaded_stamps[closest_stamp_right_index]).to_sec()) < max_interval / 2:
+                    continue
+                far_entries.append((bag, entry))
+        else:
+            far_entries = spaced_entries
+
+        # Reorder to load using bisection
+        bin_search_entries = []
+        if len(far_entries) > 0:
+            for i in _subdivide(0, len(far_entries) - 1):
+                bin_search_entries.append(far_entries[i])
+
+        entry_queue = list(reversed(bin_search_entries))  # reversed so that pop from front of list
+        
+        return entry_queue
+
+    def _process(self, bag, entry):
+        # Read the message from the bag file
+        _, msg, msg_stamp = self._timeline.read_message(bag, entry.position)
+        if not msg:
+            return False
+
+        # Extract the field data from the message
+        for path in self._paths:
+            # Get Y value
+            try:
+                y = eval('msg.' + path)
+            except Exception:
+                continue
+
+            # Get X value
+            if self._use_header_stamp:
+                if msg.__class__._has_header:
+                    header = msg.header
+                else:
+                    header = _get_header(msg, path)
+
+                stamp = header.stamp
+            else:
+                stamp = msg_stamp
+            x = (stamp - self._timeline.start_stamp).to_sec()
+
+            # Store data
+            if path not in self._data:
+                self._data[path] = DataSet()
+            self._data[path].add(x, y)
+
+        # Notify listeners of progress
+        for listener in self._progress_listeners:
+            listener()
+
+        return True
 
 def _get_header(msg, path):
     fields = path.split('.')
@@ -282,6 +370,10 @@ def _get_header(msg, path):
     return _get_header(msg, parent_path)
 
 def _subdivide(left, right):
+    if left == right:
+        yield left
+        return
+    
     yield left
     yield right
 
