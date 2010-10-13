@@ -16,5 +16,4 @@
   <depend stack="ros" /> <!-- rxtools, rosconsole, roscpp, message_filters, wxswig, roslib, std_msgs, wxPython_swig_interface, rospy, rxbag -->
   <depend stack="visualization_common" /> <!-- visualization_msgs, ogre, ogre_tools -->
   <depend stack="image_common" /> <!-- image_transport -->
-  <depend stack="rx"/>
 </stack>
