@@ -5,16 +5,17 @@
 
   </description>
   <author>Josh Faust</author>
-  <license>BSD,wxWindows,Creative Commons</license>  
+  <license>BSD,Creative Commons,wxWindows</license>  
   <review status="Doc reviewed" notes="2010/01/08"/>
   <url>http://ros.org/wiki/visualization</url>
   <depend stack="common" /> <!-- yaml_cpp -->
   <depend stack="common_msgs" /> <!-- nav_msgs, geometry_msgs, sensor_msgs -->
   <depend stack="geometry" /> <!-- tf -->
-  <depend stack="laser_pipeline" /> <!-- laser_geometry -->
-  <depend stack="robot_model" /> <!-- urdf, resource_retriever -->
-  <depend stack="ros" /> <!-- rxtools, rosconsole, roscpp, message_filters, wxswig, roslib, std_msgs, wxPython_swig_interface, rospy, rxbag -->
-  <depend stack="visualization_common" /> <!-- visualization_msgs, ogre, ogre_tools -->
   <depend stack="image_common" /> <!-- image_transport -->
-  <depend stack="rx" />
+  <depend stack="laser_pipeline" /> <!-- laser_geometry -->
+  <depend stack="robot_model" /> <!-- assimp, urdf, resource_retriever -->
+  <depend stack="ros" /> <!-- rosconsole, std_srvs, roscpp, message_filters, roslib, std_msgs, rospy, rosbag -->
+  <depend stack="rx" /> <!-- rxtools, wxswig, rxbag, wxPython_swig_interface -->
+  <depend stack="visualization_common" /> <!-- visualization_msgs, ogre, ogre_tools -->
+
 </stack>
