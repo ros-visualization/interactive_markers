@@ -43,52 +43,38 @@ import wx
 import cairo
 
 def imgmsg_to_pil(img_msg, rgba=True):
-    if img_msg._type == 'sensor_msgs/CompressedImage':
-        import cStringIO
-        io = cStringIO.StringIO(img_msg.data)
-        pil_img = Image.open(io)
-
-        pil_img = pil_bgr2rgb(pil_img)
-        if pil_img.mode != 'RGBA':
-            pil_img = pil_img.convert('RGBA')
-
-        return pil_img
-
-    # Can use rgb8 encoding directly
-    if img_msg.encoding == 'rgb8':
-        return Image.frombuffer('RGB', (img_msg.width, img_msg.height), img_msg.data, 'raw', 'RGB', 0, 1)
-
-    # Otherwise, use PIL to convert image
-    alpha = False
-    if img_msg.encoding == 'mono8':
-        mode = 'L'
-    elif img_msg.encoding == 'rgb8':
-        mode = 'RGB'
-    elif img_msg.encoding == 'bgr8':
-        mode = 'BGR'
-    elif img_msg.encoding in ['bayer_rggb8', 'bayer_bggr8', 'bayer_gbrg8', 'bayer_grbg8']:
-        mode = 'L'
-    elif img_msg.encoding == 'mono16':
-        if img_msg.is_bigendian:
-            mode = 'F;16B'
-        else:
-            mode = 'F:16'
-    elif img_msg.encoding == 'rgba8':
-        mode = 'RGB'
-        alpha = True
-    elif img_msg.encoding == 'bgra8':
-        mode = 'BGR'
-        alpha = True
-
     try:
-        pil_img = Image.frombuffer('RGB', (img_msg.width, img_msg.height), img_msg.data, 'raw', mode, 0, 1)
+        if img_msg._type == 'sensor_msgs/CompressedImage':
+            pil_img = pil_bgr2rgb(Image.open(StringIO(img_msg.data)))
+        else:
+            alpha = False
+            if img_msg.encoding == 'mono8':
+                mode = 'L'
+            elif img_msg.encoding == 'rgb8':
+                mode = 'BGR'
+            elif img_msg.encoding == 'bgr8':
+                mode = 'RGB'
+            elif img_msg.encoding in ['bayer_rggb8', 'bayer_bggr8', 'bayer_gbrg8', 'bayer_grbg8']:
+                mode = 'L'
+            elif img_msg.encoding == 'mono16':
+                if img_msg.is_bigendian:
+                    mode = 'F;16B'
+                else:
+                    mode = 'F:16'
+            elif img_msg.encoding == 'rgba8':
+                mode = 'BGR'
+                alpha = True
+            elif img_msg.encoding == 'bgra8':
+                mode = 'RGB'
+                alpha = True
+    
+            pil_img = Image.frombuffer('RGB', (img_msg.width, img_msg.height), img_msg.data, 'raw', mode, 0, 1)
 
-        if mode == 'BGR':
-            pil_img = pil_bgr2rgb(pil_img)
         if rgba and pil_img.mode != 'RGBA':
             pil_img = pil_img.convert('RGBA')
-        
+    
         return pil_img
+
     except Exception, ex:
         print >> sys.stderr, 'Can\'t convert:', mode, ex
         return None
@@ -114,6 +100,7 @@ def pil_to_cairo(pil_img):
     w, h = pil_img.size
     data = array.array('c')
     data.fromstring(pil_img.tostring())
+
     return cairo.ImageSurface.create_for_data(data, cairo.FORMAT_ARGB32, w, h)
 
 def wxbitmap_to_cairo(bitmap):
