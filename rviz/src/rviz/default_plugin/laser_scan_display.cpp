@@ -59,6 +59,8 @@ LaserScanDisplay::LaserScanDisplay( const std::string& name, VisualizationManage
 
 LaserScanDisplay::~LaserScanDisplay()
 {
+  unsubscribe();
+  tf_filter_.clear();
   delete projector_;
 }
 
@@ -98,7 +100,7 @@ void LaserScanDisplay::subscribe()
     return;
   }
 
-  sub_.subscribe(threaded_nh_, topic_, 10);
+  sub_.subscribe(threaded_nh_, topic_, 2);
 }
 
 void LaserScanDisplay::unsubscribe()

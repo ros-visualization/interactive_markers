@@ -350,6 +350,7 @@ PointCloudBase::CloudInfo::~CloudInfo()
 
 PointCloudBase::PointCloudBase( const std::string& name, VisualizationManager* manager )
 : Display( name, manager )
+, spinner_(1, &cbqueue_)
 , new_cloud_(false)
 , new_xyz_transformer_(false)
 , new_color_transformer_(false)
@@ -386,6 +387,9 @@ PointCloudBase::PointCloudBase( const std::string& name, VisualizationManager* m
     loadTransformers(plugin.get());
     plugin_conns_[plugin.get()] = pc;
   }
+
+  threaded_nh_.setCallbackQueue(&cbqueue_);
+  spinner_.start();
 }
 
 void deleteProperties(PropertyManager* man, V_PropertyBaseWPtr& props)
@@ -402,6 +406,8 @@ void deleteProperties(PropertyManager* man, V_PropertyBaseWPtr& props)
 
 PointCloudBase::~PointCloudBase()
 {
+  spinner_.stop();
+
   if (coll_handle_)
   {
     SelectionManager* sel_manager = vis_manager_->getSelectionManager();
@@ -439,6 +445,8 @@ void PointCloudBase::onPluginLoaded(const PluginStatus& status)
 
 void PointCloudBase::onPluginUnloading(const PluginStatus& status)
 {
+  boost::recursive_mutex::scoped_lock lock(transformers_mutex_);
+
   typedef std::set<std::string> S_string;
   S_string to_erase;
 
@@ -732,33 +740,36 @@ void PointCloudBase::update(float wall_dt, float ros_dt)
   }
 
   {
-    boost::recursive_mutex::scoped_lock lock(transformers_mutex_);
+    boost::recursive_mutex::scoped_try_lock lock(transformers_mutex_);
 
-    if (new_xyz_transformer_ || new_color_transformer_)
+    if (lock.owns_lock())
     {
-      M_TransformerInfo::iterator it = transformers_.begin();
-      M_TransformerInfo::iterator end = transformers_.end();
-      for (; it != end; ++it)
+      if (new_xyz_transformer_ || new_color_transformer_)
       {
-        const std::string& name = it->first;
-        TransformerInfo& info = it->second;
+        M_TransformerInfo::iterator it = transformers_.begin();
+        M_TransformerInfo::iterator end = transformers_.end();
+        for (; it != end; ++it)
+        {
+          const std::string& name = it->first;
+          TransformerInfo& info = it->second;
 
-        if (name == getXYZTransformer())
-        {
-          std::for_each(info.xyz_props.begin(), info.xyz_props.end(), showProperty<PropertyBase>);
-        }
-        else
-        {
-          std::for_each(info.xyz_props.begin(), info.xyz_props.end(), hideProperty<PropertyBase>);
-        }
+          if (name == getXYZTransformer())
+          {
+            std::for_each(info.xyz_props.begin(), info.xyz_props.end(), showProperty<PropertyBase>);
+          }
+          else
+          {
+            std::for_each(info.xyz_props.begin(), info.xyz_props.end(), hideProperty<PropertyBase>);
+          }
 
-        if (name == getColorTransformer())
-        {
-          std::for_each(info.color_props.begin(), info.color_props.end(), showProperty<PropertyBase>);
-        }
-        else
-        {
-          std::for_each(info.color_props.begin(), info.color_props.end(), hideProperty<PropertyBase>);
+          if (name == getColorTransformer())
+          {
+            std::for_each(info.color_props.begin(), info.color_props.end(), showProperty<PropertyBase>);
+          }
+          else
+          {
+            std::for_each(info.color_props.begin(), info.color_props.end(), hideProperty<PropertyBase>);
+          }
         }
       }
     }
@@ -1010,8 +1021,6 @@ void PointCloudBase::retransform()
 
 bool PointCloudBase::transformCloud(const CloudInfoPtr& info, V_Point& points, bool fully_update_transformers)
 {
-  boost::recursive_mutex::scoped_lock lock(transformers_mutex_);
-
   Ogre::Matrix4 transform = info->transform_;
 
   if (transform == Ogre::Matrix4::ZERO)
@@ -1041,28 +1050,31 @@ bool PointCloudBase::transformCloud(const CloudInfoPtr& info, V_Point& points, b
   default_pt.position = Ogre::Vector3::ZERO;
   cloud.points.resize(size, default_pt);
 
-  updateTransformers(info->message_, fully_update_transformers);
-  PointCloudTransformerPtr xyz_trans = getXYZTransformer(info->message_);
-  PointCloudTransformerPtr color_trans = getColorTransformer(info->message_);
-
-  if (!xyz_trans)
   {
-    std::stringstream ss;
-    ss << "No position transformer available for cloud";
-    setStatus(status_levels::Error, "Message", ss.str());
-    return false;
-  }
+    boost::recursive_mutex::scoped_lock lock(transformers_mutex_);
+    updateTransformers(info->message_, fully_update_transformers);
+    PointCloudTransformerPtr xyz_trans = getXYZTransformer(info->message_);
+    PointCloudTransformerPtr color_trans = getColorTransformer(info->message_);
 
-  if (!color_trans)
-  {
-    std::stringstream ss;
-    ss << "No color transformer available for cloud";
-    setStatus(status_levels::Error, "Message", ss.str());
-    return false;
-  }
+    if (!xyz_trans)
+    {
+      std::stringstream ss;
+      ss << "No position transformer available for cloud";
+      setStatus(status_levels::Error, "Message", ss.str());
+      return false;
+    }
 
-  xyz_trans->transform(info->message_, PointCloudTransformer::Support_XYZ, transform, cloud);
-  color_trans->transform(info->message_, PointCloudTransformer::Support_Color, transform, cloud);
+    if (!color_trans)
+    {
+      std::stringstream ss;
+      ss << "No color transformer available for cloud";
+      setStatus(status_levels::Error, "Message", ss.str());
+      return false;
+    }
+
+    xyz_trans->transform(info->message_, PointCloudTransformer::Support_XYZ, transform, cloud);
+    color_trans->transform(info->message_, PointCloudTransformer::Support_Color, transform, cloud);
+  }
 
   points.resize(size);
   for (size_t i = 0; i < size; ++i)
@@ -1118,7 +1130,12 @@ bool convertPointCloudToPointCloud2(const sensor_msgs::PointCloud& input, sensor
     memcpy (&output.data[cp * output.point_step + output.fields[1].offset], &input.points[cp].y, sizeof (float));
     memcpy (&output.data[cp * output.point_step + output.fields[2].offset], &input.points[cp].z, sizeof (float));
     for (size_t d = 0; d < input.channels.size (); ++d)
-      memcpy (&output.data[cp * output.point_step + output.fields[3 + d].offset], &input.channels[d].values[cp], sizeof (float));
+    {
+      if (input.channels[d].values.size() == input.points.size())
+      {
+        memcpy (&output.data[cp * output.point_step + output.fields[3 + d].offset], &input.channels[d].values[cp], sizeof (float));
+      }
+    }
   }
   return (true);
 }
