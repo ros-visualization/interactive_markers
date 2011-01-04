@@ -6,7 +6,7 @@
   </description>
   <author>Josh Faust</author>
   <license>BSD,Creative Commons,wxWindows</license>  
-  <review status="Doc reviewed" notes="2010/01/08"/>
+  <review status="Doc reviewed" notes="2011/01/04"/>
   <url>http://ros.org/wiki/visualization</url>
   <depend stack="common" /> <!-- yaml_cpp -->
   <depend stack="common_msgs" /> <!-- nav_msgs, sensor_msgs, geometry_msgs, visualization_msgs -->
