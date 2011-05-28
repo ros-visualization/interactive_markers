@@ -1,0 +1,22 @@
+<package>
+  <description brief="interactive_markers">
+
+     interactive_markers
+
+  </description>
+  <author>David Gossow</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/interactive_markers</url>
+  <depend package="roscpp"/>
+  <depend package="visualization_msgs"/>
+  <depend package="tf"/>
+  <depend package="bullet"/>
+
+  <export> 
+      <cpp cflags="-I${prefix}/include/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -linteractive_markers"/>
+  </export>
+
+</package>
+
+
