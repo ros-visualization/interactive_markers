@@ -81,6 +81,18 @@ InteractiveMarkerServer::~InteractiveMarkerServer()
     need_to_terminate_ = true;
     spin_thread_->join();
   }
+
+  if ( node_handle_.ok() )
+  {
+    // erase all markers
+    pending_updates_.clear();
+    M_MarkerContext::iterator it;
+    for ( it = marker_contexts_.begin(); it != marker_contexts_.end(); it++ )
+    {
+      erase( it->first );
+    }
+    publishUpdate();
+  }
 }
 
 
@@ -128,10 +140,12 @@ void InteractiveMarkerServer::publishUpdate()
           ROS_DEBUG("Creating new context for %s", update_it->first.c_str());
           // create a new int_marker context
           marker_context_it = marker_contexts_.insert( std::make_pair( update_it->first, MarkerContext() ) ).first;
+          // copy feedback cbs, in case they have been set before the marker context was created
+          marker_context_it->second.default_feedback_cb = update_it->second.default_feedback_cb;
+          marker_context_it->second.feedback_cbs = update_it->second.feedback_cbs;
         }
 
         marker_context_it->second.int_marker = update_it->second.int_marker;
-        marker_context_it->second.feedback_cb = update_it->second.feedback_cb;
 
         update.markers.push_back( marker_context_it->second.int_marker );
         break;
@@ -181,12 +195,6 @@ bool InteractiveMarkerServer::erase( const std::string &name )
 {
   boost::recursive_mutex::scoped_lock lock( mutex_ );
 
-  M_MarkerContext::iterator marker_context_it = marker_contexts_.find( name );
-  if ( marker_context_it == marker_contexts_.end() )
-  {
-    return false;
-  }
-
   pending_updates_[name].update_type = UpdateContext::ERASE;
   return true;
 }
@@ -197,7 +205,11 @@ bool InteractiveMarkerServer::setPose( const std::string &name, const geometry_m
   boost::recursive_mutex::scoped_lock lock( mutex_ );
 
   M_MarkerContext::iterator marker_context_it = marker_contexts_.find( name );
-  if ( marker_context_it == marker_contexts_.end() )
+  M_UpdateContext::iterator update_it = pending_updates_.find( name );
+
+  // if there's no marker and no pending addition for it, we can't update the pose
+  if ( marker_context_it == marker_contexts_.end() &&
+      ( update_it == pending_updates_.end() || update_it->second.update_type != UpdateContext::FULL_UPDATE ) )
   {
     return false;
   }
@@ -205,32 +217,78 @@ bool InteractiveMarkerServer::setPose( const std::string &name, const geometry_m
   if ( header.frame_id.empty() )
   {
     // keep the old header
-    doSetPose( marker_context_it, pose, marker_context_it->second.int_marker.header );
+    doSetPose( update_it, name, pose, marker_context_it->second.int_marker.header );
   }
   else
   {
-    doSetPose( marker_context_it, pose, header );
+    doSetPose( update_it, name, pose, header );
   }
   return true;
 }
 
-
-void InteractiveMarkerServer::insert( const visualization_msgs::InteractiveMarker &int_marker, FeedbackCallback feedback_cb )
+bool InteractiveMarkerServer::setCallback( std::string name, FeedbackCallback feedback_cb, uint8_t feedback_type  )
 {
   boost::recursive_mutex::scoped_lock lock( mutex_ );
 
-  const std::string &name = int_marker.name;
-  // If there is an entry in pending_updates_, it will be POSE_UPDATE
-  // or FULL_UPDATE. In both cases we'll want to keep it that way.
-  M_UpdateContext::iterator update_it = pending_updates_.find( name );
+  M_MarkerContext::iterator marker_context_it = marker_contexts_.find( name );
+  if ( marker_context_it == marker_contexts_.end() )
+  {
+    // the marker does not exist yet, we have to store the info in the pending updates list
+    M_UpdateContext::iterator update_it = pending_updates_.find( name );
+    if ( update_it == pending_updates_.end() )
+    {
+      return false;
+    }
+    if ( feedback_type == DEFAULT_FEEDBACK_CB )
+    {
+      update_it->second.default_feedback_cb = feedback_cb;
+    }
+    else
+    {
+      if ( feedback_cb )
+      {
+        update_it->second.feedback_cbs[feedback_type] = feedback_cb;
+      }
+      else
+      {
+        update_it->second.feedback_cbs.erase( feedback_type );
+      }
+    }
+  }
+  else
+  {
+    // the marker exists, so we can just overwrite the existing callbacks
+    if ( feedback_type == DEFAULT_FEEDBACK_CB )
+    {
+      marker_context_it->second.default_feedback_cb = feedback_cb;
+    }
+    else
+    {
+      if ( feedback_cb )
+      {
+        marker_context_it->second.feedback_cbs[feedback_type] = feedback_cb;
+      }
+      else
+      {
+        marker_context_it->second.feedback_cbs.erase( feedback_type );
+      }
+    }
+  }
+  return true;
+}
+
+void InteractiveMarkerServer::insert( const visualization_msgs::InteractiveMarker &int_marker )
+{
+  boost::recursive_mutex::scoped_lock lock( mutex_ );
+
+  M_UpdateContext::iterator update_it = pending_updates_.find( int_marker.name );
   if ( update_it == pending_updates_.end() )
   {
-    update_it = pending_updates_.insert( std::make_pair( name, UpdateContext() ) ).first;
+    update_it = pending_updates_.insert( std::make_pair( int_marker.name, UpdateContext() ) ).first;
   }
 
   update_it->second.update_type = UpdateContext::FULL_UPDATE;
   update_it->second.int_marker = int_marker;
-  update_it->second.feedback_cb = feedback_cb;
 }
 
 
@@ -288,11 +346,11 @@ void InteractiveMarkerServer::processFeedback( const FeedbackConstPtr& feedback 
   if ( marker_context.int_marker.header.stamp == ros::Time(0) )
   {
     // keep the old header
-    doSetPose( marker_context_it, feedback->pose, marker_context.int_marker.header );
+    doSetPose( pending_updates_.find( feedback->marker_name ), feedback->marker_name, feedback->pose, marker_context.int_marker.header );
   }
   else
   {
-    doSetPose( marker_context_it, feedback->pose, feedback->header );
+    doSetPose( pending_updates_.find( feedback->marker_name ), feedback->marker_name, feedback->pose, feedback->header );
   }
 
   if ( feedback->event_type == visualization_msgs::InteractiveMarkerFeedback::KEEP_ALIVE )
@@ -302,10 +360,17 @@ void InteractiveMarkerServer::processFeedback( const FeedbackConstPtr& feedback 
     return;
   }
 
-  // call user feedback handler
-  if ( marker_context.feedback_cb )
+  // call feedback handler
+  boost::unordered_map<uint8_t,FeedbackCallback>::iterator feedback_cb_it = marker_context.feedback_cbs.find( feedback->event_type );
+  if ( feedback_cb_it != marker_context.feedback_cbs.end() && feedback_cb_it->second )
   {
-    marker_context.feedback_cb(  feedback );
+    // call type-specific callback
+    feedback_cb_it->second( feedback );
+  }
+  else if ( marker_context.default_feedback_cb )
+  {
+    // call default callback
+    marker_context.default_feedback_cb(  feedback );
   }
 }
 
@@ -331,15 +396,12 @@ void InteractiveMarkerServer::publish( visualization_msgs::InteractiveMarkerUpda
 }
 
 
-void InteractiveMarkerServer::doSetPose( M_MarkerContext::iterator marker_context_it, const geometry_msgs::Pose &pose, const std_msgs::Header &header )
+void InteractiveMarkerServer::doSetPose( M_UpdateContext::iterator update_it, const std::string &name, const geometry_msgs::Pose &pose, const std_msgs::Header &header )
 {
-  std::string &name = marker_context_it->second.int_marker.name;
-
-  M_UpdateContext::iterator update_it = pending_updates_.find( name );
   if ( update_it == pending_updates_.end() )
   {
     update_it = pending_updates_.insert( std::make_pair( name, UpdateContext() ) ).first;
-    pending_updates_[name].update_type = UpdateContext::POSE_UPDATE;
+    update_it->second.update_type = UpdateContext::POSE_UPDATE;
   }
   else if ( update_it->second.update_type != UpdateContext::FULL_UPDATE )
   {
@@ -348,7 +410,7 @@ void InteractiveMarkerServer::doSetPose( M_MarkerContext::iterator marker_contex
 
   update_it->second.int_marker.pose = pose;
   update_it->second.int_marker.header = header;
-  ROS_DEBUG( "Marker '%s' is now at %f, %f, %f", name.c_str(), pose.position.x, pose.position.y, pose.position.z );
+  ROS_DEBUG( "Marker '%s' is now at %f, %f, %f", update_it->first.c_str(), pose.position.x, pose.position.y, pose.position.z );
 }
 
 

@@ -55,10 +55,10 @@ class InteractiveMarkerServer : boost::noncopyable
 {
 public:
 
-  // type for feedback functions, takes the interactive marker name
-  // as first argument and the feedback as second
   typedef visualization_msgs::InteractiveMarkerFeedbackConstPtr FeedbackConstPtr;
   typedef boost::function< void ( const FeedbackConstPtr& ) > FeedbackCallback;
+
+  static const uint8_t DEFAULT_FEEDBACK_CB = 255;
 
   // @param topic_ns:     The interface will use the topics topic_ns/update and
   //                      topic_ns/feedback for communication.
@@ -69,28 +69,39 @@ public:
   //                      All callbacks will be called from that thread.
   InteractiveMarkerServer( std::string topic_ns, std::string server_id="", bool spin_thread = false );
 
-  // Destruction of the interface will lead to all markers being cleared.
+  // Destruction of the interface will lead to all managed markers being cleared.
   ~InteractiveMarkerServer();
 
-  // Add or replace a marker.
-  // @param int_marker The marker to be added or replaced
-  // @param feedback_cb function to call on the arrival of a feedback message
-  void insert( const visualization_msgs::InteractiveMarker &int_marker,
-      FeedbackCallback feedback_cb=FeedbackCallback() );
+  // Add or replace a marker
+  // Note: This change will not take effect until you call publishUpdate().
+  // @param int_marker:  The marker to be added or replaced
+  void insert( const visualization_msgs::InteractiveMarker &int_marker );
 
   // Update the pose of a marker with the specified name
+  // Note: This change will not take effect until you call publishUpdate()
   // @return true if a marker with that name exists
-  // @param name:   identifies the marker to be updated
-  // @param pose:   the new pose
+  // @param name:   Identifies the marker to be updated
+  // @param pose:   The new pose
   // @param header: header replacement. Leave this empty to use the previous one.
   bool setPose( const std::string &name,
       const geometry_msgs::Pose &pose,
       const std_msgs::Header &header=std_msgs::Header() );
 
   // Erase the marker with the specified name
+  // Note: This change will not take effect until you call publishUpdate().
   // @return true if a marker with that name exists
   // @param name:   identifies the marker to be erased
   bool erase( const std::string &name );
+
+  // Add or replace a callback function for the specified marker. The server will try to call any
+  // type-specific callback first. If none is set, it will call the default callback.
+  // If a callback for the given type already exists, it will be replaced.
+  // To unset a type-specific callback, pass in an empty one.
+  // @param feedback_cb:   Function to call on the arrival of a feedback message.
+  // @param feedback_type: Type of feedback for which to call the feedback.
+  //                       Leave this empty to make this the default callback.
+  bool setCallback( std::string name, FeedbackCallback feedback_cb,
+      uint8_t feedback_type=DEFAULT_FEEDBACK_CB );
 
   // apply pending updates, broadcast to all clients & reset update list
   void publishUpdate();
@@ -101,7 +112,8 @@ private:
   {
     ros::Time last_feedback;
     std::string last_client_id;
-    FeedbackCallback feedback_cb;
+    FeedbackCallback default_feedback_cb;
+    boost::unordered_map<uint8_t,FeedbackCallback> feedback_cbs;
     visualization_msgs::InteractiveMarker int_marker;
   };
 
@@ -115,8 +127,9 @@ private:
       POSE_UPDATE,
       ERASE
     } update_type;
-    FeedbackCallback feedback_cb;
     visualization_msgs::InteractiveMarker int_marker;
+    FeedbackCallback default_feedback_cb;
+    boost::unordered_map<uint8_t,FeedbackCallback> feedback_cbs;
   };
 
   typedef boost::unordered_map< std::string, UpdateContext > M_UpdateContext;
@@ -139,7 +152,8 @@ private:
   void publish( visualization_msgs::InteractiveMarkerUpdate &update );
 
   // Update pose, schedule update without locking
-  void doSetPose( M_MarkerContext::iterator marker_context_it,
+  void doSetPose( M_UpdateContext::iterator update_it,
+      const std::string &name,
       const geometry_msgs::Pose &pose,
       const std_msgs::Header &header );
 
