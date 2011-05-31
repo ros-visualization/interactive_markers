@@ -37,7 +37,7 @@
 namespace interactive_markers
 {
 
-InteractiveMarkerServer::InteractiveMarkerServer( std::string topic_ns, bool spin_thread ) :
+InteractiveMarkerServer::InteractiveMarkerServer( std::string topic_ns, std::string server_id, bool spin_thread ) :
     topic_ns_(topic_ns),
     seq_num_(0)
 {
@@ -47,15 +47,13 @@ InteractiveMarkerServer::InteractiveMarkerServer( std::string topic_ns, bool spi
     node_handle_.setCallbackQueue( &callback_queue_ );
   }
 
-  static boost::mutex mutex;
-  static int volatile count = 0;
-
+  if (!server_id.empty())
   {
-    boost::mutex::scoped_lock lock(mutex);
-    std::ostringstream s;
-    s << ros::this_node::getName() << "_" << count;
-    count++;
-    server_id_ = s.str();
+    server_id_ = ros::this_node::getName() + "/" + server_id;
+  }
+  else
+  {
+    server_id_ = ros::this_node::getName();
   }
 
   std::string marker_topic = topic_ns + "/update";
@@ -78,7 +76,7 @@ InteractiveMarkerServer::InteractiveMarkerServer( std::string topic_ns, bool spi
 
 InteractiveMarkerServer::~InteractiveMarkerServer()
 {
-  if (spin_thread_)
+  if (spin_thread_.get())
   {
     need_to_terminate_ = true;
     spin_thread_->join();

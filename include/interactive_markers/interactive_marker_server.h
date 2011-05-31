@@ -62,9 +62,12 @@ public:
 
   // @param topic_ns:     The interface will use the topics topic_ns/update and
   //                      topic_ns/feedback for communication.
+  // @param server_id:    If you run multiple servers on the same topic from
+  //                      within the same node, you will need to assign different names to them.
+  //                      Otherwise, leave this empty.
   // @param spin_thread:  If set to true, will spin up a thread for message handling.
   //                      All callbacks will be called from that thread.
-  InteractiveMarkerServer( std::string topic_ns, bool spin_thread = false );
+  InteractiveMarkerServer( std::string topic_ns, std::string server_id="", bool spin_thread = false );
 
   // Destruction of the interface will lead to all markers being cleared.
   ~InteractiveMarkerServer();
