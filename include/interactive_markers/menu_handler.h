@@ -112,8 +112,6 @@ private:
   boost::unordered_map<EntryHandle, EntryContext> entry_contexts_;
 
   EntryHandle current_handle_;
-
-//  visualisation_msgs::Menu menu_;
 };
 
 }

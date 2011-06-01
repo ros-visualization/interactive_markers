@@ -172,11 +172,7 @@ void InteractiveMarkerServer::publishUpdate()
 
       case UpdateContext::ERASE:
       {
-        if ( marker_context_it == marker_contexts_.end() )
-        {
-          ROS_ERROR( "Pending erase for non-existing marker found. This is a bug in InteractiveMarkerInterface." );
-        }
-        else
+        if ( marker_context_it != marker_contexts_.end() )
         {
           marker_contexts_.erase( update_it->first );
           update.erases.push_back( update_it->first );
