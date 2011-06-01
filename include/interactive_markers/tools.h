@@ -32,7 +32,7 @@
 
 #include <visualization_msgs/InteractiveMarker.h>
 
-namespace rviz
+namespace interactive_markers
 {
 
 /// @brief fill in default values & insert default controls when none are specified

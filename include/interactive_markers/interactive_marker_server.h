@@ -29,8 +29,8 @@
  * Author: David Gossow
  */
 
-#ifndef INTERACTIVE_MARKER_INTERFACE
-#define INTERACTIVE_MARKER_INTERFACE
+#ifndef INTERACTIVE_MARKER_SERVER
+#define INTERACTIVE_MARKER_SERVER
 
 #include <visualization_msgs/InteractiveMarkerUpdate.h>
 #include <visualization_msgs/InteractiveMarkerFeedback.h>
@@ -103,8 +103,12 @@ public:
   bool setCallback( std::string name, FeedbackCallback feedback_cb,
       uint8_t feedback_type=DEFAULT_FEEDBACK_CB );
 
-  // apply pending updates, broadcast to all clients & reset update list
+  // Apply pending updates, broadcast to all clients & reset update list
   void publishUpdate();
+
+  // Get marker by name
+  // @return true if a marker with that name exists
+  bool get( std::string name, visualization_msgs::InteractiveMarker &int_marker );
 
 private:
 

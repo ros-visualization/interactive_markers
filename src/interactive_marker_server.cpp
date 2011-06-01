@@ -291,6 +291,17 @@ void InteractiveMarkerServer::insert( const visualization_msgs::InteractiveMarke
   update_it->second.int_marker = int_marker;
 }
 
+bool InteractiveMarkerServer::get( std::string name, visualization_msgs::InteractiveMarker &int_marker )
+{
+  M_MarkerContext::iterator marker_context_it = marker_contexts_.find( name );
+  if ( marker_context_it == marker_contexts_.end() )
+  {
+    return false;
+  }
+
+  int_marker = marker_context_it->second.int_marker;
+  return true;
+}
 
 void InteractiveMarkerServer::processConnect( const ros::SingleSubscriberPublisher& pub )
 {

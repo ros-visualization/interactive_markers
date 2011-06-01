@@ -31,5 +31,6 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 rosbuild_add_library(${PROJECT_NAME} 
 src/interactive_marker_server.cpp
-src/interactive_marker_tools.cpp
+src/tools.cpp
+src/menu_handler.cpp
 )

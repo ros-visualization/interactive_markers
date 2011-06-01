@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "interactive_markers/interactive_marker_tools.h"
+#include "interactive_markers/tools.h"
 
 #include <LinearMath/btQuaternion.h>
 #include <LinearMath/btMatrix3x3.h>
@@ -35,7 +35,7 @@
 #include <math.h>
 #include <assert.h>
 
-namespace rviz
+namespace interactive_markers
 {
 
 void autoComplete( visualization_msgs::InteractiveMarker &msg )
