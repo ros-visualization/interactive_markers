@@ -44,7 +44,7 @@ MenuHandler::MenuHandler() :
 }
 
 MenuHandler::EntryHandle MenuHandler::insert( const std::string &title,
-    FeedbackCallback &feedback_cb )
+    const FeedbackCallback &feedback_cb )
 {
   EntryHandle handle = doInsert( title, feedback_cb );
   top_level_handles_.push_back( handle );
@@ -52,7 +52,7 @@ MenuHandler::EntryHandle MenuHandler::insert( const std::string &title,
 }
 
 MenuHandler::EntryHandle MenuHandler::insert( const std::string &title,
-    const std::string &command="", const std::string &command_type="" )
+    const std::string &command, const std::string &command_type )
 {
   EntryHandle handle = doInsert( title, command, command_type );
   top_level_handles_.push_back( handle );
@@ -61,7 +61,7 @@ MenuHandler::EntryHandle MenuHandler::insert( const std::string &title,
 
 
 MenuHandler::EntryHandle MenuHandler::insert( EntryHandle parent, const std::string &title,
-    FeedbackCallback &feedback_cb )
+    const FeedbackCallback &feedback_cb )
 {
   boost::unordered_map<EntryHandle, EntryContext>::iterator parent_context =
       entry_contexts_.find( parent );
@@ -78,7 +78,7 @@ MenuHandler::EntryHandle MenuHandler::insert( EntryHandle parent, const std::str
 
 
 MenuHandler::EntryHandle MenuHandler::insert( EntryHandle parent, const std::string &title,
-    const std::string &command="", const std::string &command_type="" )
+    const std::string &command, const std::string &command_type )
 {
   boost::unordered_map<EntryHandle, EntryContext>::iterator parent_context =
       entry_contexts_.find( parent );
@@ -128,7 +128,7 @@ bool MenuHandler::apply( InteractiveMarkerServer &server, const std::string &mar
 
   if ( !server.get( marker_name, int_marker ) )
   {
-    ROS_DEBUG( "Marker %s was not found.", marker_name.c_str() );
+    ROS_ERROR( "Marker %s was not found.", marker_name.c_str() );
     return false;
   }
 
@@ -156,7 +156,7 @@ bool MenuHandler::apply( InteractiveMarkerServer &server, const std::string &mar
 
     for ( unsigned s=0; s<top_level_context_it->second.sub_entries.size(); s++ )
     {
-      EntryHandle second_level_handle = top_level_context_it->second.sub_entries[t];
+      EntryHandle second_level_handle = top_level_context_it->second.sub_entries[s];
       boost::unordered_map<EntryHandle, EntryContext>::iterator second_level_context_it =
           entry_contexts_.find( second_level_handle );
 
@@ -184,7 +184,7 @@ bool MenuHandler::apply( InteractiveMarkerServer &server, const std::string &mar
 
 
 MenuHandler::EntryHandle MenuHandler::doInsert( const std::string &title,
-    FeedbackCallback &feedback_cb )
+    const FeedbackCallback &feedback_cb )
 {
   EntryHandle handle = current_handle_;
   current_handle_++;
@@ -229,7 +229,7 @@ visualization_msgs::MenuEntry MenuHandler::makeEntry( EntryContext& context )
   switch ( context.check_state )
   {
     case NO_CHECKBOX:
-      menu_entry.title = "    "+context.title;
+      menu_entry.title = context.title;
       break;
     case CHECKED:
       menu_entry.title = "[x] "+context.title;

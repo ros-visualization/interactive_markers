@@ -61,18 +61,18 @@ public:
   MenuHandler( );
 
   // Insert top-level entry with feedback function
-  EntryHandle insert( const std::string &title, FeedbackCallback &feedback_cb );
+  EntryHandle insert( const std::string &title, const FeedbackCallback &feedback_cb );
 
   // Insert top-level entry with custom (client-side) command
-  EntryHandle insert( const std::string &title, const std::string &command,
-      const std::string &command_type );
+  EntryHandle insert( const std::string &title, const std::string &command="",
+      const std::string &command_type="" );
 
   // Insert second-level entry with feedback function
-  EntryHandle insert( EntryHandle parent, const std::string &title, FeedbackCallback &feedback_cb );
+  EntryHandle insert( EntryHandle parent, const std::string &title, const FeedbackCallback &feedback_cb );
 
   // Insert second-level entry with custom (client-side) command
-  EntryHandle insert( EntryHandle parent, const std::string &title, const std::string &command,
-      const std::string &command_type );
+  EntryHandle insert( EntryHandle parent, const std::string &title, const std::string &command="",
+      const std::string &command_type="" );
 
   // Specify if an entry should be visible or hidden
   void setVisible( EntryHandle handle, bool visible );
@@ -103,7 +103,7 @@ private:
   visualization_msgs::MenuEntry makeEntry( EntryContext& context );
 
   // Insert without adding a top-level entry
-  EntryHandle doInsert( const std::string &title, FeedbackCallback &feedback_cb );
+  EntryHandle doInsert( const std::string &title, const FeedbackCallback &feedback_cb );
   EntryHandle doInsert( const std::string &title, const std::string &command,
       const std::string &command_type );
 

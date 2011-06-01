@@ -293,14 +293,44 @@ void InteractiveMarkerServer::insert( const visualization_msgs::InteractiveMarke
 
 bool InteractiveMarkerServer::get( std::string name, visualization_msgs::InteractiveMarker &int_marker )
 {
-  M_MarkerContext::iterator marker_context_it = marker_contexts_.find( name );
-  if ( marker_context_it == marker_contexts_.end() )
+  M_UpdateContext::iterator update_it = pending_updates_.find( name );
+
+  if ( update_it == pending_updates_.end() )
   {
-    return false;
+    M_MarkerContext::iterator marker_context_it = marker_contexts_.find( name );
+    if ( marker_context_it == marker_contexts_.end() )
+    {
+      return false;
+    }
+
+    int_marker = marker_context_it->second.int_marker;
+    return true;
   }
 
-  int_marker = marker_context_it->second.int_marker;
-  return true;
+  // if there's an update pending, we'll have to account for that
+  switch ( update_it->second.update_type )
+  {
+    case UpdateContext::ERASE:
+      return false;
+
+    case UpdateContext::POSE_UPDATE:
+    {
+      M_MarkerContext::iterator marker_context_it = marker_contexts_.find( name );
+      if ( marker_context_it == marker_contexts_.end() )
+      {
+        return false;
+      }
+      int_marker = update_it->second.int_marker;
+      int_marker.pose = update_it->second.int_marker.pose;
+      return true;
+    }
+
+    case UpdateContext::FULL_UPDATE:
+      int_marker = update_it->second.int_marker;
+      return true;
+  }
+
+  return false;
 }
 
 void InteractiveMarkerServer::processConnect( const ros::SingleSubscriberPublisher& pub )
