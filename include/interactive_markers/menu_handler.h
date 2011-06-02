@@ -47,10 +47,10 @@ class MenuHandler
 {
 public:
 
+  typedef unsigned int EntryHandle;
+
   typedef visualization_msgs::InteractiveMarkerFeedbackConstPtr FeedbackConstPtr;
   typedef boost::function< void ( const FeedbackConstPtr& ) > FeedbackCallback;
-
-  typedef unsigned int EntryHandle;
 
   enum CheckState {
     NO_CHECKBOX,
@@ -78,11 +78,20 @@ public:
   void setVisible( EntryHandle handle, bool visible );
 
   // Specify if an entry is checked or can't be checked at all
-  void setChecked( EntryHandle handle, CheckState check_state );
+  void setCheckState( EntryHandle handle, CheckState check_state );
+
+  // Get the current state of an entry
+  // @return true if the entry exists
+  bool getCheckState( EntryHandle handle, CheckState &check_state );
 
   // Copy current menu state into the marker given by the specified name &
   // divert callback for MENU_SELECT feedback to this manager
   bool apply( InteractiveMarkerServer &server, const std::string &marker_name );
+
+  // Get the entry handle based on a menu command. Only works for
+  // auto-generated (internal) command names.
+  // @return true if the entry exists
+  bool getHandle( const std::string &command, EntryHandle &handle );
 
 private:
 

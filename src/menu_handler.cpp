@@ -108,7 +108,7 @@ void MenuHandler::setVisible( EntryHandle handle, bool visible )
 }
 
 
-void MenuHandler::setChecked( EntryHandle handle, CheckState check_state )
+void MenuHandler::setCheckState( EntryHandle handle, CheckState check_state )
 {
   boost::unordered_map<EntryHandle, EntryContext>::iterator context =
       entry_contexts_.find( handle );
@@ -119,6 +119,22 @@ void MenuHandler::setChecked( EntryHandle handle, CheckState check_state )
   }
 
   context->second.check_state = check_state;
+}
+
+
+bool MenuHandler::getCheckState( EntryHandle handle, CheckState &check_state )
+{
+  boost::unordered_map<EntryHandle, EntryContext>::iterator context =
+      entry_contexts_.find( handle );
+
+  if ( context == entry_contexts_.end() )
+  {
+    check_state = NO_CHECKBOX;
+    return false;
+  }
+
+  check_state = context->second.check_state;
+  return true;
 }
 
 
@@ -248,12 +264,9 @@ visualization_msgs::MenuEntry MenuHandler::makeEntry( EntryContext& context )
 
 void MenuHandler::processFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback )
 {
-  std::string command = feedback->command;
-  if ( command.find( "menu_handler_cmd_") == 0 )
+  EntryHandle handle;
+  if ( getHandle(feedback->command, handle) )
   {
-    std::string id = command.substr( 17 );
-    EntryHandle handle = atoi( id.c_str() );
-
     boost::unordered_map<EntryHandle, EntryContext>::iterator context =
         entry_contexts_.find( handle );
 
@@ -262,6 +275,18 @@ void MenuHandler::processFeedback( const visualization_msgs::InteractiveMarkerFe
       context->second.feedback_cb( feedback );
     }
   }
+}
+
+bool MenuHandler::getHandle( const std::string &command, EntryHandle &handle )
+{
+  if ( command.find( "menu_handler_cmd_") != 0 )
+  {
+    return false;
+  }
+
+  std::string id = command.substr( 17 );
+  handle = atoi( id.c_str() );
+  return true;
 }
 
 }

@@ -378,23 +378,8 @@ void makeViewFacingButton( const visualization_msgs::InteractiveMarker &msg,
 
   visualization_msgs::Marker marker;
 
-  // rely on the auto-completion for the correct orientation
-  marker.pose.orientation = control.orientation;
-
   float base_scale = 0.25 * msg.scale;
   float base_z = 1.2 * msg.scale;
-
-  marker.type = visualization_msgs::Marker::CUBE;
-  marker.scale.x = base_scale * 0.1;
-  marker.scale.y = base_scale * 0.5 * (0.5+(float)text.size());
-  marker.scale.z = base_scale * 1.1;
-  marker.color.r = 0.0;
-  marker.color.g = 0.0;
-  marker.color.b = 0.0;
-  marker.color.a = 1.0;
-  marker.pose.position.z = base_z;
-
-  control.markers.push_back( marker );
 
   marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
   marker.scale.x = base_scale;
