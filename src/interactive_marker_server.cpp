@@ -227,31 +227,17 @@ bool InteractiveMarkerServer::setCallback( std::string name, FeedbackCallback fe
   boost::recursive_mutex::scoped_lock lock( mutex_ );
 
   M_MarkerContext::iterator marker_context_it = marker_contexts_.find( name );
-  if ( marker_context_it == marker_contexts_.end() )
+  M_UpdateContext::iterator update_it = pending_updates_.find( name );
+
+  if ( marker_context_it == marker_contexts_.end() && update_it == pending_updates_.end() )
   {
-    // the marker does not exist yet, we have to store the info in the pending updates list
-    M_UpdateContext::iterator update_it = pending_updates_.find( name );
-    if ( update_it == pending_updates_.end() )
-    {
-      return false;
-    }
-    if ( feedback_type == DEFAULT_FEEDBACK_CB )
-    {
-      update_it->second.default_feedback_cb = feedback_cb;
-    }
-    else
-    {
-      if ( feedback_cb )
-      {
-        update_it->second.feedback_cbs[feedback_type] = feedback_cb;
-      }
-      else
-      {
-        update_it->second.feedback_cbs.erase( feedback_type );
-      }
-    }
+    return false;
   }
-  else
+
+  // we need to overwrite both the callbacks for the actual marker
+  // and the update, if there's any
+
+  if ( marker_context_it != marker_contexts_.end() )
   {
     // the marker exists, so we can just overwrite the existing callbacks
     if ( feedback_type == DEFAULT_FEEDBACK_CB )
@@ -267,6 +253,25 @@ bool InteractiveMarkerServer::setCallback( std::string name, FeedbackCallback fe
       else
       {
         marker_context_it->second.feedback_cbs.erase( feedback_type );
+      }
+    }
+  }
+
+  if ( update_it != pending_updates_.end() )
+  {
+    if ( feedback_type == DEFAULT_FEEDBACK_CB )
+    {
+      update_it->second.default_feedback_cb = feedback_cb;
+    }
+    else
+    {
+      if ( feedback_cb )
+      {
+        update_it->second.feedback_cbs[feedback_type] = feedback_cb;
+      }
+      else
+      {
+        update_it->second.feedback_cbs.erase( feedback_type );
       }
     }
   }
@@ -332,7 +337,7 @@ bool InteractiveMarkerServer::get( std::string name, visualization_msgs::Interac
       {
         return false;
       }
-      int_marker = update_it->second.int_marker;
+      int_marker = marker_context_it->second.int_marker;
       int_marker.pose = update_it->second.int_marker.pose;
       return true;
     }

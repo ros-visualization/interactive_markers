@@ -195,7 +195,6 @@ bool MenuHandler::apply( InteractiveMarkerServer &server, const std::string &mar
     int_marker.menu.push_back( menu );
   }
 
-  ROS_INFO_STREAM( "Applying to '" << marker_name << "'" );
   server.insert( int_marker );
   server.setCallback( marker_name, boost::bind( &MenuHandler::processFeedback, this, _1 ), visualization_msgs::InteractiveMarkerFeedback::MENU_SELECT );
   managed_markers_.insert( marker_name );
@@ -301,6 +300,13 @@ bool MenuHandler::getHandle( const std::string &command, EntryHandle &handle )
 
   std::string id = command.substr( 17 );
   handle = atoi( id.c_str() );
+
+  // check if the handle exists
+  if ( entry_contexts_.find( handle ) == entry_contexts_.end() )
+  {
+    return false;
+  }
+
   return true;
 }
 
