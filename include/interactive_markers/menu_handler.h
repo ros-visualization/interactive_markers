@@ -88,6 +88,9 @@ public:
   // divert callback for MENU_SELECT feedback to this manager
   bool apply( InteractiveMarkerServer &server, const std::string &marker_name );
 
+  // Re-apply to all markers that this was applied to previously
+  bool reApply( InteractiveMarkerServer &server );
+
   // Get the entry handle based on a menu command. Only works for
   // auto-generated (internal) command names.
   // @return true if the entry exists
@@ -121,6 +124,8 @@ private:
   boost::unordered_map<EntryHandle, EntryContext> entry_contexts_;
 
   EntryHandle current_handle_;
+
+  std::set<std::string> managed_markers_;
 };
 
 }

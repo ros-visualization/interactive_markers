@@ -144,7 +144,9 @@ bool MenuHandler::apply( InteractiveMarkerServer &server, const std::string &mar
 
   if ( !server.get( marker_name, int_marker ) )
   {
-    ROS_ERROR( "Marker %s was not found.", marker_name.c_str() );
+    // forget marker name.
+    ROS_WARN_STREAM( "Interactive marker '" << marker_name << "' does not exist." );
+    managed_markers_.erase( marker_name );
     return false;
   }
 
@@ -193,9 +195,22 @@ bool MenuHandler::apply( InteractiveMarkerServer &server, const std::string &mar
     int_marker.menu.push_back( menu );
   }
 
+  ROS_INFO_STREAM( "Applying to '" << marker_name << "'" );
   server.insert( int_marker );
   server.setCallback( marker_name, boost::bind( &MenuHandler::processFeedback, this, _1 ), visualization_msgs::InteractiveMarkerFeedback::MENU_SELECT );
+  managed_markers_.insert( marker_name );
   return true;
+}
+
+bool MenuHandler::reApply( InteractiveMarkerServer &server )
+{
+  bool success = true;
+  std::set<std::string>::iterator it = managed_markers_.begin();
+  for ( ; it!=managed_markers_.end(); it++ )
+  {
+    success = success && apply( server, *it );
+  }
+  return success;
 }
 
 

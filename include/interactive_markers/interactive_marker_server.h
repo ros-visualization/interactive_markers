@@ -77,6 +77,15 @@ public:
   // @param int_marker:  The marker to be added or replaced
   void insert( const visualization_msgs::InteractiveMarker &int_marker );
 
+  // Add or replace a marker
+  // Note: This change will not take effect until you call publishUpdate().
+  // @param int_marker:  The marker to be added or replaced
+  // @param feedback_cb:   Function to call on the arrival of a feedback message.
+  // @param feedback_type: Type of feedback for which to call the feedback.
+  //                       Leave this empty to make this the default callback.
+  void insert( const visualization_msgs::InteractiveMarker &int_marker,
+               FeedbackCallback feedback_cb, uint8_t feedback_type=DEFAULT_FEEDBACK_CB);
+
   // Update the pose of a marker with the specified name
   // Note: This change will not take effect until you call publishUpdate()
   // @return true if a marker with that name exists
