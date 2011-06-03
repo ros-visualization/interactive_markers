@@ -75,10 +75,10 @@ public:
       const std::string &command_type="" );
 
   // Specify if an entry should be visible or hidden
-  void setVisible( EntryHandle handle, bool visible );
+  bool setVisible( EntryHandle handle, bool visible );
 
   // Specify if an entry is checked or can't be checked at all
-  void setCheckState( EntryHandle handle, CheckState check_state );
+  bool setCheckState( EntryHandle handle, CheckState check_state );
 
   // Get the current state of an entry
   // @return true if the entry exists

@@ -94,31 +94,33 @@ MenuHandler::EntryHandle MenuHandler::insert( EntryHandle parent, const std::str
 }
 
 
-void MenuHandler::setVisible( EntryHandle handle, bool visible )
+bool MenuHandler::setVisible( EntryHandle handle, bool visible )
 {
   boost::unordered_map<EntryHandle, EntryContext>::iterator context =
       entry_contexts_.find( handle );
 
   if ( context == entry_contexts_.end() )
   {
-    return;
+    return false;
   }
 
   context->second.visible = visible;
+  return true;
 }
 
 
-void MenuHandler::setCheckState( EntryHandle handle, CheckState check_state )
+bool MenuHandler::setCheckState( EntryHandle handle, CheckState check_state )
 {
   boost::unordered_map<EntryHandle, EntryContext>::iterator context =
       entry_contexts_.find( handle );
 
   if ( context == entry_contexts_.end() )
   {
-    return;
+    return false;
   }
 
   context->second.check_state = check_state;
+  return true;
 }
 
 
