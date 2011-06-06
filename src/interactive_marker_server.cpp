@@ -84,14 +84,8 @@ InteractiveMarkerServer::~InteractiveMarkerServer()
 
   if ( node_handle_.ok() )
   {
-    // erase all markers
-    pending_updates_.clear();
-    M_MarkerContext::iterator it;
-    for ( it = marker_contexts_.begin(); it != marker_contexts_.end(); it++ )
-    {
-      erase( it->first );
-    }
-    publishUpdate();
+    clear();
+    applyChanges();
   }
 }
 
@@ -109,7 +103,7 @@ void InteractiveMarkerServer::spinThread()
 }
 
 
-void InteractiveMarkerServer::publishUpdate()
+void InteractiveMarkerServer::applyChanges()
 {
   boost::recursive_mutex::scoped_lock lock( mutex_ );
 
@@ -193,6 +187,17 @@ bool InteractiveMarkerServer::erase( const std::string &name )
 
   pending_updates_[name].update_type = UpdateContext::ERASE;
   return true;
+}
+
+void InteractiveMarkerServer::clear()
+{
+  // erase all markers
+  pending_updates_.clear();
+  M_MarkerContext::iterator it;
+  for ( it = marker_contexts_.begin(); it != marker_contexts_.end(); it++ )
+  {
+    erase( it->first );
+  }
 }
 
 

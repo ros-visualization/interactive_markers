@@ -49,8 +49,10 @@
 namespace interactive_markers
 {
 
-// Acts as a server to one or many GUIs (e.g. rviz)
-// displaying a set of interactive markers
+// Acts as a server to one or many GUIs (e.g. rviz) displaying a set of interactive markers
+//
+// Note: Keep in mind that changes made by calling insert(), erase(), setCallback() etc.
+//       are not applied until calling applyChanges().
 class InteractiveMarkerServer : boost::noncopyable
 {
 public:
@@ -73,12 +75,12 @@ public:
   ~InteractiveMarkerServer();
 
   // Add or replace a marker
-  // Note: This change will not take effect until you call publishUpdate().
+  // Note: This change will not take effect until you call applyChanges().
   // @param int_marker:  The marker to be added or replaced
   void insert( const visualization_msgs::InteractiveMarker &int_marker );
 
   // Add or replace a marker
-  // Note: This change will not take effect until you call publishUpdate().
+  // Note: This change will not take effect until you call applyChanges().
   // @param int_marker:  The marker to be added or replaced
   // @param feedback_cb:   Function to call on the arrival of a feedback message.
   // @param feedback_type: Type of feedback for which to call the feedback.
@@ -87,7 +89,7 @@ public:
                FeedbackCallback feedback_cb, uint8_t feedback_type=DEFAULT_FEEDBACK_CB);
 
   // Update the pose of a marker with the specified name
-  // Note: This change will not take effect until you call publishUpdate()
+  // Note: This change will not take effect until you call applyChanges()
   // @return true if a marker with that name exists
   // @param name:   Identifies the marker to be updated
   // @param pose:   The new pose
@@ -97,10 +99,13 @@ public:
       const std_msgs::Header &header=std_msgs::Header() );
 
   // Erase the marker with the specified name
-  // Note: This change will not take effect until you call publishUpdate().
+  // Note: This change will not take effect until you call applyChanges().
   // @return true if a marker with that name exists
   // @param name:   identifies the marker to be erased
   bool erase( const std::string &name );
+
+  // Clear all markers
+  void clear();
 
   // Add or replace a callback function for the specified marker. The server will try to call any
   // type-specific callback first. If none is set, it will call the default callback.
@@ -112,8 +117,9 @@ public:
   bool setCallback( std::string name, FeedbackCallback feedback_cb,
       uint8_t feedback_type=DEFAULT_FEEDBACK_CB );
 
-  // Apply pending updates, broadcast to all clients & reset update list
-  void publishUpdate();
+  // Apply changes made since the last call to this method &
+  // broadcast an update to all clients.
+  void applyChanges();
 
   // Get marker by name
   // @return true if a marker with that name exists
