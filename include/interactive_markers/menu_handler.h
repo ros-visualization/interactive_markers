@@ -96,6 +96,11 @@ public:
   // @return true if the entry exists
   bool getHandle( const std::string &command, EntryHandle &handle );
 
+  // Get the title for the given menu entry
+  // auto-generated (internal) command names.
+  // @return true if the entry exists
+  bool getTitle( EntryHandle handle, std::string &title );
+
 private:
 
   struct EntryContext

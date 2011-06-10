@@ -312,4 +312,20 @@ bool MenuHandler::getHandle( const std::string &command, EntryHandle &handle )
   return true;
 }
 
+bool MenuHandler::getTitle( EntryHandle handle, std::string &title )
+{
+  boost::unordered_map<EntryHandle, EntryContext>::iterator context =
+      entry_contexts_.find( handle );
+
+  if ( context == entry_contexts_.end() )
+  {
+    return false;
+  }
+
+  title = context->second.title;
+  return true;
+}
+
+
+
 }
