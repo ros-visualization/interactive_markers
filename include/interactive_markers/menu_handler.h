@@ -64,15 +64,16 @@ public:
   EntryHandle insert( const std::string &title, const FeedbackCallback &feedback_cb );
 
   // Insert top-level entry with custom (client-side) command
-  EntryHandle insert( const std::string &title, const std::string &command="",
-      const std::string &command_type="" );
+  EntryHandle insert( const std::string &title,
+      const std::string &command_type="", const std::string &command="" );
 
   // Insert second-level entry with feedback function
-  EntryHandle insert( EntryHandle parent, const std::string &title, const FeedbackCallback &feedback_cb );
+  EntryHandle insert( EntryHandle parent, const std::string &title,
+      const FeedbackCallback &feedback_cb );
 
   // Insert second-level entry with custom (client-side) command
-  EntryHandle insert( EntryHandle parent, const std::string &title, const std::string &command="",
-      const std::string &command_type="" );
+  EntryHandle insert( EntryHandle parent, const std::string &title,
+      const std::string &command_type="", const std::string &command="" );
 
   // Specify if an entry should be visible or hidden
   bool setVisible( EntryHandle handle, bool visible );
@@ -121,8 +122,8 @@ private:
 
   // Insert without adding a top-level entry
   EntryHandle doInsert( const std::string &title, const FeedbackCallback &feedback_cb );
-  EntryHandle doInsert( const std::string &title, const std::string &command,
-      const std::string &command_type );
+  EntryHandle doInsert( const std::string &title,
+    const std::string &command_type, const std::string &command );
 
   std::vector<EntryHandle> top_level_handles_;
 

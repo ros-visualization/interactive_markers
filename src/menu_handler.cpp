@@ -52,9 +52,9 @@ MenuHandler::EntryHandle MenuHandler::insert( const std::string &title,
 }
 
 MenuHandler::EntryHandle MenuHandler::insert( const std::string &title,
-    const std::string &command, const std::string &command_type )
+    const std::string &command_type, const std::string &command )
 {
-  EntryHandle handle = doInsert( title, command, command_type );
+  EntryHandle handle = doInsert( title, command_type, command );
   top_level_handles_.push_back( handle );
   return handle;
 }
@@ -78,7 +78,7 @@ MenuHandler::EntryHandle MenuHandler::insert( EntryHandle parent, const std::str
 
 
 MenuHandler::EntryHandle MenuHandler::insert( EntryHandle parent, const std::string &title,
-    const std::string &command, const std::string &command_type )
+    const std::string &command_type, const std::string &command )
 {
   boost::unordered_map<EntryHandle, EntryContext>::iterator parent_context =
       entry_contexts_.find( parent );
@@ -88,7 +88,7 @@ MenuHandler::EntryHandle MenuHandler::insert( EntryHandle parent, const std::str
     return 0;
   }
 
-  EntryHandle handle = doInsert( title, command, command_type );
+  EntryHandle handle = doInsert( title, command_type, command );
   parent_context->second.sub_entries.push_back( handle );
   return handle;
 }
@@ -237,7 +237,7 @@ MenuHandler::EntryHandle MenuHandler::doInsert( const std::string &title,
 
 
 MenuHandler::EntryHandle MenuHandler::doInsert( const std::string &title,
-    const std::string &command="", const std::string &command_type="" )
+  const std::string &command_type, const std::string &command )
 {
   EntryHandle handle = current_handle_;
   current_handle_++;
