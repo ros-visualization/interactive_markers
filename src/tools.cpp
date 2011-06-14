@@ -212,6 +212,10 @@ void autoComplete( const visualization_msgs::InteractiveMarker &msg,
     marker.pose.orientation.y = marker_orientation.y();
     marker.pose.orientation.z = marker_orientation.z();
     marker.pose.orientation.w = marker_orientation.w();
+
+    static volatile unsigned id = 0;
+    marker.id = id++;
+    marker.ns = msg.name;
   }
 }
 

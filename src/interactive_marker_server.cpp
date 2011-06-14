@@ -416,13 +416,6 @@ void InteractiveMarkerServer::processFeedback( const FeedbackConstPtr& feedback 
     doSetPose( pending_updates_.find( feedback->marker_name ), feedback->marker_name, feedback->pose, feedback->header );
   }
 
-  if ( feedback->event_type == visualization_msgs::InteractiveMarkerFeedback::KEEP_ALIVE )
-  {
-    ROS_DEBUG( "Received keep-alive from %s", feedback->marker_name.c_str() );
-    // we don't want the user to receive keep-alive messages
-    return;
-  }
-
   // call feedback handler
   boost::unordered_map<uint8_t,FeedbackCallback>::iterator feedback_cb_it = marker_context.feedback_cbs.find( feedback->event_type );
   if ( feedback_cb_it != marker_context.feedback_cbs.end() && feedback_cb_it->second )
