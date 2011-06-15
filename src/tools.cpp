@@ -193,13 +193,16 @@ void autoComplete( const visualization_msgs::InteractiveMarker &msg,
 
     marker_orientation.normalize();
 
-    // if the header is empty, interpret as local coordinates relative to interacitve marker pose
+    // if the header is empty, interpret as local coordinates relative to interactive marker pose
     if ( marker.header.frame_id.empty() )
     {
       marker.header = msg.header;
 
       // interpret marker pose as relative to interactive marker pose
-      marker_orientation = int_marker_orientation * marker_orientation;
+      if ( control.orientation_mode == visualization_msgs::InteractiveMarkerControl::INHERIT )
+      {
+        marker_orientation = int_marker_orientation * marker_orientation;
+      }
       marker_position = int_marker_position + ( btMatrix3x3(int_marker_orientation) * marker_position);
     }
 

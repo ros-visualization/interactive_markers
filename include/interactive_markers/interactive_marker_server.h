@@ -74,7 +74,7 @@ public:
   // Destruction of the interface will lead to all managed markers being cleared.
   ~InteractiveMarkerServer();
 
-  // Add or replace a marker
+  // Add or replace a marker without changing its callback functions.
   // Note: This change will not take effect until you call applyChanges().
   // @param int_marker:  The marker to be added or replaced
   void insert( const visualization_msgs::InteractiveMarker &int_marker );
