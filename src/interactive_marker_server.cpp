@@ -406,14 +406,17 @@ void InteractiveMarkerServer::processFeedback( const FeedbackConstPtr& feedback 
   marker_context.last_feedback = ros::Time::now();
   marker_context.last_client_id = feedback->client_id;
 
-  if ( marker_context.int_marker.header.stamp == ros::Time(0) )
+  if ( feedback->event_type == visualization_msgs::InteractiveMarkerFeedback::POSE_UPDATE )
   {
-    // keep the old header
-    doSetPose( pending_updates_.find( feedback->marker_name ), feedback->marker_name, feedback->pose, marker_context.int_marker.header );
-  }
-  else
-  {
-    doSetPose( pending_updates_.find( feedback->marker_name ), feedback->marker_name, feedback->pose, feedback->header );
+    if ( marker_context.int_marker.header.stamp == ros::Time(0) )
+    {
+      // keep the old header
+      doSetPose( pending_updates_.find( feedback->marker_name ), feedback->marker_name, feedback->pose, marker_context.int_marker.header );
+    }
+    else
+    {
+      doSetPose( pending_updates_.find( feedback->marker_name ), feedback->marker_name, feedback->pose, feedback->header );
+    }
   }
 
   // call feedback handler
