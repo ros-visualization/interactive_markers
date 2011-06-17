@@ -60,46 +60,45 @@ public:
 
   MenuHandler( );
 
-  // Insert top-level entry with feedback function
+  /// Insert top-level entry with feedback function
   EntryHandle insert( const std::string &title, const FeedbackCallback &feedback_cb );
 
-  // Insert top-level entry with custom (client-side) command
+  /// Insert top-level entry with custom (client-side) command
   EntryHandle insert( const std::string &title,
       const std::string &command_type="", const std::string &command="" );
 
-  // Insert second-level entry with feedback function
+  /// Insert second-level entry with feedback function
   EntryHandle insert( EntryHandle parent, const std::string &title,
       const FeedbackCallback &feedback_cb );
 
-  // Insert second-level entry with custom (client-side) command
+  /// Insert second-level entry with custom (client-side) command
   EntryHandle insert( EntryHandle parent, const std::string &title,
       const std::string &command_type="", const std::string &command="" );
 
-  // Specify if an entry should be visible or hidden
+  /// Specify if an entry should be visible or hidden
   bool setVisible( EntryHandle handle, bool visible );
 
-  // Specify if an entry is checked or can't be checked at all
+  /// Specify if an entry is checked or can't be checked at all
   bool setCheckState( EntryHandle handle, CheckState check_state );
 
-  // Get the current state of an entry
-  // @return true if the entry exists
+  /// Get the current state of an entry
+  /// @return true if the entry exists
   bool getCheckState( EntryHandle handle, CheckState &check_state );
 
-  // Copy current menu state into the marker given by the specified name &
-  // divert callback for MENU_SELECT feedback to this manager
+  /// Copy current menu state into the marker given by the specified name &
+  /// divert callback for MENU_SELECT feedback to this manager
   bool apply( InteractiveMarkerServer &server, const std::string &marker_name );
 
-  // Re-apply to all markers that this was applied to previously
+  /// Re-apply to all markers that this was applied to previously
   bool reApply( InteractiveMarkerServer &server );
 
-  // Get the entry handle based on a menu command. Only works for
-  // auto-generated (internal) command names.
-  // @return true if the entry exists
+  /// Get the entry handle based on a menu command. Only works for
+  /// auto-generated (internal) command names.
+  /// @return true if the entry exists
   bool getHandle( const std::string &command, EntryHandle &handle );
 
-  // Get the title for the given menu entry
-  // auto-generated (internal) command names.
-  // @return true if the entry exists
+  /// Get the title for the given menu entry
+  /// @return true if the entry exists
   bool getTitle( EntryHandle handle, std::string &title );
 
 private:

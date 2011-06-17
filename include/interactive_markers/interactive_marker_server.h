@@ -87,7 +87,7 @@ public:
   /// Update the pose of a marker with the specified name
   /// Note: This change will not take effect until you call applyChanges()
   /// @return true if a marker with that name exists
-  /// @param name:   Identifies the marker to be updated
+  /// @param name:   Name of the interactive marker
   /// @param pose:   The new pose
   /// @param header: Header replacement. Leave this empty to use the previous one.
   bool setPose( const std::string &name,
@@ -97,7 +97,7 @@ public:
   /// Erase the marker with the specified name
   /// Note: This change will not take effect until you call applyChanges().
   /// @return true if a marker with that name exists
-  /// @param name: identifies the marker to be erased
+  /// @param name: Name of the interactive marker
   bool erase( const std::string &name );
 
   /// Clear all markers.
@@ -110,6 +110,7 @@ public:
   /// If none is set, it will call the default callback.
   /// If a callback for the given type already exists, it will be replaced.
   /// To unset a type-specific callback, pass in an empty one.
+  /// @param name:          Name of the interactive marker
   /// @param feedback_cb:   Function to call on the arrival of a feedback message.
   /// @param feedback_type: Type of feedback for which to call the feedback.
   ///                       Leave this empty to make this the default callback.
@@ -121,6 +122,8 @@ public:
   void applyChanges();
 
   /// Get marker by name
+  /// @param name:            Name of the interactive marker
+  /// @param[out] int_marker: Output message
   /// @return true if a marker with that name exists
   bool get( std::string name, visualization_msgs::InteractiveMarker &int_marker );
 
