@@ -74,26 +74,22 @@ public:
   // Destruction of the interface will lead to all managed markers being cleared.
   ~InteractiveMarkerServer();
 
-  // Add or replace a marker without changing its callback functions.
-  // Note: This change will not take effect until you call applyChanges().
-  // @param int_marker:  The marker to be added or replaced
-  void insert( const visualization_msgs::InteractiveMarker &int_marker );
-
-  // Add or replace a marker
-  // Note: This change will not take effect until you call applyChanges().
-  // @param int_marker:  The marker to be added or replaced
+  // Add or replace a marker and its callback functions
+  // Note: Changes to the marker will not take effect until you call applyChanges().
+  // The callback changes immediately.
+  // @param int_marker:    The marker to be added or replaced
   // @param feedback_cb:   Function to call on the arrival of a feedback message.
   // @param feedback_type: Type of feedback for which to call the feedback.
-  //                       Leave this empty to make this the default callback.
   void insert( const visualization_msgs::InteractiveMarker &int_marker,
-               FeedbackCallback feedback_cb, uint8_t feedback_type=DEFAULT_FEEDBACK_CB);
+               FeedbackCallback feedback_cb=FeedbackCallback(),
+               uint8_t feedback_type=DEFAULT_FEEDBACK_CB );
 
   // Update the pose of a marker with the specified name
   // Note: This change will not take effect until you call applyChanges()
   // @return true if a marker with that name exists
   // @param name:   Identifies the marker to be updated
   // @param pose:   The new pose
-  // @param header: header replacement. Leave this empty to use the previous one.
+  // @param header: Header replacement. Leave this empty to use the previous one.
   bool setPose( const std::string &name,
       const geometry_msgs::Pose &pose,
       const std_msgs::Header &header=std_msgs::Header() );
@@ -101,14 +97,17 @@ public:
   // Erase the marker with the specified name
   // Note: This change will not take effect until you call applyChanges().
   // @return true if a marker with that name exists
-  // @param name:   identifies the marker to be erased
+  // @param name: identifies the marker to be erased
   bool erase( const std::string &name );
 
-  // Clear all markers
+  // Clear all markers.
+  // Note: This change will not take effect until you call applyChanges().
   void clear();
 
-  // Add or replace a callback function for the specified marker. The server will try to call any
-  // type-specific callback first. If none is set, it will call the default callback.
+  // Add or replace a callback function for the specified marker.
+  // Note: This change will not take effect until you call applyChanges().
+  // The server will try to call any type-specific callback first.
+  // If none is set, it will call the default callback.
   // If a callback for the given type already exists, it will be replaced.
   // To unset a type-specific callback, pass in an empty one.
   // @param feedback_cb:   Function to call on the arrival of a feedback message.
@@ -176,13 +175,13 @@ private:
       const geometry_msgs::Pose &pose,
       const std_msgs::Header &header );
 
-  // all managed goals_
+  // contains the current state of all markers
   M_MarkerContext marker_contexts_;
 
   // updates that have to be sent on the next publish
   M_UpdateContext pending_updates_;
 
-  // topic namespace to use or the actions
+  // topic namespace to use
   std::string topic_ns_;
   
   boost::recursive_mutex mutex_;

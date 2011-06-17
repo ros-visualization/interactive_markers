@@ -283,21 +283,8 @@ bool InteractiveMarkerServer::setCallback( std::string name, FeedbackCallback fe
   return true;
 }
 
-void InteractiveMarkerServer::insert( const visualization_msgs::InteractiveMarker &int_marker )
-{
-  boost::recursive_mutex::scoped_lock lock( mutex_ );
-
-  M_UpdateContext::iterator update_it = pending_updates_.find( int_marker.name );
-  if ( update_it == pending_updates_.end() )
-  {
-    update_it = pending_updates_.insert( std::make_pair( int_marker.name, UpdateContext() ) ).first;
-  }
-
-  update_it->second.update_type = UpdateContext::FULL_UPDATE;
-  update_it->second.int_marker = int_marker;
-}
-
-void InteractiveMarkerServer::insert( const visualization_msgs::InteractiveMarker &int_marker, FeedbackCallback feedback_cb, uint8_t feedback_type)
+void InteractiveMarkerServer::insert( const visualization_msgs::InteractiveMarker &int_marker,
+    FeedbackCallback feedback_cb, uint8_t feedback_type)
 {
   boost::recursive_mutex::scoped_lock lock( mutex_ );
 
