@@ -1,9 +1,8 @@
 <package>
   <description brief="interactive_markers">
 
-     Interactive markers enable developers to create custom UI controls in RViz. 
-     These controls communication with a separate interactive marker server that 
-     enables the development of specialized applications, like robot teleoperation.
+     Interactive markers allow you to add a 3D user interface
+     to your application, which can be accessed from tools like RViz.
 
   </description>
   <author>David Gossow</author>

@@ -124,9 +124,9 @@ bool MenuHandler::setCheckState( EntryHandle handle, CheckState check_state )
 }
 
 
-bool MenuHandler::getCheckState( EntryHandle handle, CheckState &check_state )
+bool MenuHandler::getCheckState( EntryHandle handle, CheckState &check_state ) const
 {
-  boost::unordered_map<EntryHandle, EntryContext>::iterator context =
+  boost::unordered_map<EntryHandle, EntryContext>::const_iterator context =
       entry_contexts_.find( handle );
 
   if ( context == entry_contexts_.end() )
@@ -293,7 +293,7 @@ void MenuHandler::processFeedback( const visualization_msgs::InteractiveMarkerFe
   }
 }
 
-bool MenuHandler::getHandle( const std::string &command, EntryHandle &handle )
+bool MenuHandler::getHandle( const std::string &command, EntryHandle &handle ) const
 {
   if ( command.find( "menu_handler_cmd_") != 0 )
   {
@@ -312,9 +312,9 @@ bool MenuHandler::getHandle( const std::string &command, EntryHandle &handle )
   return true;
 }
 
-bool MenuHandler::getTitle( EntryHandle handle, std::string &title )
+bool MenuHandler::getTitle( EntryHandle handle, std::string &title ) const
 {
-  boost::unordered_map<EntryHandle, EntryContext>::iterator context =
+  boost::unordered_map<EntryHandle, EntryContext>::const_iterator context =
       entry_contexts_.find( handle );
 
   if ( context == entry_contexts_.end() )

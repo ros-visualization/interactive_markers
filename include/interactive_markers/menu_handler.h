@@ -83,7 +83,7 @@ public:
 
   /// Get the current state of an entry
   /// @return true if the entry exists
-  bool getCheckState( EntryHandle handle, CheckState &check_state );
+  bool getCheckState( EntryHandle handle, CheckState &check_state ) const;
 
   /// Copy current menu state into the marker given by the specified name &
   /// divert callback for MENU_SELECT feedback to this manager
@@ -95,11 +95,11 @@ public:
   /// Get the entry handle based on a menu command. Only works for
   /// auto-generated (internal) command names.
   /// @return true if the entry exists
-  bool getHandle( const std::string &command, EntryHandle &handle );
+  bool getHandle( const std::string &command, EntryHandle &handle ) const;
 
   /// Get the title for the given menu entry
   /// @return true if the entry exists
-  bool getTitle( EntryHandle handle, std::string &title );
+  bool getTitle( EntryHandle handle, std::string &title ) const;
 
 private:
 

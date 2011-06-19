@@ -2,8 +2,6 @@
 \mainpage
 \htmlinclude manifest.html
 
-\b interactive_markers is ... 
-
 <!-- 
 Provide an overview of your package.
 -->
@@ -22,5 +20,10 @@ should use the doxygen 'group' tag to keep these APIs together. For
 example, the roscpp documentation has 'libros' group.
 -->
 
+interactive_markers::InteractiveMarkerServer
+
+interactive_markers::MenuHandler
+
+tools.h
 
 */

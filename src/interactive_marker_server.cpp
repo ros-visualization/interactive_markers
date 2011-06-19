@@ -37,7 +37,7 @@
 namespace interactive_markers
 {
 
-InteractiveMarkerServer::InteractiveMarkerServer( std::string topic_ns, std::string server_id, bool spin_thread ) :
+InteractiveMarkerServer::InteractiveMarkerServer( const std::string &topic_ns, const std::string &server_id, bool spin_thread ) :
     topic_ns_(topic_ns),
     seq_num_(0)
 {
@@ -227,7 +227,7 @@ bool InteractiveMarkerServer::setPose( const std::string &name, const geometry_m
   return true;
 }
 
-bool InteractiveMarkerServer::setCallback( std::string name, FeedbackCallback feedback_cb, uint8_t feedback_type  )
+bool InteractiveMarkerServer::setCallback( const std::string &name, FeedbackCallback feedback_cb, uint8_t feedback_type  )
 {
   boost::recursive_mutex::scoped_lock lock( mutex_ );
 
@@ -300,13 +300,13 @@ void InteractiveMarkerServer::insert( const visualization_msgs::InteractiveMarke
   setCallback( int_marker.name, feedback_cb, feedback_type  );
 }
 
-bool InteractiveMarkerServer::get( std::string name, visualization_msgs::InteractiveMarker &int_marker )
+bool InteractiveMarkerServer::get( std::string name, visualization_msgs::InteractiveMarker &int_marker ) const
 {
-  M_UpdateContext::iterator update_it = pending_updates_.find( name );
+  M_UpdateContext::const_iterator update_it = pending_updates_.find( name );
 
   if ( update_it == pending_updates_.end() )
   {
-    M_MarkerContext::iterator marker_context_it = marker_contexts_.find( name );
+    M_MarkerContext::const_iterator marker_context_it = marker_contexts_.find( name );
     if ( marker_context_it == marker_contexts_.end() )
     {
       return false;
@@ -324,7 +324,7 @@ bool InteractiveMarkerServer::get( std::string name, visualization_msgs::Interac
 
     case UpdateContext::POSE_UPDATE:
     {
-      M_MarkerContext::iterator marker_context_it = marker_contexts_.find( name );
+      M_MarkerContext::const_iterator marker_context_it = marker_contexts_.find( name );
       if ( marker_context_it == marker_contexts_.end() )
       {
         return false;
