@@ -46,15 +46,16 @@ MenuHandler::MenuHandler() :
 MenuHandler::EntryHandle MenuHandler::insert( const std::string &title,
     const FeedbackCallback &feedback_cb )
 {
-  EntryHandle handle = doInsert( title, feedback_cb );
+  EntryHandle handle = doInsert( title, visualization_msgs::MenuEntry::FEEDBACK, "", feedback_cb );
   top_level_handles_.push_back( handle );
   return handle;
 }
 
 MenuHandler::EntryHandle MenuHandler::insert( const std::string &title,
-    const std::string &command_type, const std::string &command )
+                                              const uint8_t command_type,
+                                              const std::string &command )
 {
-  EntryHandle handle = doInsert( title, command_type, command );
+  EntryHandle handle = doInsert( title, command_type, command, FeedbackCallback() );
   top_level_handles_.push_back( handle );
   return handle;
 }
@@ -66,29 +67,24 @@ MenuHandler::EntryHandle MenuHandler::insert( EntryHandle parent, const std::str
   boost::unordered_map<EntryHandle, EntryContext>::iterator parent_context =
       entry_contexts_.find( parent );
 
-  if ( parent_context == entry_contexts_.end() )
-  {
-    return 0;
-  }
+  ROS_ASSERT_MSG ( parent_context != entry_contexts_.end(), "Parent menu entry %u not found.", parent );
 
-  EntryHandle handle = doInsert( title, feedback_cb );
+  EntryHandle handle = doInsert( title, visualization_msgs::MenuEntry::FEEDBACK, "", feedback_cb );
   parent_context->second.sub_entries.push_back( handle );
   return handle;
 }
 
 
 MenuHandler::EntryHandle MenuHandler::insert( EntryHandle parent, const std::string &title,
-    const std::string &command_type, const std::string &command )
+                                              const uint8_t command_type,
+                                              const std::string &command )
 {
   boost::unordered_map<EntryHandle, EntryContext>::iterator parent_context =
       entry_contexts_.find( parent );
 
-  if ( parent_context == entry_contexts_.end() )
-  {
-    return 0;
-  }
+  ROS_ASSERT_MSG ( parent_context != entry_contexts_.end(), "Parent menu entry %u not found.", parent );
 
-  EntryHandle handle = doInsert( title, command_type, command );
+  EntryHandle handle = doInsert( title, command_type, command, FeedbackCallback() );
   parent_context->second.sub_entries.push_back( handle );
   return handle;
 }
@@ -152,54 +148,45 @@ bool MenuHandler::apply( InteractiveMarkerServer &server, const std::string &mar
     return false;
   }
 
-  int_marker.menu.clear();
+  int_marker.menu_entries.clear();
 
-  for ( unsigned t=0; t<top_level_handles_.size(); t++ )
+  pushMenuEntries( top_level_handles_, int_marker.menu_entries, 0 );
+
+  server.insert( int_marker );
+  server.setCallback( marker_name, boost::bind( &MenuHandler::processFeedback, this, _1 ), visualization_msgs::InteractiveMarkerFeedback::MENU_SELECT );
+  managed_markers_.insert( marker_name );
+  return true;
+}
+
+bool MenuHandler::pushMenuEntries( std::vector<EntryHandle>& handles_in,
+                                   std::vector<visualization_msgs::MenuEntry>& entries_out,
+                                   EntryHandle parent_handle )
+{
+  for ( unsigned t = 0; t < handles_in.size(); t++ )
   {
-    EntryHandle top_level_handle = top_level_handles_[t];
-    boost::unordered_map<EntryHandle, EntryContext>::iterator top_level_context_it =
-        entry_contexts_.find( top_level_handle );
+    EntryHandle handle = handles_in[t];
+    boost::unordered_map<EntryHandle, EntryContext>::iterator context_it =
+        entry_contexts_.find( handle );
 
-    if ( top_level_context_it == entry_contexts_.end() )
+    if ( context_it == entry_contexts_.end() )
     {
       ROS_ERROR( "Internal error: context handle not found! This is a bug in MenuHandler." );
       return false;
     }
 
-    if ( !top_level_context_it->second.visible )
+    EntryContext& context = context_it->second;
+
+    if ( !context.visible )
     {
       continue;
     }
 
-    visualization_msgs::Menu menu;
-    menu.entry = makeEntry( top_level_context_it->second );
-
-    for ( unsigned s=0; s<top_level_context_it->second.sub_entries.size(); s++ )
+    entries_out.push_back( makeEntry( context, handle, parent_handle ));
+    if( false == pushMenuEntries( context.sub_entries, entries_out, handle ))
     {
-      EntryHandle second_level_handle = top_level_context_it->second.sub_entries[s];
-      boost::unordered_map<EntryHandle, EntryContext>::iterator second_level_context_it =
-          entry_contexts_.find( second_level_handle );
-
-      if ( second_level_context_it == entry_contexts_.end() )
-      {
-        ROS_ERROR( "Internal error: context handle not found! This is a bug in MenuHandler." );
-        return false;
-      }
-
-      if ( !second_level_context_it->second.visible )
-      {
-        continue;
-      }
-
-      menu.sub_entries.push_back( makeEntry( second_level_context_it->second ) );
+      return false;
     }
-
-    int_marker.menu.push_back( menu );
   }
-
-  server.insert( int_marker );
-  server.setCallback( marker_name, boost::bind( &MenuHandler::processFeedback, this, _1 ), visualization_msgs::InteractiveMarkerFeedback::MENU_SELECT );
-  managed_markers_.insert( marker_name );
   return true;
 }
 
@@ -214,30 +201,10 @@ bool MenuHandler::reApply( InteractiveMarkerServer &server )
   return success;
 }
 
-
 MenuHandler::EntryHandle MenuHandler::doInsert( const std::string &title,
-    const FeedbackCallback &feedback_cb )
-{
-  EntryHandle handle = current_handle_;
-  current_handle_++;
-
-  std::ostringstream s;
-  s << "menu_handler_cmd_" << handle;
-
-  EntryContext context;
-  context.title = title;
-  context.command = s.str();
-  context.visible = true;
-  context.check_state = NO_CHECKBOX;
-  context.feedback_cb = feedback_cb;
-
-  entry_contexts_[handle] = context;
-  return handle;
-}
-
-
-MenuHandler::EntryHandle MenuHandler::doInsert( const std::string &title,
-  const std::string &command_type, const std::string &command )
+                                                const uint8_t command_type,
+                                                const std::string &command,
+                                                const FeedbackCallback &feedback_cb )
 {
   EntryHandle handle = current_handle_;
   current_handle_++;
@@ -248,13 +215,13 @@ MenuHandler::EntryHandle MenuHandler::doInsert( const std::string &title,
   context.command_type = command_type;
   context.visible = true;
   context.check_state = NO_CHECKBOX;
+  context.feedback_cb = feedback_cb;
 
   entry_contexts_[handle] = context;
   return handle;
 }
 
-
-visualization_msgs::MenuEntry MenuHandler::makeEntry( EntryContext& context )
+visualization_msgs::MenuEntry MenuHandler::makeEntry( EntryContext& context, EntryHandle handle, EntryHandle parent_handle )
 {
   visualization_msgs::MenuEntry menu_entry;
 
@@ -273,6 +240,8 @@ visualization_msgs::MenuEntry MenuHandler::makeEntry( EntryContext& context )
 
   menu_entry.command = context.command;
   menu_entry.command_type = context.command_type;
+  menu_entry.id = handle;
+  menu_entry.parent_id = parent_handle;
 
   return menu_entry;
 }
@@ -280,36 +249,13 @@ visualization_msgs::MenuEntry MenuHandler::makeEntry( EntryContext& context )
 
 void MenuHandler::processFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback )
 {
-  EntryHandle handle;
-  if ( getHandle(feedback->command, handle) )
+  boost::unordered_map<EntryHandle, EntryContext>::iterator context =
+    entry_contexts_.find( (EntryHandle) feedback->menu_entry_id );
+
+  if ( context != entry_contexts_.end() && context->second.feedback_cb )
   {
-    boost::unordered_map<EntryHandle, EntryContext>::iterator context =
-        entry_contexts_.find( handle );
-
-    if ( context != entry_contexts_.end() && context->second.feedback_cb )
-    {
-      context->second.feedback_cb( feedback );
-    }
+    context->second.feedback_cb( feedback );
   }
-}
-
-bool MenuHandler::getHandle( const std::string &command, EntryHandle &handle ) const
-{
-  if ( command.find( "menu_handler_cmd_") != 0 )
-  {
-    return false;
-  }
-
-  std::string id = command.substr( 17 );
-  handle = atoi( id.c_str() );
-
-  // check if the handle exists
-  if ( entry_contexts_.find( handle ) == entry_contexts_.end() )
-  {
-    return false;
-  }
-
-  return true;
 }
 
 bool MenuHandler::getTitle( EntryHandle handle, std::string &title ) const
