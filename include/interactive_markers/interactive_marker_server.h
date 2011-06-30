@@ -74,6 +74,12 @@ public:
   /// Destruction of the interface will lead to all managed markers being cleared.
   ~InteractiveMarkerServer();
 
+  /// Add or replace a marker without changing its callback functions.
+  /// Note: Changes to the marker will not take effect until you call applyChanges().
+  /// The callback changes immediately.
+  /// @param int_marker:    The marker to be added or replaced
+  void insert( const visualization_msgs::InteractiveMarker &int_marker );
+
   /// Add or replace a marker and its callback functions
   /// Note: Changes to the marker will not take effect until you call applyChanges().
   /// The callback changes immediately.
@@ -81,7 +87,7 @@ public:
   /// @param feedback_cb:   Function to call on the arrival of a feedback message.
   /// @param feedback_type: Type of feedback for which to call the feedback.
   void insert( const visualization_msgs::InteractiveMarker &int_marker,
-               FeedbackCallback feedback_cb=FeedbackCallback(),
+               FeedbackCallback feedback_cb,
                uint8_t feedback_type=DEFAULT_FEEDBACK_CB );
 
   /// Update the pose of a marker with the specified name
@@ -160,9 +166,6 @@ private:
   // - process pending goals
   void spinThread();
 
-  // if someone connects, we need to re-send all the markers
-  void processConnect( const ros::SingleSubscriberPublisher& );
-
   // update marker pose & call user callback
   void processFeedback( const FeedbackConstPtr& feedback );
 
@@ -171,6 +174,9 @@ private:
 
   // increase sequence number & publish an update
   void publish( visualization_msgs::InteractiveMarkerUpdate &update );
+
+  // publish the current complete state to the latched "init" topic.
+  void publishInit();
 
   // Update pose, schedule update without locking
   void doSetPose( M_UpdateContext::iterator update_it,
@@ -198,6 +204,7 @@ private:
   // this is needed when running in non-threaded mode
   ros::Timer keep_alive_timer_;
 
+  ros::Publisher init_pub_;
   ros::Publisher update_pub_;
   ros::Subscriber feedback_sub_;
 

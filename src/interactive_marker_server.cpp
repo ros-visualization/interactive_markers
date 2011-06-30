@@ -31,6 +31,8 @@
 
 #include "interactive_markers/interactive_marker_server.h"
 
+#include <visualization_msgs/InteractiveMarkerInit.h>
+
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
 
@@ -56,12 +58,12 @@ InteractiveMarkerServer::InteractiveMarkerServer( const std::string &topic_ns, c
     server_id_ = ros::this_node::getName();
   }
 
-  std::string marker_topic = topic_ns + "/update";
+  std::string update_topic = topic_ns + "/update";
+  std::string init_topic = update_topic + "_full";
   std::string feedback_topic = topic_ns + "/feedback";
 
-  update_pub_ = node_handle_.advertise<visualization_msgs::InteractiveMarkerUpdate>(
-      marker_topic, 100, boost::bind( &InteractiveMarkerServer::processConnect, this, _1 ) );
-
+  init_pub_ = node_handle_.advertise<visualization_msgs::InteractiveMarkerInit>( init_topic, 100, true );
+  update_pub_ = node_handle_.advertise<visualization_msgs::InteractiveMarkerUpdate>( update_topic, 100 );
   feedback_sub_ = node_handle_.subscribe( feedback_topic, 100, &InteractiveMarkerServer::processFeedback, this );
 
   keep_alive_timer_ =  node_handle_.createTimer(ros::Duration(0.5f), boost::bind( &InteractiveMarkerServer::keepAlive, this ) );
@@ -176,7 +178,10 @@ void InteractiveMarkerServer::applyChanges()
     }
   }
 
+  seq_num_++;
+
   publish( update );
+  publishInit();
   pending_updates_.clear();
 }
 
@@ -283,8 +288,7 @@ bool InteractiveMarkerServer::setCallback( const std::string &name, FeedbackCall
   return true;
 }
 
-void InteractiveMarkerServer::insert( const visualization_msgs::InteractiveMarker &int_marker,
-    FeedbackCallback feedback_cb, uint8_t feedback_type)
+void InteractiveMarkerServer::insert( const visualization_msgs::InteractiveMarker &int_marker )
 {
   boost::recursive_mutex::scoped_lock lock( mutex_ );
 
@@ -296,6 +300,12 @@ void InteractiveMarkerServer::insert( const visualization_msgs::InteractiveMarke
 
   update_it->second.update_type = UpdateContext::FULL_UPDATE;
   update_it->second.int_marker = int_marker;
+}
+
+void InteractiveMarkerServer::insert( const visualization_msgs::InteractiveMarker &int_marker,
+    FeedbackCallback feedback_cb, uint8_t feedback_type)
+{
+  insert( int_marker );
 
   setCallback( int_marker.name, feedback_cb, feedback_type  );
 }
@@ -342,31 +352,24 @@ bool InteractiveMarkerServer::get( std::string name, visualization_msgs::Interac
   return false;
 }
 
-void InteractiveMarkerServer::processConnect( const ros::SingleSubscriberPublisher& pub )
+void InteractiveMarkerServer::publishInit()
 {
   boost::recursive_mutex::scoped_lock lock( mutex_ );
 
-  ROS_INFO( "Re-sending all markers to new client '%s'.", pub.getSubscriberName().c_str() );
-
-  // send full set of markers to the single new subscriber
-  // don't increase sequence number
-  visualization_msgs::InteractiveMarkerUpdate update;
-  update.server_id = server_id_;
-  update.type = visualization_msgs::InteractiveMarkerUpdate::INIT;
-  update.seq_num = seq_num_;
-  update.markers.reserve( marker_contexts_.size() );
+  visualization_msgs::InteractiveMarkerInit init;
+  init.server_id = server_id_;
+  init.seq_num = seq_num_;
+  init.markers.reserve( marker_contexts_.size() );
 
   M_MarkerContext::iterator it;
   for ( it = marker_contexts_.begin(); it != marker_contexts_.end(); it++ )
   {
     ROS_DEBUG( "Publishing %s", it->second.int_marker.name.c_str() );
-    update.markers.push_back( it->second.int_marker );
+    init.markers.push_back( it->second.int_marker );
   }
 
-  pub.publish( update );
+  init_pub_.publish( init );
 }
-
-
 
 void InteractiveMarkerServer::processFeedback( const FeedbackConstPtr& feedback )
 {
@@ -431,11 +434,6 @@ void InteractiveMarkerServer::keepAlive()
 
 void InteractiveMarkerServer::publish( visualization_msgs::InteractiveMarkerUpdate &update )
 {
-  if ( update.type == visualization_msgs::InteractiveMarkerUpdate::UPDATE )
-  {
-    //only increase the sequence number for actual updates
-    seq_num_++;
-  }
   update.server_id = server_id_;
   update.seq_num = seq_num_;
   update_pub_.publish( update );
