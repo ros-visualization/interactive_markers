@@ -142,8 +142,7 @@ bool MenuHandler::apply( InteractiveMarkerServer &server, const std::string &mar
 
   if ( !server.get( marker_name, int_marker ) )
   {
-    // forget marker name.
-    ROS_WARN_STREAM( "Interactive marker '" << marker_name << "' does not exist." );
+    // This marker has been deleted on the server, so forget it.
     managed_markers_.erase( marker_name );
     return false;
   }
@@ -194,9 +193,14 @@ bool MenuHandler::reApply( InteractiveMarkerServer &server )
 {
   bool success = true;
   std::set<std::string>::iterator it = managed_markers_.begin();
-  for ( ; it!=managed_markers_.end(); it++ )
+  while ( it != managed_markers_.end() )
   {
-    success = success && apply( server, *it );
+    // apply() may delete the entry "it" is pointing to, so
+    // pre-compute the next iterator.
+    std::set<std::string>::iterator next_it = it;
+    next_it++;
+    success = apply( server, *it ) && success;
+    it = next_it;
   }
   return success;
 }
