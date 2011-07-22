@@ -73,6 +73,8 @@ InteractiveMarkerServer::InteractiveMarkerServer( const std::string &topic_ns, c
     need_to_terminate_ = false;
     spin_thread_.reset( new boost::thread(boost::bind(&InteractiveMarkerServer::spinThread, this)) );
   }
+
+  publishInit();
 }
 
 
