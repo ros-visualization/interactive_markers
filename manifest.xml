@@ -5,7 +5,7 @@
      to your application, which can be accessed from tools like RViz.
 
   </description>
-  <author>David Gossow</author>
+  <author>David Gossow (C++), Michael Ferguson (Python)</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/interactive_markers</url>
