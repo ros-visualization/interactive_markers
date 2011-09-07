@@ -108,7 +108,7 @@ class InteractiveMarkerServer:
     ## @param marker The marker to be added or replaced 
     ## @param feedback_cb Function to call on the arrival of a feedback message.
     ## @param feedback_type Type of feedback for which to call the feedback.
-    def insert(self, marker, feedback_cb=None, feedback_type=DEFAULT_FEEDBACK_CB):
+    def insert(self, marker, feedback_cb=-1, feedback_type=DEFAULT_FEEDBACK_CB):
         with self.mutex:
             try:
                 update = self.pending_updates[marker.name]
@@ -118,7 +118,8 @@ class InteractiveMarkerServer:
             
             update.update_type = UpdateContext.FULL_UPDATE
             update.int_marker = marker
-        self.setCallback( marker.name, feedback_cb, feedback_type )
+        if feedback_cb != -1:
+            self.setCallback( marker.name, feedback_cb, feedback_type )
 
     ## @brief Update the pose of a marker with the specified name
     ## Note: This change will not take effect until you call applyChanges()
