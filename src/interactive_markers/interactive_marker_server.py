@@ -74,7 +74,7 @@ class InteractiveMarkerServer:
     ## @param server_id     If you run multiple servers on the same topic from
     ##                      within the same node, you will need to assign different names to them.
     ##                      Otherwise, leave this empty.
-    def __init__(self, topic_ns, server_id=""):
+    def __init__(self, topic_ns, server_id="", q_size=100):
         self.topic_ns = topic_ns
         self.seq_num = 0
         self.mutex = Lock()
@@ -92,7 +92,7 @@ class InteractiveMarkerServer:
         self.init_pub = rospy.Publisher(topic_ns+"/update_full", InteractiveMarkerInit, latch=True)
         self.update_pub = rospy.Publisher(topic_ns+"/update", InteractiveMarkerUpdate)
 
-        rospy.Subscriber(topic_ns+"/feedback", InteractiveMarkerFeedback, self.processFeedback)
+        rospy.Subscriber(topic_ns+"/feedback", InteractiveMarkerFeedback, self.processFeedback, queue_size=q_size)
         rospy.Timer(rospy.Duration(0.5), self.keepAlive)
         
         self.publishInit()
@@ -257,11 +257,11 @@ class InteractiveMarkerServer:
                         update_msg.erases.append( name )
                     except:
                         pass
+                self.pending_updates = dict()
 
         self.seq_num += 1
         self.publish( update_msg )
         self.publishInit()
-        self.pending_updates = dict()
 
     ## @brief Get marker by name
     ## @param name Name of the interactive marker
