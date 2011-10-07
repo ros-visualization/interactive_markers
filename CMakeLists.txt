@@ -35,6 +35,5 @@ src/tools.cpp
 src/menu_handler.cpp
 )
 
-rosbuild_add_executable(server_test EXCLUDE_FROM_ALL src/test/server_test.cpp)
+rosbuild_add_gtest(server_test src/test/server_test.cpp)
 target_link_libraries(server_test ${PROJECT_NAME})
-rosbuild_declare_test(server_test)

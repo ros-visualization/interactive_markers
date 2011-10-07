@@ -30,20 +30,12 @@
 
 #include <ros/ros.h>
 
+#include <gtest/gtest.h>
+
 #include <interactive_markers/interactive_marker_server.h>
 
-void processFeedback(
-    const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback )
+TEST(InteractiveMarkerServer, addRemove)
 {
-  ROS_INFO_STREAM( feedback->marker_name << " is now at "
-      << feedback->pose.position.x << ", " << feedback->pose.position.y
-      << ", " << feedback->pose.position.z );
-}
-
-int main(int argc, char** argv)
-{
-  ros::init(argc, argv, "simple_marker");
-
   // create an interactive marker server on the topic namespace simple_marker
   interactive_markers::InteractiveMarkerServer server("simple_marker");
 
@@ -51,19 +43,52 @@ int main(int argc, char** argv)
   visualization_msgs::InteractiveMarker int_marker;
   int_marker.name = "marker1";
 
+  //insert, apply, erase, apply
   server.insert(int_marker);
-  assert( server.get("marker1", int_marker) );
+  ASSERT_TRUE( server.get("marker1", int_marker) );
 
   server.applyChanges();
-  assert( server.get("marker1", int_marker) );
+  ASSERT_TRUE( server.get("marker1", int_marker) );
 
   server.erase( "marker1" );
-  assert( !server.get("marker1", int_marker) );
+  ASSERT_FALSE( server.get("marker1", int_marker) );
 
   server.applyChanges();
-  assert( !server.get("marker1", int_marker) );
+  ASSERT_FALSE( server.get("marker1", int_marker) );
 
-  //avoid node handle destruction warning
+
+  //insert, erase, apply
+  server.insert(int_marker);
+  ASSERT_TRUE( server.get("marker1", int_marker) );
+
+  server.erase( "marker1" );
+  ASSERT_FALSE( server.get("marker1", int_marker) );
+
+  server.applyChanges();
+  ASSERT_FALSE( server.get("marker1", int_marker) );
+
+  //insert, apply, clear, apply
+  server.insert(int_marker);
+  ASSERT_TRUE( server.get("marker1", int_marker) );
+
+  server.applyChanges();
+  ASSERT_TRUE( server.get("marker1", int_marker) );
+
+  server.clear();
+  ASSERT_FALSE( server.get("marker1", int_marker) );
+
+  server.applyChanges();
+  ASSERT_FALSE( server.get("marker1", int_marker) );
+
+  //avoid subscriber destruction warning
   usleep(1000);
-  return 0;
+}
+
+
+// Run all the tests that were declared with TEST()
+int main(int argc, char **argv)
+{
+  ros::init(argc, argv, "simple_marker");
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
