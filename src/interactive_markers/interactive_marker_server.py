@@ -157,7 +157,7 @@ class InteractiveMarkerServer:
     def erase(self, name):
         with self.mutex:
             try:
-                self.pending_updates[name].update_type = UpdateContex.ERASE
+                self.pending_updates[name].update_type = UpdateContext.ERASE
                 return True
             except:
                 return False
