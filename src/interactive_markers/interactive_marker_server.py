@@ -160,7 +160,14 @@ class InteractiveMarkerServer:
                 self.pending_updates[name].update_type = UpdateContext.ERASE
                 return True
             except:
-                return False
+                try:
+                    marker_context = self.marker_contexts[name] # check exists
+                    update = UpdateContext()
+                    update.update_type = UpdateContext.ERASE
+                    self.pending_updates[name] = update
+                    return True
+                except:
+                    return False
 
     ## @brief Clear all markers.
     ## Note: This change will not take effect until you call applyChanges().
