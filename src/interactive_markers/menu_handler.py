@@ -117,7 +117,11 @@ class MenuHandler:
     ## Re-apply to all markers that this was applied to previously
     def reApply(self, server):
         success = True
-        for marker in self.managed_markers_:
+        # self.apply() might remove elements from
+        # self.managed_markers_. To prevent errors, copy the
+        # managed_markers sequence and iterate over the copy
+        managed_markers = list(self.managed_markers_)
+        for marker in managed_markers:
             success = self.apply(server, marker) and success
         return success
 
