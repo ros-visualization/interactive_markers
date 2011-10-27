@@ -35,5 +35,8 @@ src/tools.cpp
 src/menu_handler.cpp
 )
 
-rosbuild_add_gtest(server_test src/test/server_test.cpp)
-target_link_libraries(server_test ${PROJECT_NAME})
+#### server_test requires a ROS master running.
+# TODO: change to a "rostest" so it gets "roslaunch"ed and thus has a master.
+#
+# rosbuild_add_gtest(server_test src/test/server_test.cpp)
+# target_link_libraries(server_test ${PROJECT_NAME})
