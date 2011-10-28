@@ -35,8 +35,8 @@ src/tools.cpp
 src/menu_handler.cpp
 )
 
-#### server_test requires a ROS master running.
-# TODO: change to a "rostest" so it gets "roslaunch"ed and thus has a master.
-#
-# rosbuild_add_gtest(server_test src/test/server_test.cpp)
-# target_link_libraries(server_test ${PROJECT_NAME})
+# C++ Unit Tests
+rosbuild_add_executable(server_test EXCLUDE_FROM_ALL src/test/server_test.cpp)
+target_link_libraries(server_test ${PROJECT_NAME})
+rosbuild_add_gtest_build_flags(server_test)
+rosbuild_add_rostest(test/cpp_server.test)
