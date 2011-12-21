@@ -12,12 +12,9 @@
   <depend package="roscpp"/>
   <depend package="visualization_msgs"/>
   <depend package="tf"/>
-  <depend package="bullet"/>
 
   <export> 
       <cpp cflags="-I${prefix}/include/" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -linteractive_markers"/>
   </export>
 
 </package>
-
-
