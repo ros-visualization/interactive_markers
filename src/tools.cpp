@@ -35,6 +35,9 @@
 #include <math.h>
 #include <assert.h>
 
+#include <set>
+#include <sstream>
+
 namespace interactive_markers
 {
 
@@ -72,6 +75,26 @@ void autoComplete( visualization_msgs::InteractiveMarker &msg )
   for ( unsigned c=0; c<msg.controls.size(); c++ )
   {
     autoComplete( msg, msg.controls[c] );
+  }
+
+  uniqueifyControlNames( msg );
+}
+
+void uniqueifyControlNames( visualization_msgs::InteractiveMarker& msg )
+{
+  int uniqueification_number = 0;
+  std::set<std::string> names;
+  for( unsigned c = 0; c < msg.controls.size(); c++ )
+  {
+    std::string name = msg.controls[c].name;
+    while( names.find( name ) != names.end() )
+    {
+      std::stringstream ss;
+      ss << name << "_u" << uniqueification_number++;
+      name = ss.str();
+    }
+    msg.controls[c].name = name;
+    names.insert( name );
   }
 }
 

@@ -35,8 +35,10 @@
 namespace interactive_markers
 {
 
-/// @brief fill in default values & insert default controls when none are specified
-/// @param msg      interactive marker to be completed
+/** @brief fill in default values & insert default controls when none are specified.
+ *
+ * This also calls uniqueifyControlNames().
+ * @param msg      interactive marker to be completed */
 void autoComplete( visualization_msgs::InteractiveMarker &msg );
 
 /// @brief fill in default values & insert default controls when none are specified
@@ -44,6 +46,12 @@ void autoComplete( visualization_msgs::InteractiveMarker &msg );
 /// @param control  the control to be completed
 void autoComplete( const visualization_msgs::InteractiveMarker &msg,
     visualization_msgs::InteractiveMarkerControl &control );
+
+/** @brief Make sure all the control names are unique within the given msg.
+ *
+ * Appends _u0 _u1 etc to repeated names (not including the first of each).
+ * This is called by autoComplete( visualization_msgs::InteractiveMarker &msg ). */
+void uniqueifyControlNames( visualization_msgs::InteractiveMarker& msg );
 
 /// make a quaternion with a fixed local x axis.
 /// The rotation around that axis will be chosen automatically.
