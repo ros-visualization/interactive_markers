@@ -43,7 +43,7 @@ namespace interactive_markers
 
 template<class MsgT>
 MessageContext<MsgT>::MessageContext(
-    const tf::Transformer& tf,
+    tf::Transformer& tf,
     const std::string& target_frame,
     const typename MsgT::ConstPtr& _msg)
 : tf_(tf)
@@ -55,6 +55,15 @@ MessageContext<MsgT>::MessageContext(
 }
 
 template<class MsgT>
+MessageContext<MsgT>& MessageContext<MsgT>::operator=( const MessageContext<MsgT>& other )
+{
+  open_marker_idx_ = other.open_marker_idx_;
+  open_pose_idx_ = other.open_pose_idx_;
+  target_frame_ = other.target_frame_;
+  return *this;
+}
+
+template<class MsgT>
 template<class MsgVecT>
 void MessageContext<MsgT>::getTfTransforms( MsgVecT msg_vec, std::list<size_t>& indices )
 {
@@ -63,19 +72,23 @@ void MessageContext<MsgT>::getTfTransforms( MsgVecT msg_vec, std::list<size_t>& 
   {
     try
     {
-      // get transform
-      tf::StampedTransform transform;
       std_msgs::Header& header = msg_vec[ *idx_it ].header;
-      tf_.lookupTransform( target_frame_, header.frame_id, header.stamp, transform );
-      // transform message into target frame
-      tf::Pose pose;
-      tf::poseMsgToTF( msg_vec[ *idx_it ].pose, pose );
-      pose = transform * pose;
-      // store transformed pose in original message
-      tf::poseTFToMsg( pose, msg_vec[ *idx_it ].pose );
-      msg_vec[ *idx_it ].header.frame_id = target_frame_;
-
-      indices.erase(idx_it++);
+      if ( header.frame_id != target_frame_ && header.stamp != ros::Time(0) )
+      {
+        DBG_MSG( "Looking up transform %s -> %s at time %f", header.frame_id.c_str(), target_frame_.c_str(), header.stamp.toSec() );
+        // get transform
+        tf::StampedTransform transform;
+        tf_.lookupTransform( target_frame_, header.frame_id, header.stamp, transform );
+        // transform message into target frame
+        tf::Pose pose;
+        tf::poseMsgToTF( msg_vec[ *idx_it ].pose, pose );
+        pose = transform * pose;
+        // store transformed pose in original message
+        tf::poseTFToMsg( pose, msg_vec[ *idx_it ].pose );
+        msg_vec[ *idx_it ].header.frame_id = target_frame_;
+      }
+      idx_it = indices.erase(idx_it);
+      DBG_MSG( "Transform %s -> %s at time %f is ready.", header.frame_id.c_str(), target_frame_.c_str(), header.stamp.toSec() );
     }
     catch ( tf::ExtrapolationException& e )
     {
@@ -89,6 +102,7 @@ void MessageContext<MsgT>::getTfTransforms( MsgVecT msg_vec, std::list<size_t>& 
 template<class MsgT>
 bool MessageContext<MsgT>::isReady()
 {
+  DBG_MSG( "Message with seq_num=%lu is ready.", msg->seq_num );
   return open_marker_idx_.empty() && open_pose_idx_.empty();
 }
 

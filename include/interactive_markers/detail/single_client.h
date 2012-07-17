@@ -20,6 +20,8 @@
 
 #include <tf/tf.h>
 
+#include <deque>
+
 #include "message_context.h"
 #include "state_machine.h"
 #include "../interactive_marker_client.h"
@@ -34,9 +36,11 @@ public:
 
   SingleClient(
       const std::string& server_id,
-      const tf::Transformer& tf,
+      tf::Transformer& tf,
       const std::string& target_frame,
       const InteractiveMarkerClient::CbCollection& callbacks );
+
+  ~SingleClient();
 
   // Process message from the update channel
   void process(const visualization_msgs::InteractiveMarkerUpdate::ConstPtr& msg);
@@ -74,7 +78,10 @@ private:
 
   void errorReset( std::string error_msg );
 
-  // sequence number and time of last outgoing update
+  // sequence number and time of first ever received update
+  uint64_t first_update_seq_num_;
+
+  // sequence number and time of last received update
   uint64_t last_update_seq_num_;
   ros::Time last_update_time_;
 
@@ -86,8 +93,8 @@ private:
   typedef MessageContext<visualization_msgs::InteractiveMarkerInit> InitMessageContext;
 
   // Queue of Updates waiting for tf and numbering
-  typedef std::map<uint64_t, UpdateMessageContext > M_UpdateMessageContext;
-  typedef std::map<uint64_t, InitMessageContext > M_InitMessageContext;
+  typedef std::deque< UpdateMessageContext > M_UpdateMessageContext;
+  typedef std::deque< InitMessageContext > M_InitMessageContext;
 
   // queue for update messages
   M_UpdateMessageContext update_queue_;
@@ -95,7 +102,7 @@ private:
   // queue for init messages
   M_InitMessageContext init_queue_;
 
-  const tf::Transformer& tf_;
+  tf::Transformer& tf_;
   std::string target_frame_;
 
   const InteractiveMarkerClient::CbCollection& callbacks_;

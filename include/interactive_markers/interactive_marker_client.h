@@ -74,9 +74,9 @@ public:
 
   static const uint8_t DEFAULT_FEEDBACK_CB = 255;
 
-  InteractiveMarkerClient( const tf::Transformer& tf,
-      const std::string& target_frame,
-      const std::string &topic_ns,
+  InteractiveMarkerClient( tf::Transformer& tf,
+      const std::string& target_frame = "",
+      const std::string &topic_ns = "",
       bool spin_thread = false );
 
   ~InteractiveMarkerClient();
@@ -89,6 +89,8 @@ public:
 
   /// Update tf info, call callbacks
   void spin();
+
+  void setTargetFrame( std::string target_frame );
 
   void setInitCb( const InitCallback& cb );
 
@@ -132,20 +134,20 @@ private:
 
   ros::NodeHandle nh_;
 
-  const tf::Transformer& tf_;
+  tf::Transformer& tf_;
   std::string target_frame_;
 
 public:
   // for internal usage
   struct CbCollection
   {
-    void initCb( const InitConstPtr& i ) {
+    void initCb( const InitConstPtr& i ) const {
       if (init_cb_) init_cb_( i ); }
-    void updateCb( const UpdateConstPtr& u ) {
+    void updateCb( const UpdateConstPtr& u ) const {
       if (update_cb_) update_cb_( u ); }
-    void resetCb( const std::string& s ) {
+    void resetCb( const std::string& s ) const {
       if (reset_cb_) reset_cb_(s); }
-    void statusCb( StatusT s, const std::string& id, const std::string& m ) {
+    void statusCb( StatusT s, const std::string& id, const std::string& m ) const {
       if (status_cb_) status_cb_(s,id,m); }
 
     InitCallback init_cb_;

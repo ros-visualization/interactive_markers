@@ -41,17 +41,22 @@ namespace interactive_markers
 {
 
 InteractiveMarkerClient::InteractiveMarkerClient(
-    const tf::Transformer& tf,
+    tf::Transformer& tf,
     const std::string& target_frame,
     const std::string &topic_ns,
     bool spin_thread )
 : state_(IDLE)
 , tf_(tf)
-, target_frame_(target_frame)
 {
   subscribe( topic_ns );
+  setTargetFrame(target_frame);
 
   callbacks_.status_cb_ = boost::bind( &InteractiveMarkerClient::statusCb, this, _1, _2, _3 );
+}
+
+InteractiveMarkerClient::~InteractiveMarkerClient()
+{
+  shutdown();
 }
 
 /// Subscribe to given topic
@@ -82,20 +87,55 @@ void InteractiveMarkerClient::setStatusCb( const StatusCallback& cb )
   status_cb_ = cb;
 }
 
-/// Clear all markers
+void InteractiveMarkerClient::setTargetFrame( std::string target_frame )
+{
+  target_frame_ = target_frame;
+  DBG_MSG("Target frame is now %s", target_frame_.c_str() );
+
+  switch ( state_ )
+  {
+  case IDLE:
+    break;
+
+  case INIT:
+  case RUNNING:
+    shutdown();
+    subscribeUpdate();
+    subscribeInit();
+    break;
+  }
+}
+
 void InteractiveMarkerClient::shutdown()
 {
-  publisher_contexts_.clear();
-  init_sub_.shutdown();
-  update_sub_.shutdown();
+  switch ( state_ )
+  {
+  case IDLE:
+    break;
+
+  case INIT:
+  case RUNNING:
+    publisher_contexts_.clear();
+    init_sub_.shutdown();
+    update_sub_.shutdown();
+    state_=IDLE;
+    break;
+  }
 }
 
 void InteractiveMarkerClient::subscribeUpdate()
 {
   if ( state_ != INIT && !topic_ns_.empty() )
   {
-    update_sub_ =nh_.subscribe( topic_ns_+"/update", 100, &InteractiveMarkerClient::process<UpdateConstPtr>, this );
-    state_ = INIT;
+    try
+    {
+      update_sub_ = nh_.subscribe( topic_ns_+"/update", 100, &InteractiveMarkerClient::process<UpdateConstPtr>, this );
+      state_ = INIT;
+    }
+    catch( ros::Exception& e )
+    {
+      callbacks_.statusCb( ERROR, "Topic", "Error subscribing: " + std::string(e.what()) );
+    }
   }
 }
 
@@ -103,9 +143,15 @@ void InteractiveMarkerClient::subscribeInit()
 {
   if ( state_ != INIT && !topic_ns_.empty() )
   {
-    //boost::function< void(const InitConstPtr&) > cb = boost::bind( &InteractiveMarkerClient::process<InitConstPtr>, this, _1 );
-    init_sub_ =nh_.subscribe( topic_ns_+"/init", 100, &InteractiveMarkerClient::process<InitConstPtr>, this );
-    state_ = INIT;
+    try
+    {
+      init_sub_ = nh_.subscribe( topic_ns_+"/update_full", 100, &InteractiveMarkerClient::process<InitConstPtr>, this );
+      state_ = INIT;
+    }
+    catch( ros::Exception& e )
+    {
+      callbacks_.statusCb( ERROR, "Topic", "Error subscribing: " + std::string(e.what()) );
+    }
   }
 }
 
@@ -141,7 +187,7 @@ void InteractiveMarkerClient::process( const MsgConstPtrT& msg )
 
 void InteractiveMarkerClient::spin()
 {
-  switch ( (StateT)state_ )
+  switch ( state_ )
   {
   case IDLE:
     break;
