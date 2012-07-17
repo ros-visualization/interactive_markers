@@ -33,9 +33,9 @@ rosbuild_add_library(${PROJECT_NAME}
 src/interactive_marker_server.cpp
 src/tools.cpp
 src/menu_handler.cpp
-#src/interactive_marker_client.cpp
-#src/single_client.cpp
-#src/message_context.cpp
+src/interactive_marker_client.cpp
+src/single_client.cpp
+src/message_context.cpp
 )
 
 # C++ Unit Tests
@@ -45,5 +45,5 @@ rosbuild_add_gtest_build_flags(server_test)
 rosbuild_add_rostest(test/cpp_server.test)
 
 # Test program to simulate Interactive Marker with missing tf information
-rosbuild_add_executable(bursty_tf src/test/bursty_tf.cpp)
-target_link_libraries(bursty_tf ${PROJECT_NAME})
+#rosbuild_add_executable(bursty_tf src/test/bursty_tf.cpp)
+#target_link_libraries(bursty_tf ${PROJECT_NAME})

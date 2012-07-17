@@ -1,0 +1,248 @@
+/*
+ * Copyright (c) 2011, Willow Garage, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the Willow Garage, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived from
+ *       this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Author: David Gossow
+ */
+
+#include "interactive_markers/detail/single_client.h"
+
+#include <boost/bind.hpp>
+#include <boost/make_shared.hpp>
+
+#define DBG_MSG( ... ) ROS_INFO_NAMED( "im_client", __VA_ARGS__ );
+
+namespace interactive_markers
+{
+
+SingleClient::SingleClient(
+    const std::string& server_id,
+    const tf::Transformer& tf,
+    const std::string& target_frame,
+    const InteractiveMarkerClient::CbCollection& callbacks
+)
+: state_(INIT)
+, last_update_seq_num_(-1)
+, tf_(tf)
+, target_frame_(target_frame)
+, callbacks_(callbacks)
+, server_id_(server_id)
+{
+  callbacks_.status_cb_( InteractiveMarkerClient::OK, server_id_, "Waiting for init message." );
+}
+
+void SingleClient::process(const visualization_msgs::InteractiveMarkerInit::ConstPtr& msg)
+{
+  switch (state_)
+  {
+  case INIT:
+    if ( init_queue_.size() > 5 )
+    {
+      DBG_MSG( "Init queue too large. Erasing init message with id %lu. Next: %lu.", init_queue_.begin()->first, (init_queue_.begin()+1)->first );
+      init_queue_.erase( init_queue_.begin() );
+    }
+    init_queue_.insert( std::make_pair( msg->seq_num, InitMessageContext(tf_,target_frame_,msg) ) );
+    callbacks_.status_cb_( InteractiveMarkerClient::OK, server_id_, "Waiting for init tf info." );
+    break;
+
+  case RECEIVING:
+  case TF_ERROR:
+    break;
+  }
+}
+
+void SingleClient::process(const visualization_msgs::InteractiveMarkerUpdate::ConstPtr& msg)
+{
+  last_update_time_ = ros::Time::now();
+
+  if ( msg->type == msg->KEEP_ALIVE )
+  {
+    return;
+  }
+
+  if (last_update_seq_num_ != (uint64_t)-1 && msg->seq_num != last_update_seq_num_+1 )
+  {
+    std::ostringstream s;
+    s << "Sequence number of update is out of order. Expected: " << last_update_seq_num_+1 << " Received: " << msg->seq_num;
+    callbacks_.status_cb_( InteractiveMarkerClient::ERROR, server_id_, s.str() );
+  }
+  last_update_seq_num_ = msg->seq_num;
+
+  switch (state_)
+  {
+  case INIT:
+    if ( update_queue_.size() > 100 )
+    {
+      DBG_MSG( "Update queue too large. Erasing message with id %lu. Next: %lu.", init_queue_.begin()->first, (init_queue_.begin()+1)->first );
+      update_queue_.erase( update_queue_.begin() );
+    }
+    update_queue_.insert( std::make_pair( msg->seq_num, UpdateMessageContext(tf_,target_frame_,msg) ) );
+    checkInitFinished();
+    break;
+
+  case RECEIVING:
+    update_queue_.insert( std::make_pair( msg->seq_num, UpdateMessageContext(tf_,target_frame_,msg) ) );
+    break;
+
+  case TF_ERROR:
+    break;
+  }
+}
+
+void SingleClient::spin()
+{
+  switch (state_)
+  {
+  case INIT:
+    transformInitMsgs();
+    checkInitFinished();
+    break;
+
+  case RECEIVING:
+    transformUpdateMsgs();
+    pushUpdates();
+    checkKeepAlive();
+    if ( update_queue_.size() > 100 )
+    {
+      errorReset( "Update queue too large. Resetting." );
+    }
+    break;
+
+  case TF_ERROR:
+    if ( state_.getDuration().toSec() > 1.0 )
+    {
+      callbacks_.status_cb_( InteractiveMarkerClient::ERROR, server_id_, "1 second has passed. Re-initializing." );
+      state_ = INIT;
+    }
+    break;
+  }
+}
+
+void SingleClient::checkKeepAlive()
+{
+  double time_since_upd = ros::Time::now() - last_update_time_;
+  if ( time_since_upd > 2.0 )
+  {
+    std::ostringstream s;
+    s << "No update received for " << round(time_since_upd) << " seconds.";
+    callbacks_.status_cb_( InteractiveMarkerClient::WARN, server_id_, s.str() );
+  }
+}
+
+void SingleClient::checkInitFinished()
+{
+  // check for all init messages received so far if tf info is ready
+  // and the consecutive update exists.
+  // If so, omit all updates with lower sequence number,
+  // switch to RECEIVING mode and treat the init message like a regular update.
+
+  M_InitMessageContext::iterator init_it;
+  for ( init_it = init_queue_.begin(); init_it!=init_queue_.end(); ++init_it )
+  {
+    uint64_t init_seq_num = init_it->first;
+    if ( init_it->second.isReady() && update_queue_.find( init_seq_num + 1 ) != update_queue_.end() )
+    {
+      DBG_MSG( "Init message with seq_id=%lu is in line. Switching to receive mode.", init_seq_num );
+      while ( update_queue_.begin()->first <= init_seq_num )
+      {
+        DBG_MSG( "Omitting update with seq_id=%lu", update_queue_.begin()->first );
+        update_queue_.erase( update_queue_.begin() );
+      }
+
+      callbacks_.init_cb_( init_it->second.msg );
+      callbacks_.status_cb_( InteractiveMarkerClient::OK, server_id_, "Initialization complete." );
+
+      init_queue_.clear();
+      state_ = RECEIVING;
+      break;
+    }
+  }
+}
+
+void SingleClient::transformInitMsgs()
+{
+  M_InitMessageContext::iterator it;
+  for ( it = init_queue_.begin(); it!=init_queue_.end(); ++it )
+  {
+    try
+    {
+      it->second.getTfTransforms();
+    }
+    catch ( std::runtime_error& e )
+    {
+      std::ostringstream s;
+      s << "Cannot get tf info for init message with sequence number " << it->second.msg->seq_num << ". Error: " << e.what();
+      callbacks_.status_cb_( InteractiveMarkerClient::ERROR, server_id_, s.str() );
+    }
+  }
+}
+
+void SingleClient::transformUpdateMsgs( )
+{
+  M_UpdateMessageContext::iterator it;
+  for ( it = update_queue_.begin(); it!=update_queue_.end(); ++it )
+  {
+    try
+    {
+      it->second.getTfTransforms();
+    }
+    catch ( std::runtime_error& e )
+    {
+      std::ostringstream s;
+      s << "Resetting due to tf error: " << e.what();
+      errorReset( s.str() );
+    }
+  }
+}
+
+void SingleClient::errorReset( std::string error_msg )
+{
+  // if we get an error here, we re-initialize everything
+  state_ = TF_ERROR;
+  update_queue_.clear();
+  init_queue_.clear();
+
+  callbacks_.status_cb_( InteractiveMarkerClient::ERROR, server_id_, error_msg );
+  callbacks_.reset_cb_(server_id_);
+}
+
+void SingleClient::pushUpdates()
+{
+  while( !update_queue_.empty() && update_queue_.begin()->second.isReady() )
+  {
+    callbacks_.update_cb_( update_queue_.begin()->second.msg );
+    update_queue_.erase( update_queue_.begin() );
+  }
+}
+
+bool SingleClient::isInitialized()
+{
+  return (state_ != INIT);
+}
+
+}
+
