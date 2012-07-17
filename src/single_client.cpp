@@ -62,7 +62,7 @@ void SingleClient::process(const visualization_msgs::InteractiveMarkerInit::Cons
   case INIT:
     if ( init_queue_.size() > 5 )
     {
-      DBG_MSG( "Init queue too large. Erasing init message with id %lu. Next: %lu.", init_queue_.begin()->first, (init_queue_.begin()+1)->first );
+      DBG_MSG( "Init queue too large. Erasing init message with id %lu. Next: %lu.", init_queue_.begin()->first, (++init_queue_.begin())->first );
       init_queue_.erase( init_queue_.begin() );
     }
     init_queue_.insert( std::make_pair( msg->seq_num, InitMessageContext(tf_,target_frame_,msg) ) );
@@ -97,7 +97,7 @@ void SingleClient::process(const visualization_msgs::InteractiveMarkerUpdate::Co
   case INIT:
     if ( update_queue_.size() > 100 )
     {
-      DBG_MSG( "Update queue too large. Erasing message with id %lu. Next: %lu.", init_queue_.begin()->first, (init_queue_.begin()+1)->first );
+      DBG_MSG( "Update queue too large. Erasing message with id %lu. Next: %lu.", init_queue_.begin()->first, (++init_queue_.begin())->first );
       update_queue_.erase( update_queue_.begin() );
     }
     update_queue_.insert( std::make_pair( msg->seq_num, UpdateMessageContext(tf_,target_frame_,msg) ) );
@@ -144,7 +144,7 @@ void SingleClient::spin()
 
 void SingleClient::checkKeepAlive()
 {
-  double time_since_upd = ros::Time::now() - last_update_time_;
+  double time_since_upd = (ros::Time::now() - last_update_time_).toSec();
   if ( time_since_upd > 2.0 )
   {
     std::ostringstream s;
