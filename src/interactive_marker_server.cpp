@@ -158,6 +158,7 @@ void InteractiveMarkerServer::applyChanges()
         else
         {
           marker_context_it->second.int_marker.pose = update_it->second.int_marker.pose;
+          marker_context_it->second.int_marker.header = update_it->second.int_marker.header;
 
           visualization_msgs::InteractiveMarkerPose pose_update;
           pose_update.header = marker_context_it->second.int_marker.header;

@@ -248,6 +248,7 @@ class InteractiveMarkerServer:
                     try: 
                         marker_context = self.marker_contexts[name]
                         marker_context.int_marker.pose = update.int_marker.pose
+                        marker_context.int_marker.header = update.int_marker.header
 
                         pose_update = InteractiveMarkerPose()
                         pose_update.header = marker_context.int_marker.header;
