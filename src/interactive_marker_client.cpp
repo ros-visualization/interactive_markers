@@ -206,10 +206,15 @@ void InteractiveMarkerClient::spin()
         initialized = false;
       }
     }
-    if ( initialized )
+    if ( state_ == INIT && initialized )
     {
       init_sub_.shutdown();
       state_ = RUNNING;
+    }
+    if ( state_ == RUNNING && !initialized )
+    {
+      subscribeInit();
+      state_ = INIT;
     }
     break;
   }

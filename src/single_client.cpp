@@ -249,6 +249,13 @@ void SingleClient::transformUpdateMsgs( )
       std::ostringstream s;
       s << "Resetting due to tf error: " << e.what();
       errorReset( s.str() );
+      return;
+    }
+    catch ( ... )
+    {
+      std::ostringstream s;
+      s << "Resetting due to unknown exception";
+      errorReset( s.str() );
     }
   }
 }
