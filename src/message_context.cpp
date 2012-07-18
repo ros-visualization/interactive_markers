@@ -70,12 +70,11 @@ void MessageContext<MsgT>::getTfTransforms( MsgVecT msg_vec, std::list<size_t>& 
   std::list<size_t>::iterator idx_it;
   for ( idx_it = indices.begin(); idx_it != indices.end(); )
   {
+    std_msgs::Header& header = msg_vec[ *idx_it ].header;
     try
     {
-      std_msgs::Header& header = msg_vec[ *idx_it ].header;
-      if ( header.frame_id != target_frame_ && header.stamp != ros::Time(0) )
+      if ( header.frame_id != target_frame_ )
       {
-        DBG_MSG( "Looking up transform %s -> %s at time %f", header.frame_id.c_str(), target_frame_.c_str(), header.stamp.toSec() );
         // get transform
         tf::StampedTransform transform;
         tf_.lookupTransform( target_frame_, header.frame_id, header.stamp, transform );
@@ -92,17 +91,21 @@ void MessageContext<MsgT>::getTfTransforms( MsgVecT msg_vec, std::list<size_t>& 
     }
     catch ( tf::ExtrapolationException& e )
     {
+      DBG_MSG( "Transform %s -> %s at time %f is not ready.", header.frame_id.c_str(), target_frame_.c_str(), header.stamp.toSec() );
       // skip and wait for more up-to-date
       ++idx_it;
     }
     // all other exceptions need to be handled outside
+  }
+  if ( isReady() )
+  {
+    DBG_MSG( "Message with seq_num=%lu is ready.", msg->seq_num );
   }
 }
 
 template<class MsgT>
 bool MessageContext<MsgT>::isReady()
 {
-  DBG_MSG( "Message with seq_num=%lu is ready.", msg->seq_num );
   return open_marker_idx_.empty() && open_pose_idx_.empty();
 }
 

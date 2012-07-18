@@ -34,7 +34,7 @@
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
 
-#define DBG_MSG( ... ) ROS_INFO_NAMED( "im_client", __VA_ARGS__ );
+#define DBG_MSG( ... ) ROS_DEBUG_NAMED( "interactive_markers", __VA_ARGS__ );
 
 namespace interactive_markers
 {
@@ -45,7 +45,7 @@ SingleClient::SingleClient(
     const std::string& target_frame,
     const InteractiveMarkerClient::CbCollection& callbacks
 )
-: state_(INIT)
+: state_(server_id,INIT)
 , first_update_seq_num_(-1)
 , last_update_seq_num_(-1)
 , tf_(tf)
@@ -53,7 +53,7 @@ SingleClient::SingleClient(
 , callbacks_(callbacks)
 , server_id_(server_id)
 {
-  callbacks_.status_cb_( InteractiveMarkerClient::OK, server_id_, "Waiting for init message." );
+  callbacks_.statusCb( InteractiveMarkerClient::OK, server_id_, "Waiting for init message." );
 }
 
 SingleClient::~SingleClient()
@@ -74,7 +74,7 @@ void SingleClient::process(const visualization_msgs::InteractiveMarkerInit::Cons
       init_queue_.pop_back();
     }
     init_queue_.push_front( InitMessageContext(tf_,target_frame_,msg ) );
-    callbacks_.status_cb_( InteractiveMarkerClient::OK, server_id_, "Waiting for init tf info." );
+    callbacks_.statusCb( InteractiveMarkerClient::OK, server_id_, "Init message received." );
     break;
 
   case RECEIVING:
@@ -147,14 +147,14 @@ void SingleClient::spin()
     checkKeepAlive();
     if ( update_queue_.size() > 100 )
     {
-      errorReset( "Update queue too large. Resetting." );
+      errorReset( "Update queue overflow. Resetting connection." );
     }
     break;
 
   case TF_ERROR:
     if ( state_.getDuration().toSec() > 1.0 )
     {
-      callbacks_.status_cb_( InteractiveMarkerClient::ERROR, server_id_, "1 second has passed. Re-initializing." );
+      callbacks_.statusCb( InteractiveMarkerClient::ERROR, server_id_, "1 second has passed. Re-initializing." );
       state_ = INIT;
     }
     break;
@@ -168,7 +168,7 @@ void SingleClient::checkKeepAlive()
   {
     std::ostringstream s;
     s << "No update received for " << round(time_since_upd) << " seconds.";
-    callbacks_.status_cb_( InteractiveMarkerClient::WARN, server_id_, s.str() );
+    callbacks_.statusCb( InteractiveMarkerClient::WARN, server_id_, s.str() );
   }
 }
 
@@ -181,6 +181,7 @@ void SingleClient::checkInitFinished()
 
   if (last_update_seq_num_ == (uint64_t)-1)
   {
+    callbacks_.statusCb( InteractiveMarkerClient::OK, server_id_, "Initialization: Waiting for first update/keep-alive message." );
     return;
   }
 
@@ -189,9 +190,15 @@ void SingleClient::checkInitFinished()
   {
     uint64_t init_seq_num = init_it->msg->seq_num;
     bool next_up_exists = init_seq_num >= first_update_seq_num_ && init_seq_num <= last_update_seq_num_;
+
+    if ( !init_it->isReady() )
+    {
+      callbacks_.statusCb( InteractiveMarkerClient::OK, server_id_, "Initialization: Waiting for tf info." );
+    }
+
     if ( init_it->isReady() && next_up_exists )
     {
-      DBG_MSG( "Init message with seq_id=%lu is in line. Switching to receive mode.", init_seq_num );
+      DBG_MSG( "Init message with seq_id=%lu is ready & in line with updates. Switching to receive mode.", init_seq_num );
       while ( !update_queue_.empty() && update_queue_.back().msg->seq_num <= init_seq_num )
       {
         DBG_MSG( "Omitting update with seq_id=%lu", update_queue_.back().msg->seq_num );
@@ -199,7 +206,7 @@ void SingleClient::checkInitFinished()
       }
 
       callbacks_.initCb( init_it->msg );
-      callbacks_.statusCb( InteractiveMarkerClient::OK, server_id_, "Initialization complete." );
+      callbacks_.statusCb( InteractiveMarkerClient::OK, server_id_, "Receiving updates." );
 
       init_queue_.clear();
       state_ = RECEIVING;
@@ -222,7 +229,7 @@ void SingleClient::transformInitMsgs()
     {
       std::ostringstream s;
       s << "Cannot get tf info for init message with sequence number " << it->msg->seq_num << ". Error: " << e.what();
-      callbacks_.status_cb_( InteractiveMarkerClient::ERROR, server_id_, s.str() );
+      callbacks_.statusCb( InteractiveMarkerClient::ERROR, server_id_, s.str() );
       it = init_queue_.erase( it );
     }
   }
@@ -256,14 +263,15 @@ void SingleClient::errorReset( std::string error_msg )
   last_update_seq_num_ = -1;
 
   callbacks_.statusCb( InteractiveMarkerClient::ERROR, server_id_, error_msg );
-  callbacks_.resetCb(server_id_);
+  callbacks_.resetCb( server_id_ );
 }
 
 void SingleClient::pushUpdates()
 {
   while( !update_queue_.empty() && update_queue_.back().isReady() )
   {
-    callbacks_.update_cb_( update_queue_.back().msg );
+    DBG_MSG("Pushing out update #%lu.", update_queue_.back().msg->seq_num );
+    callbacks_.updateCb( update_queue_.back().msg );
     update_queue_.pop_back();
   }
 }

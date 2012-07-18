@@ -5,8 +5,10 @@
  *      Author: gossow
  */
 
-#ifndef STATE_MACHINE_H_
-#define STATE_MACHINE_H_
+#ifndef INTERACTIVE_MARKERS_STATE_MACHINE_H_
+#define INTERACTIVE_MARKERS_STATE_MACHINE_H_
+
+#include <ros/ros.h>
 
 namespace interactive_markers
 {
@@ -16,28 +18,34 @@ template<class StateT>
 class StateMachine
 {
 public:
-  StateMachine( StateT init_state );
+  StateMachine( std::string name, StateT init_state );
   StateMachine& operator=( StateT state );
   operator StateT();
   ros::Duration getDuration();
 private:
   StateT state_;
   ros::Time chg_time_;
+  std::string name_;
+};
+
+template<class StateT>
+StateMachine<StateT>::StateMachine( std::string name, StateT init_state )
+: name_(name)
+{
+  operator=(init_state);
 };
 
 template<class StateT>
 StateMachine<StateT>& StateMachine<StateT>::operator=( StateT state )
 {
-  state_ = state;
-  chg_time_=ros::Time::now();
+  if ( state_ != state )
+  {
+    ROS_DEBUG_NAMED( "interactive_markers", "Setting state of %s to %lu", name_.c_str(), (int64_t)state );
+    state_ = state;
+    chg_time_=ros::Time::now();
+  }
   return *this;
 }
-
-template<class StateT>
-StateMachine<StateT>::StateMachine( StateT init_state )
-{
-  operator=(init_state);
-};
 
 template<class StateT>
 ros::Duration StateMachine<StateT>::getDuration()

@@ -150,16 +150,32 @@ public:
     void statusCb( StatusT s, const std::string& id, const std::string& m ) const {
       if (status_cb_) status_cb_(s,id,m); }
 
+    void setInitCb( InitCallback init_cb ) {
+      init_cb_ = init_cb;
+    }
+    void setUpdateCb( UpdateCallback update_cb ) {
+      update_cb_ = update_cb;
+    }
+    void setResetCb( ResetCallback reset_cb ) {
+      reset_cb_ = reset_cb;
+    }
+    void setStatusCb( StatusCallback status_cb ) {
+      status_cb_ = status_cb;
+    }
+
+  private:
     InitCallback init_cb_;
     UpdateCallback update_cb_;
     ResetCallback reset_cb_;
     StatusCallback status_cb_;
+
+    friend class InteractiveMarkerClient;
   };
 
 private:
   CbCollection callbacks_;
 
-  // this is the real (external) status signal
+  // this is the real (external) status callback
   StatusCallback status_cb_;
 };
 

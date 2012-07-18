@@ -45,13 +45,13 @@ InteractiveMarkerClient::InteractiveMarkerClient(
     const std::string& target_frame,
     const std::string &topic_ns,
     bool spin_thread )
-: state_(IDLE)
+: state_("InteractiveMarkerClient",IDLE)
 , tf_(tf)
 {
   subscribe( topic_ns );
   setTargetFrame(target_frame);
 
-  callbacks_.status_cb_ = boost::bind( &InteractiveMarkerClient::statusCb, this, _1, _2, _3 );
+  callbacks_.setStatusCb( boost::bind( &InteractiveMarkerClient::statusCb, this, _1, _2, _3 ) );
 }
 
 InteractiveMarkerClient::~InteractiveMarkerClient()
@@ -69,17 +69,17 @@ void InteractiveMarkerClient::subscribe( std::string topic_ns )
 
 void InteractiveMarkerClient::setInitCb( const InitCallback& cb )
 {
-  callbacks_.init_cb_ = cb;
+  callbacks_.setInitCb( cb );
 }
 
 void InteractiveMarkerClient::setUpdateCb( const UpdateCallback& cb )
 {
-  callbacks_.update_cb_ = cb;
+  callbacks_.setUpdateCb( cb );
 }
 
 void InteractiveMarkerClient::setResetCb( const ResetCallback& cb )
 {
-  callbacks_.reset_cb_ = cb;
+  callbacks_.setResetCb( cb );
 }
 
 void InteractiveMarkerClient::setStatusCb( const StatusCallback& cb )
