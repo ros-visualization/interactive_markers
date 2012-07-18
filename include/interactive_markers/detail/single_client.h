@@ -52,7 +52,7 @@ public:
   bool isInitialized();
 
   // transform all messages with missing transforms
-  void spin();
+  void update();
 
 private:
 

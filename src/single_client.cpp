@@ -132,7 +132,7 @@ void SingleClient::process(const visualization_msgs::InteractiveMarkerUpdate::Co
   }
 }
 
-void SingleClient::spin()
+void SingleClient::update()
 {
   switch (state_)
   {

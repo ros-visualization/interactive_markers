@@ -35,7 +35,7 @@
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
 
-#define DBG_MSG( ... ) ROS_INFO_NAMED( "im_client", __VA_ARGS__ );
+#define DBG_MSG( ... ) ROS_DEBUG_NAMED( "interactive_markers", __VA_ARGS__ );
 
 namespace interactive_markers
 {
@@ -130,7 +130,8 @@ void InteractiveMarkerClient::subscribeUpdate()
     try
     {
       update_sub_ = nh_.subscribe( topic_ns_+"/update", 100, &InteractiveMarkerClient::process<UpdateConstPtr>, this );
-      state_ = INIT;
+      DBG_MSG( "Subscribed to update topic: %s", (topic_ns_+"/update").c_str() );
+      state_ = RUNNING;
     }
     catch( ros::Exception& e )
     {
@@ -146,6 +147,7 @@ void InteractiveMarkerClient::subscribeInit()
     try
     {
       init_sub_ = nh_.subscribe( topic_ns_+"/update_full", 100, &InteractiveMarkerClient::process<InitConstPtr>, this );
+      DBG_MSG( "Subscribed to init topic: %s", (topic_ns_+"/update_full").c_str() );
       state_ = INIT;
     }
     catch( ros::Exception& e )
@@ -154,6 +156,17 @@ void InteractiveMarkerClient::subscribeInit()
     }
   }
 }
+
+void InteractiveMarkerClient::processInit( const InitConstPtr& msg )
+{
+  process<InitConstPtr>(msg);
+}
+
+void InteractiveMarkerClient::processUpdate( const UpdateConstPtr& msg )
+{
+  process<UpdateConstPtr>(msg);
+}
+
 
 template<class MsgConstPtrT>
 void InteractiveMarkerClient::process( const MsgConstPtrT& msg )
@@ -185,7 +198,7 @@ void InteractiveMarkerClient::process( const MsgConstPtrT& msg )
   context_it->second->process( msg );
 }
 
-void InteractiveMarkerClient::spin()
+void InteractiveMarkerClient::update()
 {
   switch ( state_ )
   {
@@ -200,7 +213,7 @@ void InteractiveMarkerClient::spin()
     M_SingleClient::iterator it;
     for ( it = publisher_contexts_.begin(); it!=publisher_contexts_.end(); ++it )
     {
-      it->second->spin();
+      it->second->update();
       if ( !it->second->isInitialized() )
       {
         initialized = false;

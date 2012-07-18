@@ -37,7 +37,7 @@
 TEST(InteractiveMarkerServer, addRemove)
 {
   // create an interactive marker server on the topic namespace simple_marker
-  interactive_markers::InteractiveMarkerServer server("simple_marker");
+  interactive_markers::InteractiveMarkerServer server("im_server_test");
 
   // create an interactive marker for our server
   visualization_msgs::InteractiveMarker int_marker;
@@ -88,7 +88,7 @@ TEST(InteractiveMarkerServer, addRemove)
 // Run all the tests that were declared with TEST()
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "simple_marker");
+  ros::init(argc, argv, "im_server_test");
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

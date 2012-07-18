@@ -44,6 +44,16 @@ target_link_libraries(server_test ${PROJECT_NAME})
 rosbuild_add_gtest_build_flags(server_test)
 rosbuild_add_rostest(test/cpp_server.test)
 
+rosbuild_add_executable(client_test EXCLUDE_FROM_ALL src/test/client_test.cpp)
+target_link_libraries(client_test ${PROJECT_NAME})
+rosbuild_add_gtest_build_flags(client_test)
+rosbuild_add_rostest(test/cpp_client.test)
+
+rosbuild_add_executable(server_client_test EXCLUDE_FROM_ALL src/test/server_client_test.cpp)
+target_link_libraries(server_client_test ${PROJECT_NAME})
+rosbuild_add_gtest_build_flags(server_client_test)
+rosbuild_add_rostest(test/cpp_server_client.test)
+
 # Test program to simulate Interactive Marker with missing tf information
 #rosbuild_add_executable(bursty_tf src/test/bursty_tf.cpp)
 #target_link_libraries(bursty_tf ${PROJECT_NAME})

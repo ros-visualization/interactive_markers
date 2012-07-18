@@ -88,7 +88,7 @@ public:
   void shutdown();
 
   /// Update tf info, call callbacks
-  void spin();
+  void update();
 
   void setTargetFrame( std::string target_frame );
 
@@ -99,6 +99,10 @@ public:
   void setResetCb( const ResetCallback& cb );
 
   void setStatusCb( const StatusCallback& cb );
+
+  void processInit( const InitConstPtr& msg );
+
+  void processUpdate( const UpdateConstPtr& msg );
 
 private:
 
