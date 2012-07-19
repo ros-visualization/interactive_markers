@@ -110,6 +110,8 @@ private:
   template<class MsgConstPtrT>
   void process( const MsgConstPtrT& msg );
 
+  ros::NodeHandle nh_;
+
   enum StateT
   {
     IDLE,
@@ -135,8 +137,6 @@ private:
   typedef boost::shared_ptr<SingleClient> SingleClientPtr;
   typedef std::map<std::string, SingleClientPtr> M_SingleClient;
   M_SingleClient publisher_contexts_;
-
-  ros::NodeHandle nh_;
 
   tf::Transformer& tf_;
   std::string target_frame_;

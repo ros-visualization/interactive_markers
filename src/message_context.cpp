@@ -36,7 +36,8 @@
 
 #include <boost/make_shared.hpp>
 
-#define DBG_MSG( ... ) ROS_INFO_NAMED( "im_client", __VA_ARGS__ );
+#define DBG_MSG( ... ) ROS_DEBUG_NAMED( "interactive_markers", __VA_ARGS__ );
+//#define DBG_MSG( ... ) printf("   "); printf( __VA_ARGS__ ); printf("\n");
 
 namespace interactive_markers
 {
@@ -65,7 +66,7 @@ MessageContext<MsgT>& MessageContext<MsgT>::operator=( const MessageContext<MsgT
 
 template<class MsgT>
 template<class MsgVecT>
-void MessageContext<MsgT>::getTfTransforms( MsgVecT msg_vec, std::list<size_t>& indices )
+void MessageContext<MsgT>::getTfTransforms( MsgVecT& msg_vec, std::list<size_t>& indices )
 {
   std::list<size_t>::iterator idx_it;
   for ( idx_it = indices.begin(); idx_it != indices.end(); )
@@ -78,6 +79,8 @@ void MessageContext<MsgT>::getTfTransforms( MsgVecT msg_vec, std::list<size_t>& 
         // get transform
         tf::StampedTransform transform;
         tf_.lookupTransform( target_frame_, header.frame_id, header.stamp, transform );
+        DBG_MSG( "Transform %s -> %s at time %f is ready.", header.frame_id.c_str(), target_frame_.c_str(), header.stamp.toSec() );
+
         // transform message into target frame
         tf::Pose pose;
         tf::poseMsgToTF( msg_vec[ *idx_it ].pose, pose );
@@ -87,7 +90,6 @@ void MessageContext<MsgT>::getTfTransforms( MsgVecT msg_vec, std::list<size_t>& 
         msg_vec[ *idx_it ].header.frame_id = target_frame_;
       }
       idx_it = indices.erase(idx_it);
-      DBG_MSG( "Transform %s -> %s at time %f is ready.", header.frame_id.c_str(), target_frame_.c_str(), header.stamp.toSec() );
     }
     catch ( tf::ExtrapolationException& e )
     {

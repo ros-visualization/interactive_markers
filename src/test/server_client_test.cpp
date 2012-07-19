@@ -57,7 +57,7 @@ typedef visualization_msgs::InteractiveMarkerUpdateConstPtr UpdateConstPtr;
 InitConstPtr init_msg;
 UpdateConstPtr update_msg;
 
-void resetCount()
+void resetReceivedMsgs()
 {
   update_calls = 0;
   init_calls = 0;
@@ -112,16 +112,16 @@ TEST(InteractiveMarkerServerAndClient, connect_tf_error)
   tf::TransformListener tf;
 
   // create an interactive marker server on the topic namespace simple_marker
-  interactive_markers::InteractiveMarkerServer server("im_client_test","test_server",false);
+  interactive_markers::InteractiveMarkerServer server("im_server_client_test","test_server",false);
   visualization_msgs::InteractiveMarker int_marker;
   int_marker.name = "marker1";
   int_marker.header.frame_id = "valid_frame";
 
   waitMsg();
 
-  resetCount();
+  resetReceivedMsgs();
 
-  interactive_markers::InteractiveMarkerClient client(tf, "valid_frame", "im_client_test");
+  interactive_markers::InteractiveMarkerClient client(tf, "valid_frame", "im_server_client_test");
   client.setInitCb( &initCb );
   client.setStatusCb( &statusCb );
   client.setResetCb( &resetCb );
@@ -135,18 +135,18 @@ TEST(InteractiveMarkerServerAndClient, connect_tf_error)
   waitMsg();
   client.update();
 
-  ASSERT_EQ( update_calls, 0 );
-  ASSERT_EQ( init_calls, 1 );
-  ASSERT_EQ( reset_calls, 0 );
+  ASSERT_EQ( 0, update_calls  );
+  ASSERT_EQ( 1, init_calls  );
+  ASSERT_EQ( 0, reset_calls  );
   ASSERT_TRUE( init_msg );
-  ASSERT_EQ( init_msg->markers.size(), 1 );
-  ASSERT_EQ( init_msg->markers[0].name, "marker1" );
-  ASSERT_EQ( init_msg->markers[0].header.frame_id, "valid_frame" );
+  ASSERT_EQ( 1, init_msg->markers.size()  );
+  ASSERT_EQ( "marker1", init_msg->markers[0].name  );
+  ASSERT_EQ( "valid_frame", init_msg->markers[0].header.frame_id  );
 
   // Add another marker -> update should get called once
   DBG_MSG("----------------------------------------");
 
-  resetCount();
+  resetReceivedMsgs();
 
   int_marker.name = "marker2";
 
@@ -155,19 +155,19 @@ TEST(InteractiveMarkerServerAndClient, connect_tf_error)
   waitMsg();
   client.update();
 
-  ASSERT_EQ( update_calls, 1 );
-  ASSERT_EQ( init_calls, 0 );
-  ASSERT_EQ( reset_calls, 0 );
+  ASSERT_EQ( 1, update_calls  );
+  ASSERT_EQ( 0, init_calls  );
+  ASSERT_EQ( 0, reset_calls  );
   ASSERT_TRUE( update_msg );
-  ASSERT_EQ( update_msg->markers.size(), 1 );
-  ASSERT_EQ( update_msg->poses.size(), 0 );
-  ASSERT_EQ( update_msg->erases.size(), 0 );
-  ASSERT_EQ( update_msg->markers[0].name, "marker2" );
+  ASSERT_EQ( 1, update_msg->markers.size()  );
+  ASSERT_EQ( 0, update_msg->poses.size()  );
+  ASSERT_EQ( 0, update_msg->erases.size()  );
+  ASSERT_EQ( "marker2", update_msg->markers[0].name  );
 
   // Make marker tf info invalid -> connection should be reset
   DBG_MSG("----------------------------------------");
 
-  resetCount();
+  resetReceivedMsgs();
 
   int_marker.header.frame_id = "invalid_frame";
 
@@ -176,10 +176,10 @@ TEST(InteractiveMarkerServerAndClient, connect_tf_error)
   waitMsg();
   client.update();
 
-  ASSERT_EQ( update_calls, 0 );
-  ASSERT_EQ( init_calls, 0 );
-  ASSERT_EQ( reset_calls, 1 );
-  ASSERT_EQ( reset_server_id, "/im_client_test/test_server" );
+  ASSERT_EQ( 0, update_calls  );
+  ASSERT_EQ( 0, init_calls  );
+  ASSERT_EQ( 1, reset_calls  );
+  ASSERT_TRUE( reset_server_id.find("/test_server") != std::string::npos );
 
   // Make marker tf info valid again -> connection should be successfully initialized again
   DBG_MSG("----------------------------------------");
@@ -188,7 +188,7 @@ TEST(InteractiveMarkerServerAndClient, connect_tf_error)
   waitMsg();
   client.update();
 
-  resetCount();
+  resetReceivedMsgs();
 
   int_marker.header.frame_id = "valid_frame";
 
@@ -197,54 +197,54 @@ TEST(InteractiveMarkerServerAndClient, connect_tf_error)
   waitMsg();
   client.update();
 
-  ASSERT_EQ( update_calls, 0 );
-  ASSERT_EQ( init_calls, 1 );
-  ASSERT_EQ( reset_calls, 0 );
+  ASSERT_EQ( 0, update_calls  );
+  ASSERT_EQ( 1, init_calls  );
+  ASSERT_EQ( 0, reset_calls  );
 
   // Erase marker
   DBG_MSG("----------------------------------------");
 
-  resetCount();
+  resetReceivedMsgs();
 
   server.erase("marker1");
   server.applyChanges();
   waitMsg();
   client.update();
 
-  ASSERT_EQ( update_calls, 1 );
-  ASSERT_EQ( init_calls, 0 );
-  ASSERT_EQ( reset_calls, 0 );
+  ASSERT_EQ( 1, update_calls  );
+  ASSERT_EQ( 0, init_calls  );
+  ASSERT_EQ( 0, reset_calls  );
   ASSERT_TRUE( update_msg );
-  ASSERT_EQ( update_msg->markers.size(), 0 );
-  ASSERT_EQ( update_msg->poses.size(), 0 );
-  ASSERT_EQ( update_msg->erases.size(), 1 );
-  ASSERT_EQ( update_msg->erases[0], "marker1" );
+  ASSERT_EQ( 0, update_msg->markers.size()  );
+  ASSERT_EQ( 0, update_msg->poses.size()  );
+  ASSERT_EQ( 1, update_msg->erases.size()  );
+  ASSERT_EQ( "marker1", update_msg->erases[0]  );
 
   // Update pose
   DBG_MSG("----------------------------------------");
 
-  resetCount();
+  resetReceivedMsgs();
 
   server.setPose( "marker2", int_marker.pose, int_marker.header );
   server.applyChanges();
   waitMsg();
   client.update();
 
-  ASSERT_EQ( update_calls, 1 );
-  ASSERT_EQ( init_calls, 0 );
-  ASSERT_EQ( reset_calls, 0 );
+  ASSERT_EQ( 1, update_calls  );
+  ASSERT_EQ( 0, init_calls  );
+  ASSERT_EQ( 0, reset_calls  );
   ASSERT_TRUE( update_msg );
-  ASSERT_EQ( update_msg->markers.size(), 0 );
-  ASSERT_EQ( update_msg->poses.size(), 1 );
-  ASSERT_EQ( update_msg->erases.size(), 0 );
-  ASSERT_EQ( update_msg->poses[0].name, "marker2" );
+  ASSERT_EQ( 0, update_msg->markers.size()  );
+  ASSERT_EQ( 1, update_msg->poses.size()  );
+  ASSERT_EQ( 0, update_msg->erases.size()  );
+  ASSERT_EQ( "marker2", update_msg->poses[0].name  );
 }
 
 
 // Run all the tests that were declared with TEST()
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "im_client_test");
+  ros::init(argc, argv, "im_server_client_test");
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

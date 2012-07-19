@@ -37,7 +37,7 @@ private:
   void init();
 
   template<class MsgVecT>
-  void getTfTransforms( MsgVecT msg_vec, std::list<size_t>& indices );
+  void getTfTransforms( MsgVecT& msg_vec, std::list<size_t>& indices );
 
   // array indices of marker/pose updates with missing tf info
   std::list<size_t> open_marker_idx_;

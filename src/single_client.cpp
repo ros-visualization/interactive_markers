@@ -35,6 +35,7 @@
 #include <boost/make_shared.hpp>
 
 #define DBG_MSG( ... ) ROS_DEBUG_NAMED( "interactive_markers", __VA_ARGS__ );
+//#define DBG_MSG( ... ) printf("   "); printf( __VA_ARGS__ ); printf("\n");
 
 namespace interactive_markers
 {
@@ -120,7 +121,6 @@ void SingleClient::process(const visualization_msgs::InteractiveMarkerUpdate::Co
       update_queue_.pop_back();
     }
     update_queue_.push_front( UpdateMessageContext(tf_,target_frame_,msg) );
-    checkInitFinished();
     break;
 
   case RECEIVING:
@@ -138,6 +138,7 @@ void SingleClient::update()
   {
   case INIT:
     transformInitMsgs();
+    transformUpdateMsgs();
     checkInitFinished();
     break;
 
@@ -195,8 +196,7 @@ void SingleClient::checkInitFinished()
     {
       callbacks_.statusCb( InteractiveMarkerClient::OK, server_id_, "Initialization: Waiting for tf info." );
     }
-
-    if ( init_it->isReady() && next_up_exists )
+    else if ( next_up_exists )
     {
       DBG_MSG( "Init message with seq_id=%lu is ready & in line with updates. Switching to receive mode.", init_seq_num );
       while ( !update_queue_.empty() && update_queue_.back().msg->seq_num <= init_seq_num )
@@ -205,11 +205,15 @@ void SingleClient::checkInitFinished()
         update_queue_.pop_back();
       }
 
+      DBG_MSG( init_it->msg->markers[0].header.frame_id.c_str() );
+
       callbacks_.initCb( init_it->msg );
       callbacks_.statusCb( InteractiveMarkerClient::OK, server_id_, "Receiving updates." );
 
       init_queue_.clear();
       state_ = RECEIVING;
+
+      pushUpdates();
       break;
     }
   }

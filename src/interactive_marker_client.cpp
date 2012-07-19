@@ -36,6 +36,7 @@
 #include <boost/make_shared.hpp>
 
 #define DBG_MSG( ... ) ROS_DEBUG_NAMED( "interactive_markers", __VA_ARGS__ );
+//#define DBG_MSG( ... ) printf("   "); printf( __VA_ARGS__ ); printf("\n");
 
 namespace interactive_markers
 {
@@ -48,9 +49,11 @@ InteractiveMarkerClient::InteractiveMarkerClient(
 : state_("InteractiveMarkerClient",IDLE)
 , tf_(tf)
 {
-  subscribe( topic_ns );
-  setTargetFrame(target_frame);
-
+  target_frame_ = target_frame;
+  if ( !topic_ns.empty() )
+  {
+    subscribe( topic_ns );
+  }
   callbacks_.setStatusCb( boost::bind( &InteractiveMarkerClient::statusCb, this, _1, _2, _3 ) );
 }
 
@@ -125,13 +128,12 @@ void InteractiveMarkerClient::shutdown()
 
 void InteractiveMarkerClient::subscribeUpdate()
 {
-  if ( state_ != INIT && !topic_ns_.empty() )
+  if ( !topic_ns_.empty() )
   {
     try
     {
       update_sub_ = nh_.subscribe( topic_ns_+"/update", 100, &InteractiveMarkerClient::process<UpdateConstPtr>, this );
       DBG_MSG( "Subscribed to update topic: %s", (topic_ns_+"/update").c_str() );
-      state_ = RUNNING;
     }
     catch( ros::Exception& e )
     {
@@ -157,24 +159,13 @@ void InteractiveMarkerClient::subscribeInit()
   }
 }
 
-void InteractiveMarkerClient::processInit( const InitConstPtr& msg )
-{
-  process<InitConstPtr>(msg);
-}
-
-void InteractiveMarkerClient::processUpdate( const UpdateConstPtr& msg )
-{
-  process<UpdateConstPtr>(msg);
-}
-
-
 template<class MsgConstPtrT>
 void InteractiveMarkerClient::process( const MsgConstPtrT& msg )
 {
   // get caller ID of the sending entity
   if ( msg->server_id.empty() )
   {
-    //setStatusError( "Topic", "server_id is empty!");
+    callbacks_.statusCb( ERROR, "General", "server_id is empty!");
     return;
   }
 
@@ -196,6 +187,16 @@ void InteractiveMarkerClient::process( const MsgConstPtrT& msg )
 
   // forward init/update to respective context
   context_it->second->process( msg );
+}
+
+void InteractiveMarkerClient::processInit( const InitConstPtr& msg )
+{
+  process<InitConstPtr>(msg);
+}
+
+void InteractiveMarkerClient::processUpdate( const UpdateConstPtr& msg )
+{
+  process<UpdateConstPtr>(msg);
 }
 
 void InteractiveMarkerClient::update()
@@ -227,7 +228,6 @@ void InteractiveMarkerClient::update()
     if ( state_ == RUNNING && !initialized )
     {
       subscribeInit();
-      state_ = INIT;
     }
     break;
   }

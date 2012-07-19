@@ -43,194 +43,594 @@
 
 using namespace interactive_markers;
 
-int update_calls;
-int init_calls;
-int reset_calls;
-int status_calls;
-
-
-std::string reset_server_id;
-
-typedef visualization_msgs::InteractiveMarkerInitConstPtr InitConstPtr;
-typedef visualization_msgs::InteractiveMarkerUpdateConstPtr UpdateConstPtr;
-
-InitConstPtr init_msg;
-UpdateConstPtr update_msg;
-
-void resetCount()
+struct Msg
 {
-  update_calls = 0;
-  init_calls = 0;
-  reset_calls = 0;
-  status_calls = 0;
-  reset_server_id = "";
-  init_msg.reset();
-  update_msg.reset();
-}
+  enum {
+    INIT,
+    KEEP_ALIVE,
+    UPDATE,
+    POSE,
+    DELETE,
+    TF_INFO
+  } type;
 
-void updateCb( const UpdateConstPtr& msg )
-{
-  DBG_MSG("updateCb called");
-  update_calls++;
-  update_msg = msg;
-}
-
-void initCb( const InitConstPtr& msg )
-{
-  DBG_MSG("initCb called");
-  init_calls++;
-  init_msg = msg;
-}
-
-void statusCb( InteractiveMarkerClient::StatusT status,
-    const std::string& server_id,
-    const std::string& msg )
-{
-  DBG_MSG("statusCb called");
-  status_calls++;
-  DBG_MSG_STREAM( (int)status << " " << server_id << ": " << msg );
-}
-
-void resetCb( const std::string& server_id )
-{
-  DBG_MSG("resetCb called");
-  reset_calls++;
-  reset_server_id = server_id;
-}
-
-void waitMsg()
-{
-  for(int i=0;i<10;i++)
+  Msg()
   {
-    ros::spinOnce();
-    usleep(1000);
+    type = INIT;
+    seq_num = 0;
   }
-}
 
-TEST(InteractiveMarkerClient, protocol)
+  uint64_t seq_num;
+
+  std::string server_id;
+  std::string frame_id;
+  ros::Time stamp;
+
+  std::vector<std::string> expect_reset_calls;
+  std::vector<int> expect_init_seq_num;
+  std::vector<int> expect_update_seq_num;
+};
+
+std::string target_frame = "target_frame";
+
+
+class SequenceTest
 {
-  tf::TransformListener tf;
+  typedef visualization_msgs::InteractiveMarkerInitConstPtr InitConstPtr;
+  typedef visualization_msgs::InteractiveMarkerUpdateConstPtr UpdateConstPtr;
 
-  // create an interactive marker server on the topic namespace simple_marker
+  std::vector<visualization_msgs::InteractiveMarkerInit> recv_init_msgs;
+  std::vector<visualization_msgs::InteractiveMarkerUpdate> recv_update_msgs;
+  std::vector<std::string> recv_reset_calls;
 
-  visualization_msgs::InteractiveMarker int_marker;
-  int_marker.name = "marker1";
-  int_marker.header.frame_id = "valid_frame";
+  void resetReceivedMsgs()
+  {
+    recv_init_msgs.clear();
+    recv_update_msgs.clear();
+    recv_reset_calls.clear();
+  }
 
-  resetCount();
+  void updateCb( const UpdateConstPtr& msg )
+  {
+    DBG_MSG_STREAM( "updateCb called." );
+    recv_update_msgs.push_back( *msg );
+  }
 
-  interactive_markers::InteractiveMarkerClient client(tf, "valid_frame", "im_client_test");
-  client.setInitCb( &initCb );
-  client.setStatusCb( &statusCb );
-  client.setResetCb( &resetCb );
-  client.setUpdateCb( &updateCb );
+  void initCb( const InitConstPtr& msg )
+  {
+    DBG_MSG_STREAM( "initCb called." );
+    recv_init_msgs.push_back( *msg );
+  }
 
-  // Add one marker -> init should get called once
-  DBG_MSG("----------------------------------------");
+  void statusCb( InteractiveMarkerClient::StatusT status,
+      const std::string& server_id,
+      const std::string& msg )
+  {
+    std::string status_string[]={"INFO","WARN","ERROR"};
+    ASSERT_TRUE( (unsigned)status < 3 );
+    DBG_MSG_STREAM( "(" << status_string[(unsigned)status] << ") " << server_id << ": " << msg );
+  }
 
-  InitConstPtr init_msg_out( new visualization_msgs::InteractiveMarkerInit() );
-  init_msg_out->markers.push_back( int_marker );
-  init_msg_out->seq_num=0;
+  void resetCb( const std::string& server_id )
+  {
+    DBG_MSG_STREAM( "resetCb called." );
+    recv_reset_calls.push_back(server_id);
+  }
 
-  client.processInit( init_msg_out );
+public:
+  void test( std::vector<Msg> messages )
+  {
+    tf::Transformer tf;
 
-  ASSERT_EQ( update_calls, 0 );
-  ASSERT_EQ( init_calls, 0 );
-  ASSERT_EQ( reset_calls, 0 );
+    //tf.setTransform();
 
-  client.update();
+    // create an interactive marker server on the topic namespace simple_marker
 
-  ASSERT_EQ( update_calls, 0 );
-  ASSERT_EQ( init_calls, 0 );
-  ASSERT_EQ( reset_calls, 0 );
+    visualization_msgs::InteractiveMarker int_marker;
+    int_marker.pose.orientation.w=1;
 
-  UpdateConstPtr update_msg_out( new visualization_msgs::InteractiveMarkerUpdate() );
-  update_msg_out->type = visualization_msgs::InteractiveMarkerUpdate::KEEP_ALIVE;
-  client.processUpdate( update_msg_out );
+    interactive_markers::InteractiveMarkerClient client(tf, target_frame, "im_client_test");
 
-  ASSERT_EQ( update_calls, 0 );
-  ASSERT_EQ( init_calls, 0 );
-  ASSERT_EQ( reset_calls, 0 );
+    client.setInitCb( boost::bind(&SequenceTest::initCb, this, _1 ) );
+    client.setUpdateCb( boost::bind(&SequenceTest::updateCb, this, _1 ) );
+    client.setResetCb( boost::bind(&SequenceTest::resetCb, this, _1 ) );
+    client.setStatusCb( boost::bind(&SequenceTest::statusCb, this, _1, _2, _3 ) );
 
-  client.update();
+    std::map< int, visualization_msgs::InteractiveMarkerInit > sent_init_msgs;
+    std::map< int, visualization_msgs::InteractiveMarkerUpdate > sent_update_msgs;
 
-  ASSERT_EQ( update_calls, 0 );
-  ASSERT_EQ( init_calls, 1 );
-  ASSERT_EQ( reset_calls, 0 );
+    for ( size_t i=0; i<messages.size(); i++ )
+    {
+      resetReceivedMsgs();
 
-  ASSERT_TRUE( init_msg );
-  ASSERT_EQ( init_msg->markers.size(), 1 );
-  ASSERT_EQ( init_msg->markers[0].name, "marker1" );
-  ASSERT_EQ( init_msg->markers[0].header.frame_id, "valid_frame" );
+      Msg& msg = messages[i];
 
-  // Add another marker -> update should get called once
-  DBG_MSG("----------------------------------------");
+      int_marker.header.frame_id=msg.frame_id;
+      int_marker.header.stamp=msg.stamp;
 
-  resetCount();
+      std::ostringstream s;
+      s << i;
+      int_marker.name=s.str();
 
-  int_marker.name = "marker2";
+      switch( msg.type )
+      {
+      case Msg::INIT:
+      {
+        DBG_MSG_STREAM( i << " INIT: seq_num=" << msg.seq_num << " frame=" << msg.frame_id << " stamp=" << msg.stamp );
+        visualization_msgs::InteractiveMarkerInitPtr init_msg_out( new visualization_msgs::InteractiveMarkerInit() );
+        init_msg_out->server_id=msg.server_id;
+        init_msg_out->seq_num=msg.seq_num;
+        init_msg_out->markers.push_back( int_marker );
+        client.processInit( init_msg_out );
+        sent_init_msgs[msg.seq_num]=*init_msg_out;
+        break;
+      }
+      case Msg::KEEP_ALIVE:
+      {
+        DBG_MSG_STREAM( i << " KEEP_ALIVE: seq_num=" << msg.seq_num );
+        visualization_msgs::InteractiveMarkerUpdatePtr update_msg_out( new visualization_msgs::InteractiveMarkerUpdate() );
+        update_msg_out->server_id=msg.server_id;
+        update_msg_out->type = visualization_msgs::InteractiveMarkerUpdate::KEEP_ALIVE;
+        update_msg_out->seq_num=msg.seq_num;
 
-  update_msg_out->type = visualization_msgs::InteractiveMarkerUpdate::UPDATE;
-  update_msg_out->markers.push_back( int_marker );
-  client.processUpdate( update_msg_out );
+        client.processUpdate( update_msg_out );
+        sent_update_msgs[msg.seq_num]=*update_msg_out;
+        break;
+      }
+      case Msg::UPDATE:
+      {
+        DBG_MSG_STREAM( i << " UPDATE: seq_num=" << msg.seq_num << " frame=" << msg.frame_id << " stamp=" << msg.stamp );
+        visualization_msgs::InteractiveMarkerUpdatePtr update_msg_out( new visualization_msgs::InteractiveMarkerUpdate() );
+        update_msg_out->server_id=msg.server_id;
+        update_msg_out->type = visualization_msgs::InteractiveMarkerUpdate::UPDATE;
+        update_msg_out->seq_num=msg.seq_num;
 
-#if 0
-  server.insert(int_marker);
-  server.applyChanges();
-  waitMsg();
-  client.update();
+        update_msg_out->markers.push_back( int_marker );
+        client.processUpdate( update_msg_out );
+        sent_update_msgs[msg.seq_num]=*update_msg_out;
+        break;
+      }
+      case Msg::POSE:
+      {
+        DBG_MSG_STREAM( i << " POSE: seq_num=" << msg.seq_num << " frame=" << msg.frame_id << " stamp=" << msg.stamp );
+        visualization_msgs::InteractiveMarkerUpdatePtr update_msg_out( new visualization_msgs::InteractiveMarkerUpdate() );
+        update_msg_out->server_id=msg.server_id;
+        update_msg_out->type = visualization_msgs::InteractiveMarkerUpdate::UPDATE;
+        update_msg_out->seq_num=msg.seq_num;
 
-  ASSERT_EQ( update_calls, 1 );
-  ASSERT_EQ( init_calls, 0 );
-  ASSERT_EQ( reset_calls, 0 );
-  ASSERT_TRUE( update_msg );
-  ASSERT_EQ( update_msg->markers.size(), 1 );
-  ASSERT_EQ( update_msg->markers[0].name, "marker2" );
+        visualization_msgs::InteractiveMarkerPose pose;
+        pose.header=int_marker.header;
+        pose.name=int_marker.name;
+        pose.pose=int_marker.pose;
+        update_msg_out->poses.push_back( pose );
+        client.processUpdate( update_msg_out );
+        sent_update_msgs[msg.seq_num]=*update_msg_out;
+        break;
+      }
+      case Msg::DELETE:
+      {
+        DBG_MSG_STREAM( i << " DELETE: seq_num=" << msg.seq_num );
+        visualization_msgs::InteractiveMarkerUpdatePtr update_msg_out( new visualization_msgs::InteractiveMarkerUpdate() );
+        update_msg_out->server_id="/im_client_test/test_server";
+        update_msg_out->type = visualization_msgs::InteractiveMarkerUpdate::UPDATE;
+        update_msg_out->seq_num=msg.seq_num;
 
-  // Make marker tf info invalid -> connection should be reset
-  DBG_MSG("----------------------------------------");
+        update_msg_out->erases.push_back( int_marker.name );
+        client.processUpdate( update_msg_out );
+        sent_update_msgs[msg.seq_num]=*update_msg_out;
+        break;
+      }
+      case Msg::TF_INFO:
+      {
+        DBG_MSG_STREAM( i << " TF_INFO: " << msg.frame_id << " -> " << target_frame << " at time " << msg.stamp.toSec() );
+        tf::StampedTransform stf;
+        stf.frame_id_=msg.frame_id;
+        stf.child_frame_id_=target_frame;
+        stf.stamp_=msg.stamp;
+        tf.setTransform( stf, msg.server_id );
+        break;
+      }
+      }
 
-  resetCount();
+      ASSERT_EQ( 0, recv_update_msgs.size()  );
+      ASSERT_EQ( 0, recv_init_msgs.size()  );
+      ASSERT_EQ( 0, recv_reset_calls.size()  );
 
-  int_marker.header.frame_id = "invalid_frame";
+      client.update();
 
-  server.insert(int_marker);
-  server.applyChanges();
-  waitMsg();
-  client.update();
+      ASSERT_EQ( msg.expect_update_seq_num.size(), recv_update_msgs.size()  );
+      ASSERT_EQ( msg.expect_init_seq_num.size(), recv_init_msgs.size()  );
+      ASSERT_EQ( msg.expect_reset_calls.size(), recv_reset_calls.size()  );
 
-  ASSERT_EQ( update_calls, 0 );
-  ASSERT_EQ( init_calls, 0 );
-  ASSERT_EQ( reset_calls, 1 );
-  ASSERT_EQ( reset_server_id, "/im_client_test/test_server" );
+      for ( size_t u=0; u<msg.expect_update_seq_num.size(); u++ )
+      {
+        ASSERT_TRUE( sent_update_msgs.find(msg.expect_update_seq_num[u]) != sent_update_msgs.end() );
 
-  // Make marker tf info valid again -> connection should be successfully initialized again
-  DBG_MSG("----------------------------------------");
+        visualization_msgs::InteractiveMarkerUpdate sent_msg = sent_update_msgs[msg.expect_update_seq_num[u]];
+        visualization_msgs::InteractiveMarkerUpdate recv_msg = recv_update_msgs[ u ];
 
-  usleep(2000000);
-  client.update();
+        //sanity check
+        ASSERT_EQ( sent_msg.seq_num, msg.expect_update_seq_num[u]  );
 
-  resetCount();
+        //chech sequence number
+        ASSERT_EQ( recv_msg.seq_num, msg.expect_update_seq_num[u]  );
 
-  int_marker.header.frame_id = "valid_frame";
+        // check sent/received messages for equality
+        ASSERT_EQ( recv_msg.markers.size(), sent_msg.markers.size()  );
+        ASSERT_EQ( recv_msg.poses.size(), sent_msg.poses.size()  );
+        ASSERT_EQ( recv_msg.erases.size(), sent_msg.erases.size()  );
 
-  server.insert(int_marker);
-  server.applyChanges();
-  waitMsg();
-  client.update();
+        // check that messages are equal
+        // and everything is transformed into the target frame
+        for ( size_t m=0; m<sent_msg.markers.size(); m++ )
+        {
+          ASSERT_EQ( recv_msg.markers[m].name, sent_msg.markers[m].name  );
+          ASSERT_EQ( recv_msg.markers[m].header.stamp, sent_msg.markers[m].header.stamp  );
+          ASSERT_EQ( target_frame, recv_msg.markers[m].header.frame_id  );
+        }
+        for ( size_t p=0; p<sent_msg.poses.size(); p++ )
+        {
+          ASSERT_EQ( recv_msg.poses[p].name, sent_msg.poses[p].name  );
+          ASSERT_EQ( recv_msg.poses[p].header.stamp, sent_msg.poses[p].header.stamp  );
+          ASSERT_EQ( target_frame, recv_msg.poses[p].header.frame_id  );
+        }
+        for ( size_t e=0; e<sent_msg.erases.size(); e++ )
+        {
+          ASSERT_EQ( recv_msg.erases[e], sent_msg.erases[e]  );
+        }
+      }
 
-  ASSERT_EQ( update_calls, 0 );
-  ASSERT_EQ( init_calls, 1 );
-  ASSERT_EQ( reset_calls, 0 );
-  ASSERT_EQ( reset_server_id, "/im_client_test/test_server" );
-#endif
+
+      for ( size_t u=0; u<msg.expect_init_seq_num.size(); u++ )
+      {
+        ASSERT_TRUE( sent_init_msgs.find(msg.expect_init_seq_num[u]) != sent_init_msgs.end() );
+
+        visualization_msgs::InteractiveMarkerInit sent_msg = sent_init_msgs[msg.expect_init_seq_num[u]];
+        visualization_msgs::InteractiveMarkerInit recv_msg = recv_init_msgs[ u ];
+
+        //sanity check
+        ASSERT_EQ( sent_msg.seq_num, msg.expect_init_seq_num[u]  );
+
+        //chech sequence number
+        ASSERT_EQ( recv_msg.seq_num, msg.expect_init_seq_num[u]  );
+
+        // check sent/received messages for equality
+        ASSERT_EQ( recv_msg.markers.size(), sent_msg.markers.size()  );
+
+        // check that messages are equal
+        // and everything is transformed into the target frame
+        for ( size_t m=0; m<sent_msg.markers.size(); m++ )
+        {
+          ASSERT_EQ( recv_msg.markers[m].name, sent_msg.markers[m].name  );
+          ASSERT_EQ( recv_msg.markers[m].header.stamp, sent_msg.markers[m].header.stamp  );
+          ASSERT_EQ( target_frame, recv_msg.markers[m].header.frame_id  );
+        }
+      }
+    }
+  }
+};
+
+TEST(InteractiveMarkerClient, init_simple1)
+{
+  Msg msg;
+
+  std::vector<Msg> seq;
+
+  msg.type=Msg::INIT;
+  msg.seq_num=0;
+  msg.server_id="server1";
+  msg.frame_id=target_frame;
+  seq.push_back(msg);
+
+  msg.type=Msg::KEEP_ALIVE;
+  msg.expect_init_seq_num.push_back(0);
+  seq.push_back(msg);
+
+  SequenceTest t;
+  t.test(seq);
 }
 
+TEST(InteractiveMarkerClient, init_simple2)
+{
+  Msg msg;
+
+  std::vector<Msg> seq;
+
+  msg.type=Msg::INIT;
+  msg.seq_num=0;
+  msg.server_id="server1";
+  msg.frame_id=target_frame;
+  seq.push_back(msg);
+
+  msg.type=Msg::UPDATE;
+  msg.expect_init_seq_num.push_back(0);
+  seq.push_back(msg);
+
+  SequenceTest t;
+  t.test(seq);
+}
+
+
+TEST(InteractiveMarkerClient, init_many_inits)
+{
+  Msg msg;
+
+  std::vector<Msg> seq;
+
+  for ( int i=0; i<200; i++ )
+  {
+    msg.type=Msg::INIT;
+    msg.seq_num=i;
+    msg.server_id="server1";
+    msg.frame_id=target_frame;
+    seq.push_back(msg);
+  }
+
+  // this update should be ommitted
+  msg.type=Msg::UPDATE;
+  msg.expect_init_seq_num.push_back(msg.seq_num);
+  seq.push_back(msg);
+
+  // this update should go through
+  msg.seq_num++;
+  msg.expect_init_seq_num.clear();
+  msg.expect_update_seq_num.push_back(msg.seq_num);
+  seq.push_back(msg);
+
+  SequenceTest t;
+  t.test(seq);
+}
+
+TEST(InteractiveMarkerClient, init_many_updates)
+{
+  Msg msg;
+
+  std::vector<Msg> seq;
+
+  for ( int i=0; i<200; i++ )
+  {
+    msg.type=Msg::UPDATE;
+    msg.seq_num=i;
+    msg.server_id="server1";
+    msg.frame_id=target_frame;
+    seq.push_back(msg);
+  }
+
+  msg.type=Msg::INIT;
+  msg.seq_num=190;
+  msg.expect_init_seq_num.push_back(msg.seq_num);
+  for ( int i=191; i<200; i++ )
+  {
+    msg.expect_update_seq_num.push_back(i);
+  }
+  seq.push_back(msg);
+
+  SequenceTest t;
+  t.test(seq);
+}
+
+TEST(InteractiveMarkerClient, init_invalid_tf)
+{
+  Msg msg;
+
+  std::vector<Msg> seq;
+
+  msg.type=Msg::INIT;
+  msg.seq_num=0;
+  msg.server_id="server1";
+  msg.frame_id="invalid_frame";
+  seq.push_back(msg);
+
+  msg.type=Msg::INIT;
+  msg.seq_num=1;
+  msg.server_id="server1";
+  msg.frame_id=target_frame;
+  seq.push_back(msg);
+
+  msg.type=Msg::KEEP_ALIVE;
+  msg.expect_init_seq_num.push_back(1);
+  seq.push_back(msg);
+
+  SequenceTest t;
+  t.test(seq);
+}
+
+TEST(InteractiveMarkerClient, init_wait_tf)
+{
+  Msg msg;
+
+  std::vector<Msg> seq;
+
+  // initial tf info needed so wait_frame is in the tf tree
+  msg.type=Msg::TF_INFO;
+  msg.server_id="server1";
+  msg.frame_id="wait_frame";
+  msg.stamp=ros::Time(1.0);
+  seq.push_back(msg);
+
+  // send init message that lives in the future
+  msg.type=Msg::INIT;
+  msg.seq_num=0;
+  msg.stamp=ros::Time(2.0);
+  seq.push_back(msg);
+
+  msg.type=Msg::KEEP_ALIVE;
+  seq.push_back(msg);
+
+  // send tf info -> message should get passed through
+  msg.type=Msg::TF_INFO;
+  msg.expect_init_seq_num.push_back(0);
+  seq.push_back(msg);
+
+  // send update message that lives in the future
+  msg.type=Msg::UPDATE;
+  msg.seq_num=1;
+  msg.stamp=ros::Time(3.0);
+  msg.expect_init_seq_num.clear();
+  seq.push_back(msg);
+
+  // send tf info -> message should get passed through
+  msg.type=Msg::TF_INFO;
+  msg.expect_update_seq_num.push_back(1);
+  seq.push_back(msg);
+
+  // send pose message that lives in the future
+  msg.type=Msg::POSE;
+  msg.seq_num=2;
+  msg.stamp=ros::Time(4.0);
+  msg.expect_update_seq_num.clear();
+  seq.push_back(msg);
+
+  // send tf info -> message should get passed through
+  msg.type=Msg::TF_INFO;
+  msg.expect_update_seq_num.push_back(2);
+  seq.push_back(msg);
+
+  SequenceTest t;
+  t.test(seq);
+}
+
+
+TEST(InteractiveMarkerClient, init_wait_tf_inverse)
+{
+  // send messages with timestamps going backwards
+  // they should still be delivered in the right order
+  // according to their seq_num
+
+  Msg msg;
+
+  std::vector<Msg> seq;
+
+  // initial tf info needed so wait_frame is in the tf tree
+  msg.type=Msg::TF_INFO;
+  msg.server_id="server1";
+  msg.frame_id="wait_frame";
+  msg.stamp=ros::Time(1.0);
+  seq.push_back(msg);
+
+  msg.type=Msg::INIT;
+  msg.seq_num=0;
+  msg.stamp=ros::Time(6);
+  seq.push_back(msg);
+
+  msg.type=Msg::INIT;
+  msg.seq_num=1;
+  msg.stamp=ros::Time(5);
+  seq.push_back(msg);
+
+  msg.type=Msg::KEEP_ALIVE;
+  msg.seq_num=0;
+  seq.push_back(msg);
+
+  msg.type=Msg::UPDATE;
+  msg.seq_num=1;
+  msg.stamp=ros::Time(5);
+  seq.push_back(msg);
+
+  msg.type=Msg::UPDATE;
+  msg.seq_num=2;
+  msg.stamp=ros::Time(4);
+  seq.push_back(msg);
+
+  msg.type=Msg::UPDATE;
+  msg.seq_num=3;
+  msg.stamp=ros::Time(3);
+  seq.push_back(msg);
+
+  msg.type=Msg::TF_INFO;
+  msg.stamp=ros::Time(2);
+  seq.push_back(msg);
+
+  msg.type=Msg::TF_INFO;
+  msg.stamp=ros::Time(3);
+  seq.push_back(msg);
+
+  msg.type=Msg::TF_INFO;
+  msg.stamp=ros::Time(4);
+  seq.push_back(msg);
+
+  // as soon as tf info for init #1 is there,
+  // all messages should go through
+  msg.stamp=ros::Time(5);
+  msg.expect_init_seq_num.push_back(1);
+  msg.expect_update_seq_num.push_back(2);
+  msg.expect_update_seq_num.push_back(3);
+  seq.push_back(msg);
+
+  SequenceTest t;
+  t.test(seq);
+}
+
+TEST(InteractiveMarkerClient, wait_tf_inverse)
+{
+  // send messages with timestamps going backwards
+  // they should still be delivered in the right order
+  // according to their seq_num
+
+  Msg msg;
+
+  std::vector<Msg> seq;
+
+  // initial tf info needed so wait_frame is in the tf tree
+  msg.type=Msg::TF_INFO;
+  msg.server_id="server1";
+  msg.frame_id="wait_frame";
+  msg.stamp=ros::Time(1);
+  seq.push_back(msg);
+
+  msg.type=Msg::INIT;
+  msg.seq_num=0;
+  seq.push_back(msg);
+
+  msg.type=Msg::KEEP_ALIVE;
+  msg.seq_num=0;
+  msg.expect_init_seq_num.push_back(0);
+  seq.push_back(msg);
+
+  msg.expect_init_seq_num.clear();
+
+  // init complete
+
+  msg.type=Msg::UPDATE;
+  msg.seq_num=1;
+  msg.stamp=ros::Time(5);
+  seq.push_back(msg);
+
+  msg.type=Msg::UPDATE;
+  msg.seq_num=2;
+  msg.stamp=ros::Time(4);
+  seq.push_back(msg);
+
+  msg.type=Msg::UPDATE;
+  msg.seq_num=3;
+  msg.stamp=ros::Time(3);
+  seq.push_back(msg);
+
+  msg.type=Msg::TF_INFO;
+  msg.stamp=ros::Time(3);
+  seq.push_back(msg);
+
+  msg.type=Msg::TF_INFO;
+  msg.stamp=ros::Time(4);
+  seq.push_back(msg);
+
+  // all messages should go through in the right order
+  msg.type=Msg::TF_INFO;
+  msg.stamp=ros::Time(5);
+  msg.expect_update_seq_num.push_back(1);
+  msg.expect_update_seq_num.push_back(2);
+  msg.expect_update_seq_num.push_back(3);
+  seq.push_back(msg);
+
+  SequenceTest t;
+  t.test(seq);
+}
 
 // Run all the tests that were declared with TEST()
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "im_client_test");
+  //ros::NodeHandle nh;
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }
