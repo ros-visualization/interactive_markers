@@ -96,6 +96,13 @@ void SingleClient::process(const visualization_msgs::InteractiveMarkerUpdate::Co
   if ( msg->type == msg->KEEP_ALIVE )
   {
     DBG_MSG( "%s: received keep-alive #%lu", server_id_.c_str(), msg->seq_num );
+    if (last_update_seq_num_ != (uint64_t)-1 && msg->seq_num != last_update_seq_num_ )
+    {
+      std::ostringstream s;
+      s << "Sequence number of update is out of order. Expected: " << last_update_seq_num_ << " Received: " << msg->seq_num;
+      errorReset( s.str() );
+      return;
+    }
     last_update_seq_num_ = msg->seq_num;
     return;
   }
@@ -279,6 +286,10 @@ void SingleClient::errorReset( std::string error_msg )
 
 void SingleClient::pushUpdates()
 {
+  if( !update_queue_.empty() && update_queue_.back().isReady() )
+  {
+    callbacks_.statusCb( InteractiveMarkerClient::OK, server_id_, "OK" );
+  }
   while( !update_queue_.empty() && update_queue_.back().isReady() )
   {
     DBG_MSG("Pushing out update #%lu.", update_queue_.back().msg->seq_num );

@@ -138,8 +138,10 @@ void InteractiveMarkerClient::subscribeUpdate()
     catch( ros::Exception& e )
     {
       callbacks_.statusCb( ERROR, "Topic", "Error subscribing: " + std::string(e.what()) );
+      return;
     }
   }
+  callbacks_.statusCb( OK, "General", "Waiting for messages.");
 }
 
 void InteractiveMarkerClient::subscribeInit()

@@ -84,7 +84,7 @@ void makeViewFacingButton( const visualization_msgs::InteractiveMarker &msg,
 void assignDefaultColor(visualization_msgs::Marker &marker, const geometry_msgs::Quaternion &quat );
 
 /// create a control which shows the description of the interactive marker
-visualization_msgs::InteractiveMarkerControl makeTitle( visualization_msgs::InteractiveMarker &msg );
+visualization_msgs::InteractiveMarkerControl makeTitle( const visualization_msgs::InteractiveMarker &msg );
 
 }
 

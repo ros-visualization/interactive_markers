@@ -30,6 +30,7 @@
  */
 
 #include "interactive_markers/detail/message_context.h"
+#include "interactive_markers/tools.h"
 
 #include <visualization_msgs/InteractiveMarkerInit.h>
 #include <visualization_msgs/InteractiveMarkerUpdate.h>
@@ -52,6 +53,7 @@ MessageContext<MsgT>::MessageContext(
 {
   // copy message, as we will be modifying it
   msg = boost::make_shared<MsgT>( *_msg );
+
   init();
 }
 
@@ -81,13 +83,16 @@ void MessageContext<MsgT>::getTfTransforms( MsgVecT& msg_vec, std::list<size_t>&
         tf_.lookupTransform( target_frame_, header.frame_id, header.stamp, transform );
         DBG_MSG( "Transform %s -> %s at time %f is ready.", header.frame_id.c_str(), target_frame_.c_str(), header.stamp.toSec() );
 
-        // transform message into target frame
-        tf::Pose pose;
-        tf::poseMsgToTF( msg_vec[ *idx_it ].pose, pose );
-        pose = transform * pose;
-        // store transformed pose in original message
-        tf::poseTFToMsg( pose, msg_vec[ *idx_it ].pose );
-        msg_vec[ *idx_it ].header.frame_id = target_frame_;
+        // if timestamp is given, transform message into target frame
+        if ( header.stamp != ros::Time(0) )
+        {
+          tf::Pose pose;
+          tf::poseMsgToTF( msg_vec[ *idx_it ].pose, pose );
+          pose = transform * pose;
+          // store transformed pose in original message
+          tf::poseTFToMsg( pose, msg_vec[ *idx_it ].pose );
+          msg_vec[ *idx_it ].header.frame_id = target_frame_;
+        }
       }
       idx_it = indices.erase(idx_it);
     }
@@ -123,6 +128,19 @@ void MessageContext<visualization_msgs::InteractiveMarkerUpdate>::init()
   {
     open_pose_idx_.push_back( i );
   }
+  for( unsigned i=0; i<msg->markers.size(); i++ )
+  {
+    autoComplete( msg->markers[i] );
+  }
+  for( unsigned i=0; i<msg->poses.size(); i++ )
+  {
+    // correct empty orientation
+    if ( msg->poses[i].pose.orientation.w == 0 && msg->poses[i].pose.orientation.x == 0 &&
+        msg->poses[i].pose.orientation.y == 0 && msg->poses[i].pose.orientation.z == 0 )
+    {
+      msg->poses[i].pose.orientation.w = 1;
+    }
+  }
 }
 
 template<>
@@ -132,6 +150,10 @@ void MessageContext<visualization_msgs::InteractiveMarkerInit>::init()
   for ( size_t i=0; i<msg->markers.size(); i++ )
   {
     open_marker_idx_.push_back( i );
+  }
+  for( unsigned i=0; i<msg->markers.size(); i++ )
+  {
+    autoComplete( msg->markers[i] );
   }
 }
 
@@ -148,7 +170,7 @@ void MessageContext<visualization_msgs::InteractiveMarkerInit>::getTfTransforms(
   getTfTransforms( msg->markers, open_marker_idx_ );
 }
 
-// explicit template
+// explicit template instantiation
 template class MessageContext<visualization_msgs::InteractiveMarkerUpdate>;
 template class MessageContext<visualization_msgs::InteractiveMarkerInit>;
 

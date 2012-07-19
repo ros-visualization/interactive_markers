@@ -232,9 +232,11 @@ public:
       }
       }
 
+      /*
       ASSERT_EQ( 0, recv_update_msgs.size()  );
       ASSERT_EQ( 0, recv_init_msgs.size()  );
       ASSERT_EQ( 0, recv_reset_calls.size()  );
+      */
 
       client.update();
 
@@ -266,13 +268,27 @@ public:
         {
           ASSERT_EQ( recv_msg.markers[m].name, sent_msg.markers[m].name  );
           ASSERT_EQ( recv_msg.markers[m].header.stamp, sent_msg.markers[m].header.stamp  );
-          ASSERT_EQ( target_frame, recv_msg.markers[m].header.frame_id  );
+          if ( sent_msg.markers[m].header.stamp == ros::Time(0) )
+          {
+            ASSERT_EQ( target_frame, sent_msg.markers[m].header.frame_id  );
+          }
+          else
+          {
+            ASSERT_EQ( target_frame, recv_msg.markers[m].header.frame_id  );
+          }
         }
         for ( size_t p=0; p<sent_msg.poses.size(); p++ )
         {
           ASSERT_EQ( recv_msg.poses[p].name, sent_msg.poses[p].name  );
           ASSERT_EQ( recv_msg.poses[p].header.stamp, sent_msg.poses[p].header.stamp  );
-          ASSERT_EQ( target_frame, recv_msg.poses[p].header.frame_id  );
+          if ( sent_msg.poses[p].header.stamp == ros::Time(0) )
+          {
+            ASSERT_EQ( target_frame, sent_msg.poses[p].header.frame_id  );
+          }
+          else
+          {
+            ASSERT_EQ( target_frame, recv_msg.poses[p].header.frame_id  );
+          }
         }
         for ( size_t e=0; e<sent_msg.erases.size(); e++ )
         {
@@ -303,7 +319,14 @@ public:
         {
           ASSERT_EQ( recv_msg.markers[m].name, sent_msg.markers[m].name  );
           ASSERT_EQ( recv_msg.markers[m].header.stamp, sent_msg.markers[m].header.stamp  );
-          ASSERT_EQ( target_frame, recv_msg.markers[m].header.frame_id  );
+          if ( sent_msg.markers[m].header.stamp == ros::Time(0) )
+          {
+            ASSERT_EQ( target_frame, sent_msg.markers[m].header.frame_id  );
+          }
+          else
+          {
+            ASSERT_EQ( target_frame, recv_msg.markers[m].header.frame_id  );
+          }
         }
       }
     }
@@ -625,6 +648,238 @@ TEST(InteractiveMarkerClient, wait_tf_inverse)
   SequenceTest t;
   t.test(seq);
 }
+
+
+TEST(InteractiveMarkerClient, wrong_seq_num1)
+{
+  Msg msg;
+
+  std::vector<Msg> seq;
+
+  msg.type=Msg::INIT;
+  msg.seq_num=0;
+  msg.server_id="server1";
+  msg.frame_id=target_frame;
+  seq.push_back(msg);
+
+  msg.type=Msg::KEEP_ALIVE;
+  msg.expect_init_seq_num.push_back(0);
+  seq.push_back(msg);
+
+  msg.expect_init_seq_num.clear();
+
+  msg.type=Msg::KEEP_ALIVE;
+  msg.seq_num=1;
+  msg.expect_reset_calls.push_back(msg.server_id);
+  seq.push_back(msg);
+
+  SequenceTest t;
+  t.test(seq);
+}
+
+TEST(InteractiveMarkerClient, wrong_seq_num2)
+{
+  Msg msg;
+
+  std::vector<Msg> seq;
+
+  msg.type=Msg::INIT;
+  msg.seq_num=1;
+  msg.server_id="server1";
+  msg.frame_id=target_frame;
+  seq.push_back(msg);
+
+  msg.type=Msg::KEEP_ALIVE;
+  msg.expect_init_seq_num.push_back(1);
+  seq.push_back(msg);
+
+  msg.expect_init_seq_num.clear();
+
+  msg.type=Msg::KEEP_ALIVE;
+  msg.seq_num=0;
+  msg.expect_reset_calls.push_back(msg.server_id);
+  seq.push_back(msg);
+
+  SequenceTest t;
+  t.test(seq);
+}
+
+TEST(InteractiveMarkerClient, wrong_seq_num3)
+{
+  Msg msg;
+
+  std::vector<Msg> seq;
+
+  msg.type=Msg::INIT;
+  msg.seq_num=1;
+  msg.server_id="server1";
+  msg.frame_id=target_frame;
+  seq.push_back(msg);
+
+  msg.type=Msg::KEEP_ALIVE;
+  msg.expect_init_seq_num.push_back(1);
+  seq.push_back(msg);
+
+  msg.expect_init_seq_num.clear();
+
+  msg.type=Msg::UPDATE;
+  msg.seq_num=1;
+  msg.expect_reset_calls.push_back(msg.server_id);
+  seq.push_back(msg);
+
+  SequenceTest t;
+  t.test(seq);
+}
+
+TEST(InteractiveMarkerClient, wrong_seq_num4)
+{
+  Msg msg;
+
+  std::vector<Msg> seq;
+
+  msg.type=Msg::INIT;
+  msg.seq_num=1;
+  msg.server_id="server1";
+  msg.frame_id=target_frame;
+  seq.push_back(msg);
+
+  msg.type=Msg::KEEP_ALIVE;
+  msg.expect_init_seq_num.push_back(1);
+  seq.push_back(msg);
+
+  msg.expect_init_seq_num.clear();
+
+  msg.type=Msg::UPDATE;
+  msg.seq_num=2;
+  msg.expect_update_seq_num.push_back(2);
+  seq.push_back(msg);
+
+  msg.expect_update_seq_num.clear();
+
+  msg.type=Msg::UPDATE;
+  msg.seq_num=2;
+  msg.expect_reset_calls.push_back(msg.server_id);
+  seq.push_back(msg);
+
+  SequenceTest t;
+  t.test(seq);
+}
+
+TEST(InteractiveMarkerClient, wrong_seq_num5)
+{
+  Msg msg;
+
+  std::vector<Msg> seq;
+
+  msg.type=Msg::INIT;
+  msg.seq_num=1;
+  msg.server_id="server1";
+  msg.frame_id=target_frame;
+  seq.push_back(msg);
+
+  msg.type=Msg::KEEP_ALIVE;
+  msg.expect_init_seq_num.push_back(1);
+  seq.push_back(msg);
+
+  msg.expect_init_seq_num.clear();
+
+  msg.type=Msg::UPDATE;
+  msg.seq_num=2;
+  msg.expect_update_seq_num.push_back(2);
+  seq.push_back(msg);
+
+  msg.expect_update_seq_num.clear();
+
+  msg.type=Msg::UPDATE;
+  msg.seq_num=1;
+  msg.expect_reset_calls.push_back(msg.server_id);
+  seq.push_back(msg);
+
+  SequenceTest t;
+  t.test(seq);
+}
+
+TEST(InteractiveMarkerClient, wrong_seq_num6)
+{
+  Msg msg;
+
+  std::vector<Msg> seq;
+
+  msg.type=Msg::INIT;
+  msg.seq_num=1;
+  msg.server_id="server1";
+  msg.frame_id=target_frame;
+  seq.push_back(msg);
+
+  msg.type=Msg::KEEP_ALIVE;
+  msg.expect_init_seq_num.push_back(1);
+  seq.push_back(msg);
+
+  msg.expect_init_seq_num.clear();
+
+  msg.type=Msg::UPDATE;
+  msg.seq_num=2;
+  msg.expect_update_seq_num.push_back(2);
+  seq.push_back(msg);
+
+  msg.expect_update_seq_num.clear();
+
+  msg.type=Msg::UPDATE;
+  msg.seq_num=4;
+  msg.expect_reset_calls.push_back(msg.server_id);
+  seq.push_back(msg);
+
+  SequenceTest t;
+  t.test(seq);
+}
+
+
+TEST(InteractiveMarkerClient, init_twoservers)
+{
+  Msg msg;
+
+  std::vector<Msg> seq;
+
+  msg.type=Msg::INIT;
+  msg.seq_num=0;
+  msg.server_id="server1";
+  msg.frame_id=target_frame;
+  seq.push_back(msg);
+
+  msg.type=Msg::KEEP_ALIVE;
+  msg.expect_init_seq_num.push_back(0);
+  seq.push_back(msg);
+
+  msg.expect_init_seq_num.clear();
+
+  msg.type=Msg::UPDATE;
+  msg.seq_num=1;
+  msg.expect_update_seq_num.push_back(1);
+  seq.push_back(msg);
+
+  msg.expect_update_seq_num.clear();
+
+  msg.type=Msg::INIT;
+  msg.seq_num=0;
+  msg.server_id="server2";
+  msg.frame_id=target_frame;
+  seq.push_back(msg);
+
+  msg.type=Msg::KEEP_ALIVE;
+  msg.expect_init_seq_num.push_back(0);
+  seq.push_back(msg);
+
+  msg.expect_init_seq_num.clear();
+
+  msg.type=Msg::UPDATE;
+  msg.seq_num=1;
+  msg.expect_update_seq_num.push_back(1);
+  seq.push_back(msg);
+
+  SequenceTest t;
+  t.test(seq);
+}
+
 
 // Run all the tests that were declared with TEST()
 int main(int argc, char **argv)

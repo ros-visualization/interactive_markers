@@ -450,7 +450,7 @@ void assignDefaultColor(visualization_msgs::Marker &marker, const geometry_msgs:
 }
 
 
-visualization_msgs::InteractiveMarkerControl makeTitle( visualization_msgs::InteractiveMarker &msg )
+visualization_msgs::InteractiveMarkerControl makeTitle( const visualization_msgs::InteractiveMarker &msg )
 {
   visualization_msgs::Marker marker;
 
