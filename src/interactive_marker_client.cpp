@@ -132,7 +132,7 @@ void InteractiveMarkerClient::subscribeUpdate()
   {
     try
     {
-      update_sub_ = nh_.subscribe( topic_ns_+"/update", 100, &InteractiveMarkerClient::process<UpdateConstPtr>, this );
+      update_sub_ = nh_.subscribe( topic_ns_+"/update", 100, &InteractiveMarkerClient::processUpdate, this );
       DBG_MSG( "Subscribed to update topic: %s", (topic_ns_+"/update").c_str() );
     }
     catch( ros::Exception& e )
@@ -150,7 +150,7 @@ void InteractiveMarkerClient::subscribeInit()
   {
     try
     {
-      init_sub_ = nh_.subscribe( topic_ns_+"/update_full", 100, &InteractiveMarkerClient::process<InitConstPtr>, this );
+      init_sub_ = nh_.subscribe( topic_ns_+"/update_full", 100, &InteractiveMarkerClient::processInit, this );
       DBG_MSG( "Subscribed to init topic: %s", (topic_ns_+"/update_full").c_str() );
       state_ = INIT;
     }
@@ -164,10 +164,12 @@ void InteractiveMarkerClient::subscribeInit()
 template<class MsgConstPtrT>
 void InteractiveMarkerClient::process( const MsgConstPtrT& msg )
 {
+  callbacks_.statusCb( OK, "General", "Receiving messages.");
+
   // get caller ID of the sending entity
   if ( msg->server_id.empty() )
   {
-    callbacks_.statusCb( ERROR, "General", "server_id is empty!");
+    callbacks_.statusCb( ERROR, "General", "Received message with empty server_id!");
     return;
   }
 
