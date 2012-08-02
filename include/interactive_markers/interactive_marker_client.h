@@ -32,20 +32,19 @@
 #ifndef INTERACTIVE_MARKER_CLIENT
 #define INTERACTIVE_MARKER_CLIENT
 
-#include <visualization_msgs/InteractiveMarkerInit.h>
-#include <visualization_msgs/InteractiveMarkerUpdate.h>
-
-#include <boost/scoped_ptr.hpp>
-#include <boost/thread/thread.hpp>
-#include <boost/thread/recursive_mutex.hpp>
-
-#include <ros/ros.h>
-#include <ros/callback_queue.h>
-
+#include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
-#include <boost/unordered_map.hpp>
+
+#include <map>
+#include <string>
+
+#include <ros/subscriber.h>
+#include <ros/node_handle.h>
 
 #include <tf/tf.h>
+
+#include <visualization_msgs/InteractiveMarkerInit.h>
+#include <visualization_msgs/InteractiveMarkerUpdate.h>
 
 #include "detail/state_machine.h"
 
@@ -54,6 +53,16 @@ namespace interactive_markers
 
 class SingleClient;
 
+/// Acts as a client to one or multiple Interactive Marker servers.
+/// Handles topic subscription, error detection and tf transformations.
+///
+/// The output is an init message followed by a stream of updates
+/// for each server. In case of an error (e.g. message loss, tf failure),
+/// the connection to the sending server is reset.
+///
+/// All timestamped messages are being transformed into the target frame,
+/// while for non-timestamped messages it is ensured that the necessary
+/// tf transformation will be available.
 class InteractiveMarkerClient : boost::noncopyable
 {
 public:
@@ -72,37 +81,39 @@ public:
   typedef boost::function< void ( const std::string& ) > ResetCallback;
   typedef boost::function< void ( StatusT, const std::string&, const std::string& ) > StatusCallback;
 
-  static const uint8_t DEFAULT_FEEDBACK_CB = 255;
-
+  /// @param tf           The tf transformer to use.
+  /// @param target_frame tf frame to transform timestamped messages into.
+  /// @param topic_ns     The topic namespace (will subscribe to topic_ns/update, topic_ns/init)
   InteractiveMarkerClient( tf::Transformer& tf,
       const std::string& target_frame = "",
-      const std::string &topic_ns = "",
-      bool spin_thread = false );
+      const std::string &topic_ns = "" );
 
+  /// Will cause a 'reset' call for all servers
   ~InteractiveMarkerClient();
 
-  /// Subscribe to given topic
+  /// Subscribe to the topics topic_ns/update and topic_ns/init
   void subscribe( std::string topic_ns );
 
-  /// Unsubscribe, clear queues & call reset callback
+  /// Unsubscribe, clear queues & call reset callbacks
   void shutdown();
 
   /// Update tf info, call callbacks
   void update();
 
+  /// Change the target frame and reset the connection
   void setTargetFrame( std::string target_frame );
 
+  /// Set callback for init messages
   void setInitCb( const InitCallback& cb );
 
+  /// Set callback for update messages
   void setUpdateCb( const UpdateCallback& cb );
 
+  /// Set callback for resetting one server connection
   void setResetCb( const ResetCallback& cb );
 
+  /// Set callback for status updates
   void setStatusCb( const StatusCallback& cb );
-
-  void processInit( const InitConstPtr& msg );
-
-  void processUpdate( const UpdateConstPtr& msg );
 
 private:
 
@@ -172,9 +183,13 @@ public:
     UpdateCallback update_cb_;
     ResetCallback reset_cb_;
     StatusCallback status_cb_;
-
-    friend class InteractiveMarkerClient;
   };
+
+  // handle init message
+  void processInit( const InitConstPtr& msg );
+
+  // handle update message
+  void processUpdate( const UpdateConstPtr& msg );
 
 private:
   CbCollection callbacks_;

@@ -44,8 +44,7 @@ namespace interactive_markers
 InteractiveMarkerClient::InteractiveMarkerClient(
     tf::Transformer& tf,
     const std::string& target_frame,
-    const std::string &topic_ns,
-    bool spin_thread )
+    const std::string &topic_ns )
 : state_("InteractiveMarkerClient",IDLE)
 , tf_(tf)
 {
@@ -137,7 +136,7 @@ void InteractiveMarkerClient::subscribeUpdate()
     }
     catch( ros::Exception& e )
     {
-      callbacks_.statusCb( ERROR, "Topic", "Error subscribing: " + std::string(e.what()) );
+      callbacks_.statusCb( ERROR, "General", "Error subscribing: " + std::string(e.what()) );
       return;
     }
   }
@@ -156,7 +155,7 @@ void InteractiveMarkerClient::subscribeInit()
     }
     catch( ros::Exception& e )
     {
-      callbacks_.statusCb( ERROR, "Topic", "Error subscribing: " + std::string(e.what()) );
+      callbacks_.statusCb( ERROR, "General", "Error subscribing: " + std::string(e.what()) );
     }
   }
 }
@@ -213,6 +212,16 @@ void InteractiveMarkerClient::update()
   case INIT:
   case RUNNING:
   {
+    // check if one publisher has gone offline
+    if ( update_sub_.getNumPublishers() < publisher_contexts_.size() )
+    {
+      callbacks_.statusCb( ERROR, "General", "Server is offline. Resetting." );
+      shutdown();
+      subscribeUpdate();
+      subscribeInit();
+      return;
+    }
+
     // check if all single clients are finished with the init channels
     bool initialized = true;
     M_SingleClient::iterator it;

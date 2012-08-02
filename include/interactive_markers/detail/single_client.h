@@ -108,6 +108,8 @@ private:
   const InteractiveMarkerClient::CbCollection& callbacks_;
 
   std::string server_id_;
+
+  bool warn_keepalive_;
 };
 
 }

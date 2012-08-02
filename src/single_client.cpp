@@ -53,6 +53,7 @@ SingleClient::SingleClient(
 , target_frame_(target_frame)
 , callbacks_(callbacks)
 , server_id_(server_id)
+, warn_keepalive_(false)
 {
   callbacks_.statusCb( InteractiveMarkerClient::OK, server_id_, "Waiting for init message." );
 }
@@ -177,6 +178,12 @@ void SingleClient::checkKeepAlive()
     std::ostringstream s;
     s << "No update received for " << round(time_since_upd) << " seconds.";
     callbacks_.statusCb( InteractiveMarkerClient::WARN, server_id_, s.str() );
+    warn_keepalive_ = true;
+  }
+  else if ( warn_keepalive_ )
+  {
+    warn_keepalive_ = false;
+    callbacks_.statusCb( InteractiveMarkerClient::OK, server_id_, "OK" );
   }
 }
 
@@ -212,7 +219,7 @@ void SingleClient::checkInitFinished()
         update_queue_.pop_back();
       }
 
-      DBG_MSG( init_it->msg->markers[0].header.frame_id.c_str() );
+      DBG_MSG( "%s", init_it->msg->markers[0].header.frame_id.c_str() );
 
       callbacks_.initCb( init_it->msg );
       callbacks_.statusCb( InteractiveMarkerClient::OK, server_id_, "Receiving updates." );
@@ -279,6 +286,7 @@ void SingleClient::errorReset( std::string error_msg )
   init_queue_.clear();
   first_update_seq_num_ = -1;
   last_update_seq_num_ = -1;
+  warn_keepalive_ = false;
 
   callbacks_.statusCb( InteractiveMarkerClient::ERROR, server_id_, error_msg );
   callbacks_.resetCb( server_id_ );
