@@ -98,6 +98,22 @@ void MessageContext<MsgT>::getTfTransforms( MsgVecT& msg_vec, std::list<size_t>&
     }
     catch ( tf::ExtrapolationException& e )
     {
+      ros::Time latest_time;
+      std::string error_string;
+
+      tf_.getLatestCommonTime( header.frame_id, header.frame_id, latest_time, &error_string );
+
+      // if we have some tf info and it is newer than the requested time,
+      // we are very unlikely to ever receive the old tf info in the future.
+      if ( latest_time != ros::Time(0) && latest_time > header.stamp )
+      {
+        std::ostringstream s;
+        s << "The init message contains an old timestamp and cannot be transformed ";
+        s << "('" << header.frame_id << "' to '" << target_frame_
+          << "' at time " << header.stamp << ").";
+        throw InitFailException( s.str() );
+      }
+
       DBG_MSG( "Transform %s -> %s at time %f is not ready.", header.frame_id.c_str(), target_frame_.c_str(), header.stamp.toSec() );
       // skip and wait for more up-to-date
       ++idx_it;

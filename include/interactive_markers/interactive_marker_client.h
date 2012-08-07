@@ -34,8 +34,8 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
+#include <boost/unordered_map.hpp>
 
-#include <map>
 #include <string>
 
 #include <ros/subscriber.h>
@@ -88,7 +88,7 @@ public:
       const std::string& target_frame = "",
       const std::string &topic_ns = "" );
 
-  /// Will cause a 'reset' call for all servers
+  /// Will cause a 'reset' call for all server ids
   ~InteractiveMarkerClient();
 
   /// Subscribe to the topics topic_ns/update and topic_ns/init
@@ -146,7 +146,7 @@ private:
   void statusCb( StatusT status, const std::string& server_id, const std::string& msg );
 
   typedef boost::shared_ptr<SingleClient> SingleClientPtr;
-  typedef std::map<std::string, SingleClientPtr> M_SingleClient;
+  typedef boost::unordered_map<std::string, SingleClientPtr> M_SingleClient;
   M_SingleClient publisher_contexts_;
 
   tf::Transformer& tf_;

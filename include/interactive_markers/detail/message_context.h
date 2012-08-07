@@ -46,6 +46,13 @@ private:
   std::string target_frame_;
 };
 
+class InitFailException: public tf::TransformException
+{
+public:
+  InitFailException(const std::string errorDescription) : tf::TransformException(errorDescription) { ; };
+};
+
+
 }
 
 #endif /* MESSAGE_CONTEXT_H_ */
