@@ -37,7 +37,7 @@
 
 #include <boost/make_shared.hpp>
 
-#define DBG_MSG( ... ) ROS_DEBUG_NAMED( "interactive_markers", __VA_ARGS__ );
+#define DBG_MSG( ... ) ROS_DEBUG( "interactive_markers", __VA_ARGS__ );
 //#define DBG_MSG( ... ) printf("   "); printf( __VA_ARGS__ ); printf("\n");
 
 namespace interactive_markers
@@ -101,7 +101,7 @@ void MessageContext<MsgT>::getTfTransforms( MsgVecT& msg_vec, std::list<size_t>&
       ros::Time latest_time;
       std::string error_string;
 
-      tf_.getLatestCommonTime( header.frame_id, header.frame_id, latest_time, &error_string );
+      tf_.getLatestCommonTime( target_frame_, header.frame_id, latest_time, &error_string );
 
       // if we have some tf info and it is newer than the requested time,
       // we are very unlikely to ever receive the old tf info in the future.

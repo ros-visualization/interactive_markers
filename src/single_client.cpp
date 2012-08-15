@@ -34,7 +34,7 @@
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
 
-#define DBG_MSG( ... ) ROS_DEBUG_NAMED( "interactive_markers", __VA_ARGS__ );
+#define DBG_MSG( ... ) ROS_DEBUG( __VA_ARGS__ );
 //#define DBG_MSG( ... ) printf("   "); printf( __VA_ARGS__ ); printf("\n");
 
 namespace interactive_markers
@@ -241,15 +241,16 @@ void SingleClient::transformInitMsgs()
     try
     {
       it->getTfTransforms();
-      ++it;
     }
     catch ( std::runtime_error& e )
     {
+      // we want to notify the user, but also keep the init message
+      // in case it is the only one we will receive.
       std::ostringstream s;
       s << "Cannot get tf info for init message with sequence number " << it->msg->seq_num << ". Error: " << e.what();
-      callbacks_.statusCb( InteractiveMarkerClient::ERROR, server_id_, s.str() );
-      it = init_queue_.erase( it );
+      callbacks_.statusCb( InteractiveMarkerClient::WARN, server_id_, s.str() );
     }
+    ++it;
   }
 }
 

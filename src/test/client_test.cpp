@@ -129,7 +129,9 @@ public:
     visualization_msgs::InteractiveMarker int_marker;
     int_marker.pose.orientation.w=1;
 
-    interactive_markers::InteractiveMarkerClient client(tf, target_frame, "im_client_test");
+    std::string topic_ns ="im_client_test";
+
+    interactive_markers::InteractiveMarkerClient client(tf, target_frame, topic_ns );
 
     client.setInitCb( boost::bind(&SequenceTest::initCb, this, _1 ) );
     client.setUpdateCb( boost::bind(&SequenceTest::updateCb, this, _1 ) );
@@ -321,10 +323,12 @@ public:
           ASSERT_EQ( recv_msg.markers[m].header.stamp, sent_msg.markers[m].header.stamp  );
           if ( sent_msg.markers[m].header.stamp == ros::Time(0) )
           {
-            ASSERT_EQ( target_frame, sent_msg.markers[m].header.frame_id  );
+            // check if we can transform frame-locked messages
+            ASSERT_TRUE( tf.canTransform( target_frame, sent_msg.markers[m].header.frame_id, ros::Time(0) ) );
           }
           else
           {
+            // check if non-framelocked messages are being transformed for us
             ASSERT_EQ( target_frame, recv_msg.markers[m].header.frame_id  );
           }
         }
@@ -507,6 +511,34 @@ TEST(InteractiveMarkerClient, init_wait_tf)
   // send tf info -> message should get passed through
   msg.type=Msg::TF_INFO;
   msg.expect_update_seq_num.push_back(2);
+  seq.push_back(msg);
+
+  SequenceTest t;
+  t.test(seq);
+}
+
+
+TEST(InteractiveMarkerClient, init_wait_tf_zerotime)
+{
+  Msg msg;
+
+  std::vector<Msg> seq;
+
+  // send init message with zero timestamp and non-existing tf frame
+  msg.type=Msg::INIT;
+  msg.server_id="server1";
+  msg.frame_id="wait_frame";
+  msg.seq_num=0;
+  msg.stamp=ros::Time(0.0);
+  seq.push_back(msg);
+
+  msg.type=Msg::KEEP_ALIVE;
+  seq.push_back(msg);
+
+  // send tf info -> message should get passed through
+  msg.type=Msg::TF_INFO;
+  msg.stamp=ros::Time(1.0);
+  msg.expect_init_seq_num.push_back(0);
   seq.push_back(msg);
 
   SequenceTest t;
@@ -884,8 +916,8 @@ TEST(InteractiveMarkerClient, init_twoservers)
 // Run all the tests that were declared with TEST()
 int main(int argc, char **argv)
 {
+  testing::InitGoogleTest(&argc, argv);
   ros::init(argc, argv, "im_client_test");
   //ros::NodeHandle nh;
-  testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

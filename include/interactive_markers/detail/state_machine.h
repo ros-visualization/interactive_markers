@@ -40,7 +40,7 @@ StateMachine<StateT>& StateMachine<StateT>::operator=( StateT state )
 {
   if ( state_ != state )
   {
-    ROS_DEBUG_NAMED( "interactive_markers", "Setting state of %s to %lu", name_.c_str(), (int64_t)state );
+    ROS_DEBUG( "Setting state of %s to %lu", name_.c_str(), (int64_t)state );
     state_ = state;
     chg_time_=ros::Time::now();
   }
