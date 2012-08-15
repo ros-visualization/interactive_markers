@@ -196,6 +196,9 @@ private:
 
   // this is the real (external) status callback
   StatusCallback status_cb_;
+
+  // this allows us to detect if a server died (in most cases)
+  int last_num_publishers_;
 };
 
 

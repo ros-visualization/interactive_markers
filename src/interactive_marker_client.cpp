@@ -35,7 +35,8 @@
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
 
-#define DBG_MSG( ... ) ROS_DEBUG_NAMED( "interactive_markers", __VA_ARGS__ );
+//#define DBG_MSG( ... ) ROS_DEBUG_NAMED( "interactive_markers", __VA_ARGS__ );
+#define DBG_MSG( ... ) ROS_DEBUG( __VA_ARGS__ );
 //#define DBG_MSG( ... ) printf("   "); printf( __VA_ARGS__ ); printf("\n");
 
 namespace interactive_markers
@@ -47,6 +48,7 @@ InteractiveMarkerClient::InteractiveMarkerClient(
     const std::string &topic_ns )
 : state_("InteractiveMarkerClient",IDLE)
 , tf_(tf)
+, last_num_publishers_(0)
 {
   target_frame_ = target_frame;
   if ( !topic_ns.empty() )
@@ -120,6 +122,7 @@ void InteractiveMarkerClient::shutdown()
     publisher_contexts_.clear();
     init_sub_.shutdown();
     update_sub_.shutdown();
+    last_num_publishers_=0;
     state_=IDLE;
     break;
   }
@@ -213,7 +216,7 @@ void InteractiveMarkerClient::update()
   case RUNNING:
   {
     // check if one publisher has gone offline
-    if ( update_sub_.getNumPublishers() < publisher_contexts_.size() )
+    if ( update_sub_.getNumPublishers() < last_num_publishers_ )
     {
       callbacks_.statusCb( ERROR, "General", "Server is offline. Resetting." );
       shutdown();
@@ -221,6 +224,7 @@ void InteractiveMarkerClient::update()
       subscribeInit();
       return;
     }
+    last_num_publishers_ = update_sub_.getNumPublishers();
 
     // check if all single clients are finished with the init channels
     bool initialized = true;
