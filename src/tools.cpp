@@ -108,43 +108,6 @@ void autoComplete( const visualization_msgs::InteractiveMarker &msg,
     control.orientation.w = 1;
   }
 
-  // add default tool tip if there is none
-  if ( control.description.empty() )
-  {
-    switch ( control.interaction_mode )
-    {
-      case visualization_msgs::InteractiveMarkerControl::NONE:
-        break;
-
-      case visualization_msgs::InteractiveMarkerControl::MOVE_AXIS:
-        control.description = "Drag to move along the axis.";
-        break;
-
-      case visualization_msgs::InteractiveMarkerControl::MOVE_PLANE:
-        control.description = "Drag to move in the plane.";
-        break;
-
-      case visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS:
-        control.description = "Drag to rotate.";
-        break;
-
-      case visualization_msgs::InteractiveMarkerControl::MOVE_ROTATE:
-        control.description = "Drag to rotate and move.";
-        break;
-
-      case visualization_msgs::InteractiveMarkerControl::BUTTON:
-        control.description = "Click to activate.";
-        break;
-
-      case visualization_msgs::InteractiveMarkerControl::MENU:
-        control.description = "Menu";
-        break;
-
-      default:
-        break;
-    }
-  }
-
   // add default control handles if there are none
   if ( control.markers.empty() )
   {
