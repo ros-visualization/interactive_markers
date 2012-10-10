@@ -61,3 +61,5 @@ rosbuild_add_rostest(test/cpp_server_client.test)
 # Test program to simulate Interactive Marker with wrong tf information
 #rosbuild_add_executable(missing_tf src/test/missing_tf.cpp)
 #target_link_libraries(missing_tf ${PROJECT_NAME})
+
+rosbuild_make_distribution(1.9.0)

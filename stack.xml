@@ -1,0 +1,12 @@
+<stack>
+  <description brief="Interactive Markers library">
+     3D interactive marker communication library for RViz and similar tools. See <a href="http://www.ros.org/wiki/interactive_markers">interactive_markers</a>.
+  </description>
+  <author>David Gossow</author>
+  <license>BSD</license>  
+  <review status="Not reviewed"/>
+  <url>http://ros.org/wiki/interactive_markers</url>
+  <depend stack="common_msgs" /> <!-- visualization_msgs -->
+  <depend stack="geometry" /> <!-- tf -->
+  <depend stack="ros_comm" /> <!-- rosconsole, std_srvs, roscpp, message_filters, std_msgs, rospy, rosbag -->
+</stack>
