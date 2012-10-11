@@ -217,8 +217,8 @@ void makeArrow( const visualization_msgs::InteractiveMarker &msg,
   marker.pose.orientation = control.orientation;
 
   marker.type = visualization_msgs::Marker::ARROW;
-  marker.scale.x = msg.scale * 0.3;
-  marker.scale.y = msg.scale * 0.5;
+  marker.scale.x = msg.scale * 0.15; // aleeper: changed from 0.3 due to Rviz fix
+  marker.scale.y = msg.scale * 0.25; // aleeper: changed from 0.5 due to Rviz fix
   marker.scale.z = msg.scale * 0.2;
 
   assignDefaultColor(marker, control.orientation);
