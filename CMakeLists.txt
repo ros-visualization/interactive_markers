@@ -16,6 +16,8 @@ catkin_package(
   LIBRARIES interactive_markers
 )
 
+include_directories(include ${catkin_INCLUDE_DIRS})
+
 add_library(${PROJECT_NAME} 
 src/interactive_marker_server.cpp
 src/tools.cpp
