@@ -15,7 +15,7 @@ find_package(catkin REQUIRED
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES interactive_markers
-#  DEPENDS 
+  DEPENDS roscpp rosconsole rospy tf visualization_msgs
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS})
@@ -40,8 +40,6 @@ install(DIRECTORY include/interactive_markers/
 
 # C++ Unit Tests
 #
-message("TODO: convert interactive_markers tests to catkin")
-
 if(GTEST_FOUND)
   include_directories(${GTEST_INCLUDE_DIRS})
 
