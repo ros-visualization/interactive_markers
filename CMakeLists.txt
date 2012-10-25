@@ -6,6 +6,7 @@ find_package(catkin REQUIRED
   rosconsole
   roscpp
   rospy
+  rostest
   std_msgs
   std_srvs
   tf
@@ -14,6 +15,7 @@ find_package(catkin REQUIRED
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES interactive_markers
+#  DEPENDS 
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS})
@@ -27,6 +29,8 @@ src/single_client.cpp
 src/message_context.cpp
 )
 
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+
 install(TARGETS interactive_markers
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
@@ -37,26 +41,32 @@ install(DIRECTORY include/interactive_markers/
 # C++ Unit Tests
 #
 message("TODO: convert interactive_markers tests to catkin")
-##
-##  add_executable(server_test EXCLUDE_FROM_ALL src/test/server_test.cpp)
-##  target_link_libraries(server_test ${PROJECT_NAME})
-##  rosbuild_add_gtest_build_flags(server_test)
-##  rosbuild_add_rostest(test/cpp_server.test)
-##  
-##  rosbuild_add_executable(client_test EXCLUDE_FROM_ALL src/test/client_test.cpp)
-##  target_link_libraries(client_test ${PROJECT_NAME})
-##  rosbuild_add_gtest_build_flags(client_test)
-##  rosbuild_add_rostest(test/cpp_client.test)
-##  
-##  rosbuild_add_executable(server_client_test EXCLUDE_FROM_ALL src/test/server_client_test.cpp)
-##  target_link_libraries(server_client_test ${PROJECT_NAME})
-##  rosbuild_add_gtest_build_flags(server_client_test)
-##  rosbuild_add_rostest(test/cpp_server_client.test)
+
+if(GTEST_FOUND)
+  include_directories(${GTEST_INCLUDE_DIRS})
+
+  add_executable(server_test EXCLUDE_FROM_ALL src/test/server_test.cpp)
+  target_link_libraries(server_test ${PROJECT_NAME} ${GTEST_LIBRARIES})
+  add_dependencies(tests server_test)
+  add_rostest(test/cpp_server.test)
+
+  add_executable(client_test EXCLUDE_FROM_ALL src/test/client_test.cpp)
+  target_link_libraries(client_test ${PROJECT_NAME} ${GTEST_LIBRARIES})
+  add_dependencies(tests client_test)
+  add_rostest(test/cpp_client.test)
+
+  add_executable(server_client_test EXCLUDE_FROM_ALL src/test/server_client_test.cpp)
+  target_link_libraries(server_client_test ${PROJECT_NAME} ${GTEST_LIBRARIES})
+  add_dependencies(tests server_client_test)
+  add_rostest(test/cpp_server_client.test)
+endif()
 
 # Test program to simulate Interactive Marker with missing tf information
-#rosbuild_add_executable(bursty_tf src/test/bursty_tf.cpp)
-#target_link_libraries(bursty_tf ${PROJECT_NAME})
+add_executable(bursty_tf EXCLUDE_FROM_ALL src/test/bursty_tf.cpp)
+target_link_libraries(bursty_tf ${PROJECT_NAME})
+add_dependencies(tests bursty_tf)
 
 # Test program to simulate Interactive Marker with wrong tf information
-#rosbuild_add_executable(missing_tf src/test/missing_tf.cpp)
-#target_link_libraries(missing_tf ${PROJECT_NAME})
+add_executable(missing_tf EXCLUDE_FROM_ALL src/test/missing_tf.cpp)
+target_link_libraries(missing_tf ${PROJECT_NAME})
+add_dependencies(tests missing_tf)
