@@ -1,0 +1,35 @@
+<package>
+  <name>interactive_markers</name>
+  <description>
+     3D interactive marker communication library for RViz and similar tools.
+  </description>
+  <maintainer email="dgossow@willowgarage.com">David Gossow</maintainer>
+  <license>BSD</license>  
+  <version>1.9.2</version>
+
+  <author>David Gossow</author>
+
+  <url>http://ros.org/wiki/interactive_markers</url>
+
+  <build_depend>message_filters</build_depend>
+  <build_depend>rosbag</build_depend>
+  <build_depend>rosconsole</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>rostest</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>std_srvs</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>visualization_msgs</build_depend>
+
+  <run_depend>message_filters</run_depend>
+  <run_depend>rosbag</run_depend>
+  <run_depend>rosconsole</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>rostest</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>std_srvs</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>visualization_msgs</run_depend>
+</package>
