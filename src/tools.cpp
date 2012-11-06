@@ -273,14 +273,16 @@ void makeDisc( const visualization_msgs::InteractiveMarker &msg,
     circle2.push_back( v2 );
   }
 
-  //construct disc from several segments, as otherwise z sorting won't work nicely
-  control.markers.reserve( control.markers.size() + steps );
+  marker.points.resize(6*steps);
+
+  std_msgs::ColorRGBA color;
+  color.r=color.g=color.b=color.a=1;
 
   switch ( control.interaction_mode )
   {
     case visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS:
     {
-      marker.points.resize(6);
+      marker.colors.resize(2*steps);
       std_msgs::ColorRGBA base_color = marker.color;
       for ( int i=0; i<steps; i++ )
       {
@@ -288,25 +290,31 @@ void makeDisc( const visualization_msgs::InteractiveMarker &msg,
         int i2 = (i+1) % steps;
         int i3 = (i+2) % steps;
 
-        marker.points[0] = circle1[i1];
-        marker.points[1] = circle2[i2];
-        marker.points[2] = circle1[i2];
+        int p = i*6;
+        int c = i*2;
 
-        marker.points[3] = circle1[i2];
-        marker.points[4] = circle2[i2];
-        marker.points[5] = circle2[i3];
+        marker.points[p+0] = circle1[i1];
+        marker.points[p+1] = circle2[i2];
+        marker.points[p+2] = circle1[i2];
+
+        marker.points[p+3] = circle1[i2];
+        marker.points[p+4] = circle2[i2];
+        marker.points[p+5] = circle2[i3];
 
         float t = 0.6 + 0.4 * (i%2);
-        marker.color.r = base_color.r * t;
-        marker.color.g = base_color.g * t;
-        marker.color.b = base_color.b * t;
-        control.markers.push_back(marker);
+        color.r = base_color.r * t;
+        color.g = base_color.g * t;
+        color.b = base_color.b * t;
+
+        marker.colors[c] = color;
+        marker.colors[c+1] = color;
       }
       break;
     }
 
     case visualization_msgs::InteractiveMarkerControl::MOVE_ROTATE:
     {
+      marker.colors.resize(2*steps);
       marker.points.resize(6);
       std_msgs::ColorRGBA base_color = marker.color;
       for ( int i=0; i<steps-1; i+=2 )
@@ -315,52 +323,61 @@ void makeDisc( const visualization_msgs::InteractiveMarker &msg,
         int i2 = (i+1) % steps;
         int i3 = (i+2) % steps;
 
-        marker.points[0] = circle1[i1];
-        marker.points[1] = circle2[i2];
-        marker.points[2] = circle1[i2];
+        int p = i * 3;
+        int c = i;
 
-        marker.points[3] = circle1[i2];
-        marker.points[4] = circle2[i2];
-        marker.points[5] = circle1[i3];
+        marker.points[p+0] = circle1[i1];
+        marker.points[p+1] = circle2[i2];
+        marker.points[p+2] = circle1[i2];
 
-        marker.color.r = base_color.r * 0.6;
-        marker.color.g = base_color.g * 0.6;
-        marker.color.b = base_color.b * 0.6;
-        control.markers.push_back(marker);
+        marker.points[p+3] = circle1[i2];
+        marker.points[p+4] = circle2[i2];
+        marker.points[p+5] = circle1[i3];
 
-        marker.points[0] = circle2[i1];
-        marker.points[1] = circle2[i2];
-        marker.points[2] = circle1[i1];
+        color.r = base_color.r * 0.6;
+        color.g = base_color.g * 0.6;
+        color.b = base_color.b * 0.6;
 
-        marker.points[3] = circle2[i2];
-        marker.points[4] = circle2[i3];
-        marker.points[5] = circle1[i3];
+        marker.colors[c] = color;
+        marker.colors[c+1] = color;
 
-        marker.color = base_color;
-        control.markers.push_back(marker);
+        p += 6;
+        c += 2;
+
+        marker.points[p+0] = circle2[i1];
+        marker.points[p+1] = circle2[i2];
+        marker.points[p+2] = circle1[i1];
+
+        marker.points[p+3] = circle2[i2];
+        marker.points[p+4] = circle2[i3];
+        marker.points[p+5] = circle1[i3];
+
+        marker.colors[c] = base_color;
+        marker.colors[c+1] = base_color;
       }
       break;
     }
 
     default:
-      marker.points.resize(6);
-
       for ( int i=0; i<steps; i++ )
       {
         int i1 = i;
         int i2 = (i+1) % steps;
 
-        marker.points[0] = circle1[i1];
-        marker.points[1] = circle2[i1];
-        marker.points[2] = circle1[i2];
+        int p = i*6;
 
-        marker.points[3] = circle2[i1];
-        marker.points[4] = circle2[i2];
-        marker.points[5] = circle1[i2];
+        marker.points[p+0] = circle1[i1];
+        marker.points[p+1] = circle2[i1];
+        marker.points[p+2] = circle1[i2];
 
-        control.markers.push_back(marker);
+        marker.points[p+3] = circle2[i1];
+        marker.points[p+4] = circle2[i2];
+        marker.points[p+5] = circle1[i2];
       }
+      break;
   }
+
+  control.markers.push_back(marker);
 }
 
 void makeViewFacingButton( const visualization_msgs::InteractiveMarker &msg,
