@@ -175,27 +175,8 @@ void autoComplete( const visualization_msgs::InteractiveMarker &msg,
     //normalize orientation
     tf::Quaternion marker_orientation( marker.pose.orientation.x, marker.pose.orientation.y,
         marker.pose.orientation.z, marker.pose.orientation.w );
-    tf::Vector3 marker_position( marker.pose.position.x, marker.pose.position.y, marker.pose.position.z );
 
     marker_orientation.normalize();
-
-    // if the header is empty, interpret as local coordinates relative to interactive marker pose
-    if ( marker.header.frame_id.empty() )
-    {
-      marker.header = msg.header;
-
-      // interpret marker pose as relative to interactive marker pose
-      if ( control.orientation_mode == visualization_msgs::InteractiveMarkerControl::INHERIT )
-      {
-        marker_orientation = int_marker_orientation * marker_orientation;
-      }
-      marker_position = int_marker_position + ( tf::Matrix3x3(int_marker_orientation) * marker_position);
-    }
-
-    // write back corrected pose
-    marker.pose.position.x = marker_position.x();
-    marker.pose.position.y = marker_position.y();
-    marker.pose.position.z = marker_position.z();
 
     marker.pose.orientation.x = marker_orientation.x();
     marker.pose.orientation.y = marker_orientation.y();
