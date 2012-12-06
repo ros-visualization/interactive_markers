@@ -10,6 +10,8 @@
 
 #include <tf/tf.h>
 
+#include <visualization_msgs/InteractiveMarkerInit.h>
+#include <visualization_msgs/InteractiveMarkerUpdate.h>
 
 namespace interactive_markers
 {
@@ -36,8 +38,10 @@ private:
 
   void init();
 
-  template<class MsgVecT>
-  void getTfTransforms( MsgVecT& msg_vec, std::list<size_t>& indices );
+  bool getTransform( std_msgs::Header& header, geometry_msgs::Pose& pose_msg );
+
+  void getTfTransforms( std::vector<visualization_msgs::InteractiveMarker>& msg_vec, std::list<size_t>& indices );
+  void getTfTransforms( std::vector<visualization_msgs::InteractiveMarkerPose>& msg_vec, std::list<size_t>& indices );
 
   // array indices of marker/pose updates with missing tf info
   std::list<size_t> open_marker_idx_;

@@ -32,12 +32,9 @@
 #include "interactive_markers/detail/message_context.h"
 #include "interactive_markers/tools.h"
 
-#include <visualization_msgs/InteractiveMarkerInit.h>
-#include <visualization_msgs/InteractiveMarkerUpdate.h>
-
 #include <boost/make_shared.hpp>
 
-#define DBG_MSG( ... ) ROS_DEBUG( "interactive_markers", __VA_ARGS__ );
+#define DBG_MSG( ... ) ROS_DEBUG( __VA_ARGS__ );
 //#define DBG_MSG( ... ) printf("   "); printf( __VA_ARGS__ ); printf("\n");
 
 namespace interactive_markers
@@ -67,62 +64,103 @@ MessageContext<MsgT>& MessageContext<MsgT>::operator=( const MessageContext<MsgT
 }
 
 template<class MsgT>
-template<class MsgVecT>
-void MessageContext<MsgT>::getTfTransforms( MsgVecT& msg_vec, std::list<size_t>& indices )
+bool MessageContext<MsgT>::getTransform( std_msgs::Header& header, geometry_msgs::Pose& pose_msg )
+{
+  try
+  {
+    if ( header.frame_id != target_frame_ )
+    {
+      // get transform
+      tf::StampedTransform transform;
+      tf_.lookupTransform( target_frame_, header.frame_id, header.stamp, transform );
+      DBG_MSG( "Transform %s -> %s at time %f is ready.", header.frame_id.c_str(), target_frame_.c_str(), header.stamp.toSec() );
+
+      // if timestamp is given, transform message into target frame
+      if ( header.stamp != ros::Time(0) )
+      {
+        tf::Pose pose;
+        tf::poseMsgToTF( pose_msg, pose );
+        pose = transform * pose;
+        // store transformed pose in original message
+        tf::poseTFToMsg( pose, pose_msg );
+        ROS_INFO_STREAM("Changing " << header.frame_id << " to "<< target_frame_);
+        header.frame_id = target_frame_;
+      }
+    }
+  }
+  catch ( tf::ExtrapolationException& e )
+  {
+    ros::Time latest_time;
+    std::string error_string;
+
+    tf_.getLatestCommonTime( target_frame_, header.frame_id, latest_time, &error_string );
+
+    // if we have some tf info and it is newer than the requested time,
+    // we are very unlikely to ever receive the old tf info in the future.
+    if ( latest_time != ros::Time(0) && latest_time > header.stamp )
+    {
+      std::ostringstream s;
+      s << "The init message contains an old timestamp and cannot be transformed ";
+      s << "('" << header.frame_id << "' to '" << target_frame_
+        << "' at time " << header.stamp << ").";
+      throw InitFailException( s.str() );
+    }
+    return false;
+  }
+  return true;
+  // all other exceptions need to be handled outside
+}
+
+template<class MsgT>
+void MessageContext<MsgT>::getTfTransforms( std::vector<visualization_msgs::InteractiveMarker>& msg_vec, std::list<size_t>& indices )
 {
   std::list<size_t>::iterator idx_it;
   for ( idx_it = indices.begin(); idx_it != indices.end(); )
   {
-    std_msgs::Header& header = msg_vec[ *idx_it ].header;
-    try
+    visualization_msgs::InteractiveMarker& im_msg = msg_vec[ *idx_it ];
+    // transform interactive marker
+    bool success = getTransform( im_msg.header, im_msg.pose );
+    // transform regular markers
+    for ( unsigned c = 0; c<im_msg.controls.size(); c++ )
     {
-      if ( header.frame_id != target_frame_ )
+      visualization_msgs::InteractiveMarkerControl& ctrl_msg = im_msg.controls[c];
+      for ( unsigned m = 0; m<ctrl_msg.markers.size(); m++ )
       {
-        // get transform
-        tf::StampedTransform transform;
-        tf_.lookupTransform( target_frame_, header.frame_id, header.stamp, transform );
-        DBG_MSG( "Transform %s -> %s at time %f is ready.", header.frame_id.c_str(), target_frame_.c_str(), header.stamp.toSec() );
-
-        // if timestamp is given, transform message into target frame
-        if ( header.stamp != ros::Time(0) )
-        {
-          tf::Pose pose;
-          tf::poseMsgToTF( msg_vec[ *idx_it ].pose, pose );
-          pose = transform * pose;
-          // store transformed pose in original message
-          tf::poseTFToMsg( pose, msg_vec[ *idx_it ].pose );
-          msg_vec[ *idx_it ].header.frame_id = target_frame_;
+        visualization_msgs::Marker& marker_msg = ctrl_msg.markers[m];
+        if ( !marker_msg.header.frame_id.empty() ) {
+          success = success && getTransform( marker_msg.header, marker_msg.pose );
         }
       }
+    }
+
+    if ( success )
+    {
       idx_it = indices.erase(idx_it);
     }
-    catch ( tf::ExtrapolationException& e )
+    else
     {
-      ros::Time latest_time;
-      std::string error_string;
-
-      tf_.getLatestCommonTime( target_frame_, header.frame_id, latest_time, &error_string );
-
-      // if we have some tf info and it is newer than the requested time,
-      // we are very unlikely to ever receive the old tf info in the future.
-      if ( latest_time != ros::Time(0) && latest_time > header.stamp )
-      {
-        std::ostringstream s;
-        s << "The init message contains an old timestamp and cannot be transformed ";
-        s << "('" << header.frame_id << "' to '" << target_frame_
-          << "' at time " << header.stamp << ").";
-        throw InitFailException( s.str() );
-      }
-
-      DBG_MSG( "Transform %s -> %s at time %f is not ready.", header.frame_id.c_str(), target_frame_.c_str(), header.stamp.toSec() );
-      // skip and wait for more up-to-date
+      DBG_MSG( "Transform %s -> %s at time %f is not ready.", im_msg.header.frame_id.c_str(), target_frame_.c_str(), im_msg.header.stamp.toSec() );
       ++idx_it;
     }
-    // all other exceptions need to be handled outside
   }
-  if ( isReady() )
+}
+
+template<class MsgT>
+void MessageContext<MsgT>::getTfTransforms( std::vector<visualization_msgs::InteractiveMarkerPose>& msg_vec, std::list<size_t>& indices )
+{
+  std::list<size_t>::iterator idx_it;
+  for ( idx_it = indices.begin(); idx_it != indices.end(); )
   {
-    DBG_MSG( "Message with seq_num=%lu is ready.", msg->seq_num );
+    visualization_msgs::InteractiveMarkerPose& msg = msg_vec[ *idx_it ];
+    if ( getTransform( msg.header, msg.pose ) )
+    {
+      idx_it = indices.erase(idx_it);
+    }
+    else
+    {
+      DBG_MSG( "Transform %s -> %s at time %f is not ready.", msg.header.frame_id.c_str(), target_frame_.c_str(), msg.header.stamp.toSec() );
+      ++idx_it;
+    }
   }
 }
 
@@ -178,12 +216,20 @@ void MessageContext<visualization_msgs::InteractiveMarkerUpdate>::getTfTransform
 {
   getTfTransforms( msg->markers, open_marker_idx_ );
   getTfTransforms( msg->poses, open_pose_idx_ );
+  if ( isReady() )
+  {
+    DBG_MSG( "Update message with seq_num=%lu is ready.", msg->seq_num );
+  }
 }
 
 template<>
 void MessageContext<visualization_msgs::InteractiveMarkerInit>::getTfTransforms( )
 {
   getTfTransforms( msg->markers, open_marker_idx_ );
+  if ( isReady() )
+  {
+    DBG_MSG( "Init message with seq_num=%lu is ready.", msg->seq_num );
+  }
 }
 
 // explicit template instantiation
