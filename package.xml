@@ -11,6 +11,8 @@
 
   <url>http://ros.org/wiki/interactive_markers</url>
 
+  <buildtool_depend>catkin</buildtool_depend>
+
   <build_depend>message_filters</build_depend>
   <build_depend>rosbag</build_depend>
   <build_depend>rosconsole</build_depend>
