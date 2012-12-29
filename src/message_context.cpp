@@ -83,7 +83,7 @@ bool MessageContext<MsgT>::getTransform( std_msgs::Header& header, geometry_msgs
         pose = transform * pose;
         // store transformed pose in original message
         tf::poseTFToMsg( pose, pose_msg );
-        ROS_INFO_STREAM("Changing " << header.frame_id << " to "<< target_frame_);
+        ROS_DEBUG_STREAM("Changing " << header.frame_id << " to "<< target_frame_);
         header.frame_id = target_frame_;
       }
     }
