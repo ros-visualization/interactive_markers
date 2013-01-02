@@ -15,7 +15,7 @@ find_package(catkin REQUIRED
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES interactive_markers
-  DEPENDS roscpp rosconsole rospy tf visualization_msgs
+  CATKIN_DEPENDS roscpp rosconsole rospy tf visualization_msgs
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS})
@@ -31,7 +31,7 @@ src/message_context.cpp
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
-install(TARGETS interactive_markers
+install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
 install(DIRECTORY include/interactive_markers/
