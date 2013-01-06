@@ -17,6 +17,7 @@ catkin_package(
   LIBRARIES interactive_markers
   CATKIN_DEPENDS roscpp rosconsole rospy tf visualization_msgs
 )
+catkin_python_setup()
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
