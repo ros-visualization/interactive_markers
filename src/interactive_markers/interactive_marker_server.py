@@ -173,7 +173,8 @@ class InteractiveMarkerServer:
     ## Note: This change will not take effect until you call applyChanges().
     def clear(self):
         self.pending_updates = dict()
-        self.marker_contexts = dict()
+        for marker_name in self.marker_contexts.keys():
+            self.erase(marker_name)
 
     ## @brief Add or replace a callback function for the specified marker.
     ## Note: This change will not take effect until you call applyChanges().
