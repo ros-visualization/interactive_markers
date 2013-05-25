@@ -296,7 +296,6 @@ void makeDisc( const visualization_msgs::InteractiveMarker &msg,
     case visualization_msgs::InteractiveMarkerControl::MOVE_ROTATE:
     {
       marker.colors.resize(2*steps);
-      marker.points.resize(6);
       std_msgs::ColorRGBA base_color = marker.color;
       for ( int i=0; i<steps-1; i+=2 )
       {
@@ -304,8 +303,8 @@ void makeDisc( const visualization_msgs::InteractiveMarker &msg,
         int i2 = (i+1) % steps;
         int i3 = (i+2) % steps;
 
-        int p = i * 3;
-        int c = i;
+        int p = i * 6;
+        int c = i * 2;
 
         marker.points[p+0] = circle1[i1];
         marker.points[p+1] = circle2[i2];
