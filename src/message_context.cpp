@@ -44,9 +44,11 @@ template<class MsgT>
 MessageContext<MsgT>::MessageContext(
     tf::Transformer& tf,
     const std::string& target_frame,
-    const typename MsgT::ConstPtr& _msg)
+    const typename MsgT::ConstPtr& _msg,
+    bool enable_autocomplete_transparency)
 : tf_(tf)
 , target_frame_(target_frame)
+, enable_autocomplete_transparency_(enable_autocomplete_transparency)
 {
   // copy message, as we will be modifying it
   msg = boost::make_shared<MsgT>( *_msg );
@@ -60,6 +62,7 @@ MessageContext<MsgT>& MessageContext<MsgT>::operator=( const MessageContext<MsgT
   open_marker_idx_ = other.open_marker_idx_;
   open_pose_idx_ = other.open_pose_idx_;
   target_frame_ = other.target_frame_;
+  enable_autocomplete_transparency_ = other.enable_autocomplete_transparency_;
   return *this;
 }
 
@@ -207,7 +210,7 @@ void MessageContext<visualization_msgs::InteractiveMarkerInit>::init()
   }
   for( unsigned i=0; i<msg->markers.size(); i++ )
   {
-    autoComplete( msg->markers[i] );
+    autoComplete( msg->markers[i], enable_autocomplete_transparency_ );
   }
 }
 

@@ -39,13 +39,13 @@ namespace interactive_markers
  *
  * This also calls uniqueifyControlNames().
  * @param msg      interactive marker to be completed */
-void autoComplete( visualization_msgs::InteractiveMarker &msg );
+void autoComplete( visualization_msgs::InteractiveMarker &msg, bool enable_autocomplete_transparency = true );
 
 /// @brief fill in default values & insert default controls when none are specified
 /// @param msg      interactive marker which contains the control
 /// @param control  the control to be completed
 void autoComplete( const visualization_msgs::InteractiveMarker &msg,
-    visualization_msgs::InteractiveMarkerControl &control );
+    visualization_msgs::InteractiveMarkerControl &control, bool enable_autocomplete_transparency = true );
 
 /** @brief Make sure all the control names are unique within the given msg.
  *
