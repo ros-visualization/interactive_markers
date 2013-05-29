@@ -51,7 +51,8 @@ class MessageContext
 public:
   MessageContext( tf::Transformer& tf,
       const std::string& target_frame,
-      const typename MsgT::ConstPtr& msg);
+      const typename MsgT::ConstPtr& msg,
+      bool enable_autocomplete_transparency = true);
 
   MessageContext<MsgT>& operator=( const MessageContext<MsgT>& other );
 
@@ -77,12 +78,13 @@ private:
   std::list<size_t> open_pose_idx_;
   tf::Transformer& tf_;
   std::string target_frame_;
+  bool enable_autocomplete_transparency_;
 };
 
 class InitFailException: public tf::TransformException
 {
 public:
-  InitFailException(const std::string errorDescription) : tf::TransformException(errorDescription) { ; };
+  InitFailException(const std::string errorDescription) : tf::TransformException(errorDescription) { ; }
 };
 
 
