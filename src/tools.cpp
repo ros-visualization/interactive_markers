@@ -41,7 +41,7 @@
 namespace interactive_markers
 {
 
-void autoComplete( visualization_msgs::InteractiveMarker &msg )
+void autoComplete( visualization_msgs::InteractiveMarker &msg, bool enable_autocomplete_transparency )
 {
   // this is a 'delete' message. no need for action.
   if ( msg.controls.empty() )
@@ -74,7 +74,7 @@ void autoComplete( visualization_msgs::InteractiveMarker &msg )
   // complete the controls
   for ( unsigned c=0; c<msg.controls.size(); c++ )
   {
-    autoComplete( msg, msg.controls[c] );
+    autoComplete( msg, msg.controls[c], enable_autocomplete_transparency);
   }
 
   uniqueifyControlNames( msg );
@@ -99,7 +99,7 @@ void uniqueifyControlNames( visualization_msgs::InteractiveMarker& msg )
 }
 
 void autoComplete( const visualization_msgs::InteractiveMarker &msg,
-    visualization_msgs::InteractiveMarkerControl &control )
+    visualization_msgs::InteractiveMarkerControl &control, bool enable_autocomplete_transparency)
 {
   // correct empty orientation
   if ( control.orientation.w == 0 && control.orientation.x == 0 &&
@@ -186,6 +186,9 @@ void autoComplete( const visualization_msgs::InteractiveMarker &msg,
     static volatile unsigned id = 0;
     marker.id = id++;
     marker.ns = msg.name;
+
+    // Set alpha to 1.0 if transparency is disabled.
+    marker.color.a = enable_autocomplete_transparency ? marker.color.a : 1.0;
   }
 }
 

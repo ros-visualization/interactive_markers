@@ -63,7 +63,7 @@ SingleClient::~SingleClient()
   callbacks_.resetCb( server_id_ );
 }
 
-void SingleClient::process(const visualization_msgs::InteractiveMarkerInit::ConstPtr& msg)
+void SingleClient::process(const visualization_msgs::InteractiveMarkerInit::ConstPtr& msg, bool enable_autocomplete_transparency)
 {
   DBG_MSG( "%s: received init #%lu", server_id_.c_str(), msg->seq_num );
 
@@ -75,7 +75,7 @@ void SingleClient::process(const visualization_msgs::InteractiveMarkerInit::Cons
       DBG_MSG( "Init queue too large. Erasing init message with id %lu.", init_queue_.begin()->msg->seq_num );
       init_queue_.pop_back();
     }
-    init_queue_.push_front( InitMessageContext(tf_,target_frame_,msg ) );
+    init_queue_.push_front( InitMessageContext(tf_, target_frame_, msg, enable_autocomplete_transparency ) );
     callbacks_.statusCb( InteractiveMarkerClient::OK, server_id_, "Init message received." );
     break;
 
@@ -85,7 +85,7 @@ void SingleClient::process(const visualization_msgs::InteractiveMarkerInit::Cons
   }
 }
 
-void SingleClient::process(const visualization_msgs::InteractiveMarkerUpdate::ConstPtr& msg)
+void SingleClient::process(const visualization_msgs::InteractiveMarkerUpdate::ConstPtr& msg, bool enable_autocomplete_transparency)
 {
   if ( first_update_seq_num_ == (uint64_t)-1 )
   {
@@ -128,11 +128,11 @@ void SingleClient::process(const visualization_msgs::InteractiveMarkerUpdate::Co
       DBG_MSG( "Update queue too large. Erasing update message with id %lu.", update_queue_.begin()->msg->seq_num );
       update_queue_.pop_back();
     }
-    update_queue_.push_front( UpdateMessageContext(tf_,target_frame_,msg) );
+    update_queue_.push_front( UpdateMessageContext(tf_, target_frame_, msg, enable_autocomplete_transparency) );
     break;
 
   case RECEIVING:
-    update_queue_.push_front( UpdateMessageContext(tf_,target_frame_,msg) );
+    update_queue_.push_front( UpdateMessageContext(tf_, target_frame_, msg, enable_autocomplete_transparency) );
     break;
 
   case TF_ERROR:
