@@ -49,6 +49,7 @@ InteractiveMarkerClient::InteractiveMarkerClient(
 : state_("InteractiveMarkerClient",IDLE)
 , tf_(tf)
 , last_num_publishers_(0)
+, enable_autocomplete_transparency_(true)
 {
   target_frame_ = target_frame;
   if ( !topic_ns.empty() )
@@ -192,7 +193,7 @@ void InteractiveMarkerClient::process( const MsgConstPtrT& msg )
   }
 
   // forward init/update to respective context
-  context_it->second->process( msg );
+  context_it->second->process( msg, enable_autocomplete_transparency_ );
 }
 
 void InteractiveMarkerClient::processInit( const InitConstPtr& msg )

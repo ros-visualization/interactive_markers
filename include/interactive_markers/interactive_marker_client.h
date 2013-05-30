@@ -115,6 +115,8 @@ public:
   /// Set callback for status updates
   void setStatusCb( const StatusCallback& cb );
 
+  void setEnableAutocompleteTransparency( bool enable ) { enable_autocomplete_transparency_ = enable;}
+
 private:
 
   // Process message from the init or update channel
@@ -199,6 +201,9 @@ private:
 
   // this allows us to detect if a server died (in most cases)
   int last_num_publishers_;
+
+  // if false, auto-completed markers will have alpha = 1.0
+  bool enable_autocomplete_transparency_;
 };
 
 

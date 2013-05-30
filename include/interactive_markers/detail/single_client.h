@@ -72,10 +72,10 @@ public:
   ~SingleClient();
 
   // Process message from the update channel
-  void process(const visualization_msgs::InteractiveMarkerUpdate::ConstPtr& msg);
+  void process(const visualization_msgs::InteractiveMarkerUpdate::ConstPtr& msg, bool enable_autocomplete_transparency = true);
 
   // Process message from the init channel
-  void process(const visualization_msgs::InteractiveMarkerInit::ConstPtr& msg);
+  void process(const visualization_msgs::InteractiveMarkerInit::ConstPtr& msg, bool enable_autocomplete_transparency = true);
 
   // true if INIT messages are not needed anymore
   bool isInitialized();
