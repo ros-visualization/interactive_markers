@@ -187,7 +187,7 @@ void MessageContext<visualization_msgs::InteractiveMarkerUpdate>::init()
   }
   for( unsigned i=0; i<msg->markers.size(); i++ )
   {
-    autoComplete( msg->markers[i] );
+    autoComplete( msg->markers[i], enable_autocomplete_transparency_  );
   }
   for( unsigned i=0; i<msg->poses.size(); i++ )
   {
