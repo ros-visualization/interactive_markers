@@ -187,8 +187,11 @@ void autoComplete( const visualization_msgs::InteractiveMarker &msg,
     marker.id = id++;
     marker.ns = msg.name;
 
-    // Set alpha to 1.0 if transparency is disabled.
-    marker.color.a = enable_autocomplete_transparency ? marker.color.a : 1.0;
+    // If transparency is disabled, set alpha to 1.0 for all semi-transparent markers
+    if ( !enable_autocomplete_transparency && marker.color.a > 0.0 )
+    {
+      marker.color.a = 1.0;
+    }
   }
 }
 
