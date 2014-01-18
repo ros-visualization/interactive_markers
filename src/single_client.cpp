@@ -219,8 +219,6 @@ void SingleClient::checkInitFinished()
         update_queue_.pop_back();
       }
 
-      DBG_MSG( "%s", init_it->msg->markers[0].header.frame_id.c_str() );
-
       callbacks_.initCb( init_it->msg );
       callbacks_.statusCb( InteractiveMarkerClient::OK, server_id_, "Receiving updates." );
 
