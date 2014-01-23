@@ -1,14 +1,11 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(interactive_markers)
 find_package(catkin REQUIRED 
-  message_filters
-  rosbag
   rosconsole
   roscpp
   rospy
   rostest
   std_msgs
-  std_srvs
   tf
   visualization_msgs
 )
