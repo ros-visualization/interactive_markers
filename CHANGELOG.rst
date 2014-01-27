@@ -2,8 +2,8 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.10.1 (2014-01-27)
+-------------------
 * cleanup python code and package contents
 * remove useless dependencies
 * Contributors: Vincent Rabaud, William Woodall
