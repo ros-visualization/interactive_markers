@@ -29,11 +29,16 @@
 
 # Author: Michael Ferguson
 
-import roslib; roslib.load_manifest("interactive_markers")
 import rospy
 
-from visualization_msgs.msg import *
 from std_msgs.msg import Header
+
+from visualization_msgs.msg import InteractiveMarker
+from visualization_msgs.msg import InteractiveMarkerFeedback
+from visualization_msgs.msg import InteractiveMarkerInit
+from visualization_msgs.msg import InteractiveMarkerPose
+from visualization_msgs.msg import InteractiveMarkerUpdate
+
 from threading import Lock
 
 
@@ -52,7 +57,7 @@ class MarkerContext:
 class UpdateContext:
     FULL_UPDATE = 0
     POSE_UPDATE = 1
-    ERASE = 2   
+    ERASE = 2
 
     def __init__(self):
         self.update_type = self.FULL_UPDATE
@@ -78,7 +83,7 @@ class InteractiveMarkerServer:
         self.topic_ns = topic_ns
         self.seq_num = 0
         self.mutex = Lock()
-        
+
         self.server_id = rospy.get_name() + server_id
 
         # contains the current state of all markers
@@ -94,10 +99,10 @@ class InteractiveMarkerServer:
 
         rospy.Subscriber(topic_ns+"/feedback", InteractiveMarkerFeedback, self.processFeedback, queue_size=q_size)
         rospy.Timer(rospy.Duration(0.5), self.keepAlive)
-        
+
         self.publishInit()
 
-    ## @brief Destruction of the interface will lead to all managed markers being cleared. 
+    ## @brief Destruction of the interface will lead to all managed markers being cleared.
     def __del__(self):
         self.clear()
         self.applyChanges()
@@ -105,7 +110,7 @@ class InteractiveMarkerServer:
     ## @brief Add or replace a marker.
     ## Note: Changes to the marker will not take effect until you call applyChanges().
     ## The callback changes immediately.
-    ## @param marker The marker to be added or replaced 
+    ## @param marker The marker to be added or replaced
     ## @param feedback_cb Function to call on the arrival of a feedback message.
     ## @param feedback_type Type of feedback for which to call the feedback.
     def insert(self, marker, feedback_cb=-1, feedback_type=DEFAULT_FEEDBACK_CB):
@@ -115,11 +120,10 @@ class InteractiveMarkerServer:
             except:
                 update = UpdateContext()
                 self.pending_updates[marker.name] = update
-            
             update.update_type = UpdateContext.FULL_UPDATE
             update.int_marker = marker
         if feedback_cb != -1:
-            self.setCallback( marker.name, feedback_cb, feedback_type )
+            self.setCallback(marker.name, feedback_cb, feedback_type)
 
     ## @brief Update the pose of a marker with the specified name
     ## Note: This change will not take effect until you call applyChanges()
@@ -129,7 +133,7 @@ class InteractiveMarkerServer:
     ## @return True if a marker with that name exists
     def setPose(self, name, pose, header=Header()):
         with self.mutex:
-            try:        
+            try:
                 marker_context = self.marker_contexts[name]
             except:
                 marker_context = None
@@ -138,16 +142,16 @@ class InteractiveMarkerServer:
             except:
                 update = None
             # if there's no marker and no pending addition for it, we can't update the pose
-            if marker_context == None and update == None:
+            if marker_context is None and update is None:
                 return False
-            if update != None and update.update_type == UpdateContext.FULL_UPDATE:
+            if update is not None and update.update_type == UpdateContext.FULL_UPDATE:
                 return False
 
-            if header.frame_id == None or header.frame_id == "":
+            if header.frame_id is None or header.frame_id == "":
                 # keep the old header
-                self.doSetPose( update, name, pose, marker_context.int_marker.header )
+                self.doSetPose(update, name, pose, marker_context.int_marker.header)
             else:
-                self.doSetPose( update, name, pose, header )
+                self.doSetPose(update, name, pose, header)
             return True
 
     ## @brief Erase the marker with the specified name
@@ -161,7 +165,7 @@ class InteractiveMarkerServer:
                 return True
             except:
                 try:
-                    marker_context = self.marker_contexts[name] # check exists
+                    self.marker_contexts[name]  # check exists
                     update = UpdateContext()
                     update.update_type = UpdateContext.ERASE
                     self.pending_updates[name] = update
@@ -196,13 +200,13 @@ class InteractiveMarkerServer:
                 update = self.pending_updates[name]
             except:
                 update = None
-            if marker_context == None and update == None:
+            if marker_context is None and update is None:
                 return False
 
             # we need to overwrite both the callbacks for the actual marker
             # and the update, if there's any
             if marker_context:
-                # the marker exists, so we can just overwrite the existing callbacks    
+                # the marker exists, so we can just overwrite the existing callbacks
                 if feedback_type == self.DEFAULT_FEEDBACK_CB:
                     marker_context.default_feedback_cb = feedback_cb
                 else:
@@ -210,7 +214,7 @@ class InteractiveMarkerServer:
                         marker_context.feedback_cbs[feedback_type] = feedback_cb
                     else:
                         del marker_context.feedback_cbs[feedback_type]
-            if update:   
+            if update:
                 if feedback_type == self.DEFAULT_FEEDBACK_CB:
                     update.default_feedback_cb = feedback_cb
                 else:
@@ -224,18 +228,18 @@ class InteractiveMarkerServer:
     ## broadcast an update to all clients.
     def applyChanges(self):
         with self.mutex:
-            if len( self.pending_updates.keys() ) == 0:
+            if len(self.pending_updates.keys()) == 0:
                 return
-            
+
             update_msg = InteractiveMarkerUpdate()
             update_msg.type = InteractiveMarkerUpdate.UPDATE
 
             for name, update in self.pending_updates.items():
                 if update.update_type == UpdateContext.FULL_UPDATE:
-                    try: 
+                    try:
                         marker_context = self.marker_contexts[name]
                     except:
-                        rospy.logdebug("Creating new context for " + name);
+                        rospy.logdebug("Creating new context for " + name)
                         # create a new int_marker context
                         marker_context = MarkerContext()
                         marker_context.default_feedback_cb = update.default_feedback_cb
@@ -243,33 +247,34 @@ class InteractiveMarkerServer:
                         self.marker_contexts[name] = marker_context
 
                     marker_context.int_marker = update.int_marker
-                    update_msg.markers.append( marker_context.int_marker )
+                    update_msg.markers.append(marker_context.int_marker)
 
                 elif update.update_type == UpdateContext.POSE_UPDATE:
-                    try: 
+                    try:
                         marker_context = self.marker_contexts[name]
                         marker_context.int_marker.pose = update.int_marker.pose
                         marker_context.int_marker.header = update.int_marker.header
 
                         pose_update = InteractiveMarkerPose()
-                        pose_update.header = marker_context.int_marker.header;
-                        pose_update.pose = marker_context.int_marker.pose;
-                        pose_update.name = marker_context.int_marker.name;
-                        update_msg.poses.append( pose_update )
+                        pose_update.header = marker_context.int_marker.header
+                        pose_update.pose = marker_context.int_marker.pose
+                        pose_update.name = marker_context.int_marker.name
+                        update_msg.poses.append(pose_update)
                     except:
-                        rospy.logerr("Pending pose update for non-existing marker found. This is a bug in InteractiveMarkerInterface.")
+                        rospy.logerr("""\
+Pending pose update for non-existing marker found. This is a bug in InteractiveMarkerInterface.""")
 
                 elif update.update_type == UpdateContext.ERASE:
-                    try: 
+                    try:
                         marker_context = self.marker_contexts[name]
                         del self.marker_contexts[name]
-                        update_msg.erases.append( name )
+                        update_msg.erases.append(name)
                     except:
                         pass
                 self.pending_updates = dict()
 
         self.seq_num += 1
-        self.publish( update_msg )
+        self.publish(update_msg)
         self.publishInit()
 
     ## @brief Get marker by name
@@ -284,7 +289,7 @@ class InteractiveMarkerServer:
             except:
                 return None
             return marker_context.int_marker
-        
+
         # if there's an update pending, we'll have to account for that
         if update.update_type == UpdateContext.ERASE:
             return None
@@ -299,7 +304,7 @@ class InteractiveMarkerServer:
         elif update.update_type == UpdateContext.FULL_UPDATE:
             return update.int_marker
         return None
-  
+
     # update marker pose & call user callback.
     def processFeedback(self, feedback):
         with self.mutex:
@@ -310,8 +315,11 @@ class InteractiveMarkerServer:
                 return
 
             # if two callers try to modify the same marker, reject (timeout= 1 sec)
-            if marker_context.last_client_id != feedback.client_id and (rospy.Time.now() - marker_context.last_feedback).to_sec() < 1.0:
-                rospy.logdebug("Rejecting feedback for " + feedback.marker_name + ": conflicting feedback from separate clients.")
+            if marker_context.last_client_id != feedback.client_id \
+               and (rospy.Time.now() - marker_context.last_feedback).to_sec() < 1.0:
+                rospy.logdebug("Rejecting feedback for " +
+                               feedback.marker_name +
+                               ": conflicting feedback from separate clients.")
                 return
 
             marker_context.last_feedback = rospy.Time.now()
@@ -321,14 +329,23 @@ class InteractiveMarkerServer:
                 if marker_context.int_marker.header.stamp == rospy.Time():
                     # keep the old header
                     try:
-                        self.doSetPose( self.pending_updates[feedback.marker_name], feedback.marker_name, feedback.pose, marker_context.int_marker.header )
+                        self.doSetPose(self.pending_updates[feedback.marker_name],
+                                       feedback.marker_name,
+                                       feedback.pose,
+                                       marker_context.int_marker.header)
                     except:
-                        self.doSetPose( None, feedback.marker_name, feedback.pose, marker_context.int_marker.header )
+                        self.doSetPose(None,
+                                       feedback.marker_name,
+                                       feedback.pose,
+                                       marker_context.int_marker.header)
                 else:
                     try:
-                        self.doSetPose( self.pending_updates[feedback.marker_name], feedback.marker_name, feedback.pose, feedback.header )
+                        self.doSetPose(self.pending_updates[feedback.marker_name],
+                                       feedback.marker_name,
+                                       feedback.pose,
+                                       feedback.header)
                     except:
-                        self.doSetPose( None, feedback.marker_name, feedback.pose, feedback.header )
+                        self.doSetPose(None, feedback.marker_name, feedback.pose, feedback.header)
 
         # call feedback handler
         try:
@@ -336,7 +353,7 @@ class InteractiveMarkerServer:
             feedback_cb(feedback)
         except KeyError:
             #try:
-            marker_context.default_feedback_cb( feedback )
+            marker_context.default_feedback_cb(feedback)
             #except:
                 #pass
 
@@ -344,14 +361,14 @@ class InteractiveMarkerServer:
     def keepAlive(self, msg):
         empty_msg = InteractiveMarkerUpdate()
         empty_msg.type = empty_msg.KEEP_ALIVE
-        self.publish( empty_msg )
+        self.publish(empty_msg)
 
     # increase sequence number & publish an update
     def publish(self, update):
         update.server_id = self.server_id
         update.seq_num = self.seq_num
-        self.update_pub.publish( update)
-        
+        self.update_pub.publish(update)
+
     # publish the current complete state to the latched "init" topic
     def publishInit(self):
         with self.mutex:
@@ -360,14 +377,14 @@ class InteractiveMarkerServer:
             init.seq_num = self.seq_num
 
             for name, marker_context in self.marker_contexts.items():
-                rospy.logdebug("Publishing " + name )
-                init.markers.append( marker_context.int_marker )
+                rospy.logdebug("Publishing " + name)
+                init.markers.append(marker_context.int_marker)
 
-            self.init_pub.publish( init )
+            self.init_pub.publish(init)
 
     # update pose, schedule update without locking
     def doSetPose(self, update, name, pose, header):
-        if update == None:
+        if update is None:
             update = UpdateContext()
             update.update_type = UpdateContext.POSE_UPDATE
             self.pending_updates[name] = update
@@ -376,5 +393,6 @@ class InteractiveMarkerServer:
 
         update.int_marker.pose = pose
         update.int_marker.header = header
-        rospy.logdebug("Marker '" + name + "' is now at " + str(pose.position.x) + ", " + str(pose.position.y) + ", " + str(pose.position.z) )
-
+        rospy.logdebug("Marker '" + name + "' is now at " +
+                       str(pose.position.x) + ", " + str(pose.position.y) +
+                       ", " + str(pose.position.z))

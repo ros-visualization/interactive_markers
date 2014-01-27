@@ -29,13 +29,13 @@
 
 # Author: Michael Ferguson
 
-import roslib; roslib.load_manifest("interactive_markers")
 import rospy
 
-from visualization_msgs.msg import *
+from visualization_msgs.msg import InteractiveMarkerFeedback
+from visualization_msgs.msg import MenuEntry
+
 
 class EntryContext:
-    
     def __init__(self):
         self.title = ""
         self.command = ""
@@ -44,6 +44,7 @@ class EntryContext:
         self.visible = True
         self.check_state = 0
         self.feedback_cb = None
+
 
 ## @brief Simple non-intrusive helper class which creates a menu and maps its
 ## entries to function callbacks
@@ -55,21 +56,21 @@ class MenuHandler:
     def __init__(self):
         self.top_level_handles_ = list()    # std::vector<EntryHandle>
         self.entry_contexts_ = dict()       # boost::unordered_map<EntryHandle, EntryContext>
-        self.current_handle_ = 1;
+        self.current_handle_ = 1
         self.managed_markers_ = set()       # std::set<std::string>
 
     ## Insert a new menu item
     def insert(self, title, parent=None, command_type=MenuEntry.FEEDBACK, command="", callback=None):
-        handle = self.doInsert( title, command_type, command, callback )
-        if parent != None:
+        handle = self.doInsert(title, command_type, command, callback)
+        if parent is None:
             try:
-                parent_context = self.entry_contexts_[parent]           
-                parent_context.sub_entries.append( handle )
+                parent_context = self.entry_contexts_[parent]
+                parent_context.sub_entries.append(handle)
             except:
                 rospy.logerr("Parent menu entry " + str(parent) + " not found.")
                 return None
         else:
-            self.top_level_handles_.append( handle )
+            self.top_level_handles_.append(handle)
         return handle
 
     ## Specify if an entry should be visible or hidden
@@ -106,12 +107,12 @@ class MenuHandler:
         if not marker:
             self.managed_markers_.remove(marker_name)
             return False
-        
-        marker.menu_entries = list()
-        self.pushMenuEntries( self.top_level_handles_, marker.menu_entries, 0 )
 
-        server.insert( marker, self.processFeedback, InteractiveMarkerFeedback.MENU_SELECT )
-        self.managed_markers_.add( marker_name )
+        marker.menu_entries = list()
+        self.pushMenuEntries(self.top_level_handles_, marker.menu_entries, 0)
+
+        server.insert(marker, self.processFeedback, InteractiveMarkerFeedback.MENU_SELECT)
+        self.managed_markers_.add(marker_name)
         return True
 
     ## Re-apply to all markers that this was applied to previously
@@ -149,7 +150,7 @@ class MenuHandler:
                 context = self.entry_contexts_[handle]
                 if not context.visible:
                     continue
-                entries_out.append( self.makeEntry(context, handle, parent_handle) )
+                entries_out.append(self.makeEntry(context, handle, parent_handle))
                 if not self.pushMenuEntries(context.sub_entries, entries_out, handle):
                     return False
             except:
@@ -177,7 +178,7 @@ class MenuHandler:
     def doInsert(self, title, command_type, command, feedback_cb):
         handle = self.current_handle_
         self.current_handle_ += 1
-        
+
         context = EntryContext()
         context.title = title
         context.command = command
@@ -188,4 +189,3 @@ class MenuHandler:
 
         self.entry_contexts_[handle] = context
         return handle
-
