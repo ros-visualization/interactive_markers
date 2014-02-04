@@ -62,7 +62,7 @@ class MenuHandler:
     ## Insert a new menu item
     def insert(self, title, parent=None, command_type=MenuEntry.FEEDBACK, command="", callback=None):
         handle = self.doInsert(title, command_type, command, callback)
-        if parent is None:
+        if parent is not None:
             try:
                 parent_context = self.entry_contexts_[parent]
                 parent_context.sub_entries.append(handle)
