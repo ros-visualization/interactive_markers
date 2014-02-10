@@ -193,7 +193,7 @@ private:
   // topic namespace to use
   std::string topic_ns_;
   
-  boost::recursive_mutex mutex_;
+  mutable boost::recursive_mutex mutex_;
 
   // these are needed when spinning up a dedicated thread
   boost::scoped_ptr<boost::thread> spin_thread_;
