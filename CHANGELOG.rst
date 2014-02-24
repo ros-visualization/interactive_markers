@@ -2,6 +2,13 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Adding William Woodall as maintainer
+* fix threading bugs
+  Fix locking of data structures shared across threads.
+* Contributors: Acorn Pooley, William Woodall, hersh
+
 1.10.2 (2014-02-03)
 -------------------
 * fix regression in menu_handler.py
