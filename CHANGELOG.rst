@@ -2,8 +2,8 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.11.0 (2014-02-24)
+-------------------
 * Adding William Woodall as maintainer
 * fix threading bugs
   Fix locking of data structures shared across threads.
