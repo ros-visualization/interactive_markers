@@ -2,8 +2,8 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.9.10 (2014-04-16)
+-------------------
 * fix threading bugs
   Fix locking of data structures shared across threads.
 * Contributors: Acorn Pooley
