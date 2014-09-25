@@ -85,7 +85,7 @@ TEST(InteractiveMarkerServer, addRemove)
   ASSERT_FALSE( server.get("marker1", int_marker) );
 
   //insert, setPose, apply, clear, apply
-  ASSERT_TRUE( server.insert(int_marker) );
+  server.insert(int_marker);
   ASSERT_TRUE( server.setPose("marker1", pose) );
 
   server.applyChanges();
