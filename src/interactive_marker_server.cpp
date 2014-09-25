@@ -238,7 +238,8 @@ bool InteractiveMarkerServer::setPose( const std::string &name, const geometry_m
     }
     else
     {
-      return false; // this should never happen
+      BOOST_ASSERT_MSG(false, "Marker does not exist and there is no pending creation.");
+      return false;
     }
   }
   else
