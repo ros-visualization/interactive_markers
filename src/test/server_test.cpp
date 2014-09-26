@@ -43,6 +43,10 @@ TEST(InteractiveMarkerServer, addRemove)
   visualization_msgs::InteractiveMarker int_marker;
   int_marker.name = "marker1";
 
+  // create a valid pose
+  geometry_msgs::Pose pose;
+  pose.orientation.w = 1.0;
+
   //insert, apply, erase, apply
   server.insert(int_marker);
   ASSERT_TRUE( server.get("marker1", int_marker) );
@@ -79,6 +83,16 @@ TEST(InteractiveMarkerServer, addRemove)
 
   server.applyChanges();
   ASSERT_FALSE( server.get("marker1", int_marker) );
+
+  //insert, setPose, apply, clear, apply
+  server.insert(int_marker);
+  ASSERT_TRUE( server.setPose("marker1", pose) );
+
+  server.applyChanges();
+  server.clear();
+  ASSERT_FALSE( server.get("marker1", int_marker) );
+
+  server.applyChanges();
 
   //avoid subscriber destruction warning
   usleep(1000);

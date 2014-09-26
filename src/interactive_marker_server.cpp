@@ -225,10 +225,22 @@ bool InteractiveMarkerServer::setPose( const std::string &name, const geometry_m
     return false;
   }
 
+  // keep the old header
   if ( header.frame_id.empty() )
   {
-    // keep the old header
-    doSetPose( update_it, name, pose, marker_context_it->second.int_marker.header );
+    if ( marker_context_it != marker_contexts_.end() )
+    {
+      doSetPose( update_it, name, pose, marker_context_it->second.int_marker.header );
+    }
+    else if ( update_it != pending_updates_.end() )
+    {
+      doSetPose( update_it, name, pose, update_it->second.int_marker.header );
+    }
+    else
+    {
+      BOOST_ASSERT_MSG(false, "Marker does not exist and there is no pending creation.");
+      return false;
+    }
   }
   else
   {
