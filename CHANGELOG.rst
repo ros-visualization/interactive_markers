@@ -2,6 +2,19 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Added explicit keyword argument queue_size for publisher in Python code and use the same default queue_size value as C++.
+* Fixed a SEGFAULT in setPose reported in `#18 <https://github.com/ros-visualization/interactive_markers/issues/18>`_
+  Previously, calling setPose() on an interactive marker causes a SEGFAULT
+  if applyChanges() was not called on the server at least once since the
+  marker was created. I traced the actual SEGFAULT to the doSetPose
+  function. The value of header passed from setPose() is invalid because,
+  in this case, marker_context_it = marker_contexts\_.end().
+  I added a check for this case and, if there is no marker is present,
+  instead use the header from the pending update.
+* Contributors: David Gossow, Mike Koval, William Woodall, ipa-fxm
+
 1.11.0 (2014-02-24)
 -------------------
 * Adding William Woodall as maintainer
