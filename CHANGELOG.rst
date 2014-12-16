@@ -2,8 +2,8 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.10.3 (2014-12-16)
+-------------------
 * Fixed a SEGFAULT in setPose reported in `#18 <https://github.com/ros-visualization/interactive_markers/issues/18>`_
   Previously, calling setPose() on an interactive marker causes a SEGFAULT
   if applyChanges() was not called on the server at least once since the
