@@ -2,8 +2,8 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.11.1 (2014-12-16)
+-------------------
 * Added explicit keyword argument queue_size for publisher in Python code and use the same default queue_size value as C++.
 * Fixed a SEGFAULT in setPose reported in `#18 <https://github.com/ros-visualization/interactive_markers/issues/18>`_
   Previously, calling setPose() on an interactive marker causes a SEGFAULT
