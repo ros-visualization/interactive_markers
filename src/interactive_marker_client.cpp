@@ -232,11 +232,19 @@ void InteractiveMarkerClient::update()
     M_SingleClient::iterator it;
     for ( it = publisher_contexts_.begin(); it!=publisher_contexts_.end(); ++it )
     {
-      it->second->update();
-      if ( !it->second->isInitialized() )
+      // Explicitly reference the pointer to the client here, because the client
+      // might call user code, which might call shutdown(), which will delete
+      // the publisher_contexts_ map...
+
+      SingleClientPtr single_client = it->second;
+      single_client->update();
+      if ( !single_client->isInitialized() )
       {
         initialized = false;
       }
+
+      if ( publisher_contexts_.empty() )
+        break; // Yep, someone called shutdown()...
     }
     if ( state_ == INIT && initialized )
     {
