@@ -60,9 +60,10 @@ private:
 
 template<class StateT>
 StateMachine<StateT>::StateMachine( std::string name, StateT init_state )
-: name_(name)
+: state_(init_state)
+, chg_time_(ros::Time::now())
+, name_(name)
 {
-  operator=(init_state);
 };
 
 template<class StateT>
