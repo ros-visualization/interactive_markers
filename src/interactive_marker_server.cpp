@@ -211,6 +211,18 @@ void InteractiveMarkerServer::clear()
 }
 
 
+bool InteractiveMarkerServer::empty() const
+{
+  return marker_contexts_.empty();
+}
+
+
+std::size_t InteractiveMarkerServer::size() const
+{
+  return marker_contexts_.size();
+}
+
+
 bool InteractiveMarkerServer::setPose( const std::string &name, const geometry_msgs::Pose &pose, const std_msgs::Header &header )
 {
   boost::recursive_mutex::scoped_lock lock( mutex_ );

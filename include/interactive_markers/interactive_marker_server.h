@@ -109,6 +109,16 @@ public:
   /// Clear all markers.
   /// Note: This change will not take effect until you call applyChanges().
   void clear();
+  
+  /// Return whether the server contains any markers.
+  /// Note: Does not include markers inserted since the last applyChanges().
+  /// @return true if the server contains no markers
+  bool empty() const;
+  
+  /// Return the number of markers contained in the server
+  /// Note: Does not include markers inserted since the last applyChanges().
+  /// @return The number of markers contained in the server
+  std::size_t size() const;
 
   /// Add or replace a callback function for the specified marker.
   /// Note: This change will not take effect until you call applyChanges().
