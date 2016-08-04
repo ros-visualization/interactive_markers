@@ -32,6 +32,7 @@
 #include "interactive_markers/interactive_marker_server.h"
 
 #include <visualization_msgs/InteractiveMarkerInit.h>
+#include <tf/transform_broadcaster.h>
 
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
@@ -444,6 +445,42 @@ void InteractiveMarkerServer::publish( visualization_msgs::InteractiveMarkerUpda
   update.server_id = server_id_;
   update.seq_num = seq_num_;
   update_pub_.publish( update );
+  //
+  // publish tf update_it->second.int_marker.pose -> feedback->marker_name;
+  for(M_MarkerContext::iterator it = marker_contexts_.begin(); it != marker_contexts_.end(); it++) {
+    ROS_DEBUG( "Markers '%s' publish tf from ~%s to %s",
+	       it->first.c_str(),
+	       it->second.int_marker.header.frame_id.c_str(),
+	       it->second.int_marker.name.c_str() );
+    static tf::TransformBroadcaster br;
+    tf::Transform transform;
+    geometry_msgs::Pose pose;
+    pose = it->second.int_marker.pose;
+
+    transform.setOrigin( tf::Vector3( pose.position.x,
+				      pose.position.y,
+				      pose.position.z ));
+    
+    if( (pose.orientation.x =! pose.orientation.x) ||
+	(pose.orientation.y =! pose.orientation.y) ||
+	(pose.orientation.z =! pose.orientation.z) ||
+	(pose.orientation.w =! pose.orientation.w) ){
+      transform.setRotation( tf::Quaternion( 0,
+					     0,
+					     0,
+					     1 ));
+    }else{
+      transform.setRotation( tf::Quaternion( pose.orientation.x,
+					     pose.orientation.y,
+					     pose.orientation.z,
+					     pose.orientation.w ));
+    }
+    
+    br.sendTransform( tf::StampedTransform( transform,
+					    ros::Time::now(),
+					    it->second.int_marker.header.frame_id,
+					    it->second.int_marker.name ));
+  }
 }
 
 

@@ -31,6 +31,8 @@
 
 import roslib; roslib.load_manifest("interactive_markers")
 import rospy
+import tf
+import math
 
 from visualization_msgs.msg import *
 from std_msgs.msg import Header
@@ -351,6 +353,23 @@ class InteractiveMarkerServer:
         update.server_id = self.server_id
         update.seq_num = self.seq_num
         self.update_pub.publish( update)
+        for name, marker_context in self.marker_contexts.items():
+            pose = marker_context.int_marker.pose
+            br = tf.TransformBroadcaster()
+            if (pose.orientation.x == 0.0) and (pose.orientation.y == 0.0) and (pose.orientation.z == 0.0) and (pose.orientation.w == 0.0):
+                br.sendTransform((pose.position.x, pose.position.y, pose.position.z),
+                                 (0,0,0,1),
+                                 rospy.Time.now(),
+                                 marker_context.int_marker.name,
+                                 marker_context.int_marker.header.frame_id
+                                 )
+            else:
+                br.sendTransform((pose.position.x, pose.position.y, pose.position.z),
+                                 (pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w),
+                                 rospy.Time.now(),
+                                 marker_context.int_marker.name,
+                                 marker_context.int_marker.header.frame_id
+                                 )
         
     # publish the current complete state to the latched "init" topic
     def publishInit(self):
