@@ -138,9 +138,9 @@ class MenuHandler:
     def processFeedback(self, feedback):
         try:
             context = self.entry_contexts_[feedback.menu_entry_id]
-            context.feedback_cb(feedback)
         except KeyError:
-            pass
+            return
+        context.feedback_cb(feedback)
 
     # Create and push MenuEntry objects from handles_in onto
     # entries_out. Calls itself recursively to add the entire menu tree.
