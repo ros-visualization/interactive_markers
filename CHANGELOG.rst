@@ -2,8 +2,8 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.11.2 (2016-08-24)
+-------------------
 * Fix build when disabling tests with ``-DCATKIN_ENABLE_TESTING=OFF``.
   See: `#26 <https://github.com/ros-visualization/interactive_markers/issues/26>`_
 * Fix use of uninitialized variables.
