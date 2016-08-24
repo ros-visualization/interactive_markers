@@ -2,8 +2,8 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.11.3 (2016-08-24)
+-------------------
 * The ``processFeedback`` function of the menu handler no longer catches the ``KeyErrors`` of the feedback_cb.
   See: `#29 <https://github.com/ros-visualization/interactive_markers/issues/29>`_
 * Added the ``empty()`` and ``size()`` members to ``InteractiveMarkerServer`` interface.
