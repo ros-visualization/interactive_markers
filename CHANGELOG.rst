@@ -2,6 +2,16 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix build when disabling tests with ``-DCATKIN_ENABLE_TESTING=OFF``.
+  See: `#26 <https://github.com/ros-visualization/interactive_markers/issues/26>`_
+* Fix use of uninitialized variables.
+  See: `#24 <https://github.com/ros-visualization/interactive_markers/issues/24>`_
+* Fix potential segfault when shutting down.
+  See: `#25 <https://github.com/ros-visualization/interactive_markers/issues/25>`_
+* Contributors: Alexis Ballier, David Gossow, Max Schwarz
+
 1.11.1 (2014-12-16)
 -------------------
 * Added explicit keyword argument queue_size for publisher in Python code and use the same default queue_size value as C++.
