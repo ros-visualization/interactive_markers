@@ -1,20 +1,28 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(interactive_markers)
 find_package(catkin REQUIRED 
+  dynamic_reconfigure
   rosconsole
   roscpp
   rospy
   rostest
+  message_generation
   std_msgs
   tf
   visualization_msgs
 )
+
+catkin_python_setup()
+
+generate_dynamic_reconfigure_options(
+  cfg/TransformParameter.cfg
+)
+
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES interactive_markers
-  CATKIN_DEPENDS roscpp rosconsole rospy tf visualization_msgs
+  CATKIN_DEPENDS dynamic_reconfigure geometry_msgs message_runtime roscpp rosconsole rospy tf visualization_msgs
 )
-catkin_python_setup()
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
@@ -27,6 +35,9 @@ src/single_client.cpp
 src/message_context.cpp
 )
 
+add_executable(dynamic_transform_publisher src/dynamic_transform_publisher.cpp)
+add_dependencies(dynamic_transform_publisher ${PROJECT_NAME}_gencpp ${PROJECT_NAME}_gencfg)
+target_link_libraries(dynamic_transform_publisher ${catkin_LIBRARIES} ${PROJECT_NAME})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 install(TARGETS ${PROJECT_NAME}
