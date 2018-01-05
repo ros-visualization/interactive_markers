@@ -33,6 +33,7 @@
 #define INTERACTIVE_MARKER_CLIENT
 
 #include <boost/shared_ptr.hpp>
+#include <boost/thread/mutex.hpp>
 #include <boost/function.hpp>
 #include <boost/unordered_map.hpp>
 
@@ -150,6 +151,7 @@ private:
   typedef boost::shared_ptr<SingleClient> SingleClientPtr;
   typedef boost::unordered_map<std::string, SingleClientPtr> M_SingleClient;
   M_SingleClient publisher_contexts_;
+  boost::mutex publisher_contexts_mutex_;
 
   tf::Transformer& tf_;
   std::string target_frame_;
