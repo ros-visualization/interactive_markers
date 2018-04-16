@@ -2,6 +2,11 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixed a crash when updates arrive, or are being processed, while shutdown is called (`#36 <https://github.com/ros-visualization/interactive_markers/issues/36>`_)
+* Contributors: Simon Schmeisser
+
 1.11.3 (2016-08-24)
 -------------------
 * The ``processFeedback`` function of the menu handler no longer catches the ``KeyErrors`` of the feedback_cb.
