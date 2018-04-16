@@ -2,8 +2,8 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.11.4 (2018-04-16)
+-------------------
 * Fixed a crash when updates arrive, or are being processed, while shutdown is called (`#36 <https://github.com/ros-visualization/interactive_markers/issues/36>`_)
 * Contributors: Simon Schmeisser
 
