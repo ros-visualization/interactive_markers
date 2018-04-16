@@ -38,7 +38,7 @@ install(DIRECTORY include/interactive_markers/
 
 # C++ Unit Tests
 #
-if(GTEST_FOUND)
+if(CATKIN_ENABLE_TESTING)
   include_directories(${GTEST_INCLUDE_DIRS})
 
   add_executable(server_test EXCLUDE_FROM_ALL src/test/server_test.cpp)

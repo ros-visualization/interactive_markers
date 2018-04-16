@@ -120,9 +120,10 @@ void InteractiveMarkerClient::shutdown()
 
   case INIT:
   case RUNNING:
-    publisher_contexts_.clear();
     init_sub_.shutdown();
     update_sub_.shutdown();
+    boost::lock_guard<boost::mutex> lock(publisher_contexts_mutex_);
+    publisher_contexts_.clear();
     last_num_publishers_=0;
     state_=IDLE;
     break;
@@ -176,24 +177,32 @@ void InteractiveMarkerClient::process( const MsgConstPtrT& msg )
     return;
   }
 
-  M_SingleClient::iterator context_it = publisher_contexts_.find(msg->server_id);
-
-  // If we haven't seen this publisher before, we need to reset the
-  // display and listen to the init topic, plus of course add this
-  // publisher to our list.
-  if ( context_it == publisher_contexts_.end() )
+  SingleClientPtr client;
   {
-    DBG_MSG( "New publisher detected: %s", msg->server_id.c_str() );
+    boost::lock_guard<boost::mutex> lock(publisher_contexts_mutex_);
 
-    SingleClientPtr pc(new SingleClient( msg->server_id, tf_, target_frame_, callbacks_ ));
-    context_it = publisher_contexts_.insert( std::make_pair(msg->server_id,pc) ).first;
+    M_SingleClient::iterator context_it = publisher_contexts_.find(msg->server_id);
 
-    // we need to subscribe to the init topic again
-    subscribeInit();
+    // If we haven't seen this publisher before, we need to reset the
+    // display and listen to the init topic, plus of course add this
+    // publisher to our list.
+    if ( context_it == publisher_contexts_.end() )
+    {
+      DBG_MSG( "New publisher detected: %s", msg->server_id.c_str() );
+
+      SingleClientPtr pc(new SingleClient( msg->server_id, tf_, target_frame_, callbacks_ ));
+      context_it = publisher_contexts_.insert( std::make_pair(msg->server_id,pc) ).first;
+      client = pc;
+
+      // we need to subscribe to the init topic again
+      subscribeInit();
+    }
+
+    client = context_it->second;
   }
 
   // forward init/update to respective context
-  context_it->second->process( msg, enable_autocomplete_transparency_ );
+  client->process( msg, enable_autocomplete_transparency_ );
 }
 
 void InteractiveMarkerClient::processInit( const InitConstPtr& msg )
@@ -229,6 +238,7 @@ void InteractiveMarkerClient::update()
 
     // check if all single clients are finished with the init channels
     bool initialized = true;
+    boost::lock_guard<boost::mutex> lock(publisher_contexts_mutex_);
     M_SingleClient::iterator it;
     for ( it = publisher_contexts_.begin(); it!=publisher_contexts_.end(); ++it )
     {

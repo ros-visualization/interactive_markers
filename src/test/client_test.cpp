@@ -149,6 +149,7 @@ public:
 
       int_marker.header.frame_id=msg.frame_id;
       int_marker.header.stamp=msg.stamp;
+      int_marker.pose.orientation.w = 1.0;
 
       std::ostringstream s;
       s << i;
@@ -229,6 +230,7 @@ public:
         stf.frame_id_=msg.frame_id;
         stf.child_frame_id_=target_frame;
         stf.stamp_=msg.stamp;
+        stf.setIdentity();
         tf.setTransform( stf, msg.server_id );
         break;
       }
