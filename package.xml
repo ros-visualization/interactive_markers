@@ -1,4 +1,4 @@
-<package>
+<package format="2">
   <name>interactive_markers</name>
   <description>
      3D interactive marker communication library for RViz and similar tools.
@@ -11,7 +11,7 @@
 
   <url>http://ros.org/wiki/interactive_markers</url>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <!--<buildtool_depend>catkin</buildtool_depend>
 
   <build_depend>rosconsole</build_depend>
   <build_depend>roscpp</build_depend>
@@ -28,4 +28,13 @@
   <run_depend>std_msgs</run_depend>
   <run_depend>tf</run_depend>
   <run_depend>visualization_msgs</run_depend>
+  -->
+
+  <depend>rclcpp</depend>
+  <depend>tf2_ros</depend>
+  <depend>visualization_msgs</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>
