@@ -31,48 +31,65 @@
 
 #include "interactive_markers/interactive_marker_server.h"
 
-#include <visualization_msgs/InteractiveMarkerInit.h>
+#include <rclcpp/qos.hpp>
 
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
 
+using visualization_msgs::msg::InteractiveMarkerFeedback;
+using visualization_msgs::msg::InteractiveMarkerInit;
+using visualization_msgs::msg::InteractiveMarkerUpdate;
+
 namespace interactive_markers
 {
 
-InteractiveMarkerServer::InteractiveMarkerServer( const std::string &topic_ns, const std::string &server_id, bool spin_thread ) :
+InteractiveMarkerServer::InteractiveMarkerServer( const std::string &topic_ns,
+    rclcpp::node_interfaces::NodeBaseInterface::SharedPtr base_interface,
+    rclcpp::node_interfaces::NodeClockInterface::SharedPtr clock_interface,
+    rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_interface,
+    rclcpp::node_interfaces::NodeTimersInterface::SharedPtr timers_interface,
+    rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
+    const std::string server_id)
+  :
     topic_ns_(topic_ns),
-    seq_num_(0)
+    seq_num_(0),
+    context_(base_interface->get_context()),
+    clock_(clock_interface->get_clock()),
+    logger_(logging_interface->get_logger().get_child(server_id))
 {
-  if ( spin_thread )
-  {
-    // if we're spinning our own thread, we'll also need our own callback queue
-    node_handle_.setCallbackQueue( &callback_queue_ );
-  }
-
   if (!server_id.empty())
   {
-    server_id_ = ros::this_node::getName() + "/" + server_id;
+    server_id_ = std::string(base_interface->get_fully_qualified_name()) + "/" + server_id;
   }
   else
   {
-    server_id_ = ros::this_node::getName();
+    server_id_ = base_interface->get_fully_qualified_name();
   }
 
   std::string update_topic = topic_ns + "/update";
   std::string init_topic = update_topic + "_full";
   std::string feedback_topic = topic_ns + "/feedback";
 
-  init_pub_ = node_handle_.advertise<visualization_msgs::InteractiveMarkerInit>( init_topic, 100, true );
-  update_pub_ = node_handle_.advertise<visualization_msgs::InteractiveMarkerUpdate>( update_topic, 100 );
-  feedback_sub_ = node_handle_.subscribe( feedback_topic, 100, &InteractiveMarkerServer::processFeedback, this );
+  rclcpp::QoS init_qos(rclcpp::KeepLast(100));
+  init_qos.transient_local().reliable();
+  init_pub_ = rclcpp::create_publisher<InteractiveMarkerInit>(topics_interface, init_topic, init_qos);
 
-  keep_alive_timer_ =  node_handle_.createTimer(ros::Duration(0.5f), boost::bind( &InteractiveMarkerServer::keepAlive, this ) );
+  rclcpp::QoS update_qos(rclcpp::KeepLast(100));
+  update_qos.durability_volatile();
+  update_pub_ = rclcpp::create_publisher<InteractiveMarkerUpdate>(topics_interface, update_topic, update_qos);
 
-  if ( spin_thread )
-  {
-    need_to_terminate_ = false;
-    spin_thread_.reset( new boost::thread(boost::bind(&InteractiveMarkerServer::spinThread, this)) );
-  }
+  rclcpp::QoS feedback_qos(rclcpp::KeepLast(100));
+  feedback_qos.durability_volatile();
+  feedback_sub_ = rclcpp::create_subscription<InteractiveMarkerFeedback>(topics_interface, feedback_topic, feedback_qos, std::bind(&InteractiveMarkerServer::processFeedback, this, std::placeholders::_1));
+
+  keep_alive_timer_ = rclcpp::GenericTimer<std::function<void ()>>::make_shared(
+    clock_,
+    std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(500)),
+    std::bind(&InteractiveMarkerServer::keepAlive, this),
+    context_);
+
+  rclcpp::callback_group::CallbackGroup::SharedPtr group{nullptr};
+  timers_interface->add_timer(keep_alive_timer_, group);
 
   publishInit();
 }
@@ -80,36 +97,16 @@ InteractiveMarkerServer::InteractiveMarkerServer( const std::string &topic_ns, c
 
 InteractiveMarkerServer::~InteractiveMarkerServer()
 {
-  if (spin_thread_.get())
-  {
-    need_to_terminate_ = true;
-    spin_thread_->join();
-  }
-
-  if ( node_handle_.ok() )
+  if (rclcpp::ok(context_))
   {
     clear();
     applyChanges();
   }
 }
 
-
-void InteractiveMarkerServer::spinThread()
-{
-  while (node_handle_.ok())
-  {
-    if (need_to_terminate_)
-    {
-      break;
-    }
-    callback_queue_.callAvailable(ros::WallDuration(0.033f));
-  }
-}
-
-
 void InteractiveMarkerServer::applyChanges()
 {
-  boost::recursive_mutex::scoped_lock lock( mutex_ );
+  std::unique_lock<std::recursive_mutex> lock( mutex_ );
 
   if ( pending_updates_.empty() )
   {
@@ -118,8 +115,8 @@ void InteractiveMarkerServer::applyChanges()
 
   M_UpdateContext::iterator update_it;
 
-  visualization_msgs::InteractiveMarkerUpdate update;
-  update.type = visualization_msgs::InteractiveMarkerUpdate::UPDATE;
+  visualization_msgs::msg::InteractiveMarkerUpdate update;
+  update.type = visualization_msgs::msg::InteractiveMarkerUpdate::UPDATE;
 
   update.markers.reserve( marker_contexts_.size() );
   update.poses.reserve( marker_contexts_.size() );
@@ -135,7 +132,7 @@ void InteractiveMarkerServer::applyChanges()
       {
         if ( marker_context_it == marker_contexts_.end() )
         {
-          ROS_DEBUG("Creating new context for %s", update_it->first.c_str());
+          RCLCPP_DEBUG(logger_, "Creating new context for %s", update_it->first.c_str());
           // create a new int_marker context
           marker_context_it = marker_contexts_.insert( std::make_pair( update_it->first, MarkerContext() ) ).first;
           // copy feedback cbs, in case they have been set before the marker context was created
@@ -153,14 +150,14 @@ void InteractiveMarkerServer::applyChanges()
       {
         if ( marker_context_it == marker_contexts_.end() )
         {
-          ROS_ERROR( "Pending pose update for non-existing marker found. This is a bug in InteractiveMarkerInterface." );
+          RCLCPP_ERROR(logger_, "Pending pose update for non-existing marker found. This is a bug in InteractiveMarkerInterface." );
         }
         else
         {
           marker_context_it->second.int_marker.pose = update_it->second.int_marker.pose;
           marker_context_it->second.int_marker.header = update_it->second.int_marker.header;
 
-          visualization_msgs::InteractiveMarkerPose pose_update;
+          visualization_msgs::msg::InteractiveMarkerPose pose_update;
           pose_update.header = marker_context_it->second.int_marker.header;
           pose_update.pose = marker_context_it->second.int_marker.pose;
           pose_update.name = marker_context_it->second.int_marker.name;
@@ -191,7 +188,7 @@ void InteractiveMarkerServer::applyChanges()
 
 bool InteractiveMarkerServer::erase( const std::string &name )
 {
-  boost::recursive_mutex::scoped_lock lock( mutex_ );
+  std::unique_lock<std::recursive_mutex> lock( mutex_ );
 
   pending_updates_[name].update_type = UpdateContext::ERASE;
   return true;
@@ -199,7 +196,7 @@ bool InteractiveMarkerServer::erase( const std::string &name )
 
 void InteractiveMarkerServer::clear()
 {
-  boost::recursive_mutex::scoped_lock lock( mutex_ );
+  std::unique_lock<std::recursive_mutex> lock( mutex_ );
 
   // erase all markers
   pending_updates_.clear();
@@ -223,9 +220,9 @@ std::size_t InteractiveMarkerServer::size() const
 }
 
 
-bool InteractiveMarkerServer::setPose( const std::string &name, const geometry_msgs::Pose &pose, const std_msgs::Header &header )
+bool InteractiveMarkerServer::setPose( const std::string &name, const geometry_msgs::msg::Pose &pose, const std_msgs::msg::Header &header )
 {
-  boost::recursive_mutex::scoped_lock lock( mutex_ );
+  std::unique_lock<std::recursive_mutex> lock( mutex_ );
 
   M_MarkerContext::iterator marker_context_it = marker_contexts_.find( name );
   M_UpdateContext::iterator update_it = pending_updates_.find( name );
@@ -250,7 +247,7 @@ bool InteractiveMarkerServer::setPose( const std::string &name, const geometry_m
     }
     else
     {
-      BOOST_ASSERT_MSG(false, "Marker does not exist and there is no pending creation.");
+      RCLCPP_WARN(logger_, "Marker does not exist and there is no pending creation.");
       return false;
     }
   }
@@ -263,7 +260,7 @@ bool InteractiveMarkerServer::setPose( const std::string &name, const geometry_m
 
 bool InteractiveMarkerServer::setCallback( const std::string &name, FeedbackCallback feedback_cb, uint8_t feedback_type  )
 {
-  boost::recursive_mutex::scoped_lock lock( mutex_ );
+  std::unique_lock<std::recursive_mutex> lock( mutex_ );
 
   M_MarkerContext::iterator marker_context_it = marker_contexts_.find( name );
   M_UpdateContext::iterator update_it = pending_updates_.find( name );
@@ -317,9 +314,9 @@ bool InteractiveMarkerServer::setCallback( const std::string &name, FeedbackCall
   return true;
 }
 
-void InteractiveMarkerServer::insert( const visualization_msgs::InteractiveMarker &int_marker )
+void InteractiveMarkerServer::insert( const visualization_msgs::msg::InteractiveMarker &int_marker )
 {
-  boost::recursive_mutex::scoped_lock lock( mutex_ );
+  std::unique_lock<std::recursive_mutex> lock( mutex_ );
 
   M_UpdateContext::iterator update_it = pending_updates_.find( int_marker.name );
   if ( update_it == pending_updates_.end() )
@@ -331,7 +328,7 @@ void InteractiveMarkerServer::insert( const visualization_msgs::InteractiveMarke
   update_it->second.int_marker = int_marker;
 }
 
-void InteractiveMarkerServer::insert( const visualization_msgs::InteractiveMarker &int_marker,
+void InteractiveMarkerServer::insert( const visualization_msgs::msg::InteractiveMarker &int_marker,
     FeedbackCallback feedback_cb, uint8_t feedback_type)
 {
   insert( int_marker );
@@ -339,9 +336,9 @@ void InteractiveMarkerServer::insert( const visualization_msgs::InteractiveMarke
   setCallback( int_marker.name, feedback_cb, feedback_type  );
 }
 
-bool InteractiveMarkerServer::get( std::string name, visualization_msgs::InteractiveMarker &int_marker ) const
+bool InteractiveMarkerServer::get( std::string name, visualization_msgs::msg::InteractiveMarker &int_marker ) const
 {
-  boost::recursive_mutex::scoped_lock lock( mutex_ );
+  std::unique_lock<std::recursive_mutex> lock( mutex_ );
 
   M_UpdateContext::const_iterator update_it = pending_updates_.find( name );
 
@@ -385,9 +382,10 @@ bool InteractiveMarkerServer::get( std::string name, visualization_msgs::Interac
 
 void InteractiveMarkerServer::publishInit()
 {
-  boost::recursive_mutex::scoped_lock lock( mutex_ );
+  std::unique_lock<std::recursive_mutex> lock( mutex_ );
+  RCLCPP_INFO(logger_, "Publishing initial message");
 
-  visualization_msgs::InteractiveMarkerInit init;
+  visualization_msgs::msg::InteractiveMarkerInit init;
   init.server_id = server_id_;
   init.seq_num = seq_num_;
   init.markers.reserve( marker_contexts_.size() );
@@ -395,16 +393,16 @@ void InteractiveMarkerServer::publishInit()
   M_MarkerContext::iterator it;
   for ( it = marker_contexts_.begin(); it != marker_contexts_.end(); it++ )
   {
-    ROS_DEBUG( "Publishing %s", it->second.int_marker.name.c_str() );
+    RCLCPP_DEBUG(logger_, "Publishing %s", it->second.int_marker.name.c_str() );
     init.markers.push_back( it->second.int_marker );
   }
 
-  init_pub_.publish( init );
+  init_pub_->publish( init );
 }
 
-void InteractiveMarkerServer::processFeedback( const FeedbackConstPtr& feedback )
+void InteractiveMarkerServer::processFeedback( visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr feedback )
 {
-  boost::recursive_mutex::scoped_lock lock( mutex_ );
+  std::unique_lock<std::recursive_mutex> lock( mutex_ );
 
   M_MarkerContext::iterator marker_context_it = marker_contexts_.find( feedback->marker_name );
 
@@ -418,18 +416,18 @@ void InteractiveMarkerServer::processFeedback( const FeedbackConstPtr& feedback 
 
   // if two callers try to modify the same marker, reject (timeout= 1 sec)
   if ( marker_context.last_client_id != feedback->client_id &&
-      (ros::Time::now() - marker_context.last_feedback).toSec() < 1.0 )
+      (clock_->now() - marker_context.last_feedback).seconds() < 1.0 )
   {
-    ROS_DEBUG( "Rejecting feedback for %s: conflicting feedback from separate clients.", feedback->marker_name.c_str() );
+    RCLCPP_DEBUG(logger_, "Rejecting feedback for %s: conflicting feedback from separate clients.", feedback->marker_name.c_str() );
     return;
   }
 
-  marker_context.last_feedback = ros::Time::now();
+  marker_context.last_feedback = clock_->now();
   marker_context.last_client_id = feedback->client_id;
 
-  if ( feedback->event_type == visualization_msgs::InteractiveMarkerFeedback::POSE_UPDATE )
+  if ( feedback->event_type == visualization_msgs::msg::InteractiveMarkerFeedback::POSE_UPDATE )
   {
-    if ( marker_context.int_marker.header.stamp == ros::Time(0) )
+    if ( marker_context.int_marker.header.stamp == rclcpp::Time() )
     {
       // keep the old header
       doSetPose( pending_updates_.find( feedback->marker_name ), feedback->marker_name, feedback->pose, marker_context.int_marker.header );
@@ -441,7 +439,7 @@ void InteractiveMarkerServer::processFeedback( const FeedbackConstPtr& feedback 
   }
 
   // call feedback handler
-  boost::unordered_map<uint8_t,FeedbackCallback>::iterator feedback_cb_it = marker_context.feedback_cbs.find( feedback->event_type );
+  std::unordered_map<uint8_t,FeedbackCallback>::iterator feedback_cb_it = marker_context.feedback_cbs.find( feedback->event_type );
   if ( feedback_cb_it != marker_context.feedback_cbs.end() && feedback_cb_it->second )
   {
     // call type-specific callback
@@ -457,21 +455,21 @@ void InteractiveMarkerServer::processFeedback( const FeedbackConstPtr& feedback 
 
 void InteractiveMarkerServer::keepAlive()
 {
-  visualization_msgs::InteractiveMarkerUpdate empty_update;
-  empty_update.type = visualization_msgs::InteractiveMarkerUpdate::KEEP_ALIVE;
+  visualization_msgs::msg::InteractiveMarkerUpdate empty_update;
+  empty_update.type = visualization_msgs::msg::InteractiveMarkerUpdate::KEEP_ALIVE;
   publish( empty_update );
 }
 
 
-void InteractiveMarkerServer::publish( visualization_msgs::InteractiveMarkerUpdate &update )
+void InteractiveMarkerServer::publish( visualization_msgs::msg::InteractiveMarkerUpdate &update )
 {
   update.server_id = server_id_;
   update.seq_num = seq_num_;
-  update_pub_.publish( update );
+  update_pub_->publish( update );
 }
 
 
-void InteractiveMarkerServer::doSetPose( M_UpdateContext::iterator update_it, const std::string &name, const geometry_msgs::Pose &pose, const std_msgs::Header &header )
+void InteractiveMarkerServer::doSetPose( M_UpdateContext::iterator update_it, const std::string &name, const geometry_msgs::msg::Pose &pose, const std_msgs::msg::Header &header )
 {
   if ( update_it == pending_updates_.end() )
   {
@@ -485,7 +483,7 @@ void InteractiveMarkerServer::doSetPose( M_UpdateContext::iterator update_it, co
 
   update_it->second.int_marker.pose = pose;
   update_it->second.int_marker.header = header;
-  ROS_DEBUG( "Marker '%s' is now at %f, %f, %f", update_it->first.c_str(), pose.position.x, pose.position.y, pose.position.z );
+  RCLCPP_DEBUG(logger_, "Marker '%s' is now at %f, %f, %f", update_it->first.c_str(), pose.position.x, pose.position.y, pose.position.z );
 }
 
 

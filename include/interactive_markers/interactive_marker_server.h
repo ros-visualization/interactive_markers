@@ -32,19 +32,27 @@
 #ifndef INTERACTIVE_MARKER_SERVER
 #define INTERACTIVE_MARKER_SERVER
 
-#include <visualization_msgs/InteractiveMarkerUpdate.h>
-#include <visualization_msgs/InteractiveMarkerFeedback.h>
+#include <visualization_msgs/msg/interactive_marker_init.hpp>
+#include <visualization_msgs/msg/interactive_marker_feedback.hpp>
+#include <visualization_msgs/msg/interactive_marker_update.hpp>
 
-#include <boost/scoped_ptr.hpp>
-#include <boost/thread/thread.hpp>
-#include <boost/thread/recursive_mutex.hpp>
+#include <functional>
+#include <mutex>
+#include <thread>
+#include <unordered_map>
 
-#include <ros/ros.h>
-#include <ros/callback_queue.h>
+#include <rclcpp/rclcpp.hpp>
 
+// #include <boost/scoped_ptr.hpp>
+// #include <boost/thread/thread.hpp>
+// #include <boost/thread/recursive_mutex.hpp>
 
-#include <boost/function.hpp>
-#include <boost/unordered_map.hpp>
+// #include <ros/ros.h>
+// #include <ros/callback_queue.h>
+// 
+// 
+// #include <boost/function.hpp>
+// #include <boost/unordered_map.hpp>
 
 namespace interactive_markers
 {
@@ -53,12 +61,12 @@ namespace interactive_markers
 ///
 /// Note: Keep in mind that changes made by calling insert(), erase(), setCallback() etc.
 ///       are not applied until calling applyChanges().
-class InteractiveMarkerServer : boost::noncopyable
+class InteractiveMarkerServer
 {
 public:
 
-  typedef visualization_msgs::InteractiveMarkerFeedbackConstPtr FeedbackConstPtr;
-  typedef boost::function< void ( const FeedbackConstPtr& ) > FeedbackCallback;
+  typedef visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr FeedbackConstPtr;
+  typedef std::function< void ( FeedbackConstPtr ) > FeedbackCallback;
 
   static const uint8_t DEFAULT_FEEDBACK_CB = 255;
 
@@ -67,9 +75,27 @@ public:
   /// @param server_id     If you run multiple servers on the same topic from
   ///                      within the same node, you will need to assign different names to them.
   ///                      Otherwise, leave this empty.
-  /// @param spin_thread   If set to true, will spin up a thread for message handling.
-  ///                      All callbacks will be called from that thread.
-  InteractiveMarkerServer( const std::string &topic_ns, const std::string &server_id="", bool spin_thread = false );
+  InteractiveMarkerServer( const std::string &topic_ns,
+    rclcpp::node_interfaces::NodeBaseInterface::SharedPtr base_interface,
+    rclcpp::node_interfaces::NodeClockInterface::SharedPtr clock_interface,
+    rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_interface,
+    rclcpp::node_interfaces::NodeTimersInterface::SharedPtr timers_interface,
+    rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
+    const std::string server_id);
+
+  template <typename NodePtr>
+  InteractiveMarkerServer(const std::string &topic_ns, NodePtr node, const std::string &server_id="")
+    :
+    InteractiveMarkerServer(
+      topic_ns,
+      node->get_node_base_interface(),
+      node->get_node_clock_interface(),
+      node->get_node_logging_interface(),
+      node->get_node_timers_interface(),
+      node->get_node_topics_interface(),
+      server_id)
+  {
+  }
 
   /// Destruction of the interface will lead to all managed markers being cleared.
   ~InteractiveMarkerServer();
@@ -78,7 +104,7 @@ public:
   /// Note: Changes to the marker will not take effect until you call applyChanges().
   /// The callback changes immediately.
   /// @param int_marker     The marker to be added or replaced
-  void insert( const visualization_msgs::InteractiveMarker &int_marker );
+  void insert( const visualization_msgs::msg::InteractiveMarker &int_marker );
 
   /// Add or replace a marker and its callback functions
   /// Note: Changes to the marker will not take effect until you call applyChanges().
@@ -86,7 +112,7 @@ public:
   /// @param int_marker     The marker to be added or replaced
   /// @param feedback_cb    Function to call on the arrival of a feedback message.
   /// @param feedback_type  Type of feedback for which to call the feedback.
-  void insert( const visualization_msgs::InteractiveMarker &int_marker,
+  void insert( const visualization_msgs::msg::InteractiveMarker &int_marker,
                FeedbackCallback feedback_cb,
                uint8_t feedback_type=DEFAULT_FEEDBACK_CB );
 
@@ -97,8 +123,8 @@ public:
   /// @param pose    The new pose
   /// @param header  Header replacement. Leave this empty to use the previous one.
   bool setPose( const std::string &name,
-      const geometry_msgs::Pose &pose,
-      const std_msgs::Header &header=std_msgs::Header() );
+      const geometry_msgs::msg::Pose &pose,
+      const std_msgs::msg::Header &header=std_msgs::msg::Header() );
 
   /// Erase the marker with the specified name
   /// Note: This change will not take effect until you call applyChanges().
@@ -141,20 +167,23 @@ public:
   /// @param name             Name of the interactive marker
   /// @param[out] int_marker  Output message
   /// @return true if a marker with that name exists
-  bool get( std::string name, visualization_msgs::InteractiveMarker &int_marker ) const;
+  bool get( std::string name, visualization_msgs::msg::InteractiveMarker &int_marker ) const;
 
 private:
+  // Disable copying
+  InteractiveMarkerServer(const InteractiveMarkerServer &) = delete;
+  InteractiveMarkerServer & operator=(const InteractiveMarkerServer &) = delete;
 
   struct MarkerContext
   {
-    ros::Time last_feedback;
+    rclcpp::Time last_feedback;
     std::string last_client_id;
     FeedbackCallback default_feedback_cb;
-    boost::unordered_map<uint8_t,FeedbackCallback> feedback_cbs;
-    visualization_msgs::InteractiveMarker int_marker;
+    std::unordered_map<uint8_t,FeedbackCallback> feedback_cbs;
+    visualization_msgs::msg::InteractiveMarker int_marker;
   };
 
-  typedef boost::unordered_map< std::string, MarkerContext > M_MarkerContext;
+  typedef std::unordered_map< std::string, MarkerContext > M_MarkerContext;
 
   // represents an update to a single marker
   struct UpdateContext
@@ -164,26 +193,21 @@ private:
       POSE_UPDATE,
       ERASE
     } update_type;
-    visualization_msgs::InteractiveMarker int_marker;
+    visualization_msgs::msg::InteractiveMarker int_marker;
     FeedbackCallback default_feedback_cb;
-    boost::unordered_map<uint8_t,FeedbackCallback> feedback_cbs;
+    std::unordered_map<uint8_t,FeedbackCallback> feedback_cbs;
   };
 
-  typedef boost::unordered_map< std::string, UpdateContext > M_UpdateContext;
-
-  // main loop when spinning our own thread
-  // - process callbacks in our callback queue
-  // - process pending goals
-  void spinThread();
+  typedef std::unordered_map< std::string, UpdateContext > M_UpdateContext;
 
   // update marker pose & call user callback
-  void processFeedback( const FeedbackConstPtr& feedback );
+  void processFeedback( visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr feedback );
 
   // send an empty update to keep the client GUIs happy
   void keepAlive();
 
   // increase sequence number & publish an update
-  void publish( visualization_msgs::InteractiveMarkerUpdate &update );
+  void publish( visualization_msgs::msg::InteractiveMarkerUpdate &update );
 
   // publish the current complete state to the latched "init" topic.
   void publishInit();
@@ -191,8 +215,8 @@ private:
   // Update pose, schedule update without locking
   void doSetPose( M_UpdateContext::iterator update_it,
       const std::string &name,
-      const geometry_msgs::Pose &pose,
-      const std_msgs::Header &header );
+      const geometry_msgs::msg::Pose &pose,
+      const std_msgs::msg::Header &header );
 
   // contains the current state of all markers
   M_MarkerContext marker_contexts_;
@@ -203,20 +227,18 @@ private:
   // topic namespace to use
   std::string topic_ns_;
   
-  mutable boost::recursive_mutex mutex_;
-
-  // these are needed when spinning up a dedicated thread
-  boost::scoped_ptr<boost::thread> spin_thread_;
-  ros::NodeHandle node_handle_;
-  ros::CallbackQueue callback_queue_;
-  volatile bool need_to_terminate_;
+  mutable std::recursive_mutex mutex_;
 
   // this is needed when running in non-threaded mode
-  ros::Timer keep_alive_timer_;
+  rclcpp::TimerBase::SharedPtr keep_alive_timer_;
 
-  ros::Publisher init_pub_;
-  ros::Publisher update_pub_;
-  ros::Subscriber feedback_sub_;
+  rclcpp::Publisher<visualization_msgs::msg::InteractiveMarkerInit>::SharedPtr init_pub_;
+  rclcpp::Publisher<visualization_msgs::msg::InteractiveMarkerUpdate>::SharedPtr update_pub_;
+  rclcpp::Subscription<visualization_msgs::msg::InteractiveMarkerFeedback>::SharedPtr feedback_sub_;
+
+  rclcpp::Context::SharedPtr context_;
+  rclcpp::Clock::SharedPtr clock_;
+  rclcpp::Logger logger_;
 
   uint64_t seq_num_;
 
