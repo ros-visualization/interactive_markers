@@ -29,25 +29,25 @@
  * Author: David Gossow
  */
 
+#include <memory>
+
 #include "interactive_markers/interactive_marker_client.h"
 #include "interactive_markers/detail/single_client.h"
 
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
-
-//#define DBG_MSG( ... ) ROS_DEBUG_NAMED( "interactive_markers", __VA_ARGS__ );
-#define DBG_MSG( ... ) ROS_DEBUG( __VA_ARGS__ );
-//#define DBG_MSG( ... ) printf("   "); printf( __VA_ARGS__ ); printf("\n");
+using std::placeholders;
 
 namespace interactive_markers
 {
 
 InteractiveMarkerClient::InteractiveMarkerClient(
-    tf::Transformer& tf,
+    rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
+    tf2::BufferCorer& tf_buffer,
     const std::string& target_frame,
     const std::string &topic_ns )
 : state_("InteractiveMarkerClient",IDLE)
-, tf_(tf)
+, topics_interface_(topics_interface)
+, logger_(logging_interface->get_logger())
+, tf_buffer_(tf_buffer)
 , last_num_publishers_(0)
 , enable_autocomplete_transparency_(true)
 {
@@ -56,7 +56,7 @@ InteractiveMarkerClient::InteractiveMarkerClient(
   {
     subscribe( topic_ns );
   }
-  callbacks_.setStatusCb( boost::bind( &InteractiveMarkerClient::statusCb, this, _1, _2, _3 ) );
+  callbacks_.setStatusCb( std::bind( &InteractiveMarkerClient::statusCb, this, _1, _2, _3 ) );
 }
 
 InteractiveMarkerClient::~InteractiveMarkerClient()
@@ -95,7 +95,7 @@ void InteractiveMarkerClient::setStatusCb( const StatusCallback& cb )
 void InteractiveMarkerClient::setTargetFrame( std::string target_frame )
 {
   target_frame_ = target_frame;
-  DBG_MSG("Target frame is now %s", target_frame_.c_str() );
+  RCLCPP_DEBUG(logger_,"Target frame is now %s", target_frame_.c_str() );
 
   switch ( state_ )
   {
@@ -122,7 +122,7 @@ void InteractiveMarkerClient::shutdown()
   case RUNNING:
     init_sub_.shutdown();
     update_sub_.shutdown();
-    boost::lock_guard<boost::mutex> lock(publisher_contexts_mutex_);
+    std::lock_guard<std::mutex> lock(publisher_contexts_mutex_);
     publisher_contexts_.clear();
     last_num_publishers_=0;
     state_=IDLE;
@@ -136,12 +136,22 @@ void InteractiveMarkerClient::subscribeUpdate()
   {
     try
     {
-      update_sub_ = nh_.subscribe( topic_ns_+"/update", 100, &InteractiveMarkerClient::processUpdate, this );
-      DBG_MSG( "Subscribed to update topic: %s", (topic_ns_+"/update").c_str() );
+      rclcpp::QoS update_qos(rclcpp::KeepLast(100));
+      update_sub_ = rclcpp::create_subscription<InteractiveMarkerUpdate>(
+        topics_interface_,
+        topic_ns_ + "/update",
+        update_qos,
+        std::bind(&InteractiveMarkerClient::processUpdate, this, _1));
+      RCLCPP_DEBUG(logger_, "Subscribed to update topic: %s", (topic_ns_+"/update").c_str() );
     }
-    catch( ros::Exception& e )
+    catch(rclcpp::InvalidNodeError & ex)
     {
-      callbacks_.statusCb( ERROR, "General", "Error subscribing: " + std::string(e.what()) );
+      callbacks_.statusCb( ERROR, "General", "Error subscribing: " + std::string(ex.what()) );
+      return;
+    }
+    catch (rclcpp::NameValidationError & ex)
+    {
+      callbacks_.statusCb( ERROR, "General", "Error subscribing: " + std::string(ex.what()) );
       return;
     }
   }
@@ -154,13 +164,24 @@ void InteractiveMarkerClient::subscribeInit()
   {
     try
     {
-      init_sub_ = nh_.subscribe( topic_ns_+"/update_full", 100, &InteractiveMarkerClient::processInit, this );
-      DBG_MSG( "Subscribed to init topic: %s", (topic_ns_+"/update_full").c_str() );
+      rclcpp::QoS init_qos(rclcpp::KeepLast(100));
+      // TODO(jacobperron): Do we need this?
+      // init_qos.transient_local().reliable();
+      init_sub_ = rclcpp::create_subscription<InteractiveMarkerInit>(
+        topics_interface_,
+        topic_ns_ + "/update_full",
+        init_qos,
+        std::bind(&InteractiveMarkerClient::processInit, this, _1));
+      RCLCPP_DEBUG(logger_, "Subscribed to init topic: %s", (topic_ns_+"/update_full").c_str() );
       state_ = INIT;
     }
-    catch( ros::Exception& e )
+    catch(rclcpp::InvalidNodeError & ex)
     {
-      callbacks_.statusCb( ERROR, "General", "Error subscribing: " + std::string(e.what()) );
+      callbacks_.statusCb( ERROR, "General", "Error subscribing: " + std::string(ex.what()) );
+    }
+    catch (rclcpp::NameValidationError & ex)
+    {
+      callbacks_.statusCb( ERROR, "General", "Error subscribing: " + std::string(ex.what()) );
     }
   }
 }
@@ -179,7 +200,7 @@ void InteractiveMarkerClient::process( const MsgConstPtrT& msg )
 
   SingleClientPtr client;
   {
-    boost::lock_guard<boost::mutex> lock(publisher_contexts_mutex_);
+    std::lock_guard<std::mutex> lock(publisher_contexts_mutex_);
 
     M_SingleClient::iterator context_it = publisher_contexts_.find(msg->server_id);
 
@@ -188,9 +209,9 @@ void InteractiveMarkerClient::process( const MsgConstPtrT& msg )
     // publisher to our list.
     if ( context_it == publisher_contexts_.end() )
     {
-      DBG_MSG( "New publisher detected: %s", msg->server_id.c_str() );
+      RCLCPP_DEBUG(logger_, "New publisher detected: %s", msg->server_id.c_str() );
 
-      SingleClientPtr pc(new SingleClient( msg->server_id, tf_, target_frame_, callbacks_ ));
+      SingleClientPtr pc(new SingleClient( msg->server_id, tf_buffer_, target_frame_, callbacks_ ));
       context_it = publisher_contexts_.insert( std::make_pair(msg->server_id,pc) ).first;
       client = pc;
 
@@ -238,7 +259,7 @@ void InteractiveMarkerClient::update()
 
     // check if all single clients are finished with the init channels
     bool initialized = true;
-    boost::lock_guard<boost::mutex> lock(publisher_contexts_mutex_);
+    std::lock_guard<std::mutex> lock(publisher_contexts_mutex_);
     M_SingleClient::iterator it;
     for ( it = publisher_contexts_.begin(); it!=publisher_contexts_.end(); ++it )
     {
@@ -275,13 +296,13 @@ void InteractiveMarkerClient::statusCb( StatusT status, const std::string& serve
   switch ( status )
   {
   case OK:
-    DBG_MSG( "%s: %s (Status: OK)", server_id.c_str(), msg.c_str() );
+    RCLCPP_DEBUG(logger_, "%s: %s (Status: OK)", server_id.c_str(), msg.c_str() );
     break;
   case WARN:
-    DBG_MSG( "%s: %s (Status: WARNING)", server_id.c_str(), msg.c_str() );
+    RCLCPP_DEBUG(logger_, "%s: %s (Status: WARNING)", server_id.c_str(), msg.c_str() );
     break;
   case ERROR:
-    DBG_MSG( "%s: %s (Status: ERROR)", server_id.c_str(), msg.c_str() );
+    RCLCPP_DEBUG(logger_, "%s: %s (Status: ERROR)", server_id.c_str(), msg.c_str() );
     break;
   }
 
