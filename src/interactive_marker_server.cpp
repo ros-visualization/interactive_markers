@@ -29,7 +29,7 @@
  * Author: David Gossow
  */
 
-#include "interactive_markers/interactive_marker_server.h"
+#include "interactive_markers/interactive_marker_server.hpp"
 
 #include <rclcpp/qos.hpp>
 
