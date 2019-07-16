@@ -37,10 +37,13 @@
 #ifndef MESSAGE_CONTEXT_H_
 #define MESSAGE_CONTEXT_H_
 
-#include <tf/tf.h>
+#include <list>
 
-#include <visualization_msgs/InteractiveMarkerInit.h>
-#include <visualization_msgs/InteractiveMarkerUpdate.h>
+#include <tf2/buffer_core.h>
+#include <tf2/exceptions.h>
+
+#include <visualization_msgs/msg/interactive_marker_init.hpp>
+#include <visualization_msgs/msg/interactive_marker_update.hpp>
 
 namespace interactive_markers
 {
@@ -49,9 +52,9 @@ template<class MsgT>
 class MessageContext
 {
 public:
-  MessageContext( tf::Transformer& tf,
+  MessageContext( tf2::BufferCore& tf,
       const std::string& target_frame,
-      const typename MsgT::ConstPtr& msg,
+      typename MsgT::SharedPtr msg,
       bool enable_autocomplete_transparency = true);
 
   MessageContext<MsgT>& operator=( const MessageContext<MsgT>& other );
@@ -59,7 +62,7 @@ public:
   // transform all messages with timestamp into target frame
   void getTfTransforms();
 
-  typename MsgT::Ptr msg;
+  typename MsgT::SharedPtr msg;
 
   // return true if tf info is complete
   bool isReady();
@@ -68,23 +71,23 @@ private:
 
   void init();
 
-  bool getTransform( std_msgs::Header& header, geometry_msgs::Pose& pose_msg );
+  bool getTransform( std_msgs::msg::Header& header, geometry_msgs::msg::Pose& pose_msg );
 
-  void getTfTransforms( std::vector<visualization_msgs::InteractiveMarker>& msg_vec, std::list<size_t>& indices );
-  void getTfTransforms( std::vector<visualization_msgs::InteractiveMarkerPose>& msg_vec, std::list<size_t>& indices );
+  void getTfTransforms( std::vector<visualization_msgs::msg::InteractiveMarker>& msg_vec, std::list<size_t>& indices );
+  void getTfTransforms( std::vector<visualization_msgs::msg::InteractiveMarkerPose>& msg_vec, std::list<size_t>& indices );
 
   // array indices of marker/pose updates with missing tf info
   std::list<size_t> open_marker_idx_;
   std::list<size_t> open_pose_idx_;
-  tf::Transformer& tf_;
+  tf2::BufferCore & tf_;
   std::string target_frame_;
   bool enable_autocomplete_transparency_;
 };
 
-class InitFailException: public tf::TransformException
+class InitFailException: public tf2::TransformException
 {
 public:
-  InitFailException(const std::string errorDescription) : tf::TransformException(errorDescription) { ; }
+  InitFailException(const std::string errorDescription) : tf2::TransformException(errorDescription) { ; }
 };
 
 

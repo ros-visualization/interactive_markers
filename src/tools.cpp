@@ -27,10 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "interactive_markers/tools.h"
+#include "interactive_markers/tools.hpp"
 
-#include <tf/LinearMath/Quaternion.h>
-#include <tf/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
 
 #include <math.h>
 #include <assert.h>
@@ -41,7 +41,9 @@
 namespace interactive_markers
 {
 
-void autoComplete( visualization_msgs::InteractiveMarker &msg, bool enable_autocomplete_transparency )
+void autoComplete(
+  visualization_msgs::msg::InteractiveMarker & msg,
+  bool enable_autocomplete_transparency)
 {
   // this is a 'delete' message. no need for action.
   if ( msg.controls.empty() )
@@ -63,7 +65,7 @@ void autoComplete( visualization_msgs::InteractiveMarker &msg, bool enable_autoc
   }
 
   //normalize quaternion
-  tf::Quaternion int_marker_orientation( msg.pose.orientation.x, msg.pose.orientation.y,
+  tf2::Quaternion int_marker_orientation( msg.pose.orientation.x, msg.pose.orientation.y,
       msg.pose.orientation.z, msg.pose.orientation.w );
   int_marker_orientation.normalize();
   msg.pose.orientation.x = int_marker_orientation.x();
@@ -80,7 +82,7 @@ void autoComplete( visualization_msgs::InteractiveMarker &msg, bool enable_autoc
   uniqueifyControlNames( msg );
 }
 
-void uniqueifyControlNames( visualization_msgs::InteractiveMarker& msg )
+void uniqueifyControlNames(visualization_msgs::msg::InteractiveMarker & msg)
 {
   int uniqueification_number = 0;
   std::set<std::string> names;
@@ -98,8 +100,10 @@ void uniqueifyControlNames( visualization_msgs::InteractiveMarker& msg )
   }
 }
 
-void autoComplete( const visualization_msgs::InteractiveMarker &msg,
-    visualization_msgs::InteractiveMarkerControl &control, bool enable_autocomplete_transparency)
+void autoComplete(
+  const visualization_msgs::msg::InteractiveMarker & msg,
+  visualization_msgs::msg::InteractiveMarkerControl & control,
+  bool enable_autocomplete_transparency)
 {
   // correct empty orientation
   if ( control.orientation.w == 0 && control.orientation.x == 0 &&
@@ -113,25 +117,25 @@ void autoComplete( const visualization_msgs::InteractiveMarker &msg,
   {
     switch ( control.interaction_mode )
     {
-      case visualization_msgs::InteractiveMarkerControl::NONE:
+      case visualization_msgs::msg::InteractiveMarkerControl::NONE:
         break;
 
-      case visualization_msgs::InteractiveMarkerControl::MOVE_AXIS:
+      case visualization_msgs::msg::InteractiveMarkerControl::MOVE_AXIS:
         control.markers.reserve(2);
         makeArrow( msg, control, 1.0 );
         makeArrow( msg, control, -1.0 );
         break;
 
-      case visualization_msgs::InteractiveMarkerControl::MOVE_PLANE:
-      case visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS:
-      case visualization_msgs::InteractiveMarkerControl::MOVE_ROTATE:
+      case visualization_msgs::msg::InteractiveMarkerControl::MOVE_PLANE:
+      case visualization_msgs::msg::InteractiveMarkerControl::ROTATE_AXIS:
+      case visualization_msgs::msg::InteractiveMarkerControl::MOVE_ROTATE:
         makeDisc( msg, control );
         break;
 
-      case visualization_msgs::InteractiveMarkerControl::BUTTON:
+      case visualization_msgs::msg::InteractiveMarkerControl::BUTTON:
         break;
 
-      case visualization_msgs::InteractiveMarkerControl::MENU:
+      case visualization_msgs::msg::InteractiveMarkerControl::MENU:
         makeViewFacingButton( msg, control, control.description );
         break;
 
@@ -141,14 +145,14 @@ void autoComplete( const visualization_msgs::InteractiveMarker &msg,
   }
 
   // get interactive marker pose for later
-  tf::Quaternion int_marker_orientation( msg.pose.orientation.x, msg.pose.orientation.y,
+  tf2::Quaternion int_marker_orientation( msg.pose.orientation.x, msg.pose.orientation.y,
       msg.pose.orientation.z, msg.pose.orientation.w );
-  tf::Vector3 int_marker_position( msg.pose.position.x, msg.pose.position.y, msg.pose.position.z );
+  tf2::Vector3 int_marker_position( msg.pose.position.x, msg.pose.position.y, msg.pose.position.z );
 
   // fill in missing pose information into the markers
   for ( unsigned m=0; m<control.markers.size(); m++ )
   {
-    visualization_msgs::Marker &marker = control.markers[m];
+    visualization_msgs::msg::Marker & marker = control.markers[m];
 
     if ( marker.scale.x == 0 )
     {
@@ -173,7 +177,7 @@ void autoComplete( const visualization_msgs::InteractiveMarker &msg,
     }
 
     //normalize orientation
-    tf::Quaternion marker_orientation( marker.pose.orientation.x, marker.pose.orientation.y,
+    tf2::Quaternion marker_orientation( marker.pose.orientation.x, marker.pose.orientation.y,
         marker.pose.orientation.z, marker.pose.orientation.w );
 
     marker_orientation.normalize();
@@ -195,15 +199,17 @@ void autoComplete( const visualization_msgs::InteractiveMarker &msg,
   }
 }
 
-void makeArrow( const visualization_msgs::InteractiveMarker &msg,
-    visualization_msgs::InteractiveMarkerControl &control, float pos )
+void makeArrow(
+  const visualization_msgs::msg::InteractiveMarker & msg,
+  visualization_msgs::msg::InteractiveMarkerControl & control,
+  float pos)
 {
-  visualization_msgs::Marker marker;
+  visualization_msgs::msg::Marker marker;
 
   // rely on the auto-completion for the correct orientation
   marker.pose.orientation = control.orientation;
 
-  marker.type = visualization_msgs::Marker::ARROW;
+  marker.type = visualization_msgs::msg::Marker::ARROW;
   marker.scale.x = msg.scale * 0.15; // aleeper: changed from 0.3 due to Rviz fix
   marker.scale.y = msg.scale * 0.25; // aleeper: changed from 0.5 due to Rviz fix
   marker.scale.z = msg.scale * 0.2;
@@ -223,15 +229,17 @@ void makeArrow( const visualization_msgs::InteractiveMarker &msg,
   control.markers.push_back( marker );
 }
 
-void makeDisc( const visualization_msgs::InteractiveMarker &msg,
-    visualization_msgs::InteractiveMarkerControl &control, float width )
+void makeDisc(
+  const visualization_msgs::msg::InteractiveMarker & msg,
+  visualization_msgs::msg::InteractiveMarkerControl & control,
+  float width)
 {
-  visualization_msgs::Marker marker;
+  visualization_msgs::msg::Marker marker;
 
   // rely on the auto-completion for the correct orientation
   marker.pose.orientation = control.orientation;
 
-  marker.type = visualization_msgs::Marker::TRIANGLE_LIST;
+  marker.type = visualization_msgs::msg::Marker::TRIANGLE_LIST;
   marker.scale.x = msg.scale;
   marker.scale.y = msg.scale;
   marker.scale.z = msg.scale;
@@ -240,11 +248,11 @@ void makeDisc( const visualization_msgs::InteractiveMarker &msg,
 
   // compute points on a circle in the y-z plane
   int steps = 36;
-  std::vector<geometry_msgs::Point> circle1, circle2;
+  std::vector<geometry_msgs::msg::Point> circle1, circle2;
   circle1.reserve(steps);
   circle2.reserve(steps);
 
-  geometry_msgs::Point v1,v2;
+  geometry_msgs::msg::Point v1,v2;
 
   for ( int i=0; i<steps; i++ )
   {
@@ -262,15 +270,15 @@ void makeDisc( const visualization_msgs::InteractiveMarker &msg,
 
   marker.points.resize(6*steps);
 
-  std_msgs::ColorRGBA color;
+  std_msgs::msg::ColorRGBA color;
   color.r=color.g=color.b=color.a=1;
 
   switch ( control.interaction_mode )
   {
-    case visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS:
+    case visualization_msgs::msg::InteractiveMarkerControl::ROTATE_AXIS:
     {
       marker.colors.resize(2*steps);
-      std_msgs::ColorRGBA base_color = marker.color;
+      std_msgs::msg::ColorRGBA base_color = marker.color;
       for ( int i=0; i<steps; i++ )
       {
         int i1 = i;
@@ -299,10 +307,10 @@ void makeDisc( const visualization_msgs::InteractiveMarker &msg,
       break;
     }
 
-    case visualization_msgs::InteractiveMarkerControl::MOVE_ROTATE:
+    case visualization_msgs::msg::InteractiveMarkerControl::MOVE_ROTATE:
     {
       marker.colors.resize(2*steps);
-      std_msgs::ColorRGBA base_color = marker.color;
+      std_msgs::msg::ColorRGBA base_color = marker.color;
       for ( int i=0; i<steps-1; i+=2 )
       {
         int i1 = i;
@@ -366,18 +374,20 @@ void makeDisc( const visualization_msgs::InteractiveMarker &msg,
   control.markers.push_back(marker);
 }
 
-void makeViewFacingButton( const visualization_msgs::InteractiveMarker &msg,
-    visualization_msgs::InteractiveMarkerControl &control, std::string text )
+void makeViewFacingButton(
+  const visualization_msgs::msg::InteractiveMarker & msg,
+  visualization_msgs::msg::InteractiveMarkerControl & control,
+  std::string text)
 {
-  control.orientation_mode = visualization_msgs::InteractiveMarkerControl::VIEW_FACING;
+  control.orientation_mode = visualization_msgs::msg::InteractiveMarkerControl::VIEW_FACING;
   control.independent_marker_orientation = false;
 
-  visualization_msgs::Marker marker;
+  visualization_msgs::msg::Marker marker;
 
   float base_scale = 0.25 * msg.scale;
   float base_z = 1.2 * msg.scale;
 
-  marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+  marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
   marker.scale.x = base_scale;
   marker.scale.y = base_scale;
   marker.scale.z = base_scale;
@@ -393,12 +403,12 @@ void makeViewFacingButton( const visualization_msgs::InteractiveMarker &msg,
 }
 
 
-void assignDefaultColor(visualization_msgs::Marker &marker, const geometry_msgs::Quaternion &quat )
+void assignDefaultColor(visualization_msgs::msg::Marker & marker, const geometry_msgs::msg::Quaternion & quat)
 {
-  geometry_msgs::Vector3 v;
+  geometry_msgs::msg::Vector3 v;
 
-  tf::Quaternion bt_quat( quat.x, quat.y, quat.z, quat.w );
-  tf::Vector3 bt_x_axis = tf::Matrix3x3(bt_quat) * tf::Vector3(1,0,0);
+  tf2::Quaternion bt_quat( quat.x, quat.y, quat.z, quat.w );
+  tf2::Vector3 bt_x_axis = tf2::Matrix3x3(bt_quat) * tf2::Vector3(1,0,0);
 
   float x,y,z;
   x = fabs(bt_x_axis.x());
@@ -416,11 +426,11 @@ void assignDefaultColor(visualization_msgs::Marker &marker, const geometry_msgs:
 }
 
 
-visualization_msgs::InteractiveMarkerControl makeTitle( const visualization_msgs::InteractiveMarker &msg )
+visualization_msgs::msg::InteractiveMarkerControl makeTitle(const visualization_msgs::msg::InteractiveMarker & msg)
 {
-  visualization_msgs::Marker marker;
+  visualization_msgs::msg::Marker marker;
 
-  marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+  marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
   marker.scale.x = msg.scale * 0.15;
   marker.scale.y = msg.scale * 0.15;
   marker.scale.z = msg.scale * 0.15;
@@ -431,9 +441,9 @@ visualization_msgs::InteractiveMarkerControl makeTitle( const visualization_msgs
   marker.pose.position.z = msg.scale * 1.4;
   marker.text = msg.description;
 
-  visualization_msgs::InteractiveMarkerControl control;
-  control.interaction_mode = visualization_msgs::InteractiveMarkerControl::NONE;
-  control.orientation_mode = visualization_msgs::InteractiveMarkerControl::VIEW_FACING;
+  visualization_msgs::msg::InteractiveMarkerControl control;
+  control.interaction_mode = visualization_msgs::msg::InteractiveMarkerControl::NONE;
+  control.orientation_mode = visualization_msgs::msg::InteractiveMarkerControl::VIEW_FACING;
   control.always_visible = true;
   control.markers.push_back( marker );
 

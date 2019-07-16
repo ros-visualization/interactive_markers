@@ -31,21 +31,24 @@
 
 #include <memory>
 
-#include "interactive_markers/interactive_marker_client.h"
-#include "interactive_markers/detail/single_client.h"
+#include "interactive_markers/interactive_marker_client.hpp"
+#include "interactive_markers/detail/single_client.hpp"
 
-using std::placeholders;
+using namespace std::placeholders;
 
 namespace interactive_markers
 {
 
 InteractiveMarkerClient::InteractiveMarkerClient(
     rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
-    tf2::BufferCorer& tf_buffer,
+    rclcpp::node_interfaces::NodeGraphInterface::SharedPtr graph_interface,
+    rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_interface,
+    tf2::BufferCore& tf_buffer,
     const std::string& target_frame,
     const std::string &topic_ns )
 : state_("InteractiveMarkerClient",IDLE)
 , topics_interface_(topics_interface)
+, graph_interface_(graph_interface)
 , logger_(logging_interface->get_logger())
 , tf_buffer_(tf_buffer)
 , last_num_publishers_(0)
@@ -120,8 +123,8 @@ void InteractiveMarkerClient::shutdown()
 
   case INIT:
   case RUNNING:
-    init_sub_.shutdown();
-    update_sub_.shutdown();
+    init_sub_.reset();
+    update_sub_.reset();
     std::lock_guard<std::mutex> lock(publisher_contexts_mutex_);
     publisher_contexts_.clear();
     last_num_publishers_=0;
@@ -137,19 +140,19 @@ void InteractiveMarkerClient::subscribeUpdate()
     try
     {
       rclcpp::QoS update_qos(rclcpp::KeepLast(100));
-      update_sub_ = rclcpp::create_subscription<InteractiveMarkerUpdate>(
+      update_sub_ = rclcpp::create_subscription<visualization_msgs::msg::InteractiveMarkerUpdate>(
         topics_interface_,
         topic_ns_ + "/update",
         update_qos,
         std::bind(&InteractiveMarkerClient::processUpdate, this, _1));
       RCLCPP_DEBUG(logger_, "Subscribed to update topic: %s", (topic_ns_+"/update").c_str() );
     }
-    catch(rclcpp::InvalidNodeError & ex)
+    catch(rclcpp::exceptions::InvalidNodeError & ex)
     {
       callbacks_.statusCb( ERROR, "General", "Error subscribing: " + std::string(ex.what()) );
       return;
     }
-    catch (rclcpp::NameValidationError & ex)
+    catch (rclcpp::exceptions::NameValidationError & ex)
     {
       callbacks_.statusCb( ERROR, "General", "Error subscribing: " + std::string(ex.what()) );
       return;
@@ -167,7 +170,7 @@ void InteractiveMarkerClient::subscribeInit()
       rclcpp::QoS init_qos(rclcpp::KeepLast(100));
       // TODO(jacobperron): Do we need this?
       // init_qos.transient_local().reliable();
-      init_sub_ = rclcpp::create_subscription<InteractiveMarkerInit>(
+      init_sub_ = rclcpp::create_subscription<visualization_msgs::msg::InteractiveMarkerInit>(
         topics_interface_,
         topic_ns_ + "/update_full",
         init_qos,
@@ -175,11 +178,11 @@ void InteractiveMarkerClient::subscribeInit()
       RCLCPP_DEBUG(logger_, "Subscribed to init topic: %s", (topic_ns_+"/update_full").c_str() );
       state_ = INIT;
     }
-    catch(rclcpp::InvalidNodeError & ex)
+    catch(rclcpp::exceptions::InvalidNodeError & ex)
     {
       callbacks_.statusCb( ERROR, "General", "Error subscribing: " + std::string(ex.what()) );
     }
-    catch (rclcpp::NameValidationError & ex)
+    catch (rclcpp::exceptions::NameValidationError & ex)
     {
       callbacks_.statusCb( ERROR, "General", "Error subscribing: " + std::string(ex.what()) );
     }
@@ -226,14 +229,14 @@ void InteractiveMarkerClient::process( const MsgConstPtrT& msg )
   client->process( msg, enable_autocomplete_transparency_ );
 }
 
-void InteractiveMarkerClient::processInit( const InitConstPtr& msg )
+void InteractiveMarkerClient::processInit(visualization_msgs::msg::InteractiveMarkerInit::SharedPtr msg)
 {
-  process<InitConstPtr>(msg);
+  process<visualization_msgs::msg::InteractiveMarkerInit::SharedPtr>(msg);
 }
 
-void InteractiveMarkerClient::processUpdate( const UpdateConstPtr& msg )
+void InteractiveMarkerClient::processUpdate(visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg)
 {
-  process<UpdateConstPtr>(msg);
+  process<visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr>(msg);
 }
 
 void InteractiveMarkerClient::update()
@@ -247,7 +250,8 @@ void InteractiveMarkerClient::update()
   case RUNNING:
   {
     // check if one publisher has gone offline
-    if ( update_sub_.getNumPublishers() < last_num_publishers_ )
+    const size_t num_publishers = graph_interface_->count_publishers(update_sub_->get_topic_name());
+    if (num_publishers < last_num_publishers_ )
     {
       callbacks_.statusCb( ERROR, "General", "Server is offline. Resetting." );
       shutdown();
@@ -255,7 +259,7 @@ void InteractiveMarkerClient::update()
       subscribeInit();
       return;
     }
-    last_num_publishers_ = update_sub_.getNumPublishers();
+    last_num_publishers_ = num_publishers;
 
     // check if all single clients are finished with the init channels
     bool initialized = true;
@@ -279,7 +283,7 @@ void InteractiveMarkerClient::update()
     }
     if ( state_ == INIT && initialized )
     {
-      init_sub_.shutdown();
+      init_sub_.reset();
       state_ = RUNNING;
     }
     if ( state_ == RUNNING && !initialized )

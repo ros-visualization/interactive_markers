@@ -38,9 +38,10 @@
 #include <string>
 #include <unordered_map>
 
+#include <rclcpp/logger.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <tf2/tf2.h>
+#include <tf2/buffer_core.h>
 
 #include <visualization_msgs/msg/interactive_marker_init.hpp>
 #include <visualization_msgs/msg/interactive_marker_update.hpp>
@@ -72,19 +73,17 @@ public:
     ERROR = 2
   };
 
-  typedef visualization_msgs::msg::InteractiveMarkerUpdateConstPtr UpdateConstPtr;
-  typedef visualization_msgs::msg::InteractiveMarkerInitConstPtr InitConstPtr;
-
-  typedef std::function< void ( const UpdateConstPtr& ) > UpdateCallback;
-  typedef std::function< void ( const InitConstPtr& ) > InitCallback;
-  typedef std::function< void ( const std::string& ) > ResetCallback;
-  typedef std::function< void ( StatusT, const std::string&, const std::string& ) > StatusCallback;
+  typedef std::function<void(visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr) > UpdateCallback;
+  typedef std::function<void(visualization_msgs::msg::InteractiveMarkerInit::SharedPtr)> InitCallback;
+  typedef std::function<void(const std::string& )> ResetCallback;
+  typedef std::function<void(StatusT, const std::string&, const std::string&)> StatusCallback;
 
   /// @param tf           The tf transformer to use.
   /// @param target_frame tf frame to transform timestamped messages into.
   /// @param topic_ns     The topic namespace (will subscribe to topic_ns/update, topic_ns/init)
   InteractiveMarkerClient(
       rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
+      rclcpp::node_interfaces::NodeGraphInterface::SharedPtr graph_interface,
       rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_interface,
       tf2::BufferCore& tf_buffer,
       const std::string& target_frame = "",
@@ -98,6 +97,7 @@ public:
     const std::string & topic_ns = "")
   : InteractiveMarkerClient(
       node->get_node_topics_interface(),
+      node->get_node_graph_interface(),
       node->get_node_logging_interface(),
       tf_buffer,
       target_frame,
@@ -140,7 +140,8 @@ private:
   template<class MsgConstPtrT>
   void process( const MsgConstPtrT& msg );
 
-  rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface_,
+  rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface_;
+  rclcpp::node_interfaces::NodeGraphInterface::SharedPtr graph_interface_;
   rclcpp::Logger logger_;
 
   enum StateT
@@ -154,8 +155,8 @@ private:
 
   std::string topic_ns_;
 
-  ros::Subscriber update_sub_;
-  ros::Subscriber init_sub_;
+  rclcpp::SubscriptionBase::SharedPtr update_sub_;
+  rclcpp::SubscriptionBase::SharedPtr init_sub_;
 
   // subscribe to the init channel
   void subscribeInit();
@@ -170,16 +171,16 @@ private:
   M_SingleClient publisher_contexts_;
   std::mutex publisher_contexts_mutex_;
 
-  tf::Transformer& tf_;
+  tf2::BufferCore& tf_buffer_;
   std::string target_frame_;
 
 public:
   // for internal usage
   struct CbCollection
   {
-    void initCb( const InitConstPtr& i ) const {
+    void initCb(visualization_msgs::msg::InteractiveMarkerInit::SharedPtr i) const {
       if (init_cb_) init_cb_( i ); }
-    void updateCb( const UpdateConstPtr& u ) const {
+    void updateCb(visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr u) const {
       if (update_cb_) update_cb_( u ); }
     void resetCb( const std::string& s ) const {
       if (reset_cb_) reset_cb_(s); }
@@ -207,10 +208,10 @@ public:
   };
 
   // handle init message
-  void processInit( const InitConstPtr& msg );
+  void processInit(visualization_msgs::msg::InteractiveMarkerInit::SharedPtr msg);
 
   // handle update message
-  void processUpdate( const UpdateConstPtr& msg );
+  void processUpdate(const visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg);
 
 private:
   // Disable copying
@@ -223,7 +224,7 @@ private:
   StatusCallback status_cb_;
 
   // this allows us to detect if a server died (in most cases)
-  int last_num_publishers_;
+  size_t last_num_publishers_;
 
   // if false, auto-completed markers will have alpha = 1.0
   bool enable_autocomplete_transparency_;

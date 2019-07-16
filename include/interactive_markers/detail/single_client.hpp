@@ -37,23 +37,17 @@
 #ifndef SINGLE_CLIENT_H_
 #define SINGLE_CLIENT_H_
 
-#include <visualization_msgs/InteractiveMarkerInit.h>
-#include <visualization_msgs/InteractiveMarkerUpdate.h>
-
-#include <boost/scoped_ptr.hpp>
-#include <boost/thread/thread.hpp>
-#include <boost/thread/recursive_mutex.hpp>
-
-#include <boost/function.hpp>
-#include <boost/unordered_map.hpp>
-
-#include <tf/tf.h>
-
 #include <deque>
 
-#include "message_context.h"
-#include "state_machine.h"
-#include "../interactive_marker_client.h"
+#include <rclcpp/rclcpp.hpp>
+#include <visualization_msgs/msg/interactive_marker_init.hpp>
+#include <visualization_msgs/msg/interactive_marker_update.hpp>
+
+#include <tf2/buffer_core.h>
+
+#include "message_context.hpp"
+#include "state_machine.hpp"
+#include "../interactive_marker_client.hpp"
 
 
 namespace interactive_markers
@@ -65,17 +59,17 @@ public:
 
   SingleClient(
       const std::string& server_id,
-      tf::Transformer& tf,
+      tf2::BufferCore& tf,
       const std::string& target_frame,
       const InteractiveMarkerClient::CbCollection& callbacks );
 
   ~SingleClient();
 
   // Process message from the update channel
-  void process(const visualization_msgs::InteractiveMarkerUpdate::ConstPtr& msg, bool enable_autocomplete_transparency = true);
+  void process(visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg, bool enable_autocomplete_transparency = true);
 
   // Process message from the init channel
-  void process(const visualization_msgs::InteractiveMarkerInit::ConstPtr& msg, bool enable_autocomplete_transparency = true);
+  void process(visualization_msgs::msg::InteractiveMarkerInit::SharedPtr msg, bool enable_autocomplete_transparency = true);
 
   // true if INIT messages are not needed anymore
   bool isInitialized();
@@ -112,14 +106,14 @@ private:
 
   // sequence number and time of last received update
   uint64_t last_update_seq_num_;
-  ros::Time last_update_time_;
+  rclcpp::Time last_update_time_;
 
   // true if the last outgoing update is too long ago
   // and we've already sent a notification of that
   bool update_time_ok_;
 
-  typedef MessageContext<visualization_msgs::InteractiveMarkerUpdate> UpdateMessageContext;
-  typedef MessageContext<visualization_msgs::InteractiveMarkerInit> InitMessageContext;
+  typedef MessageContext<visualization_msgs::msg::InteractiveMarkerUpdate> UpdateMessageContext;
+  typedef MessageContext<visualization_msgs::msg::InteractiveMarkerInit> InitMessageContext;
 
   // Queue of Updates waiting for tf and numbering
   typedef std::deque< UpdateMessageContext > M_UpdateMessageContext;
@@ -131,7 +125,7 @@ private:
   // queue for init messages
   M_InitMessageContext init_queue_;
 
-  tf::Transformer& tf_;
+  tf2::BufferCore& tf_;
   std::string target_frame_;
 
   const InteractiveMarkerClient::CbCollection& callbacks_;

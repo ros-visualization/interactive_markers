@@ -29,12 +29,13 @@
  * Author: David Gossow
  */
 
-#include "interactive_markers/detail/single_client.h"
+#include <functional>
+#include <memory>
 
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
+#include "interactive_markers/detail/single_client.hpp"
 
-#define DBG_MSG( ... ) ROS_DEBUG( __VA_ARGS__ );
+
+#define DBG_MSG( ... ) RCUTILS_LOG_DEBUG( __VA_ARGS__ );
 //#define DBG_MSG( ... ) printf("   "); printf( __VA_ARGS__ ); printf("\n");
 
 namespace interactive_markers
@@ -42,7 +43,7 @@ namespace interactive_markers
 
 SingleClient::SingleClient(
     const std::string& server_id,
-    tf::Transformer& tf,
+    tf2::BufferCore& tf,
     const std::string& target_frame,
     const InteractiveMarkerClient::CbCollection& callbacks
 )
@@ -63,7 +64,7 @@ SingleClient::~SingleClient()
   callbacks_.resetCb( server_id_ );
 }
 
-void SingleClient::process(const visualization_msgs::InteractiveMarkerInit::ConstPtr& msg, bool enable_autocomplete_transparency)
+void SingleClient::process(visualization_msgs::msg::InteractiveMarkerInit::SharedPtr msg, bool enable_autocomplete_transparency)
 {
   DBG_MSG( "%s: received init #%lu", server_id_.c_str(), msg->seq_num );
 
@@ -85,14 +86,14 @@ void SingleClient::process(const visualization_msgs::InteractiveMarkerInit::Cons
   }
 }
 
-void SingleClient::process(const visualization_msgs::InteractiveMarkerUpdate::ConstPtr& msg, bool enable_autocomplete_transparency)
+void SingleClient::process(visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg, bool enable_autocomplete_transparency)
 {
   if ( first_update_seq_num_ == (uint64_t)-1 )
   {
     first_update_seq_num_ = msg->seq_num;
   }
 
-  last_update_time_ = ros::Time::now();
+  last_update_time_ = rclcpp::Clock().now();
 
   if ( msg->type == msg->KEEP_ALIVE )
   {
@@ -161,7 +162,7 @@ void SingleClient::update()
     break;
 
   case TF_ERROR:
-    if ( state_.getDuration().toSec() > 1.0 )
+    if ( state_.getDuration().seconds() > 1.0 )
     {
       callbacks_.statusCb( InteractiveMarkerClient::ERROR, server_id_, "1 second has passed. Re-initializing." );
       state_ = INIT;
@@ -172,7 +173,7 @@ void SingleClient::update()
 
 void SingleClient::checkKeepAlive()
 {
-  double time_since_upd = (ros::Time::now() - last_update_time_).toSec();
+  double time_since_upd = (rclcpp::Clock().now() - last_update_time_).seconds();
   if ( time_since_upd > 2.0 )
   {
     std::ostringstream s;
@@ -299,8 +300,9 @@ void SingleClient::pushUpdates()
   }
   while( !update_queue_.empty() && update_queue_.back().isReady() )
   {
-    DBG_MSG("Pushing out update #%lu.", update_queue_.back().msg->seq_num );
-    callbacks_.updateCb( update_queue_.back().msg );
+    visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg = update_queue_.back().msg;
+    DBG_MSG("Pushing out update #%lu.", msg->seq_num );
+    callbacks_.updateCb(msg);
     update_queue_.pop_back();
   }
 }

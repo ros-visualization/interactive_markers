@@ -38,7 +38,7 @@
 #ifndef INTERACTIVE_MARKERS_STATE_MACHINE_H_
 #define INTERACTIVE_MARKERS_STATE_MACHINE_H_
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 namespace interactive_markers
 {
@@ -51,17 +51,19 @@ public:
   StateMachine( std::string name, StateT init_state );
   StateMachine& operator=( StateT state );
   operator StateT();
-  ros::Duration getDuration();
+  rclcpp::Duration getDuration();
 private:
   StateT state_;
-  ros::Time chg_time_;
+  rclcpp::Clock clock_;
+  rclcpp::Time chg_time_;
   std::string name_;
 };
 
 template<class StateT>
 StateMachine<StateT>::StateMachine( std::string name, StateT init_state )
 : state_(init_state)
-, chg_time_(ros::Time::now())
+, clock_()
+, chg_time_(clock_.now())
 , name_(name)
 {
 };
@@ -71,17 +73,17 @@ StateMachine<StateT>& StateMachine<StateT>::operator=( StateT state )
 {
   if ( state_ != state )
   {
-    ROS_DEBUG( "Setting state of %s to %lu", name_.c_str(), (int64_t)state );
+    RCUTILS_LOG_DEBUG("Setting state of %s to %lu", name_.c_str(), (int64_t)state);
     state_ = state;
-    chg_time_=ros::Time::now();
+    chg_time_=clock_.now();
   }
   return *this;
 }
 
 template<class StateT>
-ros::Duration StateMachine<StateT>::getDuration()
+rclcpp::Duration StateMachine<StateT>::getDuration()
 {
-  return ros::Time::now()-chg_time_;
+  return clock_.now()-chg_time_;
 }
 
 template<class StateT>

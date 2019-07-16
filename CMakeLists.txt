@@ -3,20 +3,22 @@ project(interactive_markers)
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(visualization_msgs REQUIRED)
 
 add_library(${PROJECT_NAME} 
   src/interactive_marker_server.cpp
-  # src/tools.cpp
-  # src/menu_handler.cpp
-  # src/interactive_marker_client.cpp
-  # src/single_client.cpp
-  # src/message_context.cpp
+  src/tools.cpp
+  src/menu_handler.cpp
+  src/interactive_marker_client.cpp
+  src/single_client.cpp
+  src/message_context.cpp
 )
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 ament_target_dependencies(${PROJECT_NAME}
   "rclcpp"
+  "tf2_geometry_msgs"
   "tf2_ros"
   "visualization_msgs")
 
@@ -30,6 +32,7 @@ install(
   DESTINATION include)
 
 ament_export_dependencies("rclcpp")
+ament_export_dependencies("tf2_geometry_msgs")
 ament_export_dependencies("tf2_ros")
 ament_export_dependencies("visualization_msgs")
 ament_export_include_directories(include)
