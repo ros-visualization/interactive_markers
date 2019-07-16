@@ -49,48 +49,48 @@ TEST(InteractiveMarkerServer, addRemove)
 
   //insert, apply, erase, apply
   server.insert(int_marker);
-  ASSERT_TRUE( server.get("marker1", int_marker) );
+  ASSERT_TRUE(server.get("marker1", int_marker) );
 
   server.applyChanges();
-  ASSERT_TRUE( server.get("marker1", int_marker) );
+  ASSERT_TRUE(server.get("marker1", int_marker) );
 
-  ASSERT_TRUE( server.erase( "marker1" ) );
-  ASSERT_FALSE( server.get("marker1", int_marker) );
+  ASSERT_TRUE(server.erase("marker1"));
+  ASSERT_FALSE(server.get("marker1", int_marker) );
 
   server.applyChanges();
-  ASSERT_FALSE( server.get("marker1", int_marker) );
+  ASSERT_FALSE(server.get("marker1", int_marker) );
 
 
   //insert, erase, apply
   server.insert(int_marker);
-  ASSERT_TRUE( server.get("marker1", int_marker) );
+  ASSERT_TRUE(server.get("marker1", int_marker) );
 
-  ASSERT_TRUE( server.erase( "marker1" ) );
-  ASSERT_FALSE( server.get("marker1", int_marker) );
+  ASSERT_TRUE(server.erase("marker1"));
+  ASSERT_FALSE(server.get("marker1", int_marker) );
 
   server.applyChanges();
-  ASSERT_FALSE( server.get("marker1", int_marker) );
+  ASSERT_FALSE(server.get("marker1", int_marker) );
 
   //insert, apply, clear, apply
   server.insert(int_marker);
-  ASSERT_TRUE( server.get("marker1", int_marker) );
+  ASSERT_TRUE(server.get("marker1", int_marker) );
 
   server.applyChanges();
-  ASSERT_TRUE( server.get("marker1", int_marker) );
+  ASSERT_TRUE(server.get("marker1", int_marker) );
 
   server.clear();
-  ASSERT_FALSE( server.get("marker1", int_marker) );
+  ASSERT_FALSE(server.get("marker1", int_marker) );
 
   server.applyChanges();
-  ASSERT_FALSE( server.get("marker1", int_marker) );
+  ASSERT_FALSE(server.get("marker1", int_marker) );
 
   //insert, setPose, apply, clear, apply
   server.insert(int_marker);
-  ASSERT_TRUE( server.setPose("marker1", pose) );
+  ASSERT_TRUE(server.setPose("marker1", pose) );
 
   server.applyChanges();
   server.clear();
-  ASSERT_FALSE( server.get("marker1", int_marker) );
+  ASSERT_FALSE(server.get("marker1", int_marker) );
 
   server.applyChanges();
 
@@ -103,7 +103,7 @@ TEST(InteractiveMarkerServer, addRemove)
 
 
 // Run all the tests that were declared with TEST()
-int main(int argc, char **argv)
+int main(int argc, char ** argv)
 {
   ros::init(argc, argv, "im_server_test");
   testing::InitGoogleTest(&argc, argv);

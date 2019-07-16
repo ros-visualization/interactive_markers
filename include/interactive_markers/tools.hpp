@@ -91,10 +91,13 @@ void makeViewFacingButton(
   std::string text);
 
 /// assign an RGB value to the given marker based on the given orientation
-void assignDefaultColor(visualization_msgs::msg::Marker & marker, const geometry_msgs::msg::Quaternion & quat);
+void assignDefaultColor(
+  visualization_msgs::msg::Marker & marker,
+  const geometry_msgs::msg::Quaternion & quat);
 
 /// create a control which shows the description of the interactive marker
-visualization_msgs::msg::InteractiveMarkerControl makeTitle(const visualization_msgs::msg::InteractiveMarker & msg);
+visualization_msgs::msg::InteractiveMarkerControl makeTitle(
+  const visualization_msgs::msg::InteractiveMarker & msg);
 
 }
 

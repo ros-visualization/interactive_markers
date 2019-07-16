@@ -25,7 +25,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * Author: David Gossow
  *//*
  * message_context.h
@@ -52,12 +52,13 @@ template<class MsgT>
 class MessageContext
 {
 public:
-  MessageContext( tf2::BufferCore& tf,
-      const std::string& target_frame,
-      typename MsgT::SharedPtr msg,
-      bool enable_autocomplete_transparency = true);
+  MessageContext(
+    tf2::BufferCore & tf,
+    const std::string & target_frame,
+    typename MsgT::SharedPtr msg,
+    bool enable_autocomplete_transparency = true);
 
-  MessageContext<MsgT>& operator=( const MessageContext<MsgT>& other );
+  MessageContext<MsgT> & operator=(const MessageContext<MsgT> & other);
 
   // transform all messages with timestamp into target frame
   void getTfTransforms();
@@ -68,13 +69,16 @@ public:
   bool isReady();
 
 private:
-
   void init();
 
-  bool getTransform( std_msgs::msg::Header& header, geometry_msgs::msg::Pose& pose_msg );
+  bool getTransform(std_msgs::msg::Header & header, geometry_msgs::msg::Pose & pose_msg);
 
-  void getTfTransforms( std::vector<visualization_msgs::msg::InteractiveMarker>& msg_vec, std::list<size_t>& indices );
-  void getTfTransforms( std::vector<visualization_msgs::msg::InteractiveMarkerPose>& msg_vec, std::list<size_t>& indices );
+  void getTfTransforms(
+    std::vector<visualization_msgs::msg::InteractiveMarker> & msg_vec,
+    std::list<size_t> & indices);
+  void getTfTransforms(
+    std::vector<visualization_msgs::msg::InteractiveMarkerPose> & msg_vec,
+    std::list<size_t> & indices);
 
   // array indices of marker/pose updates with missing tf info
   std::list<size_t> open_marker_idx_;
@@ -84,10 +88,11 @@ private:
   bool enable_autocomplete_transparency_;
 };
 
-class InitFailException: public tf2::TransformException
+class InitFailException : public tf2::TransformException
 {
 public:
-  InitFailException(const std::string errorDescription) : tf2::TransformException(errorDescription) { ; }
+  InitFailException(const std::string errorDescription)
+  : tf2::TransformException(errorDescription) {}
 };
 
 

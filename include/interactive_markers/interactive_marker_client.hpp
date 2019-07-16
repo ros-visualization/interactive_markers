@@ -25,7 +25,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * Author: David Gossow
  */
 
@@ -66,34 +66,36 @@ class SingleClient;
 class InteractiveMarkerClient
 {
 public:
-
-  enum StatusT {
+  enum StatusT
+  {
     OK = 0,
     WARN = 1,
     ERROR = 2
   };
 
-  typedef std::function<void(visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr) > UpdateCallback;
-  typedef std::function<void(visualization_msgs::msg::InteractiveMarkerInit::SharedPtr)> InitCallback;
-  typedef std::function<void(const std::string& )> ResetCallback;
-  typedef std::function<void(StatusT, const std::string&, const std::string&)> StatusCallback;
+  typedef std::function<void (visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr)>
+    UpdateCallback;
+  typedef std::function<void (visualization_msgs::msg::InteractiveMarkerInit::SharedPtr)>
+    InitCallback;
+  typedef std::function<void (const std::string & )> ResetCallback;
+  typedef std::function<void (StatusT, const std::string &, const std::string &)> StatusCallback;
 
   /// @param tf           The tf transformer to use.
   /// @param target_frame tf frame to transform timestamped messages into.
   /// @param topic_ns     The topic namespace (will subscribe to topic_ns/update, topic_ns/init)
   InteractiveMarkerClient(
-      rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
-      rclcpp::node_interfaces::NodeGraphInterface::SharedPtr graph_interface,
-      rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_interface,
-      tf2::BufferCore& tf_buffer,
-      const std::string& target_frame = "",
-      const std::string &topic_ns = "" );
+    rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
+    rclcpp::node_interfaces::NodeGraphInterface::SharedPtr graph_interface,
+    rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_interface,
+    tf2::BufferCore & tf_buffer,
+    const std::string & target_frame = "",
+    const std::string & topic_ns = "");
 
-  template <typename NodePtr>
+  template<typename NodePtr>
   InteractiveMarkerClient(
     NodePtr node,
     tf2::BufferCore & tf_buffer,
-    const std::string& target_frame = "",
+    const std::string & target_frame = "",
     const std::string & topic_ns = "")
   : InteractiveMarkerClient(
       node->get_node_topics_interface(),
@@ -109,7 +111,7 @@ public:
   ~InteractiveMarkerClient();
 
   /// Subscribe to the topics topic_ns/update and topic_ns/init
-  void subscribe( std::string topic_ns );
+  void subscribe(std::string topic_ns);
 
   /// Unsubscribe, clear queues & call reset callbacks
   void shutdown();
@@ -118,27 +120,26 @@ public:
   void update();
 
   /// Change the target frame and reset the connection
-  void setTargetFrame( std::string target_frame );
+  void setTargetFrame(std::string target_frame);
 
   /// Set callback for init messages
-  void setInitCb( const InitCallback& cb );
+  void setInitCb(const InitCallback & cb);
 
   /// Set callback for update messages
-  void setUpdateCb( const UpdateCallback& cb );
+  void setUpdateCb(const UpdateCallback & cb);
 
   /// Set callback for resetting one server connection
-  void setResetCb( const ResetCallback& cb );
+  void setResetCb(const ResetCallback & cb);
 
   /// Set callback for status updates
-  void setStatusCb( const StatusCallback& cb );
+  void setStatusCb(const StatusCallback & cb);
 
-  void setEnableAutocompleteTransparency( bool enable ) { enable_autocomplete_transparency_ = enable;}
+  void setEnableAutocompleteTransparency(bool enable) {enable_autocomplete_transparency_ = enable;}
 
 private:
-
   // Process message from the init or update channel
   template<class MsgConstPtrT>
-  void process( const MsgConstPtrT& msg );
+  void process(const MsgConstPtrT & msg);
 
   rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface_;
   rclcpp::node_interfaces::NodeGraphInterface::SharedPtr graph_interface_;
@@ -164,43 +165,51 @@ private:
   // subscribe to the init channel
   void subscribeUpdate();
 
-  void statusCb( StatusT status, const std::string& server_id, const std::string& msg );
+  void statusCb(StatusT status, const std::string & server_id, const std::string & msg);
 
   typedef std::shared_ptr<SingleClient> SingleClientPtr;
   typedef std::unordered_map<std::string, SingleClientPtr> M_SingleClient;
   M_SingleClient publisher_contexts_;
   std::mutex publisher_contexts_mutex_;
 
-  tf2::BufferCore& tf_buffer_;
+  tf2::BufferCore & tf_buffer_;
   std::string target_frame_;
 
 public:
   // for internal usage
   struct CbCollection
   {
-    void initCb(visualization_msgs::msg::InteractiveMarkerInit::SharedPtr i) const {
-      if (init_cb_) init_cb_( i ); }
-    void updateCb(visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr u) const {
-      if (update_cb_) update_cb_( u ); }
-    void resetCb( const std::string& s ) const {
-      if (reset_cb_) reset_cb_(s); }
-    void statusCb( StatusT s, const std::string& id, const std::string& m ) const {
-      if (status_cb_) status_cb_(s,id,m); }
+    void initCb(visualization_msgs::msg::InteractiveMarkerInit::SharedPtr i) const
+    {
+      if (init_cb_) {init_cb_(i);}}
+    void updateCb(visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr u) const
+    {
+      if (update_cb_) {update_cb_(u);}}
+    void resetCb(const std::string & s) const
+    {
+      if (reset_cb_) {reset_cb_(s);}}
+    void statusCb(StatusT s, const std::string & id, const std::string & m) const
+    {
+      if (status_cb_) {status_cb_(s, id, m);}}
 
-    void setInitCb( InitCallback init_cb ) {
+    void setInitCb(InitCallback init_cb)
+    {
       init_cb_ = init_cb;
     }
-    void setUpdateCb( UpdateCallback update_cb ) {
+    void setUpdateCb(UpdateCallback update_cb)
+    {
       update_cb_ = update_cb;
     }
-    void setResetCb( ResetCallback reset_cb ) {
+    void setResetCb(ResetCallback reset_cb)
+    {
       reset_cb_ = reset_cb;
     }
-    void setStatusCb( StatusCallback status_cb ) {
+    void setStatusCb(StatusCallback status_cb)
+    {
       status_cb_ = status_cb;
     }
 
-  private:
+private:
     InitCallback init_cb_;
     UpdateCallback update_cb_;
     ResetCallback reset_cb_;
@@ -229,7 +238,6 @@ private:
   // if false, auto-completed markers will have alpha = 1.0
   bool enable_autocomplete_transparency_;
 };
-
 
 
 }

@@ -25,7 +25,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * Author: David Gossow
  */
 
@@ -40,26 +40,25 @@ namespace interactive_markers
 {
 
 InteractiveMarkerClient::InteractiveMarkerClient(
-    rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
-    rclcpp::node_interfaces::NodeGraphInterface::SharedPtr graph_interface,
-    rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_interface,
-    tf2::BufferCore& tf_buffer,
-    const std::string& target_frame,
-    const std::string &topic_ns )
-: state_("InteractiveMarkerClient",IDLE)
-, topics_interface_(topics_interface)
-, graph_interface_(graph_interface)
-, logger_(logging_interface->get_logger())
-, tf_buffer_(tf_buffer)
-, last_num_publishers_(0)
-, enable_autocomplete_transparency_(true)
+  rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
+  rclcpp::node_interfaces::NodeGraphInterface::SharedPtr graph_interface,
+  rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_interface,
+  tf2::BufferCore & tf_buffer,
+  const std::string & target_frame,
+  const std::string & topic_ns)
+: state_("InteractiveMarkerClient", IDLE),
+  topics_interface_(topics_interface),
+  graph_interface_(graph_interface),
+  logger_(logging_interface->get_logger()),
+  tf_buffer_(tf_buffer),
+  last_num_publishers_(0),
+  enable_autocomplete_transparency_(true)
 {
   target_frame_ = target_frame;
-  if ( !topic_ns.empty() )
-  {
-    subscribe( topic_ns );
+  if (!topic_ns.empty() ) {
+    subscribe(topic_ns);
   }
-  callbacks_.setStatusCb( std::bind( &InteractiveMarkerClient::statusCb, this, _1, _2, _3 ) );
+  callbacks_.setStatusCb(std::bind(&InteractiveMarkerClient::statusCb, this, _1, _2, _3) );
 }
 
 InteractiveMarkerClient::~InteractiveMarkerClient()
@@ -68,105 +67,95 @@ InteractiveMarkerClient::~InteractiveMarkerClient()
 }
 
 /// Subscribe to given topic
-void InteractiveMarkerClient::subscribe( std::string topic_ns )
+void InteractiveMarkerClient::subscribe(std::string topic_ns)
 {
   topic_ns_ = topic_ns;
   subscribeUpdate();
   subscribeInit();
 }
 
-void InteractiveMarkerClient::setInitCb( const InitCallback& cb )
+void InteractiveMarkerClient::setInitCb(const InitCallback & cb)
 {
-  callbacks_.setInitCb( cb );
+  callbacks_.setInitCb(cb);
 }
 
-void InteractiveMarkerClient::setUpdateCb( const UpdateCallback& cb )
+void InteractiveMarkerClient::setUpdateCb(const UpdateCallback & cb)
 {
-  callbacks_.setUpdateCb( cb );
+  callbacks_.setUpdateCb(cb);
 }
 
-void InteractiveMarkerClient::setResetCb( const ResetCallback& cb )
+void InteractiveMarkerClient::setResetCb(const ResetCallback & cb)
 {
-  callbacks_.setResetCb( cb );
+  callbacks_.setResetCb(cb);
 }
 
-void InteractiveMarkerClient::setStatusCb( const StatusCallback& cb )
+void InteractiveMarkerClient::setStatusCb(const StatusCallback & cb)
 {
   status_cb_ = cb;
 }
 
-void InteractiveMarkerClient::setTargetFrame( std::string target_frame )
+void InteractiveMarkerClient::setTargetFrame(std::string target_frame)
 {
   target_frame_ = target_frame;
-  RCLCPP_DEBUG(logger_,"Target frame is now %s", target_frame_.c_str() );
+  RCLCPP_DEBUG(logger_, "Target frame is now %s", target_frame_.c_str() );
 
-  switch ( state_ )
-  {
-  case IDLE:
-    break;
+  switch (state_) {
+    case IDLE:
+      break;
 
-  case INIT:
-  case RUNNING:
-    shutdown();
-    subscribeUpdate();
-    subscribeInit();
-    break;
+    case INIT:
+    case RUNNING:
+      shutdown();
+      subscribeUpdate();
+      subscribeInit();
+      break;
   }
 }
 
 void InteractiveMarkerClient::shutdown()
 {
-  switch ( state_ )
-  {
-  case IDLE:
-    break;
+  switch (state_) {
+    case IDLE:
+      break;
 
-  case INIT:
-  case RUNNING:
-    init_sub_.reset();
-    update_sub_.reset();
-    std::lock_guard<std::mutex> lock(publisher_contexts_mutex_);
-    publisher_contexts_.clear();
-    last_num_publishers_=0;
-    state_=IDLE;
-    break;
+    case INIT:
+    case RUNNING:
+      init_sub_.reset();
+      update_sub_.reset();
+      std::lock_guard<std::mutex> lock(publisher_contexts_mutex_);
+      publisher_contexts_.clear();
+      last_num_publishers_ = 0;
+      state_ = IDLE;
+      break;
   }
 }
 
 void InteractiveMarkerClient::subscribeUpdate()
 {
-  if ( !topic_ns_.empty() )
-  {
-    try
-    {
+  if (!topic_ns_.empty() ) {
+    try {
       rclcpp::QoS update_qos(rclcpp::KeepLast(100));
       update_sub_ = rclcpp::create_subscription<visualization_msgs::msg::InteractiveMarkerUpdate>(
         topics_interface_,
         topic_ns_ + "/update",
         update_qos,
         std::bind(&InteractiveMarkerClient::processUpdate, this, _1));
-      RCLCPP_DEBUG(logger_, "Subscribed to update topic: %s", (topic_ns_+"/update").c_str() );
-    }
-    catch(rclcpp::exceptions::InvalidNodeError & ex)
-    {
-      callbacks_.statusCb( ERROR, "General", "Error subscribing: " + std::string(ex.what()) );
+      RCLCPP_DEBUG(logger_, "Subscribed to update topic: %s", (topic_ns_ + "/update").c_str() );
+    } catch (rclcpp::exceptions::InvalidNodeError & ex) {
+      callbacks_.statusCb(ERROR, "General", "Error subscribing: " + std::string(ex.what()) );
       return;
-    }
-    catch (rclcpp::exceptions::NameValidationError & ex)
-    {
-      callbacks_.statusCb( ERROR, "General", "Error subscribing: " + std::string(ex.what()) );
+    } catch (rclcpp::exceptions::NameValidationError & ex) {
+      callbacks_.statusCb(ERROR, "General", "Error subscribing: " + std::string(ex.what()) );
       return;
     }
   }
-  callbacks_.statusCb( OK, "General", "Waiting for messages.");
+  callbacks_.statusCb(OK, "General", "Waiting for messages.");
 }
 
 void InteractiveMarkerClient::subscribeInit()
 {
-  if ( state_ != INIT && !topic_ns_.empty() )
-  {
-    try
-    {
+  if (state_ != INIT && !topic_ns_.empty() ) {
+    try {
       rclcpp::QoS init_qos(rclcpp::KeepLast(100));
       // TODO(jacobperron): Do we need this?
       // init_qos.transient_local().reliable();
@@ -175,29 +164,24 @@ void InteractiveMarkerClient::subscribeInit()
         topic_ns_ + "/update_full",
         init_qos,
         std::bind(&InteractiveMarkerClient::processInit, this, _1));
-      RCLCPP_DEBUG(logger_, "Subscribed to init topic: %s", (topic_ns_+"/update_full").c_str() );
+      RCLCPP_DEBUG(logger_, "Subscribed to init topic: %s", (topic_ns_ + "/update_full").c_str() );
       state_ = INIT;
-    }
-    catch(rclcpp::exceptions::InvalidNodeError & ex)
-    {
-      callbacks_.statusCb( ERROR, "General", "Error subscribing: " + std::string(ex.what()) );
-    }
-    catch (rclcpp::exceptions::NameValidationError & ex)
-    {
-      callbacks_.statusCb( ERROR, "General", "Error subscribing: " + std::string(ex.what()) );
+    } catch (rclcpp::exceptions::InvalidNodeError & ex) {
+      callbacks_.statusCb(ERROR, "General", "Error subscribing: " + std::string(ex.what()) );
+    } catch (rclcpp::exceptions::NameValidationError & ex) {
+      callbacks_.statusCb(ERROR, "General", "Error subscribing: " + std::string(ex.what()) );
     }
   }
 }
 
 template<class MsgConstPtrT>
-void InteractiveMarkerClient::process( const MsgConstPtrT& msg )
+void InteractiveMarkerClient::process(const MsgConstPtrT & msg)
 {
-  callbacks_.statusCb( OK, "General", "Receiving messages.");
+  callbacks_.statusCb(OK, "General", "Receiving messages.");
 
   // get caller ID of the sending entity
-  if ( msg->server_id.empty() )
-  {
-    callbacks_.statusCb( ERROR, "General", "Received message with empty server_id!");
+  if (msg->server_id.empty() ) {
+    callbacks_.statusCb(ERROR, "General", "Received message with empty server_id!");
     return;
   }
 
@@ -210,12 +194,11 @@ void InteractiveMarkerClient::process( const MsgConstPtrT& msg )
     // If we haven't seen this publisher before, we need to reset the
     // display and listen to the init topic, plus of course add this
     // publisher to our list.
-    if ( context_it == publisher_contexts_.end() )
-    {
+    if (context_it == publisher_contexts_.end() ) {
       RCLCPP_DEBUG(logger_, "New publisher detected: %s", msg->server_id.c_str() );
 
-      SingleClientPtr pc(new SingleClient( msg->server_id, tf_buffer_, target_frame_, callbacks_ ));
-      context_it = publisher_contexts_.insert( std::make_pair(msg->server_id,pc) ).first;
+      SingleClientPtr pc(new SingleClient(msg->server_id, tf_buffer_, target_frame_, callbacks_));
+      context_it = publisher_contexts_.insert(std::make_pair(msg->server_id, pc) ).first;
       client = pc;
 
       // we need to subscribe to the init topic again
@@ -226,93 +209,91 @@ void InteractiveMarkerClient::process( const MsgConstPtrT& msg )
   }
 
   // forward init/update to respective context
-  client->process( msg, enable_autocomplete_transparency_ );
+  client->process(msg, enable_autocomplete_transparency_);
 }
 
-void InteractiveMarkerClient::processInit(visualization_msgs::msg::InteractiveMarkerInit::SharedPtr msg)
+void InteractiveMarkerClient::processInit(
+  visualization_msgs::msg::InteractiveMarkerInit::SharedPtr msg)
 {
   process<visualization_msgs::msg::InteractiveMarkerInit::SharedPtr>(msg);
 }
 
-void InteractiveMarkerClient::processUpdate(visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg)
+void InteractiveMarkerClient::processUpdate(
+  visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg)
 {
   process<visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr>(msg);
 }
 
 void InteractiveMarkerClient::update()
 {
-  switch ( state_ )
-  {
-  case IDLE:
-    break;
+  switch (state_) {
+    case IDLE:
+      break;
 
-  case INIT:
-  case RUNNING:
-  {
-    // check if one publisher has gone offline
-    const size_t num_publishers = graph_interface_->count_publishers(update_sub_->get_topic_name());
-    if (num_publishers < last_num_publishers_ )
-    {
-      callbacks_.statusCb( ERROR, "General", "Server is offline. Resetting." );
-      shutdown();
-      subscribeUpdate();
-      subscribeInit();
-      return;
-    }
-    last_num_publishers_ = num_publishers;
-
-    // check if all single clients are finished with the init channels
-    bool initialized = true;
-    std::lock_guard<std::mutex> lock(publisher_contexts_mutex_);
-    M_SingleClient::iterator it;
-    for ( it = publisher_contexts_.begin(); it!=publisher_contexts_.end(); ++it )
-    {
-      // Explicitly reference the pointer to the client here, because the client
-      // might call user code, which might call shutdown(), which will delete
-      // the publisher_contexts_ map...
-
-      SingleClientPtr single_client = it->second;
-      single_client->update();
-      if ( !single_client->isInitialized() )
+    case INIT:
+    case RUNNING:
       {
-        initialized = false;
-      }
+        // check if one publisher has gone offline
+        const size_t num_publishers = graph_interface_->count_publishers(
+          update_sub_->get_topic_name());
+        if (num_publishers < last_num_publishers_) {
+          callbacks_.statusCb(ERROR, "General", "Server is offline. Resetting.");
+          shutdown();
+          subscribeUpdate();
+          subscribeInit();
+          return;
+        }
+        last_num_publishers_ = num_publishers;
 
-      if ( publisher_contexts_.empty() )
-        break; // Yep, someone called shutdown()...
-    }
-    if ( state_ == INIT && initialized )
-    {
-      init_sub_.reset();
-      state_ = RUNNING;
-    }
-    if ( state_ == RUNNING && !initialized )
-    {
-      subscribeInit();
-    }
-    break;
-  }
+        // check if all single clients are finished with the init channels
+        bool initialized = true;
+        std::lock_guard<std::mutex> lock(publisher_contexts_mutex_);
+        M_SingleClient::iterator it;
+        for (it = publisher_contexts_.begin(); it != publisher_contexts_.end(); ++it) {
+          // Explicitly reference the pointer to the client here, because the client
+          // might call user code, which might call shutdown(), which will delete
+          // the publisher_contexts_ map...
+
+          SingleClientPtr single_client = it->second;
+          single_client->update();
+          if (!single_client->isInitialized() ) {
+            initialized = false;
+          }
+
+          if (publisher_contexts_.empty() ) {
+            break; // Yep, someone called shutdown()...
+          }
+        }
+        if (state_ == INIT && initialized) {
+          init_sub_.reset();
+          state_ = RUNNING;
+        }
+        if (state_ == RUNNING && !initialized) {
+          subscribeInit();
+        }
+        break;
+      }
   }
 }
 
-void InteractiveMarkerClient::statusCb( StatusT status, const std::string& server_id, const std::string& msg )
+void InteractiveMarkerClient::statusCb(
+  StatusT status, const std::string & server_id,
+  const std::string & msg)
 {
-  switch ( status )
-  {
-  case OK:
-    RCLCPP_DEBUG(logger_, "%s: %s (Status: OK)", server_id.c_str(), msg.c_str() );
-    break;
-  case WARN:
-    RCLCPP_DEBUG(logger_, "%s: %s (Status: WARNING)", server_id.c_str(), msg.c_str() );
-    break;
-  case ERROR:
-    RCLCPP_DEBUG(logger_, "%s: %s (Status: ERROR)", server_id.c_str(), msg.c_str() );
-    break;
+  switch (status) {
+    case OK:
+      RCLCPP_DEBUG(logger_, "%s: %s (Status: OK)", server_id.c_str(), msg.c_str() );
+      break;
+    case WARN:
+      RCLCPP_DEBUG(logger_, "%s: %s (Status: WARNING)", server_id.c_str(), msg.c_str() );
+      break;
+    case ERROR:
+      RCLCPP_DEBUG(logger_, "%s: %s (Status: ERROR)", server_id.c_str(), msg.c_str() );
+      break;
   }
 
-  if ( status_cb_ )
-  {
-    status_cb_( status, server_id, msg );
+  if (status_cb_) {
+    status_cb_(status, server_id, msg);
   }
 }
 

@@ -25,7 +25,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * Author: David Gossow
  *//*
  * single_client.h
@@ -56,20 +56,23 @@ namespace interactive_markers
 class SingleClient
 {
 public:
-
   SingleClient(
-      const std::string& server_id,
-      tf2::BufferCore& tf,
-      const std::string& target_frame,
-      const InteractiveMarkerClient::CbCollection& callbacks );
+    const std::string & server_id,
+    tf2::BufferCore & tf,
+    const std::string & target_frame,
+    const InteractiveMarkerClient::CbCollection & callbacks);
 
   ~SingleClient();
 
   // Process message from the update channel
-  void process(visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg, bool enable_autocomplete_transparency = true);
+  void process(
+    visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg,
+    bool enable_autocomplete_transparency = true);
 
   // Process message from the init channel
-  void process(visualization_msgs::msg::InteractiveMarkerInit::SharedPtr msg, bool enable_autocomplete_transparency = true);
+  void process(
+    visualization_msgs::msg::InteractiveMarkerInit::SharedPtr msg,
+    bool enable_autocomplete_transparency = true);
 
   // true if INIT messages are not needed anymore
   bool isInitialized();
@@ -78,7 +81,6 @@ public:
   void update();
 
 private:
-
   // check if we can go from init state to normal operation
   void checkInitFinished();
 
@@ -94,12 +96,12 @@ private:
   StateMachine<StateT> state_;
 
   // updateTf implementation (for one queue)
-  void transformInitMsgs( );
-  void transformUpdateMsgs( );
+  void transformInitMsgs();
+  void transformUpdateMsgs();
 
   void pushUpdates();
 
-  void errorReset( std::string error_msg );
+  void errorReset(std::string error_msg);
 
   // sequence number and time of first ever received update
   uint64_t first_update_seq_num_;
@@ -116,8 +118,8 @@ private:
   typedef MessageContext<visualization_msgs::msg::InteractiveMarkerInit> InitMessageContext;
 
   // Queue of Updates waiting for tf and numbering
-  typedef std::deque< UpdateMessageContext > M_UpdateMessageContext;
-  typedef std::deque< InitMessageContext > M_InitMessageContext;
+  typedef std::deque<UpdateMessageContext> M_UpdateMessageContext;
+  typedef std::deque<InitMessageContext> M_InitMessageContext;
 
   // queue for update messages
   M_UpdateMessageContext update_queue_;
@@ -125,10 +127,10 @@ private:
   // queue for init messages
   M_InitMessageContext init_queue_;
 
-  tf2::BufferCore& tf_;
+  tf2::BufferCore & tf_;
   std::string target_frame_;
 
-  const InteractiveMarkerClient::CbCollection& callbacks_;
+  const InteractiveMarkerClient::CbCollection & callbacks_;
 
   std::string server_id_;
 

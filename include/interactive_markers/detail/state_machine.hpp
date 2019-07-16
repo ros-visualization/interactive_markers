@@ -25,7 +25,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * Author: David Gossow
  */
 /*
@@ -48,10 +48,11 @@ template<class StateT>
 class StateMachine
 {
 public:
-  StateMachine( std::string name, StateT init_state );
-  StateMachine& operator=( StateT state );
+  StateMachine(std::string name, StateT init_state);
+  StateMachine & operator=(StateT state);
   operator StateT();
   rclcpp::Duration getDuration();
+
 private:
   StateT state_;
   rclcpp::Clock clock_;
@@ -60,22 +61,21 @@ private:
 };
 
 template<class StateT>
-StateMachine<StateT>::StateMachine( std::string name, StateT init_state )
-: state_(init_state)
-, clock_()
-, chg_time_(clock_.now())
-, name_(name)
+StateMachine<StateT>::StateMachine(std::string name, StateT init_state)
+: state_(init_state),
+  clock_(),
+  chg_time_(clock_.now()),
+  name_(name)
 {
-};
+}
 
 template<class StateT>
-StateMachine<StateT>& StateMachine<StateT>::operator=( StateT state )
+StateMachine<StateT> & StateMachine<StateT>::operator=(StateT state)
 {
-  if ( state_ != state )
-  {
+  if (state_ != state) {
     RCUTILS_LOG_DEBUG("Setting state of %s to %lu", name_.c_str(), (int64_t)state);
     state_ = state;
-    chg_time_=clock_.now();
+    chg_time_ = clock_.now();
   }
   return *this;
 }
@@ -83,7 +83,7 @@ StateMachine<StateT>& StateMachine<StateT>::operator=( StateT state )
 template<class StateT>
 rclcpp::Duration StateMachine<StateT>::getDuration()
 {
-  return clock_.now()-chg_time_;
+  return clock_.now() - chg_time_;
 }
 
 template<class StateT>

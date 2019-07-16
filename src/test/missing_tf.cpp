@@ -41,7 +41,7 @@ boost::shared_ptr<interactive_markers::InteractiveMarkerServer> server;
 
 using namespace visualization_msgs;
 
-Marker makeBox( InteractiveMarker &msg )
+Marker makeBox(InteractiveMarker & msg)
 {
   Marker marker;
 
@@ -57,18 +57,18 @@ Marker makeBox( InteractiveMarker &msg )
   return marker;
 }
 
-InteractiveMarkerControl& makeBoxControl( InteractiveMarker &msg )
+InteractiveMarkerControl & makeBoxControl(InteractiveMarker & msg)
 {
   InteractiveMarkerControl control;
   control.always_visible = true;
-  control.markers.push_back( makeBox(msg) );
-  msg.controls.push_back( control );
+  control.markers.push_back(makeBox(msg) );
+  msg.controls.push_back(control);
 
   return msg.controls.back();
 }
 
 // %Tag(6DOF)%
-void make6DofMarker( bool fixed )
+void make6DofMarker(bool fixed)
 {
   InteractiveMarker int_marker;
   int_marker.header.frame_id = "/base_link";
@@ -83,8 +83,7 @@ void make6DofMarker( bool fixed )
 
   InteractiveMarkerControl control;
 
-  if ( fixed )
-  {
+  if (fixed) {
     int_marker.name += "_fixed";
     int_marker.description += "\n(fixed orientation)";
     control.orientation_mode = InteractiveMarkerControl::FIXED;
@@ -126,7 +125,7 @@ void make6DofMarker( bool fixed )
   server->insert(int_marker);
 }
 
-void frameCallback(const ros::TimerEvent&)
+void frameCallback(const ros::TimerEvent &)
 {
   static tf::TransformBroadcaster br;
   static bool sending = true;
@@ -142,21 +141,18 @@ void frameCallback(const ros::TimerEvent&)
 
   int seconds = time.toSec();
 
-  ROS_INFO( "%.3f", time.toSec() );
+  ROS_INFO("%.3f", time.toSec() );
 
-  if ( seconds % 4 < 2 )
-  {
-    if (!sending) ROS_INFO("on");
+  if (seconds % 4 < 2) {
+    if (!sending) {ROS_INFO("on");}
     sending = true;
-  }
-  else
-  {
-    if (sending) ROS_INFO("off");
+  } else {
+    if (sending) {ROS_INFO("off");}
     sending = false;
     header.frame_id = "missing_frame";
   }
 
-  server->setPose("simple_6dof",pose,header);
+  server->setPose("simple_6dof", pose, header);
   server->applyChanges();
 
   tf::Transform t;
@@ -165,12 +161,12 @@ void frameCallback(const ros::TimerEvent&)
   br.sendTransform(tf::StampedTransform(t, time, "base_link", "bursty_frame"));
 }
 
-int main(int argc, char** argv)
+int main(int argc, char ** argv)
 {
   ros::init(argc, argv, "bursty_tf");
   ros::NodeHandle n;
 
-  server.reset( new interactive_markers::InteractiveMarkerServer("bursty_tf","",false) );
+  server.reset(new interactive_markers::InteractiveMarkerServer("bursty_tf", "", false) );
 
   // create a timer to update the published transforms
   ros::Timer frame_timer = n.createTimer(ros::Duration(0.5), frameCallback);

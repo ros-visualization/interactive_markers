@@ -25,7 +25,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * Author: David Gossow
  */
 
@@ -49,8 +49,8 @@
 
 // #include <ros/ros.h>
 // #include <ros/callback_queue.h>
-// 
-// 
+//
+//
 // #include <boost/function.hpp>
 // #include <boost/unordered_map.hpp>
 
@@ -64,9 +64,8 @@ namespace interactive_markers
 class InteractiveMarkerServer
 {
 public:
-
   typedef visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr FeedbackConstPtr;
-  typedef std::function< void ( FeedbackConstPtr ) > FeedbackCallback;
+  typedef std::function<void ( FeedbackConstPtr )> FeedbackCallback;
 
   static const uint8_t DEFAULT_FEEDBACK_CB = 255;
 
@@ -75,7 +74,8 @@ public:
   /// @param server_id     If you run multiple servers on the same topic from
   ///                      within the same node, you will need to assign different names to them.
   ///                      Otherwise, leave this empty.
-  InteractiveMarkerServer( const std::string &topic_ns,
+  InteractiveMarkerServer(
+    const std::string & topic_ns,
     rclcpp::node_interfaces::NodeBaseInterface::SharedPtr base_interface,
     rclcpp::node_interfaces::NodeClockInterface::SharedPtr clock_interface,
     rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_interface,
@@ -83,10 +83,11 @@ public:
     rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
     const std::string server_id);
 
-  template <typename NodePtr>
-  InteractiveMarkerServer(const std::string &topic_ns, NodePtr node, const std::string &server_id="")
-    :
-    InteractiveMarkerServer(
+  template<typename NodePtr>
+  InteractiveMarkerServer(
+    const std::string & topic_ns, NodePtr node,
+    const std::string & server_id = "")
+  : InteractiveMarkerServer(
       topic_ns,
       node->get_node_base_interface(),
       node->get_node_clock_interface(),
@@ -104,7 +105,7 @@ public:
   /// Note: Changes to the marker will not take effect until you call applyChanges().
   /// The callback changes immediately.
   /// @param int_marker     The marker to be added or replaced
-  void insert( const visualization_msgs::msg::InteractiveMarker &int_marker );
+  void insert(const visualization_msgs::msg::InteractiveMarker & int_marker);
 
   /// Add or replace a marker and its callback functions
   /// Note: Changes to the marker will not take effect until you call applyChanges().
@@ -112,9 +113,10 @@ public:
   /// @param int_marker     The marker to be added or replaced
   /// @param feedback_cb    Function to call on the arrival of a feedback message.
   /// @param feedback_type  Type of feedback for which to call the feedback.
-  void insert( const visualization_msgs::msg::InteractiveMarker &int_marker,
-               FeedbackCallback feedback_cb,
-               uint8_t feedback_type=DEFAULT_FEEDBACK_CB );
+  void insert(
+    const visualization_msgs::msg::InteractiveMarker & int_marker,
+    FeedbackCallback feedback_cb,
+    uint8_t feedback_type = DEFAULT_FEEDBACK_CB);
 
   /// Update the pose of a marker with the specified name
   /// Note: This change will not take effect until you call applyChanges()
@@ -122,25 +124,26 @@ public:
   /// @param name    Name of the interactive marker
   /// @param pose    The new pose
   /// @param header  Header replacement. Leave this empty to use the previous one.
-  bool setPose( const std::string &name,
-      const geometry_msgs::msg::Pose &pose,
-      const std_msgs::msg::Header &header=std_msgs::msg::Header() );
+  bool setPose(
+    const std::string & name,
+    const geometry_msgs::msg::Pose & pose,
+    const std_msgs::msg::Header & header = std_msgs::msg::Header() );
 
   /// Erase the marker with the specified name
   /// Note: This change will not take effect until you call applyChanges().
   /// @return true if a marker with that name exists
   /// @param name  Name of the interactive marker
-  bool erase( const std::string &name );
+  bool erase(const std::string & name);
 
   /// Clear all markers.
   /// Note: This change will not take effect until you call applyChanges().
   void clear();
-  
+
   /// Return whether the server contains any markers.
   /// Note: Does not include markers inserted since the last applyChanges().
   /// @return true if the server contains no markers
   bool empty() const;
-  
+
   /// Return the number of markers contained in the server
   /// Note: Does not include markers inserted since the last applyChanges().
   /// @return The number of markers contained in the server
@@ -156,8 +159,9 @@ public:
   /// @param feedback_cb    Function to call on the arrival of a feedback message.
   /// @param feedback_type  Type of feedback for which to call the feedback.
   ///                       Leave this empty to make this the default callback.
-  bool setCallback( const std::string &name, FeedbackCallback feedback_cb,
-      uint8_t feedback_type=DEFAULT_FEEDBACK_CB );
+  bool setCallback(
+    const std::string & name, FeedbackCallback feedback_cb,
+    uint8_t feedback_type = DEFAULT_FEEDBACK_CB);
 
   /// Apply changes made since the last call to this method &
   /// broadcast an update to all clients.
@@ -167,7 +171,7 @@ public:
   /// @param name             Name of the interactive marker
   /// @param[out] int_marker  Output message
   /// @return true if a marker with that name exists
-  bool get( std::string name, visualization_msgs::msg::InteractiveMarker &int_marker ) const;
+  bool get(std::string name, visualization_msgs::msg::InteractiveMarker & int_marker) const;
 
 private:
   // Disable copying
@@ -179,44 +183,46 @@ private:
     rclcpp::Time last_feedback;
     std::string last_client_id;
     FeedbackCallback default_feedback_cb;
-    std::unordered_map<uint8_t,FeedbackCallback> feedback_cbs;
+    std::unordered_map<uint8_t, FeedbackCallback> feedback_cbs;
     visualization_msgs::msg::InteractiveMarker int_marker;
   };
 
-  typedef std::unordered_map< std::string, MarkerContext > M_MarkerContext;
+  typedef std::unordered_map<std::string, MarkerContext> M_MarkerContext;
 
   // represents an update to a single marker
   struct UpdateContext
   {
-    enum {
+    enum
+    {
       FULL_UPDATE,
       POSE_UPDATE,
       ERASE
     } update_type;
     visualization_msgs::msg::InteractiveMarker int_marker;
     FeedbackCallback default_feedback_cb;
-    std::unordered_map<uint8_t,FeedbackCallback> feedback_cbs;
+    std::unordered_map<uint8_t, FeedbackCallback> feedback_cbs;
   };
 
-  typedef std::unordered_map< std::string, UpdateContext > M_UpdateContext;
+  typedef std::unordered_map<std::string, UpdateContext> M_UpdateContext;
 
   // update marker pose & call user callback
-  void processFeedback( visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr feedback );
+  void processFeedback(visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr feedback);
 
   // send an empty update to keep the client GUIs happy
   void keepAlive();
 
   // increase sequence number & publish an update
-  void publish( visualization_msgs::msg::InteractiveMarkerUpdate &update );
+  void publish(visualization_msgs::msg::InteractiveMarkerUpdate & update);
 
   // publish the current complete state to the latched "init" topic.
   void publishInit();
 
   // Update pose, schedule update without locking
-  void doSetPose( M_UpdateContext::iterator update_it,
-      const std::string &name,
-      const geometry_msgs::msg::Pose &pose,
-      const std_msgs::msg::Header &header );
+  void doSetPose(
+    M_UpdateContext::iterator update_it,
+    const std::string & name,
+    const geometry_msgs::msg::Pose & pose,
+    const std_msgs::msg::Header & header);
 
   // contains the current state of all markers
   M_MarkerContext marker_contexts_;
@@ -226,7 +232,7 @@ private:
 
   // topic namespace to use
   std::string topic_ns_;
-  
+
   mutable std::recursive_mutex mutex_;
 
   // this is needed when running in non-threaded mode
