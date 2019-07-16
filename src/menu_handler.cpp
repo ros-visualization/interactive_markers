@@ -1,36 +1,43 @@
-/*
- * Copyright (c) 2011, Willow Garage, Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
- *       notice, this list of conditions and the following disclaimer in the
- *       documentation and/or other materials provided with the distribution.
- *     * Neither the name of the Willow Garage, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived from
- *       this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- * Author: David Gossow
- */
+// Copyright (c) 2011, Willow Garage, Inc.
+// All rights reserved.
+//
+// Software License Agreement (BSD License 2.0)
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+//
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above
+//    copyright notice, this list of conditions and the following
+//    disclaimer in the documentation and/or other materials provided
+//    with the distribution.
+//  * Neither the name of Willow Garage, Inc. nor the names of its
+//    contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+
+// Author: David Gossow
 
 #include <functional>
 #include <memory>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "interactive_markers/menu_handler.hpp"
 
@@ -55,7 +62,6 @@ namespace interactive_markers
 MenuHandler::MenuHandler()
 : current_handle_(1)
 {
-
 }
 
 MenuHandler::EntryHandle MenuHandler::insert(
@@ -73,7 +79,7 @@ MenuHandler::EntryHandle MenuHandler::insert(
   const uint8_t command_type,
   const std::string & command)
 {
-  EntryHandle handle = doInsert(title, command_type, command, FeedbackCallback() );
+  EntryHandle handle = doInsert(title, command_type, command, FeedbackCallback());
   top_level_handles_.push_back(handle);
   return handle;
 }
@@ -107,7 +113,7 @@ MenuHandler::EntryHandle MenuHandler::insert(
   RCUTILS_ASSERT_MSG(
     parent_context != entry_contexts_.end(), "Parent menu entry %u not found.", parent);
 
-  EntryHandle handle = doInsert(title, command_type, command, FeedbackCallback() );
+  EntryHandle handle = doInsert(title, command_type, command, FeedbackCallback());
   parent_context->second.sub_entries.push_back(handle);
   return handle;
 }
@@ -118,7 +124,7 @@ bool MenuHandler::setVisible(EntryHandle handle, bool visible)
   std::unordered_map<EntryHandle, EntryContext>::iterator context =
     entry_contexts_.find(handle);
 
-  if (context == entry_contexts_.end() ) {
+  if (context == entry_contexts_.end()) {
     return false;
   }
 
@@ -132,7 +138,7 @@ bool MenuHandler::setCheckState(EntryHandle handle, CheckState check_state)
   std::unordered_map<EntryHandle, EntryContext>::iterator context =
     entry_contexts_.find(handle);
 
-  if (context == entry_contexts_.end() ) {
+  if (context == entry_contexts_.end()) {
     return false;
   }
 
@@ -146,7 +152,7 @@ bool MenuHandler::getCheckState(EntryHandle handle, CheckState & check_state) co
   std::unordered_map<EntryHandle, EntryContext>::const_iterator context =
     entry_contexts_.find(handle);
 
-  if (context == entry_contexts_.end() ) {
+  if (context == entry_contexts_.end()) {
     check_state = NO_CHECKBOX;
     return false;
   }
@@ -160,7 +166,7 @@ bool MenuHandler::apply(InteractiveMarkerServer & server, const std::string & ma
 {
   visualization_msgs::msg::InteractiveMarker int_marker;
 
-  if (!server.get(marker_name, int_marker) ) {
+  if (!server.get(marker_name, int_marker)) {
     // This marker has been deleted on the server, so forget it.
     managed_markers_.erase(marker_name);
     return false;
@@ -189,7 +195,7 @@ bool MenuHandler::pushMenuEntries(
     std::unordered_map<EntryHandle, EntryContext>::iterator context_it =
       entry_contexts_.find(handle);
 
-    if (context_it == entry_contexts_.end() ) {
+    if (context_it == entry_contexts_.end()) {
       RCUTILS_LOG_ERROR("Internal error: context handle not found! This is a bug in MenuHandler.");
       return false;
     }
@@ -212,7 +218,7 @@ bool MenuHandler::reApply(InteractiveMarkerServer & server)
 {
   bool success = true;
   std::set<std::string>::iterator it = managed_markers_.begin();
-  while (it != managed_markers_.end() ) {
+  while (it != managed_markers_.end()) {
     // apply() may delete the entry "it" is pointing to, so
     // pre-compute the next iterator.
     std::set<std::string>::iterator next_it = it;
@@ -288,7 +294,7 @@ bool MenuHandler::getTitle(EntryHandle handle, std::string & title) const
   std::unordered_map<EntryHandle, EntryContext>::const_iterator context =
     entry_contexts_.find(handle);
 
-  if (context == entry_contexts_.end() ) {
+  if (context == entry_contexts_.end()) {
     return false;
   }
 
@@ -296,5 +302,4 @@ bool MenuHandler::getTitle(EntryHandle handle, std::string & title) const
   return true;
 }
 
-
-}
+}  // namespace interactive_markers

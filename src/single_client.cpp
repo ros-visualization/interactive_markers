@@ -1,42 +1,44 @@
-/*
- * Copyright (c) 2011, Willow Garage, Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
- *       notice, this list of conditions and the following disclaimer in the
- *       documentation and/or other materials provided with the distribution.
- *     * Neither the name of the Willow Garage, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived from
- *       this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- * Author: David Gossow
- */
+// Copyright (c) 2011, Willow Garage, Inc.
+// All rights reserved.
+//
+// Software License Agreement (BSD License 2.0)
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+//
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above
+//    copyright notice, this list of conditions and the following
+//    disclaimer in the documentation and/or other materials provided
+//    with the distribution.
+//  * Neither the name of Willow Garage, Inc. nor the names of its
+//    contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+
+// Author: David Gossow
 
 #include <functional>
 #include <memory>
+#include <string>
 
 #include "interactive_markers/detail/single_client.hpp"
 
-
 #define DBG_MSG(...) RCUTILS_LOG_DEBUG(__VA_ARGS__);
-//#define DBG_MSG( ... ) printf("   "); printf( __VA_ARGS__ ); printf("\n");
 
 namespace interactive_markers
 {
@@ -78,7 +80,7 @@ void SingleClient::process(
         init_queue_.pop_back();
       }
       init_queue_.push_front(InitMessageContext(tf_, target_frame_, msg,
-        enable_autocomplete_transparency) );
+        enable_autocomplete_transparency));
       callbacks_.statusCb(InteractiveMarkerClient::OK, server_id_, "Init message received.");
       break;
 
@@ -104,7 +106,7 @@ void SingleClient::process(
       std::ostringstream s;
       s << "Sequence number of update is out of order. Expected: " << last_update_seq_num_ <<
         " Received: " << msg->seq_num;
-      errorReset(s.str() );
+      errorReset(s.str());
       return;
     }
     last_update_seq_num_ = msg->seq_num;
@@ -115,7 +117,7 @@ void SingleClient::process(
       std::ostringstream s;
       s << "Sequence number of update is out of order. Expected: " << last_update_seq_num_ + 1 <<
         " Received: " << msg->seq_num;
-      errorReset(s.str() );
+      errorReset(s.str());
       return;
     }
     last_update_seq_num_ = msg->seq_num;
@@ -129,12 +131,12 @@ void SingleClient::process(
         update_queue_.pop_back();
       }
       update_queue_.push_front(UpdateMessageContext(tf_, target_frame_, msg,
-        enable_autocomplete_transparency) );
+        enable_autocomplete_transparency));
       break;
 
     case RECEIVING:
       update_queue_.push_front(UpdateMessageContext(tf_, target_frame_, msg,
-        enable_autocomplete_transparency) );
+        enable_autocomplete_transparency));
       break;
 
     case TF_ERROR:
@@ -176,7 +178,7 @@ void SingleClient::checkKeepAlive()
   if (time_since_upd > 2.0) {
     std::ostringstream s;
     s << "No update received for " << round(time_since_upd) << " seconds.";
-    callbacks_.statusCb(InteractiveMarkerClient::WARN, server_id_, s.str() );
+    callbacks_.statusCb(InteractiveMarkerClient::WARN, server_id_, s.str());
     warn_keepalive_ = true;
   } else if (warn_keepalive_) {
     warn_keepalive_ = false;
@@ -203,7 +205,7 @@ void SingleClient::checkInitFinished()
     bool next_up_exists = init_seq_num >= first_update_seq_num_ &&
       init_seq_num <= last_update_seq_num_;
 
-    if (!init_it->isReady() ) {
+    if (!init_it->isReady()) {
       callbacks_.statusCb(InteractiveMarkerClient::OK, server_id_,
         "Initialization: Waiting for tf info.");
     } else if (next_up_exists) {
@@ -239,7 +241,7 @@ void SingleClient::transformInitMsgs()
       std::ostringstream s;
       s << "Cannot get tf info for init message with sequence number " << it->msg->seq_num <<
         ". Error: " << e.what();
-      callbacks_.statusCb(InteractiveMarkerClient::WARN, server_id_, s.str() );
+      callbacks_.statusCb(InteractiveMarkerClient::WARN, server_id_, s.str());
     }
     ++it;
   }
@@ -254,12 +256,12 @@ void SingleClient::transformUpdateMsgs()
     } catch (std::runtime_error & e) {
       std::ostringstream s;
       s << "Resetting due to tf error: " << e.what();
-      errorReset(s.str() );
+      errorReset(s.str());
       return;
     } catch (...) {
       std::ostringstream s;
       s << "Resetting due to unknown exception";
-      errorReset(s.str() );
+      errorReset(s.str());
     }
   }
 }
@@ -280,10 +282,10 @@ void SingleClient::errorReset(std::string error_msg)
 
 void SingleClient::pushUpdates()
 {
-  if (!update_queue_.empty() && update_queue_.back().isReady() ) {
+  if (!update_queue_.empty() && update_queue_.back().isReady()) {
     callbacks_.statusCb(InteractiveMarkerClient::OK, server_id_, "OK");
   }
-  while (!update_queue_.empty() && update_queue_.back().isReady() ) {
+  while (!update_queue_.empty() && update_queue_.back().isReady()) {
     visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg = update_queue_.back().msg;
     DBG_MSG("Pushing out update #%lu.", msg->seq_num);
     callbacks_.updateCb(msg);
@@ -296,4 +298,4 @@ bool SingleClient::isInitialized()
   return state_ != INIT;
 }
 
-}
+}  // namespace interactive_markers

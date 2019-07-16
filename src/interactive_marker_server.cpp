@@ -1,40 +1,44 @@
-/*
- * Copyright (c) 2011, Willow Garage, Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
- *       notice, this list of conditions and the following disclaimer in the
- *       documentation and/or other materials provided with the distribution.
- *     * Neither the name of the Willow Garage, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived from
- *       this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- * Author: David Gossow
- */
+// Copyright (c) 2011, Willow Garage, Inc.
+// All rights reserved.
+//
+// Software License Agreement (BSD License 2.0)
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+//
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above
+//    copyright notice, this list of conditions and the following
+//    disclaimer in the documentation and/or other materials provided
+//    with the distribution.
+//  * Neither the name of Willow Garage, Inc. nor the names of its
+//    contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+
+// Author: David Gossow
+
+#include <string>
+#include <unordered_map>
+#include <utility>
 
 #include "interactive_markers/interactive_marker_server.hpp"
 
-#include <rclcpp/qos.hpp>
-
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
+#include "rclcpp/qos.hpp"
 
 using visualization_msgs::msg::InteractiveMarkerFeedback;
 using visualization_msgs::msg::InteractiveMarkerInit;
@@ -109,7 +113,7 @@ void InteractiveMarkerServer::applyChanges()
 {
   std::unique_lock<std::recursive_mutex> lock(mutex_);
 
-  if (pending_updates_.empty() ) {
+  if (pending_updates_.empty()) {
     return;
   }
 
@@ -118,9 +122,9 @@ void InteractiveMarkerServer::applyChanges()
   visualization_msgs::msg::InteractiveMarkerUpdate update;
   update.type = visualization_msgs::msg::InteractiveMarkerUpdate::UPDATE;
 
-  update.markers.reserve(marker_contexts_.size() );
-  update.poses.reserve(marker_contexts_.size() );
-  update.erases.reserve(marker_contexts_.size() );
+  update.markers.reserve(marker_contexts_.size());
+  update.poses.reserve(marker_contexts_.size());
+  update.erases.reserve(marker_contexts_.size());
 
   for (update_it = pending_updates_.begin(); update_it != pending_updates_.end(); update_it++) {
     M_MarkerContext::iterator marker_context_it = marker_contexts_.find(update_it->first);
@@ -128,11 +132,11 @@ void InteractiveMarkerServer::applyChanges()
     switch (update_it->second.update_type) {
       case UpdateContext::FULL_UPDATE:
         {
-          if (marker_context_it == marker_contexts_.end() ) {
+          if (marker_context_it == marker_contexts_.end()) {
             RCLCPP_DEBUG(logger_, "Creating new context for %s", update_it->first.c_str());
             // create a new int_marker context
             marker_context_it =
-              marker_contexts_.insert(std::make_pair(update_it->first, MarkerContext() ) ).first;
+              marker_contexts_.insert(std::make_pair(update_it->first, MarkerContext())).first;
             // copy feedback cbs, in case they have been set before the marker context was created
             marker_context_it->second.default_feedback_cb = update_it->second.default_feedback_cb;
             marker_context_it->second.feedback_cbs = update_it->second.feedback_cbs;
@@ -146,9 +150,11 @@ void InteractiveMarkerServer::applyChanges()
 
       case UpdateContext::POSE_UPDATE:
         {
-          if (marker_context_it == marker_contexts_.end() ) {
-            RCLCPP_ERROR(logger_,
-              "Pending pose update for non-existing marker found. This is a bug in InteractiveMarkerInterface.");
+          if (marker_context_it == marker_contexts_.end()) {
+            RCLCPP_ERROR(
+              logger_,
+              "Pending pose update for non-existing marker found. This is a bug in "
+              "InteractiveMarkerInterface.");
           } else {
             marker_context_it->second.int_marker.pose = update_it->second.int_marker.pose;
             marker_context_it->second.int_marker.header = update_it->second.int_marker.header;
@@ -164,7 +170,7 @@ void InteractiveMarkerServer::applyChanges()
 
       case UpdateContext::ERASE:
         {
-          if (marker_context_it != marker_contexts_.end() ) {
+          if (marker_context_it != marker_contexts_.end()) {
             marker_contexts_.erase(update_it->first);
             update.erases.push_back(update_it->first);
           }
@@ -232,16 +238,16 @@ bool InteractiveMarkerServer::setPose(
   // if there's no marker and no pending addition for it, we can't update the pose
   if (marker_context_it == marker_contexts_.end() &&
     ( update_it == pending_updates_.end() ||
-    update_it->second.update_type != UpdateContext::FULL_UPDATE ) )
+    update_it->second.update_type != UpdateContext::FULL_UPDATE))
   {
     return false;
   }
 
   // keep the old header
-  if (header.frame_id.empty() ) {
-    if (marker_context_it != marker_contexts_.end() ) {
+  if (header.frame_id.empty()) {
+    if (marker_context_it != marker_contexts_.end()) {
       doSetPose(update_it, name, pose, marker_context_it->second.int_marker.header);
-    } else if (update_it != pending_updates_.end() ) {
+    } else if (update_it != pending_updates_.end()) {
       doSetPose(update_it, name, pose, update_it->second.int_marker.header);
     } else {
       RCLCPP_WARN(logger_, "Marker does not exist and there is no pending creation.");
@@ -262,14 +268,14 @@ bool InteractiveMarkerServer::setCallback(
   M_MarkerContext::iterator marker_context_it = marker_contexts_.find(name);
   M_UpdateContext::iterator update_it = pending_updates_.find(name);
 
-  if (marker_context_it == marker_contexts_.end() && update_it == pending_updates_.end() ) {
+  if (marker_context_it == marker_contexts_.end() && update_it == pending_updates_.end()) {
     return false;
   }
 
   // we need to overwrite both the callbacks for the actual marker
   // and the update, if there's any
 
-  if (marker_context_it != marker_contexts_.end() ) {
+  if (marker_context_it != marker_contexts_.end()) {
     // the marker exists, so we can just overwrite the existing callbacks
     if (feedback_type == DEFAULT_FEEDBACK_CB) {
       marker_context_it->second.default_feedback_cb = feedback_cb;
@@ -282,7 +288,7 @@ bool InteractiveMarkerServer::setCallback(
     }
   }
 
-  if (update_it != pending_updates_.end() ) {
+  if (update_it != pending_updates_.end()) {
     if (feedback_type == DEFAULT_FEEDBACK_CB) {
       update_it->second.default_feedback_cb = feedback_cb;
     } else {
@@ -301,8 +307,8 @@ void InteractiveMarkerServer::insert(const visualization_msgs::msg::InteractiveM
   std::unique_lock<std::recursive_mutex> lock(mutex_);
 
   M_UpdateContext::iterator update_it = pending_updates_.find(int_marker.name);
-  if (update_it == pending_updates_.end() ) {
-    update_it = pending_updates_.insert(std::make_pair(int_marker.name, UpdateContext() ) ).first;
+  if (update_it == pending_updates_.end()) {
+    update_it = pending_updates_.insert(std::make_pair(int_marker.name, UpdateContext())).first;
   }
 
   update_it->second.update_type = UpdateContext::FULL_UPDATE;
@@ -326,9 +332,9 @@ bool InteractiveMarkerServer::get(
 
   M_UpdateContext::const_iterator update_it = pending_updates_.find(name);
 
-  if (update_it == pending_updates_.end() ) {
+  if (update_it == pending_updates_.end()) {
     M_MarkerContext::const_iterator marker_context_it = marker_contexts_.find(name);
-    if (marker_context_it == marker_contexts_.end() ) {
+    if (marker_context_it == marker_contexts_.end()) {
       return false;
     }
 
@@ -344,7 +350,7 @@ bool InteractiveMarkerServer::get(
     case UpdateContext::POSE_UPDATE:
       {
         M_MarkerContext::const_iterator marker_context_it = marker_contexts_.find(name);
-        if (marker_context_it == marker_contexts_.end() ) {
+        if (marker_context_it == marker_contexts_.end()) {
           return false;
         }
         int_marker = marker_context_it->second.int_marker;
@@ -368,11 +374,11 @@ void InteractiveMarkerServer::publishInit()
   visualization_msgs::msg::InteractiveMarkerInit init;
   init.server_id = server_id_;
   init.seq_num = seq_num_;
-  init.markers.reserve(marker_contexts_.size() );
+  init.markers.reserve(marker_contexts_.size());
 
   M_MarkerContext::iterator it;
   for (it = marker_contexts_.begin(); it != marker_contexts_.end(); it++) {
-    RCLCPP_DEBUG(logger_, "Publishing %s", it->second.int_marker.name.c_str() );
+    RCLCPP_DEBUG(logger_, "Publishing %s", it->second.int_marker.name.c_str());
     init.markers.push_back(it->second.int_marker);
   }
 
@@ -387,7 +393,7 @@ void InteractiveMarkerServer::processFeedback(
   M_MarkerContext::iterator marker_context_it = marker_contexts_.find(feedback->marker_name);
 
   // ignore feedback for non-existing markers
-  if (marker_context_it == marker_contexts_.end() ) {
+  if (marker_context_it == marker_contexts_.end()) {
     return;
   }
 
@@ -398,7 +404,7 @@ void InteractiveMarkerServer::processFeedback(
     (clock_->now() - marker_context.last_feedback).seconds() < 1.0)
   {
     RCLCPP_DEBUG(logger_, "Rejecting feedback for %s: conflicting feedback from separate clients.",
-      feedback->marker_name.c_str() );
+      feedback->marker_name.c_str());
     return;
   }
 
@@ -406,7 +412,7 @@ void InteractiveMarkerServer::processFeedback(
   marker_context.last_client_id = feedback->client_id;
 
   if (feedback->event_type == visualization_msgs::msg::InteractiveMarkerFeedback::POSE_UPDATE) {
-    if (marker_context.int_marker.header.stamp == rclcpp::Time() ) {
+    if (marker_context.int_marker.header.stamp == rclcpp::Time()) {
       // keep the old header
       doSetPose(pending_updates_.find(
           feedback->marker_name), feedback->marker_name, feedback->pose,
@@ -453,8 +459,8 @@ void InteractiveMarkerServer::doSetPose(
   const geometry_msgs::msg::Pose & pose,
   const std_msgs::msg::Header & header)
 {
-  if (update_it == pending_updates_.end() ) {
-    update_it = pending_updates_.insert(std::make_pair(name, UpdateContext() ) ).first;
+  if (update_it == pending_updates_.end()) {
+    update_it = pending_updates_.insert(std::make_pair(name, UpdateContext())).first;
     update_it->second.update_type = UpdateContext::POSE_UPDATE;
   } else if (update_it->second.update_type != UpdateContext::FULL_UPDATE) {
     update_it->second.update_type = UpdateContext::POSE_UPDATE;
@@ -466,5 +472,4 @@ void InteractiveMarkerServer::doSetPose(
     update_it->first.c_str(), pose.position.x, pose.position.y, pose.position.z);
 }
 
-
-}
+}  // namespace interactive_markers

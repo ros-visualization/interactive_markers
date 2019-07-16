@@ -1,42 +1,45 @@
-/*
- * Copyright (c) 2011, Willow Garage, Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
- *       notice, this list of conditions and the following disclaimer in the
- *       documentation and/or other materials provided with the distribution.
- *     * Neither the name of the Willow Garage, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived from
- *       this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+// Copyright (c) 2011, Willow Garage, Inc.
+// All rights reserved.
+//
+// Software License Agreement (BSD License 2.0)
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+//
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above
+//    copyright notice, this list of conditions and the following
+//    disclaimer in the documentation and/or other materials provided
+//    with the distribution.
+//  * Neither the name of Willow Garage, Inc. nor the names of its
+//    contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
 
-#include "interactive_markers/tools.hpp"
-
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2/LinearMath/Matrix3x3.h>
-
-#include <math.h>
-#include <assert.h>
-
+#include <cmath>
 #include <set>
 #include <sstream>
+#include <string>
+#include <vector>
+
+#include "tf2/LinearMath/Quaternion.h"
+#include "tf2/LinearMath/Matrix3x3.h"
+
+#include "interactive_markers/tools.hpp"
 
 namespace interactive_markers
 {
@@ -46,7 +49,7 @@ void autoComplete(
   bool enable_autocomplete_transparency)
 {
   // this is a 'delete' message. no need for action.
-  if (msg.controls.empty() ) {
+  if (msg.controls.empty()) {
     return;
   }
 
@@ -62,7 +65,7 @@ void autoComplete(
     msg.pose.orientation.w = 1;
   }
 
-  //normalize quaternion
+  // normalize quaternion
   tf2::Quaternion int_marker_orientation(msg.pose.orientation.x, msg.pose.orientation.y,
     msg.pose.orientation.z, msg.pose.orientation.w);
   int_marker_orientation.normalize();
@@ -85,7 +88,7 @@ void uniqueifyControlNames(visualization_msgs::msg::InteractiveMarker & msg)
   std::set<std::string> names;
   for (unsigned c = 0; c < msg.controls.size(); c++) {
     std::string name = msg.controls[c].name;
-    while (names.find(name) != names.end() ) {
+    while (names.find(name) != names.end()) {
       std::stringstream ss;
       ss << name << "_u" << uniqueification_number++;
       name = ss.str();
@@ -108,7 +111,7 @@ void autoComplete(
   }
 
   // add default control handles if there are none
-  if (control.markers.empty() ) {
+  if (control.markers.empty()) {
     switch (control.interaction_mode) {
       case visualization_msgs::msg::InteractiveMarkerControl::NONE:
         break;
@@ -165,7 +168,7 @@ void autoComplete(
       marker.pose.orientation.w = 1;
     }
 
-    //normalize orientation
+    // normalize orientation
     tf2::Quaternion marker_orientation(marker.pose.orientation.x, marker.pose.orientation.y,
       marker.pose.orientation.z, marker.pose.orientation.w);
 
@@ -198,8 +201,8 @@ void makeArrow(
   marker.pose.orientation = control.orientation;
 
   marker.type = visualization_msgs::msg::Marker::ARROW;
-  marker.scale.x = msg.scale * 0.15; // aleeper: changed from 0.3 due to Rviz fix
-  marker.scale.y = msg.scale * 0.25; // aleeper: changed from 0.5 due to Rviz fix
+  marker.scale.x = msg.scale * 0.15;  // aleeper: changed from 0.3 due to Rviz fix
+  marker.scale.y = msg.scale * 0.25;  // aleeper: changed from 0.5 due to Rviz fix
   marker.scale.z = msg.scale * 0.2;
 
   assignDefaultColor(marker, control.orientation);
@@ -243,7 +246,7 @@ void makeDisc(
   geometry_msgs::msg::Point v1, v2;
 
   for (int i = 0; i < steps; i++) {
-    float a = float(i) / float(steps) * M_PI * 2.0;
+    const float a = static_cast<float>(i) / static_cast<float>(steps) * M_PI * 2.0f;
 
     v1.y = 0.5 * cos(a);
     v1.z = 0.5 * sin(a);
@@ -410,7 +413,6 @@ void assignDefaultColor(
   marker.color.a = 0.5;
 }
 
-
 visualization_msgs::msg::InteractiveMarkerControl makeTitle(
   const visualization_msgs::msg::InteractiveMarker & msg)
 {
@@ -438,4 +440,4 @@ visualization_msgs::msg::InteractiveMarkerControl makeTitle(
   return control;
 }
 
-}
+}  // namespace interactive_markers
