@@ -55,7 +55,7 @@ class MenuHandler
 public:
   typedef uint32_t EntryHandle;
 
-  typedef visualization_msgs::msg::InteractiveMarkerFeedback::ConstPtr FeedbackConstPtr;
+  typedef visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr FeedbackConstPtr;
   typedef std::function<void (const FeedbackConstPtr &)> FeedbackCallback;
 
   enum CheckState
@@ -122,7 +122,7 @@ private:
 
   // Call registered callback functions for given feedback command
   void processFeedback(
-    const visualization_msgs::msg::InteractiveMarkerFeedback::ConstPtr & feedback);
+    const visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr & feedback);
 
   // Create and push MenuEntry objects from handles_in onto
   // entries_out.  Calls itself recursively to add the entire menu

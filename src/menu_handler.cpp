@@ -279,7 +279,7 @@ visualization_msgs::msg::MenuEntry MenuHandler::makeEntry(
 
 
 void MenuHandler::processFeedback(
-  const visualization_msgs::msg::InteractiveMarkerFeedback::ConstPtr & feedback)
+  const visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr & feedback)
 {
   std::unordered_map<EntryHandle, EntryContext>::iterator context =
     entry_contexts_.find( (EntryHandle) feedback->menu_entry_id);
