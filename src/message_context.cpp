@@ -37,6 +37,7 @@
 #include <string>
 #include <vector>
 
+#include "tf2/buffer_core_interface.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
 #include "interactive_markers/detail/message_context.hpp"
@@ -47,11 +48,11 @@ namespace interactive_markers
 
 template<class MsgT>
 MessageContext<MsgT>::MessageContext(
-  tf2::BufferCore & tf,
+  std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core,
   const std::string & target_frame,
   typename MsgT::SharedPtr _msg,
   bool enable_autocomplete_transparency)
-: tf_(tf),
+: tf_buffer_core_(tf_buffer_core),
   target_frame_(target_frame),
   enable_autocomplete_transparency_(enable_autocomplete_transparency)
 {
@@ -79,7 +80,7 @@ bool MessageContext<MsgT>::getTransform(
   try {
     if (header.frame_id != target_frame_) {
       // get transform
-      geometry_msgs::msg::TransformStamped transform = tf_.lookupTransform(
+      geometry_msgs::msg::TransformStamped transform = tf_buffer_core_->lookupTransform(
         target_frame_, header.frame_id, tf2::timeFromSec(rclcpp::Time(header.stamp).seconds()));
       RCUTILS_LOG_DEBUG("Transform %s -> %s at time %f is ready.",
         header.frame_id.c_str(), target_frame_.c_str(), rclcpp::Time(header.stamp).seconds());

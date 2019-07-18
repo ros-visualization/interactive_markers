@@ -44,12 +44,15 @@
 #include "rclcpp/logger.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-#include "tf2/buffer_core.h"
-
 #include "visualization_msgs/msg/interactive_marker_init.hpp"
 #include "visualization_msgs/msg/interactive_marker_update.hpp"
 
 #include "detail/state_machine.hpp"
+
+namespace tf2
+{
+class BufferCoreInterface;
+}
 
 namespace interactive_markers
 {
@@ -90,21 +93,21 @@ public:
     rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
     rclcpp::node_interfaces::NodeGraphInterface::SharedPtr graph_interface,
     rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_interface,
-    tf2::BufferCore & tf_buffer,
+    std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core,
     const std::string & target_frame = "",
     const std::string & topic_ns = "");
 
   template<typename NodePtr>
   InteractiveMarkerClient(
     NodePtr node,
-    tf2::BufferCore & tf_buffer,
+    std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core,
     const std::string & target_frame = "",
     const std::string & topic_ns = "")
   : InteractiveMarkerClient(
       node->get_node_topics_interface(),
       node->get_node_graph_interface(),
       node->get_node_logging_interface(),
-      tf_buffer,
+      tf_buffer_core,
       target_frame,
       topic_ns)
   {
@@ -175,7 +178,7 @@ private:
   M_SingleClient publisher_contexts_;
   std::mutex publisher_contexts_mutex_;
 
-  tf2::BufferCore & tf_buffer_;
+  std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core_;
   std::string target_frame_;
 
 public:

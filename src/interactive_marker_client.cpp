@@ -48,14 +48,14 @@ InteractiveMarkerClient::InteractiveMarkerClient(
   rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
   rclcpp::node_interfaces::NodeGraphInterface::SharedPtr graph_interface,
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_interface,
-  tf2::BufferCore & tf_buffer,
+  std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core,
   const std::string & target_frame,
   const std::string & topic_ns)
 : state_("InteractiveMarkerClient", IDLE),
   topics_interface_(topics_interface),
   graph_interface_(graph_interface),
   logger_(logging_interface->get_logger()),
-  tf_buffer_(tf_buffer),
+  tf_buffer_core_(tf_buffer_core),
   last_num_publishers_(0),
   enable_autocomplete_transparency_(true)
 {
@@ -202,9 +202,12 @@ void InteractiveMarkerClient::process(const MsgConstPtrT & msg)
     if (context_it == publisher_contexts_.end()) {
       RCLCPP_DEBUG(logger_, "New publisher detected: %s", msg->server_id.c_str());
 
-      SingleClientPtr pc(new SingleClient(msg->server_id, tf_buffer_, target_frame_, callbacks_));
-      context_it = publisher_contexts_.insert(std::make_pair(msg->server_id, pc)).first;
-      client = pc;
+      client = std::make_shared<SingleClient>(
+        msg->server_id,
+        tf_buffer_core_,
+        target_frame_,
+        callbacks_);
+      context_it = publisher_contexts_.emplace(msg->server_id, client).first;
 
       // we need to subscribe to the init topic again
       subscribeInit();

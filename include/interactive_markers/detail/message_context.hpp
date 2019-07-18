@@ -36,14 +36,19 @@
 #define INTERACTIVE_MARKERS__DETAIL__MESSAGE_CONTEXT_HPP_
 
 #include <list>
+#include <memory>
 #include <string>
 #include <vector>
 
-#include "tf2/buffer_core.h"
 #include "tf2/exceptions.h"
 
 #include "visualization_msgs/msg/interactive_marker_init.hpp"
 #include "visualization_msgs/msg/interactive_marker_update.hpp"
+
+namespace tf2
+{
+class BufferCoreInterface;
+}
 
 namespace interactive_markers
 {
@@ -53,7 +58,7 @@ class MessageContext
 {
 public:
   MessageContext(
-    tf2::BufferCore & tf,
+    std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core,
     const std::string & target_frame,
     typename MsgT::SharedPtr msg,
     bool enable_autocomplete_transparency = true);
@@ -83,7 +88,7 @@ private:
   // array indices of marker/pose updates with missing tf info
   std::list<size_t> open_marker_idx_;
   std::list<size_t> open_pose_idx_;
-  tf2::BufferCore & tf_;
+  std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core_;
   std::string target_frame_;
   bool enable_autocomplete_transparency_;
 };  // class MessageContext

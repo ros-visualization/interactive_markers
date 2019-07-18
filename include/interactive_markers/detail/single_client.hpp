@@ -36,17 +36,21 @@
 #define INTERACTIVE_MARKERS__DETAIL__SINGLE_CLIENT_HPP_
 
 #include <deque>
+#include <memory>
 #include <string>
 
 #include "rclcpp/rclcpp.hpp"
 #include "visualization_msgs/msg/interactive_marker_init.hpp"
 #include "visualization_msgs/msg/interactive_marker_update.hpp"
 
-#include "tf2/buffer_core.h"
-
 #include "message_context.hpp"
 #include "state_machine.hpp"
 #include "../interactive_marker_client.hpp"
+
+namespace tf2
+{
+class BufferCoreInterface;
+}
 
 namespace interactive_markers
 {
@@ -56,7 +60,7 @@ class SingleClient
 public:
   SingleClient(
     const std::string & server_id,
-    tf2::BufferCore & tf,
+    std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core,
     const std::string & target_frame,
     const InteractiveMarkerClient::CbCollection & callbacks);
 
@@ -125,7 +129,7 @@ private:
   // queue for init messages
   M_InitMessageContext init_queue_;
 
-  tf2::BufferCore & tf_;
+  std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core_;
   std::string target_frame_;
 
   const InteractiveMarkerClient::CbCollection & callbacks_;

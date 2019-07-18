@@ -32,6 +32,7 @@
 
 // Author: David Gossow
 
+#include <cmath>
 #include <functional>
 #include <memory>
 #include <string>
@@ -43,14 +44,14 @@ namespace interactive_markers
 
 SingleClient::SingleClient(
   const std::string & server_id,
-  tf2::BufferCore & tf,
+  std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core,
   const std::string & target_frame,
   const InteractiveMarkerClient::CbCollection & callbacks
 )
 : state_(server_id, INIT),
   first_update_seq_num_(-1),
   last_update_seq_num_(-1),
-  tf_(tf),
+  tf_buffer_core_(tf_buffer_core),
   target_frame_(target_frame),
   callbacks_(callbacks),
   server_id_(server_id),
@@ -77,8 +78,8 @@ void SingleClient::process(
           init_queue_.begin()->msg->seq_num);
         init_queue_.pop_back();
       }
-      init_queue_.push_front(InitMessageContext(tf_, target_frame_, msg,
-        enable_autocomplete_transparency));
+      init_queue_.push_front(InitMessageContext(
+          tf_buffer_core_, target_frame_, msg, enable_autocomplete_transparency));
       callbacks_.statusCb(InteractiveMarkerClient::OK, server_id_, "Init message received.");
       break;
 
@@ -128,13 +129,13 @@ void SingleClient::process(
           update_queue_.begin()->msg->seq_num);
         update_queue_.pop_back();
       }
-      update_queue_.push_front(UpdateMessageContext(tf_, target_frame_, msg,
-        enable_autocomplete_transparency));
+      update_queue_.push_front(UpdateMessageContext(
+          tf_buffer_core_, target_frame_, msg, enable_autocomplete_transparency));
       break;
 
     case RECEIVING:
-      update_queue_.push_front(UpdateMessageContext(tf_, target_frame_, msg,
-        enable_autocomplete_transparency));
+      update_queue_.push_front(UpdateMessageContext(
+          tf_buffer_core_, target_frame_, msg, enable_autocomplete_transparency));
       break;
 
     case TF_ERROR:
