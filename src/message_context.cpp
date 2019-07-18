@@ -42,8 +42,6 @@
 #include "interactive_markers/detail/message_context.hpp"
 #include "interactive_markers/tools.hpp"
 
-#define DBG_MSG(...) RCUTILS_LOG_DEBUG(__VA_ARGS__);
-
 namespace interactive_markers
 {
 
@@ -83,7 +81,7 @@ bool MessageContext<MsgT>::getTransform(
       // get transform
       geometry_msgs::msg::TransformStamped transform = tf_.lookupTransform(
         target_frame_, header.frame_id, tf2::timeFromSec(rclcpp::Time(header.stamp).seconds()));
-      DBG_MSG("Transform %s -> %s at time %f is ready.",
+      RCUTILS_LOG_DEBUG("Transform %s -> %s at time %f is ready.",
         header.frame_id.c_str(), target_frame_.c_str(), rclcpp::Time(header.stamp).seconds());
 
       // if timestamp is given, transform message into target frame
@@ -144,7 +142,7 @@ void MessageContext<MsgT>::getTfTransforms(
     if (success) {
       idx_it = indices.erase(idx_it);
     } else {
-      DBG_MSG("Transform %s -> %s at time %f is not ready.",
+      RCUTILS_LOG_DEBUG("Transform %s -> %s at time %f is not ready.",
         im_msg.header.frame_id.c_str(), target_frame_.c_str(), rclcpp::Time(
           im_msg.header.stamp).seconds());
       ++idx_it;
@@ -163,7 +161,7 @@ void MessageContext<MsgT>::getTfTransforms(
     if (getTransform(msg.header, msg.pose)) {
       idx_it = indices.erase(idx_it);
     } else {
-      DBG_MSG("Transform %s -> %s at time %f is not ready.",
+      RCUTILS_LOG_DEBUG("Transform %s -> %s at time %f is not ready.",
         msg.header.frame_id.c_str(), target_frame_.c_str(), rclcpp::Time(
           msg.header.stamp).seconds());
       ++idx_it;
@@ -218,7 +216,7 @@ void MessageContext<visualization_msgs::msg::InteractiveMarkerUpdate>::getTfTran
   getTfTransforms(msg->markers, open_marker_idx_);
   getTfTransforms(msg->poses, open_pose_idx_);
   if (isReady()) {
-    DBG_MSG("Update message with seq_num=%lu is ready.", msg->seq_num);
+    RCUTILS_LOG_DEBUG("Update message with seq_num=%lu is ready.", msg->seq_num);
   }
 }
 
@@ -227,7 +225,7 @@ void MessageContext<visualization_msgs::msg::InteractiveMarkerInit>::getTfTransf
 {
   getTfTransforms(msg->markers, open_marker_idx_);
   if (isReady()) {
-    DBG_MSG("Init message with seq_num=%lu is ready.", msg->seq_num);
+    RCUTILS_LOG_DEBUG("Init message with seq_num=%lu is ready.", msg->seq_num);
   }
 }
 

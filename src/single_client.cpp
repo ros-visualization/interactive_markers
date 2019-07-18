@@ -38,8 +38,6 @@
 
 #include "interactive_markers/detail/single_client.hpp"
 
-#define DBG_MSG(...) RCUTILS_LOG_DEBUG(__VA_ARGS__);
-
 namespace interactive_markers
 {
 
@@ -70,12 +68,12 @@ void SingleClient::process(
   visualization_msgs::msg::InteractiveMarkerInit::SharedPtr msg,
   bool enable_autocomplete_transparency)
 {
-  DBG_MSG("%s: received init #%lu", server_id_.c_str(), msg->seq_num);
+  RCUTILS_LOG_DEBUG("%s: received init #%lu", server_id_.c_str(), msg->seq_num);
 
   switch (state_) {
     case INIT:
       if (init_queue_.size() > 5) {
-        DBG_MSG("Init queue too large. Erasing init message with id %lu.",
+        RCUTILS_LOG_DEBUG("Init queue too large. Erasing init message with id %lu.",
           init_queue_.begin()->msg->seq_num);
         init_queue_.pop_back();
       }
@@ -101,7 +99,7 @@ void SingleClient::process(
   last_update_time_ = rclcpp::Clock().now();
 
   if (msg->type == msg->KEEP_ALIVE) {
-    DBG_MSG("%s: received keep-alive #%lu", server_id_.c_str(), msg->seq_num);
+    RCUTILS_LOG_DEBUG("%s: received keep-alive #%lu", server_id_.c_str(), msg->seq_num);
     if (last_update_seq_num_ != (uint64_t)-1 && msg->seq_num != last_update_seq_num_) {
       std::ostringstream s;
       s << "Sequence number of update is out of order. Expected: " << last_update_seq_num_ <<
@@ -112,7 +110,7 @@ void SingleClient::process(
     last_update_seq_num_ = msg->seq_num;
     return;
   } else {
-    DBG_MSG("%s: received update #%lu", server_id_.c_str(), msg->seq_num);
+    RCUTILS_LOG_DEBUG("%s: received update #%lu", server_id_.c_str(), msg->seq_num);
     if (last_update_seq_num_ != (uint64_t)-1 && msg->seq_num != last_update_seq_num_ + 1) {
       std::ostringstream s;
       s << "Sequence number of update is out of order. Expected: " << last_update_seq_num_ + 1 <<
@@ -126,7 +124,7 @@ void SingleClient::process(
   switch (state_) {
     case INIT:
       if (update_queue_.size() > 100) {
-        DBG_MSG("Update queue too large. Erasing update message with id %lu.",
+        RCUTILS_LOG_DEBUG("Update queue too large. Erasing update message with id %lu.",
           update_queue_.begin()->msg->seq_num);
         update_queue_.pop_back();
       }
@@ -209,11 +207,11 @@ void SingleClient::checkInitFinished()
       callbacks_.statusCb(InteractiveMarkerClient::OK, server_id_,
         "Initialization: Waiting for tf info.");
     } else if (next_up_exists) {
-      DBG_MSG(
+      RCUTILS_LOG_DEBUG(
         "Init message with seq_id=%lu is ready & in line with updates. Switching to receive mode.",
         init_seq_num);
       while (!update_queue_.empty() && update_queue_.back().msg->seq_num <= init_seq_num) {
-        DBG_MSG("Omitting update with seq_id=%lu", update_queue_.back().msg->seq_num);
+        RCUTILS_LOG_DEBUG("Omitting update with seq_id=%lu", update_queue_.back().msg->seq_num);
         update_queue_.pop_back();
       }
 
@@ -287,7 +285,7 @@ void SingleClient::pushUpdates()
   }
   while (!update_queue_.empty() && update_queue_.back().isReady()) {
     visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg = update_queue_.back().msg;
-    DBG_MSG("Pushing out update #%lu.", msg->seq_num);
+    RCUTILS_LOG_DEBUG("Pushing out update #%lu.", msg->seq_num);
     callbacks_.updateCb(msg);
     update_queue_.pop_back();
   }
