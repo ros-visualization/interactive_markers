@@ -66,20 +66,22 @@ SingleClient::~SingleClient()
 }
 
 void SingleClient::process(
-  visualization_msgs::msg::InteractiveMarkerInit::SharedPtr msg,
+  visualization_msgs::srv::GetInteractiveMarkers::Response::SharedPtr response,
   bool enable_autocomplete_transparency)
 {
-  RCUTILS_LOG_DEBUG("%s: received init #%lu", server_id_.c_str(), msg->seq_num);
+  RCUTILS_LOG_DEBUG("%s: received init #%lu", server_id_.c_str(), response->sequence_number);
 
   switch (state_) {
     case INIT:
-      if (init_queue_.size() > 5) {
-        RCUTILS_LOG_DEBUG("Init queue too large. Erasing init message with id %lu.",
-          init_queue_.begin()->msg->seq_num);
-        init_queue_.pop_back();
+      // TODO(jacobperron): Do we need to queue full update messages,
+      //                    or can we just take the latest?
+      if (response_queue_.size() > 5) {
+        RCUTILS_LOG_DEBUG("Response queue too large. Erasing init message with id %lu.",
+          response_queue_.begin()->msg->sequence_number);
+        response_queue_.pop_back();
       }
-      init_queue_.push_front(InitMessageContext(
-          tf_buffer_core_, target_frame_, msg, enable_autocomplete_transparency));
+      response_queue_.push_front(InitMessageContext(
+          tf_buffer_core_, target_frame_, response, enable_autocomplete_transparency));
       callbacks_.statusCb(InteractiveMarkerClient::OK, server_id_, "Init message received.");
       break;
 
@@ -198,28 +200,28 @@ void SingleClient::checkInitFinished()
     return;
   }
 
-  M_InitMessageContext::iterator init_it;
-  for (init_it = init_queue_.begin(); init_it != init_queue_.end(); ++init_it) {
-    uint64_t init_seq_num = init_it->msg->seq_num;
-    bool next_up_exists = init_seq_num >= first_update_seq_num_ &&
-      init_seq_num <= last_update_seq_num_;
+  M_InitMessageContext::iterator response_it;
+  for (response_it = response_queue_.begin(); response_it != response_queue_.end(); ++response_it) {
+    uint64_t response_seq_num = response_it->msg->sequence_number;
+    bool next_up_exists = response_seq_num >= first_update_seq_num_ &&
+      response_seq_num <= last_update_seq_num_;
 
-    if (!init_it->isReady()) {
+    if (!response_it->isReady()) {
       callbacks_.statusCb(InteractiveMarkerClient::OK, server_id_,
         "Initialization: Waiting for tf info.");
     } else if (next_up_exists) {
       RCUTILS_LOG_DEBUG(
         "Init message with seq_id=%lu is ready & in line with updates. Switching to receive mode.",
-        init_seq_num);
-      while (!update_queue_.empty() && update_queue_.back().msg->seq_num <= init_seq_num) {
+        response_seq_num);
+      while (!update_queue_.empty() && update_queue_.back().msg->seq_num <= response_seq_num) {
         RCUTILS_LOG_DEBUG("Omitting update with seq_id=%lu", update_queue_.back().msg->seq_num);
         update_queue_.pop_back();
       }
 
-      callbacks_.initCb(init_it->msg);
+      callbacks_.initCb(response_it->msg);
       callbacks_.statusCb(InteractiveMarkerClient::OK, server_id_, "Receiving updates.");
 
-      init_queue_.clear();
+      response_queue_.clear();
       state_ = RECEIVING;
 
       pushUpdates();
@@ -231,15 +233,15 @@ void SingleClient::checkInitFinished()
 void SingleClient::transformInitMsgs()
 {
   M_InitMessageContext::iterator it;
-  for (it = init_queue_.begin(); it != init_queue_.end(); ) {
+  for (it = response_queue_.begin(); it != response_queue_.end(); ) {
     try {
       it->getTfTransforms();
     } catch (std::runtime_error & e) {
       // we want to notify the user, but also keep the init message
       // in case it is the only one we will receive.
       std::ostringstream s;
-      s << "Cannot get tf info for init message with sequence number " << it->msg->seq_num <<
-        ". Error: " << e.what();
+      s << "Cannot get tf info for init message with sequence number " <<
+        it->msg->sequence_number << ". Error: " << e.what();
       callbacks_.statusCb(InteractiveMarkerClient::WARN, server_id_, s.str());
     }
     ++it;
@@ -270,7 +272,7 @@ void SingleClient::errorReset(std::string error_msg)
   // if we get an error here, we re-initialize everything
   state_ = TF_ERROR;
   update_queue_.clear();
-  init_queue_.clear();
+  response_queue_.clear();
   first_update_seq_num_ = -1;
   last_update_seq_num_ = -1;
   warn_keepalive_ = false;

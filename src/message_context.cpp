@@ -39,6 +39,7 @@
 
 #include "tf2/buffer_core_interface.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include "visualization_msgs/srv/get_interactive_markers.hpp"
 
 #include "interactive_markers/detail/message_context.hpp"
 #include "interactive_markers/tools.hpp"
@@ -200,7 +201,7 @@ void MessageContext<visualization_msgs::msg::InteractiveMarkerUpdate>::init()
 }
 
 template<>
-void MessageContext<visualization_msgs::msg::InteractiveMarkerInit>::init()
+void MessageContext<visualization_msgs::srv::GetInteractiveMarkers::Response>::init()
 {
   // mark all transforms as being missing
   for (size_t i = 0; i < msg->markers.size(); i++) {
@@ -222,16 +223,16 @@ void MessageContext<visualization_msgs::msg::InteractiveMarkerUpdate>::getTfTran
 }
 
 template<>
-void MessageContext<visualization_msgs::msg::InteractiveMarkerInit>::getTfTransforms()
+void MessageContext<visualization_msgs::srv::GetInteractiveMarkers::Response>::getTfTransforms()
 {
   getTfTransforms(msg->markers, open_marker_idx_);
   if (isReady()) {
-    RCUTILS_LOG_DEBUG("Init message with seq_num=%lu is ready.", msg->seq_num);
+    RCUTILS_LOG_DEBUG("Response message with seq_num=%lu is ready.", msg->sequence_number);
   }
 }
 
 // explicit template instantiation
 template class MessageContext<visualization_msgs::msg::InteractiveMarkerUpdate>;
-template class MessageContext<visualization_msgs::msg::InteractiveMarkerInit>;
+template class MessageContext<visualization_msgs::srv::GetInteractiveMarkers::Response>;
 
 }  // namespace interactive_markers

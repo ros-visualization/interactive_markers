@@ -44,8 +44,8 @@
 #include "rclcpp/logger.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-#include "visualization_msgs/msg/interactive_marker_init.hpp"
 #include "visualization_msgs/msg/interactive_marker_update.hpp"
+#include "visualization_msgs/srv/get_interactive_markers.hpp"
 
 #include "detail/state_machine.hpp"
 
@@ -81,7 +81,7 @@ public:
 
   typedef std::function<void (visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr)>
     UpdateCallback;
-  typedef std::function<void (visualization_msgs::msg::InteractiveMarkerInit::SharedPtr)>
+  typedef std::function<void (visualization_msgs::srv::GetInteractiveMarkers::Response::SharedPtr)>
     InitCallback;
   typedef std::function<void (const std::string &)> ResetCallback;
   typedef std::function<void (StatusT, const std::string &, const std::string &)> StatusCallback;
@@ -90,7 +90,9 @@ public:
   /// @param target_frame tf frame to transform timestamped messages into.
   /// @param topic_ns     The topic namespace (will subscribe to topic_ns/update, topic_ns/init)
   InteractiveMarkerClient(
+    rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base_interface,
     rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
+    rclcpp::node_interfaces::NodeServicesInterface::SharedPtr services_interface,
     rclcpp::node_interfaces::NodeGraphInterface::SharedPtr graph_interface,
     rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_interface,
     std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core,
@@ -104,7 +106,9 @@ public:
     const std::string & target_frame = "",
     const std::string & topic_ns = "")
   : InteractiveMarkerClient(
+      node->get_node_base_interface(),
       node->get_node_topics_interface(),
+      node->get_node_services_interface(),
       node->get_node_graph_interface(),
       node->get_node_logging_interface(),
       tf_buffer_core,
@@ -144,10 +148,12 @@ public:
 
 private:
   // Process message from the init or update channel
-  template<class MsgConstPtrT>
-  void process(const MsgConstPtrT & msg);
+  template<class MsgSharedPtrT>
+  void process(const MsgSharedPtrT msg);
 
+  rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base_interface_;
   rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface_;
+  rclcpp::node_interfaces::NodeServicesInterface::SharedPtr services_interface_;
   rclcpp::node_interfaces::NodeGraphInterface::SharedPtr graph_interface_;
   rclcpp::Logger logger_;
 
@@ -162,11 +168,11 @@ private:
 
   std::string topic_ns_;
 
+  rclcpp::Client<visualization_msgs::srv::GetInteractiveMarkers>::SharedPtr
+    get_interactive_markers_client_;
   rclcpp::SubscriptionBase::SharedPtr update_sub_;
-  rclcpp::SubscriptionBase::SharedPtr init_sub_;
 
-  // subscribe to the init channel
-  void subscribeInit();
+  void requestInteractiveMarkers();
 
   // subscribe to the init channel
   void subscribeUpdate();
@@ -185,7 +191,7 @@ public:
   // for internal usage
   struct CbCollection
   {
-    void initCb(visualization_msgs::msg::InteractiveMarkerInit::SharedPtr i) const
+    void initCb(visualization_msgs::srv::GetInteractiveMarkers::Response::SharedPtr i) const
     {
       if (init_cb_) {
         init_cb_(i);
@@ -239,9 +245,6 @@ private:
     ResetCallback reset_cb_;
     StatusCallback status_cb_;
   };  // struct CbCollection
-
-  // handle init message
-  void processInit(visualization_msgs::msg::InteractiveMarkerInit::SharedPtr msg);
 
   // handle update message
   void processUpdate(const visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg);

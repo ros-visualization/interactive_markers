@@ -36,15 +36,16 @@
 #define INTERACTIVE_MARKERS__INTERACTIVE_MARKER_SERVER_HPP_
 
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
 #include <unordered_map>
 
 #include "rclcpp/rclcpp.hpp"
-#include "visualization_msgs/msg/interactive_marker_init.hpp"
 #include "visualization_msgs/msg/interactive_marker_feedback.hpp"
 #include "visualization_msgs/msg/interactive_marker_update.hpp"
+#include "visualization_msgs/srv/get_interactive_markers.hpp"
 
 namespace interactive_markers
 {
@@ -73,6 +74,7 @@ public:
     rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_interface,
     rclcpp::node_interfaces::NodeTimersInterface::SharedPtr timers_interface,
     rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
+    rclcpp::node_interfaces::NodeServicesInterface::SharedPtr services_interface,
     const std::string server_id);
 
   template<typename NodePtr>
@@ -86,6 +88,7 @@ public:
       node->get_node_logging_interface(),
       node->get_node_timers_interface(),
       node->get_node_topics_interface(),
+      node->get_node_services_interface(),
       server_id)
   {
   }
@@ -197,6 +200,11 @@ private:
 
   typedef std::unordered_map<std::string, UpdateContext> M_UpdateContext;
 
+  void getInteractiveMarkersCallback(
+    const std::shared_ptr<rmw_request_id_t> request_header,
+    const std::shared_ptr<visualization_msgs::srv::GetInteractiveMarkers::Request> request,
+    std::shared_ptr<visualization_msgs::srv::GetInteractiveMarkers::Response> response);
+
   // update marker pose & call user callback
   void processFeedback(visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr feedback);
 
@@ -205,9 +213,6 @@ private:
 
   // increase sequence number & publish an update
   void publish(visualization_msgs::msg::InteractiveMarkerUpdate & update);
-
-  // publish the current complete state to the latched "init" topic.
-  void publishInit();
 
   // Update pose, schedule update without locking
   void doSetPose(
@@ -230,7 +235,8 @@ private:
   // this is needed when running in non-threaded mode
   rclcpp::TimerBase::SharedPtr keep_alive_timer_;
 
-  rclcpp::Publisher<visualization_msgs::msg::InteractiveMarkerInit>::SharedPtr init_pub_;
+  rclcpp::Service<visualization_msgs::srv::GetInteractiveMarkers>::SharedPtr
+    get_interactive_markers_service_;
   rclcpp::Publisher<visualization_msgs::msg::InteractiveMarkerUpdate>::SharedPtr update_pub_;
   rclcpp::Subscription<visualization_msgs::msg::InteractiveMarkerFeedback>::SharedPtr feedback_sub_;
 

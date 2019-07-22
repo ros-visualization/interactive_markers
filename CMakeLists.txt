@@ -3,6 +3,7 @@ project(interactive_markers)
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rmw REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(visualization_msgs REQUIRED)
@@ -18,6 +19,7 @@ add_library(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 ament_target_dependencies(${PROJECT_NAME}
   "rclcpp"
+  "rmw"
   "tf2_geometry_msgs"
   "tf2_ros"
   "visualization_msgs")
@@ -32,6 +34,7 @@ install(
   DESTINATION include)
 
 ament_export_dependencies("rclcpp")
+ament_export_dependencies("rmw")
 ament_export_dependencies("tf2_geometry_msgs")
 ament_export_dependencies("tf2_ros")
 ament_export_dependencies("visualization_msgs")

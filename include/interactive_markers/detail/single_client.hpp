@@ -40,8 +40,8 @@
 #include <string>
 
 #include "rclcpp/rclcpp.hpp"
-#include "visualization_msgs/msg/interactive_marker_init.hpp"
 #include "visualization_msgs/msg/interactive_marker_update.hpp"
+#include "visualization_msgs/srv/get_interactive_markers.hpp"
 
 #include "message_context.hpp"
 #include "state_machine.hpp"
@@ -71,9 +71,9 @@ public:
     visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg,
     bool enable_autocomplete_transparency = true);
 
-  // Process message from the init channel
+  // Process service responses
   void process(
-    visualization_msgs::msg::InteractiveMarkerInit::SharedPtr msg,
+    visualization_msgs::srv::GetInteractiveMarkers::Response::SharedPtr response,
     bool enable_autocomplete_transparency = true);
 
   // true if INIT messages are not needed anymore
@@ -117,7 +117,9 @@ private:
   bool update_time_ok_;
 
   typedef MessageContext<visualization_msgs::msg::InteractiveMarkerUpdate> UpdateMessageContext;
-  typedef MessageContext<visualization_msgs::msg::InteractiveMarkerInit> InitMessageContext;
+  // TODO(jacobperron): Rename/refactor
+  typedef MessageContext<visualization_msgs::srv::GetInteractiveMarkers::Response>
+    InitMessageContext;
 
   // Queue of Updates waiting for tf and numbering
   typedef std::deque<UpdateMessageContext> M_UpdateMessageContext;
@@ -126,8 +128,8 @@ private:
   // queue for update messages
   M_UpdateMessageContext update_queue_;
 
-  // queue for init messages
-  M_InitMessageContext init_queue_;
+  // queue for response messages
+  M_InitMessageContext response_queue_;
 
   std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core_;
   std::string target_frame_;

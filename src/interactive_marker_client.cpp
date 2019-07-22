@@ -36,6 +36,8 @@
 #include <string>
 #include <utility>
 
+#include "visualization_msgs/srv/get_interactive_markers.hpp"
+
 #include "interactive_markers/interactive_marker_client.hpp"
 #include "interactive_markers/detail/single_client.hpp"
 
@@ -45,14 +47,18 @@ namespace interactive_markers
 {
 
 InteractiveMarkerClient::InteractiveMarkerClient(
+  rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base_interface,
   rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
+  rclcpp::node_interfaces::NodeServicesInterface::SharedPtr services_interface,
   rclcpp::node_interfaces::NodeGraphInterface::SharedPtr graph_interface,
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_interface,
   std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core,
   const std::string & target_frame,
   const std::string & topic_ns)
 : state_("InteractiveMarkerClient", IDLE),
+  node_base_interface_(node_base_interface),
   topics_interface_(topics_interface),
+  services_interface_(services_interface),
   graph_interface_(graph_interface),
   logger_(logging_interface->get_logger()),
   tf_buffer_core_(tf_buffer_core),
@@ -76,7 +82,15 @@ void InteractiveMarkerClient::subscribe(std::string topic_ns)
 {
   topic_ns_ = topic_ns;
   subscribeUpdate();
-  subscribeInit();
+  get_interactive_markers_client_ =
+    rclcpp::create_client<visualization_msgs::srv::GetInteractiveMarkers>(
+    node_base_interface_,
+    graph_interface_,
+    services_interface_,
+    topic_ns_ + "/get_interactive_markers",
+    rmw_qos_profile_services_default,
+    nullptr);
+  requestInteractiveMarkers();
 }
 
 void InteractiveMarkerClient::setInitCb(const InitCallback & cb)
@@ -112,7 +126,7 @@ void InteractiveMarkerClient::setTargetFrame(std::string target_frame)
     case RUNNING:
       shutdown();
       subscribeUpdate();
-      subscribeInit();
+      requestInteractiveMarkers();
       break;
   }
 }
@@ -125,7 +139,7 @@ void InteractiveMarkerClient::shutdown()
 
     case INIT:
     case RUNNING:
-      init_sub_.reset();
+      get_interactive_markers_client_.reset();
       update_sub_.reset();
       std::lock_guard<std::mutex> lock(publisher_contexts_mutex_);
       publisher_contexts_.clear();
@@ -133,6 +147,19 @@ void InteractiveMarkerClient::shutdown()
       state_ = IDLE;
       break;
   }
+}
+
+void InteractiveMarkerClient::requestInteractiveMarkers()
+{
+  // TODO(jacobperron): Check if service is ready?
+  auto callback =
+    [this](rclcpp::Client<visualization_msgs::srv::GetInteractiveMarkers>::SharedFuture future) {
+      process<visualization_msgs::srv::GetInteractiveMarkers::Response::SharedPtr>(future.get());
+    };
+  auto request = std::make_shared<visualization_msgs::srv::GetInteractiveMarkers::Request>();
+  get_interactive_markers_client_->async_send_request(
+    request,
+    callback);
 }
 
 void InteractiveMarkerClient::subscribeUpdate()
@@ -157,30 +184,8 @@ void InteractiveMarkerClient::subscribeUpdate()
   callbacks_.statusCb(OK, "General", "Waiting for messages.");
 }
 
-void InteractiveMarkerClient::subscribeInit()
-{
-  if (state_ != INIT && !topic_ns_.empty()) {
-    try {
-      rclcpp::QoS init_qos(rclcpp::KeepLast(100));
-      // TODO(jacobperron): Do we need this?
-      // init_qos.transient_local().reliable();
-      init_sub_ = rclcpp::create_subscription<visualization_msgs::msg::InteractiveMarkerInit>(
-        topics_interface_,
-        topic_ns_ + "/update_full",
-        init_qos,
-        std::bind(&InteractiveMarkerClient::processInit, this, _1));
-      RCLCPP_DEBUG(logger_, "Subscribed to init topic: %s", (topic_ns_ + "/update_full").c_str());
-      state_ = INIT;
-    } catch (rclcpp::exceptions::InvalidNodeError & ex) {
-      callbacks_.statusCb(ERROR, "General", "Error subscribing: " + std::string(ex.what()));
-    } catch (rclcpp::exceptions::NameValidationError & ex) {
-      callbacks_.statusCb(ERROR, "General", "Error subscribing: " + std::string(ex.what()));
-    }
-  }
-}
-
-template<class MsgConstPtrT>
-void InteractiveMarkerClient::process(const MsgConstPtrT & msg)
+template<class MsgSharedPtrT>
+void InteractiveMarkerClient::process(const MsgSharedPtrT msg)
 {
   callbacks_.statusCb(OK, "General", "Receiving messages.");
 
@@ -209,8 +214,8 @@ void InteractiveMarkerClient::process(const MsgConstPtrT & msg)
         callbacks_);
       context_it = publisher_contexts_.emplace(msg->server_id, client).first;
 
-      // we need to subscribe to the init topic again
-      subscribeInit();
+      // we need to request markers again
+      requestInteractiveMarkers();
     }
 
     client = context_it->second;
@@ -220,11 +225,11 @@ void InteractiveMarkerClient::process(const MsgConstPtrT & msg)
   client->process(msg, enable_autocomplete_transparency_);
 }
 
-void InteractiveMarkerClient::processInit(
-  visualization_msgs::msg::InteractiveMarkerInit::SharedPtr msg)
-{
-  process<visualization_msgs::msg::InteractiveMarkerInit::SharedPtr>(msg);
-}
+// void InteractiveMarkerClient::processInit(
+//   visualization_msgs::msg::InteractiveMarkerInit::SharedPtr msg)
+// {
+//   process<visualization_msgs::msg::InteractiveMarkerInit::SharedPtr>(msg);
+// }
 
 void InteractiveMarkerClient::processUpdate(
   visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg)
@@ -248,7 +253,7 @@ void InteractiveMarkerClient::update()
           callbacks_.statusCb(ERROR, "General", "Server is offline. Resetting.");
           shutdown();
           subscribeUpdate();
-          subscribeInit();
+          requestInteractiveMarkers();
           return;
         }
         last_num_publishers_ = num_publishers;
@@ -273,11 +278,10 @@ void InteractiveMarkerClient::update()
           }
         }
         if (state_ == INIT && initialized) {
-          init_sub_.reset();
           state_ = RUNNING;
         }
         if (state_ == RUNNING && !initialized) {
-          subscribeInit();
+          requestInteractiveMarkers();
         }
         break;
       }

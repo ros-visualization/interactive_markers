@@ -32,16 +32,17 @@
 
 // Author: David Gossow
 
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
 
 #include "interactive_markers/interactive_marker_server.hpp"
 
+#include "rmw/rmw.h"
 #include "rclcpp/qos.hpp"
 
 using visualization_msgs::msg::InteractiveMarkerFeedback;
-using visualization_msgs::msg::InteractiveMarkerInit;
 using visualization_msgs::msg::InteractiveMarkerUpdate;
 
 namespace interactive_markers
@@ -54,6 +55,7 @@ InteractiveMarkerServer::InteractiveMarkerServer(
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_interface,
   rclcpp::node_interfaces::NodeTimersInterface::SharedPtr timers_interface,
   rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
+  rclcpp::node_interfaces::NodeServicesInterface::SharedPtr services_interface,
   const std::string server_id)
 : topic_ns_(topic_ns),
   seq_num_(0),
@@ -68,13 +70,21 @@ InteractiveMarkerServer::InteractiveMarkerServer(
   }
 
   std::string update_topic = topic_ns + "/update";
-  std::string init_topic = update_topic + "_full";
   std::string feedback_topic = topic_ns + "/feedback";
 
-  rclcpp::QoS init_qos(rclcpp::KeepLast(100));
-  init_qos.transient_local().reliable();
-  init_pub_ =
-    rclcpp::create_publisher<InteractiveMarkerInit>(topics_interface, init_topic, init_qos);
+  get_interactive_markers_service_ = rclcpp::create_service<
+    visualization_msgs::srv::GetInteractiveMarkers>(
+    base_interface,
+    services_interface,
+    topic_ns + "/get_interactive_markers",
+    std::bind(
+      &InteractiveMarkerServer::getInteractiveMarkersCallback,
+      this,
+      std::placeholders::_1,
+      std::placeholders::_2,
+      std::placeholders::_3),
+    rmw_qos_profile_services_default,
+    base_interface->get_default_callback_group());
 
   rclcpp::QoS update_qos(rclcpp::KeepLast(100));
   update_qos.durability_volatile();
@@ -96,8 +106,6 @@ InteractiveMarkerServer::InteractiveMarkerServer(
 
   rclcpp::callback_group::CallbackGroup::SharedPtr group{nullptr};
   timers_interface->add_timer(keep_alive_timer_, group);
-
-  publishInit();
 }
 
 
@@ -182,7 +190,6 @@ void InteractiveMarkerServer::applyChanges()
   seq_num_++;
 
   publish(update);
-  publishInit();
   pending_updates_.clear();
 }
 
@@ -366,23 +373,21 @@ bool InteractiveMarkerServer::get(
   return false;
 }
 
-void InteractiveMarkerServer::publishInit()
+void InteractiveMarkerServer::getInteractiveMarkersCallback(
+  const std::shared_ptr<rmw_request_id_t> request_header,
+  const std::shared_ptr<visualization_msgs::srv::GetInteractiveMarkers::Request> request,
+  std::shared_ptr<visualization_msgs::srv::GetInteractiveMarkers::Response> response)
 {
-  std::unique_lock<std::recursive_mutex> lock(mutex_);
-  RCLCPP_INFO(logger_, "Publishing initial message");
-
-  visualization_msgs::msg::InteractiveMarkerInit init;
-  init.server_id = server_id_;
-  init.seq_num = seq_num_;
-  init.markers.reserve(marker_contexts_.size());
-
+  (void)request_header;
+  RCLCPP_DEBUG(logger_, "Responding to request to get interactive markers");
+  response->server_id = server_id_;
+  response->sequence_number = seq_num_;
+  response->markers.reserve(marker_contexts_.size());
   M_MarkerContext::iterator it;
   for (it = marker_contexts_.begin(); it != marker_contexts_.end(); it++) {
-    RCLCPP_DEBUG(logger_, "Publishing %s", it->second.int_marker.name.c_str());
-    init.markers.push_back(it->second.int_marker);
+    RCLCPP_DEBUG(logger_, "Sending marker '%s'", it->second.int_marker.name.c_str());
+    response->markers.push_back(it->second.int_marker);
   }
-
-  init_pub_->publish(init);
 }
 
 void InteractiveMarkerServer::processFeedback(
