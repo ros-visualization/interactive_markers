@@ -54,7 +54,7 @@ TEST(InteractiveMarkerServer, addRemove)
   server.applyChanges();
   ASSERT_TRUE( server.get("marker1", int_marker) );
 
-  server.erase( "marker1" );
+  ASSERT_TRUE( server.erase( "marker1" ) );
   ASSERT_FALSE( server.get("marker1", int_marker) );
 
   server.applyChanges();
@@ -65,7 +65,7 @@ TEST(InteractiveMarkerServer, addRemove)
   server.insert(int_marker);
   ASSERT_TRUE( server.get("marker1", int_marker) );
 
-  server.erase( "marker1" );
+  ASSERT_TRUE( server.erase( "marker1" ) );
   ASSERT_FALSE( server.get("marker1", int_marker) );
 
   server.applyChanges();
@@ -93,6 +93,9 @@ TEST(InteractiveMarkerServer, addRemove)
   ASSERT_FALSE( server.get("marker1", int_marker) );
 
   server.applyChanges();
+
+  // erase unknown marker
+  ASSERT_FALSE( server.erase("marker1") );
 
   //avoid subscriber destruction warning
   usleep(1000);

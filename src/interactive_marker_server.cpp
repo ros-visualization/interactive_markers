@@ -193,6 +193,11 @@ bool InteractiveMarkerServer::erase( const std::string &name )
 {
   boost::recursive_mutex::scoped_lock lock( mutex_ );
 
+  if (marker_contexts_.end() == marker_contexts_.find(name) &&
+      pending_updates_.end() == pending_updates_.find(name))
+  {
+    return false;
+  }
   pending_updates_[name].update_type = UpdateContext::ERASE;
   return true;
 }
