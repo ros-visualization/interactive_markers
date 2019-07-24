@@ -63,6 +63,7 @@ InteractiveMarkerClient::InteractiveMarkerClient(
   logger_(logging_interface->get_logger()),
   tf_buffer_core_(tf_buffer_core),
   last_num_publishers_(0),
+  server_ready_(false),
   enable_autocomplete_transparency_(true)
 {
   target_frame_ = target_frame;
@@ -151,7 +152,14 @@ void InteractiveMarkerClient::shutdown()
 
 void InteractiveMarkerClient::requestInteractiveMarkers()
 {
-  // TODO(jacobperron): Check if service is ready?
+  state_ = INIT;
+
+  server_ready_ = get_interactive_markers_client_->service_is_ready();
+
+  if (!server_ready_) {
+    return;
+  }
+
   auto callback =
     [this](rclcpp::Client<visualization_msgs::srv::GetInteractiveMarkers>::SharedFuture future) {
       process<visualization_msgs::srv::GetInteractiveMarkers::Response::SharedPtr>(future.get());
@@ -277,8 +285,13 @@ void InteractiveMarkerClient::update()
             break;  // Yep, someone called shutdown()...
           }
         }
-        if (state_ == INIT && initialized) {
-          state_ = RUNNING;
+        if (state_ == INIT) {
+          if (initialized) {
+            state_ = RUNNING;
+          } else if (!server_ready_) {
+            // Keep trying to request markers until server is ready
+            requestInteractiveMarkers();
+          }
         }
         if (state_ == RUNNING && !initialized) {
           requestInteractiveMarkers();
