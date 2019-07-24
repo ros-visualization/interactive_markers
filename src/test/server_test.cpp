@@ -97,7 +97,7 @@ TEST(InteractiveMarkerServer, addRemove)
   server.applyChanges();
 
   // erase unknown marker
-  ASSERT_FALSE( server.erase("marker1") );
+  ASSERT_FALSE(server.erase("marker1"));
 
   // avoid subscriber destruction warning
   usleep(1000);
