@@ -79,6 +79,13 @@ public:
     ERROR = 2
   };
 
+  enum StateT
+  {
+    IDLE,
+    INIT,
+    RUNNING
+  };
+
   typedef std::function<void (visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr)>
     UpdateCallback;
   typedef std::function<void (visualization_msgs::srv::GetInteractiveMarkers::Response::SharedPtr)>
@@ -146,6 +153,11 @@ public:
 
   void setEnableAutocompleteTransparency(bool enable) {enable_autocomplete_transparency_ = enable;}
 
+  inline StateT getState() const
+  {
+    return static_cast<StateT>(state_);
+  }
+
 private:
   // Process message from the init or update channel
   template<class MsgSharedPtrT>
@@ -156,13 +168,6 @@ private:
   rclcpp::node_interfaces::NodeServicesInterface::SharedPtr services_interface_;
   rclcpp::node_interfaces::NodeGraphInterface::SharedPtr graph_interface_;
   rclcpp::Logger logger_;
-
-  enum StateT
-  {
-    IDLE,
-    INIT,
-    RUNNING
-  };
 
   StateMachine<StateT> state_;
 
@@ -261,6 +266,9 @@ private:
 
   // this allows us to detect if a server died (in most cases)
   size_t last_num_publishers_;
+
+  // if server is ready
+  bool server_ready_;
 
   // if false, auto-completed markers will have alpha = 1.0
   bool enable_autocomplete_transparency_;

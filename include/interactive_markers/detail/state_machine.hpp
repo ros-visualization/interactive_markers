@@ -49,7 +49,7 @@ class StateMachine
 public:
   StateMachine(std::string name, StateT init_state);
   StateMachine & operator=(StateT state);
-  operator StateT();
+  operator StateT() const;
   rclcpp::Duration getDuration();
 
 private:
@@ -86,7 +86,7 @@ rclcpp::Duration StateMachine<StateT>::getDuration()
 }
 
 template<class StateT>
-StateMachine<StateT>::operator StateT()
+StateMachine<StateT>::operator StateT() const
 {
   return state_;
 }
