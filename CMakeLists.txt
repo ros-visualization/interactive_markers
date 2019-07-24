@@ -42,10 +42,27 @@ ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
 
 if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_lint_auto REQUIRED)
+  find_package(geometry_msgs REQUIRED)
+  find_package(std_msgs REQUIRED)
+
   set(ament_cmake_flake8_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
+
+  ament_add_gtest(test_interactive_marker_server
+    test/${PROJECT_NAME}/test_interactive_marker_server.cpp
+  )
+  ament_target_dependencies(test_interactive_marker_server
+    "geometry_msgs"
+    "rclcpp"
+    "std_msgs"
+  )
+  target_link_libraries(test_interactive_marker_server
+    ${PROJECT_NAME}
+  )
 endif()
+
 # C++ Unit Tests
 #
 # if(CATKIN_ENABLE_TESTING)
