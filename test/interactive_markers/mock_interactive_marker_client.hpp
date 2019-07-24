@@ -57,7 +57,7 @@ public:
   void publishFeedback(const visualization_msgs::msg::InteractiveMarkerFeedback & feedback);
   SharedFuture requestInteractiveMarkers();
 
-  uint64_t updates_received;
+  uint32_t updates_received;
   visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr last_update_message;
   visualization_msgs::srv::GetInteractiveMarkers::Response::SharedPtr last_response_message;
 

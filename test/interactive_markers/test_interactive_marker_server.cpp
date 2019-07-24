@@ -36,21 +36,11 @@
 #include <string>
 #include <vector>
 
-#include "mock_interactive_marker_client.hpp"
 #include "interactive_marker_fixtures.hpp"
+#include "mock_interactive_marker_client.hpp"
+#include "timed_expect.hpp"
 
 #include "interactive_markers/interactive_marker_server.hpp"
-
-#define TIMED_EXPECT_EQ(lhs, rhs, timeout, executor) \
-  do { \
-    auto start_time = std::chrono::steady_clock::now(); \
-    while (lhs != rhs && \
-      (std::chrono::steady_clock::now() - start_time < timeout)) \
-    { \
-      executor.spin_once(std::chrono::nanoseconds(1000)); \
-    } \
-    EXPECT_EQ(lhs, rhs); \
-  } while (0)
 
 TEST(TestInteractiveMarkerServer, construction_and_destruction)
 {
@@ -293,7 +283,7 @@ TEST_F(TestInteractiveMarkerServerWithMarkers, feedback_communication)
   server_->applyChanges();
   // Wait for callback to be registered
   // FIXME(jacobperron): This probably shouldn't be necessary...
-  TIMED_EXPECT_EQ(mock_client_->updates_received, 1u, 3s, executor_);
+  TIMED_EXPECT_EQ(mock_client_->updates_received, 1u, 3s, 10ms, executor_);
 
   // Populate and publish mock feedback
   visualization_msgs::msg::InteractiveMarkerFeedback feedback;
@@ -305,7 +295,7 @@ TEST_F(TestInteractiveMarkerServerWithMarkers, feedback_communication)
 
   // FIXME(jacobperron): Test fails due to rclcpp Time exception
   //                     "can't subtract times with difference time sources"
-  // TIMED_EXPECT_EQ(output_feedback.client_id, feedback.client_id, 3s, executor_);
+  // TIMED_EXPECT_EQ(output_feedback.client_id, feedback.client_id, 3s, 10ms, executor_);
   // std::cout << "D" << std::endl;
   // EXPECT_EQ(output_feedback.marker_name, markers_[0].name);
   // EXPECT_EQ(output_feedback.pose.position.x, feedback.pose.position.x);
@@ -319,7 +309,7 @@ TEST_F(TestInteractiveMarkerServerWithMarkers, update_communication)
   EXPECT_EQ(mock_client_->updates_received, 0u);
   // This should trigger an update publication
   server_->applyChanges();
-  TIMED_EXPECT_EQ(mock_client_->updates_received, 1u, 3s, executor_);
+  TIMED_EXPECT_EQ(mock_client_->updates_received, 1u, 3s, 10ms, executor_);
   EXPECT_EQ(mock_client_->last_update_message->markers.size(), 0u);
   EXPECT_EQ(mock_client_->last_update_message->poses.size(), 0u);
   EXPECT_EQ(mock_client_->last_update_message->erases.size(), 0u);
@@ -327,7 +317,7 @@ TEST_F(TestInteractiveMarkerServerWithMarkers, update_communication)
   // Erase a marker and update
   ASSERT_TRUE(server_->erase(markers_[0].name));
   server_->applyChanges();
-  TIMED_EXPECT_EQ(mock_client_->updates_received, 2u, 3s, executor_);
+  TIMED_EXPECT_EQ(mock_client_->updates_received, 2u, 3s, 10ms, executor_);
   EXPECT_EQ(mock_client_->last_update_message->markers.size(), 0u);
   EXPECT_EQ(mock_client_->last_update_message->poses.size(), 0u);
   ASSERT_EQ(mock_client_->last_update_message->erases.size(), 1u);

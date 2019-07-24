@@ -4,8 +4,8 @@ project(interactive_markers)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rmw REQUIRED)
+find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
-find_package(tf2_ros REQUIRED)
 find_package(visualization_msgs REQUIRED)
 
 add_library(${PROJECT_NAME}
@@ -20,8 +20,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC include)
 ament_target_dependencies(${PROJECT_NAME}
   "rclcpp"
   "rmw"
+  "tf2"
   "tf2_geometry_msgs"
-  "tf2_ros"
   "visualization_msgs")
 
 install(TARGETS ${PROJECT_NAME}
@@ -35,8 +35,8 @@ install(
 
 ament_export_dependencies("rclcpp")
 ament_export_dependencies("rmw")
+ament_export_dependencies("tf2")
 ament_export_dependencies("tf2_geometry_msgs")
-ament_export_dependencies("tf2_ros")
 ament_export_dependencies("visualization_msgs")
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
@@ -59,6 +59,19 @@ if(BUILD_TESTING)
     "std_msgs"
   )
   target_link_libraries(test_interactive_marker_server
+    ${PROJECT_NAME}
+  )
+
+  ament_add_gtest(test_interactive_marker_client
+    test/${PROJECT_NAME}/test_interactive_marker_client.cpp
+  )
+  ament_target_dependencies(test_interactive_marker_client
+    "geometry_msgs"
+    "rclcpp"
+    "std_msgs"
+    "tf2"
+  )
+  target_link_libraries(test_interactive_marker_client
     ${PROJECT_NAME}
   )
 endif()
