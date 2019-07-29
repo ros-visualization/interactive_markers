@@ -89,7 +89,7 @@ public:
   typedef std::function<void (visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr)>
     UpdateCallback;
   typedef std::function<void (visualization_msgs::srv::GetInteractiveMarkers::Response::SharedPtr)>
-    InitCallback;
+    InitializeCallback;
   typedef std::function<void (const std::string &)> ResetCallback;
   typedef std::function<void (StatusT, const std::string &, const std::string &)> StatusCallback;
 
@@ -140,18 +140,21 @@ public:
   void setTargetFrame(std::string target_frame);
 
   /// Set callback for init messages
-  void setInitCb(const InitCallback & cb);
+  void setInitializeCallback(const InitializeCallback & cb);
 
   /// Set callback for update messages
-  void setUpdateCb(const UpdateCallback & cb);
+  void setUpdateCallback(const UpdateCallback & cb);
 
   /// Set callback for resetting one server connection
-  void setResetCb(const ResetCallback & cb);
+  void setResetCallback(const ResetCallback & cb);
 
   /// Set callback for status updates
-  void setStatusCb(const StatusCallback & cb);
+  void setStatusCallback(const StatusCallback & cb);
 
-  void setEnableAutocompleteTransparency(bool enable) {enable_autocomplete_transparency_ = enable;}
+  inline void setEnableAutocompleteTransparency(bool enable)
+  {
+    enable_autocomplete_transparency_ = enable;
+  }
 
   inline StateT getState() const
   {
@@ -182,7 +185,7 @@ private:
   // subscribe to the init channel
   void subscribeUpdate();
 
-  void statusCb(StatusT status, const std::string & server_id, const std::string & msg);
+  void statusCallback(StatusT status, const std::string & server_id, const std::string & msg);
 
   typedef std::shared_ptr<SingleClient> SingleClientPtr;
   typedef std::unordered_map<std::string, SingleClientPtr> M_SingleClient;
@@ -192,64 +195,66 @@ private:
   std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core_;
   std::string target_frame_;
 
+// TODO(jacobperron): protected
 public:
   // for internal usage
-  struct CbCollection
+  struct Callbacks
   {
-    void initCb(visualization_msgs::srv::GetInteractiveMarkers::Response::SharedPtr i) const
+    void initializeCallback(
+      visualization_msgs::srv::GetInteractiveMarkers::Response::SharedPtr response) const
     {
-      if (init_cb_) {
-        init_cb_(i);
+      if (initialize_callback_) {
+        initialize_callback_(response);
       }
     }
 
-    void updateCb(visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr u) const
+    void updateCallback(visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr update) const
     {
-      if (update_cb_) {
-        update_cb_(u);
+      if (update_callback_) {
+        update_callback_(update);
       }
     }
 
-    void resetCb(const std::string & s) const
+    void resetCallback(const std::string & message) const
     {
-      if (reset_cb_) {
-        reset_cb_(s);
+      if (reset_callback_) {
+        reset_callback_(message);
       }
     }
 
-    void statusCb(StatusT s, const std::string & id, const std::string & m) const
+    void statusCallback(StatusT status, const std::string & id, const std::string & message) const
     {
-      if (status_cb_) {
-        status_cb_(s, id, m);
+      if (status_callback_) {
+        status_callback_(status, id, message);
       }
     }
 
-    void setInitCb(InitCallback init_cb)
+    void setInitializeCallback(InitializeCallback initialize_callback)
     {
-      init_cb_ = init_cb;
+      initialize_callback_ = initialize_callback;
     }
 
-    void setUpdateCb(UpdateCallback update_cb)
+    void setUpdateCallback(UpdateCallback update_callback)
     {
-      update_cb_ = update_cb;
+      update_callback_ = update_callback;
     }
 
-    void setResetCb(ResetCallback reset_cb)
+    void setResetCallback(ResetCallback reset_callback)
     {
-      reset_cb_ = reset_cb;
+      reset_callback_ = reset_callback;
     }
 
-    void setStatusCb(StatusCallback status_cb)
+    void setStatusCallback(StatusCallback status_callback)
     {
-      status_cb_ = status_cb;
+      status_callback_ = status_callback;
     }
 
 private:
-    InitCallback init_cb_;
-    UpdateCallback update_cb_;
-    ResetCallback reset_cb_;
-    StatusCallback status_cb_;
-  };  // struct CbCollection
+    InitializeCallback initialize_callback_;
+    UpdateCallback update_callback_;
+    ResetCallback reset_callback_;
+    StatusCallback status_callback_;
+  };  // struct Callbacks
 
   // handle update message
   void processUpdate(const visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg);
@@ -259,7 +264,7 @@ private:
   InteractiveMarkerClient(const InteractiveMarkerClient &) = delete;
   InteractiveMarkerClient & operator=(const InteractiveMarkerClient &) = delete;
 
-  CbCollection callbacks_;
+  Callbacks callbacks_;
 
   // this is the real (external) status callback
   StatusCallback status_cb_;

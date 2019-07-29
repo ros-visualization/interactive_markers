@@ -69,8 +69,8 @@ InteractiveMarkerServer::InteractiveMarkerServer(
     server_id_ = base_interface->get_fully_qualified_name();
   }
 
-  std::string update_topic = topic_ns + "/update";
-  std::string feedback_topic = topic_ns + "/feedback";
+  const std::string update_topic = topic_ns + "/update";
+  const std::string feedback_topic = topic_ns + "/feedback";
 
   get_interactive_markers_service_ = rclcpp::create_service<
     visualization_msgs::srv::GetInteractiveMarkers>(
@@ -108,7 +108,6 @@ InteractiveMarkerServer::InteractiveMarkerServer(
   timers_interface->add_timer(keep_alive_timer_, group);
 }
 
-
 InteractiveMarkerServer::~InteractiveMarkerServer()
 {
   if (rclcpp::ok(context_)) {
@@ -125,8 +124,6 @@ void InteractiveMarkerServer::applyChanges()
     return;
   }
 
-  M_UpdateContext::iterator update_it;
-
   visualization_msgs::msg::InteractiveMarkerUpdate update;
   update.type = visualization_msgs::msg::InteractiveMarkerUpdate::UPDATE;
 
@@ -134,7 +131,10 @@ void InteractiveMarkerServer::applyChanges()
   update.poses.reserve(marker_contexts_.size());
   update.erases.reserve(marker_contexts_.size());
 
-  for (update_it = pending_updates_.begin(); update_it != pending_updates_.end(); update_it++) {
+  for (auto update_it = pending_updates_.begin();
+    update_it != pending_updates_.end();
+    update_it++)
+  {
     M_MarkerContext::iterator marker_context_it = marker_contexts_.find(update_it->first);
 
     switch (update_it->second.update_type) {
@@ -193,7 +193,6 @@ void InteractiveMarkerServer::applyChanges()
   pending_updates_.clear();
 }
 
-
 bool InteractiveMarkerServer::erase(const std::string & name)
 {
   std::unique_lock<std::recursive_mutex> lock(mutex_);
@@ -219,18 +218,15 @@ void InteractiveMarkerServer::clear()
   }
 }
 
-
 bool InteractiveMarkerServer::empty() const
 {
   return marker_contexts_.empty();
 }
 
-
 std::size_t InteractiveMarkerServer::size() const
 {
   return marker_contexts_.size();
 }
-
 
 bool InteractiveMarkerServer::setPose(
   const std::string & name,
@@ -244,7 +240,7 @@ bool InteractiveMarkerServer::setPose(
 
   // if there's no marker and no pending addition for it, we can't update the pose
   if (marker_context_it == marker_contexts_.end() &&
-    ( update_it == pending_updates_.end() ||
+    (update_it == pending_updates_.end() ||
     update_it->second.update_type != UpdateContext::FULL_UPDATE))
   {
     return false;
@@ -267,7 +263,8 @@ bool InteractiveMarkerServer::setPose(
 }
 
 bool InteractiveMarkerServer::setCallback(
-  const std::string & name, FeedbackCallback feedback_cb,
+  const std::string & name,
+  FeedbackCallback feedback_cb,
   uint8_t feedback_type)
 {
   std::unique_lock<std::recursive_mutex> lock(mutex_);
@@ -281,7 +278,6 @@ bool InteractiveMarkerServer::setCallback(
 
   // we need to overwrite both the callbacks for the actual marker
   // and the update, if there's any
-
   if (marker_context_it != marker_contexts_.end()) {
     // the marker exists, so we can just overwrite the existing callbacks
     if (feedback_type == DEFAULT_FEEDBACK_CB) {
@@ -324,7 +320,8 @@ void InteractiveMarkerServer::insert(const visualization_msgs::msg::InteractiveM
 
 void InteractiveMarkerServer::insert(
   const visualization_msgs::msg::InteractiveMarker & int_marker,
-  FeedbackCallback feedback_cb, uint8_t feedback_type)
+  FeedbackCallback feedback_cb,
+  uint8_t feedback_type)
 {
   insert(int_marker);
 
@@ -379,6 +376,7 @@ void InteractiveMarkerServer::getInteractiveMarkersCallback(
   std::shared_ptr<visualization_msgs::srv::GetInteractiveMarkers::Response> response)
 {
   (void)request_header;
+
   RCLCPP_DEBUG(logger_, "Responding to request to get interactive markers");
   response->server_id = server_id_;
   response->sequence_number = seq_num_;
@@ -429,9 +427,8 @@ void InteractiveMarkerServer::processFeedback(
   }
 
   // call feedback handler
-  std::unordered_map<uint8_t,
-    FeedbackCallback>::iterator feedback_cb_it = marker_context.feedback_cbs.find(
-    feedback->event_type);
+  std::unordered_map<uint8_t, FeedbackCallback>::iterator feedback_cb_it =
+    marker_context.feedback_cbs.find(feedback->event_type);
   if (feedback_cb_it != marker_context.feedback_cbs.end() && feedback_cb_it->second) {
     // call type-specific callback
     feedback_cb_it->second(feedback);
@@ -441,7 +438,6 @@ void InteractiveMarkerServer::processFeedback(
   }
 }
 
-
 void InteractiveMarkerServer::keepAlive()
 {
   visualization_msgs::msg::InteractiveMarkerUpdate empty_update;
@@ -449,14 +445,12 @@ void InteractiveMarkerServer::keepAlive()
   publish(empty_update);
 }
 
-
 void InteractiveMarkerServer::publish(visualization_msgs::msg::InteractiveMarkerUpdate & update)
 {
   update.server_id = server_id_;
   update.seq_num = seq_num_;
   update_pub_->publish(update);
 }
-
 
 void InteractiveMarkerServer::doSetPose(
   M_UpdateContext::iterator update_it,

@@ -70,7 +70,7 @@ InteractiveMarkerClient::InteractiveMarkerClient(
   if (!topic_ns.empty()) {
     subscribe(topic_ns);
   }
-  callbacks_.setStatusCb(std::bind(&InteractiveMarkerClient::statusCb, this, _1, _2, _3));
+  callbacks_.setStatusCallback(std::bind(&InteractiveMarkerClient::statusCallback, this, _1, _2, _3));
 }
 
 InteractiveMarkerClient::~InteractiveMarkerClient()
@@ -94,22 +94,22 @@ void InteractiveMarkerClient::subscribe(std::string topic_ns)
   requestInteractiveMarkers();
 }
 
-void InteractiveMarkerClient::setInitCb(const InitCallback & cb)
+void InteractiveMarkerClient::setInitializeCallback(const InitializeCallback & cb)
 {
-  callbacks_.setInitCb(cb);
+  callbacks_.setInitializeCallback(cb);
 }
 
-void InteractiveMarkerClient::setUpdateCb(const UpdateCallback & cb)
+void InteractiveMarkerClient::setUpdateCallback(const UpdateCallback & cb)
 {
-  callbacks_.setUpdateCb(cb);
+  callbacks_.setUpdateCallback(cb);
 }
 
-void InteractiveMarkerClient::setResetCb(const ResetCallback & cb)
+void InteractiveMarkerClient::setResetCallback(const ResetCallback & cb)
 {
-  callbacks_.setResetCb(cb);
+  callbacks_.setResetCallback(cb);
 }
 
-void InteractiveMarkerClient::setStatusCb(const StatusCallback & cb)
+void InteractiveMarkerClient::setStatusCallback(const StatusCallback & cb)
 {
   status_cb_ = cb;
 }
@@ -182,24 +182,24 @@ void InteractiveMarkerClient::subscribeUpdate()
         std::bind(&InteractiveMarkerClient::processUpdate, this, _1));
       RCLCPP_DEBUG(logger_, "Subscribed to update topic: %s", (topic_ns_ + "/update").c_str());
     } catch (rclcpp::exceptions::InvalidNodeError & ex) {
-      callbacks_.statusCb(ERROR, "General", "Error subscribing: " + std::string(ex.what()));
+      callbacks_.statusCallback(ERROR, "General", "Error subscribing: " + std::string(ex.what()));
       return;
     } catch (rclcpp::exceptions::NameValidationError & ex) {
-      callbacks_.statusCb(ERROR, "General", "Error subscribing: " + std::string(ex.what()));
+      callbacks_.statusCallback(ERROR, "General", "Error subscribing: " + std::string(ex.what()));
       return;
     }
   }
-  callbacks_.statusCb(OK, "General", "Waiting for messages.");
+  callbacks_.statusCallback(OK, "General", "Waiting for messages.");
 }
 
 template<class MsgSharedPtrT>
 void InteractiveMarkerClient::process(const MsgSharedPtrT msg)
 {
-  callbacks_.statusCb(OK, "General", "Receiving messages.");
+  callbacks_.statusCallback(OK, "General", "Receiving messages.");
 
   // get caller ID of the sending entity
   if (msg->server_id.empty()) {
-    callbacks_.statusCb(ERROR, "General", "Received message with empty server_id!");
+    callbacks_.statusCallback(ERROR, "General", "Received message with empty server_id!");
     return;
   }
 
@@ -233,12 +233,6 @@ void InteractiveMarkerClient::process(const MsgSharedPtrT msg)
   client->process(msg, enable_autocomplete_transparency_);
 }
 
-// void InteractiveMarkerClient::processInit(
-//   visualization_msgs::msg::InteractiveMarkerInit::SharedPtr msg)
-// {
-//   process<visualization_msgs::msg::InteractiveMarkerInit::SharedPtr>(msg);
-// }
-
 void InteractiveMarkerClient::processUpdate(
   visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg)
 {
@@ -258,7 +252,7 @@ void InteractiveMarkerClient::update()
         const size_t num_publishers = graph_interface_->count_publishers(
           update_sub_->get_topic_name());
         if (num_publishers < last_num_publishers_) {
-          callbacks_.statusCb(ERROR, "General", "Server is offline. Resetting.");
+          callbacks_.statusCallback(ERROR, "General", "Server is offline. Resetting.");
           shutdown();
           subscribeUpdate();
           requestInteractiveMarkers();
@@ -301,7 +295,7 @@ void InteractiveMarkerClient::update()
   }
 }
 
-void InteractiveMarkerClient::statusCb(
+void InteractiveMarkerClient::statusCallback(
   StatusT status, const std::string & server_id,
   const std::string & msg)
 {

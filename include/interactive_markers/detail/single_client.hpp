@@ -62,7 +62,7 @@ public:
     const std::string & server_id,
     std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core,
     const std::string & target_frame,
-    const InteractiveMarkerClient::CbCollection & callbacks);
+    const InteractiveMarkerClient::Callbacks & callbacks);
 
   ~SingleClient();
 
@@ -134,7 +134,7 @@ private:
   std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core_;
   std::string target_frame_;
 
-  const InteractiveMarkerClient::CbCollection & callbacks_;
+  const InteractiveMarkerClient::Callbacks & callbacks_;
 
   std::string server_id_;
 

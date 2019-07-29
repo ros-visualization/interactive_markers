@@ -219,7 +219,7 @@ TEST_F(TestInteractiveMarkerClient, init_callback)
       called = true;
     };
 
-  client_->setInitCb(callback);
+  client_->setInitializeCallback(callback);
 
   // Creating a server should trigger the callback
   auto mock_server = std::make_shared<MockInteractiveMarkerServer>(topic_namespace_);
@@ -239,7 +239,7 @@ TEST_F(TestInteractiveMarkerClient, update_callback)
       output_pose = msg->poses[0].pose;
     };
 
-  client_->setUpdateCb(callback);
+  client_->setUpdateCallback(callback);
 
   // Publish an update from a server
   auto mock_server = std::make_shared<MockInteractiveMarkerServer>(topic_namespace_);
