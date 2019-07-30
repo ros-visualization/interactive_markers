@@ -39,12 +39,13 @@
 #include "visualization_msgs/srv/get_interactive_markers.hpp"
 
 #include "interactive_markers/interactive_marker_client.hpp"
-#include "interactive_markers/detail/single_client.hpp"
 
 using namespace std::placeholders;
 
 namespace interactive_markers
 {
+
+const size_t MAX_UPDATE_QUEUE_SIZE = 100u;
 
 InteractiveMarkerClient::InteractiveMarkerClient(
   rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base_interface,
@@ -54,265 +55,377 @@ InteractiveMarkerClient::InteractiveMarkerClient(
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_interface,
   std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core,
   const std::string & target_frame,
-  const std::string & topic_ns)
-: state_("InteractiveMarkerClient", IDLE),
-  node_base_interface_(node_base_interface),
+  const std::string & topic_namespace)
+: node_base_interface_(node_base_interface),
   topics_interface_(topics_interface),
   services_interface_(services_interface),
   graph_interface_(graph_interface),
   logger_(logging_interface->get_logger()),
+  state_("InteractiveMarkerClient", IDLE),
   tf_buffer_core_(tf_buffer_core),
-  last_num_publishers_(0),
-  server_ready_(false),
+  target_frame_(target_frame),
+  topic_namespace_(topic_namespace),
+  initial_response_msg_(0),
+  first_update_(true),
+  last_update_sequence_number_(0u),
   enable_autocomplete_transparency_(true)
 {
-  target_frame_ = target_frame;
-  if (!topic_ns.empty()) {
-    subscribe(topic_ns);
-  }
-  callbacks_.setStatusCallback(std::bind(&InteractiveMarkerClient::statusCallback, this, _1, _2, _3));
+  connect(topic_namespace_);
 }
 
 InteractiveMarkerClient::~InteractiveMarkerClient()
 {
-  shutdown();
+  disconnect();
 }
 
-/// Subscribe to given topic
-void InteractiveMarkerClient::subscribe(std::string topic_ns)
+void InteractiveMarkerClient::connect(std::string topic_namespace)
 {
-  topic_ns_ = topic_ns;
-  subscribeUpdate();
+  changeState(IDLE);
+  topic_namespace_ = topic_namespace;
+
+  // Terminate any existing connection
+  disconnect();
+
+  // Don't do anything if no namespace is provided
+  if (topic_namespace_.empty()) {
+    return;
+  }
+
+  // TODO(jacobperron) try-catch
   get_interactive_markers_client_ =
     rclcpp::create_client<visualization_msgs::srv::GetInteractiveMarkers>(
     node_base_interface_,
     graph_interface_,
     services_interface_,
-    topic_ns_ + "/get_interactive_markers",
+    topic_namespace_ + "/get_interactive_markers",
     rmw_qos_profile_services_default,
     nullptr);
-  requestInteractiveMarkers();
+
+  try {
+    rclcpp::QoS update_qos(rclcpp::KeepLast(100));
+    update_sub_ = rclcpp::create_subscription<visualization_msgs::msg::InteractiveMarkerUpdate>(
+      topics_interface_,
+      topic_namespace_ + "/update",
+      update_qos,
+      std::bind(&InteractiveMarkerClient::processUpdate, this, _1));
+  } catch (rclcpp::exceptions::InvalidNodeError & ex) {
+    updateStatus(ERROR, "Error subscribing: " + std::string(ex.what()));
+    return;
+  } catch (rclcpp::exceptions::NameValidationError & ex) {
+    updateStatus(ERROR, "Error subscribing: " + std::string(ex.what()));
+    return;
+  }
+
+  updateStatus(INFO, "Connected on namespace: " + topic_namespace_);
 }
 
-void InteractiveMarkerClient::setInitializeCallback(const InitializeCallback & cb)
+void InteractiveMarkerClient::disconnect()
 {
-  callbacks_.setInitializeCallback(cb);
+  get_interactive_markers_client_.reset();
+  update_sub_.reset();
+  reset();
 }
 
-void InteractiveMarkerClient::setUpdateCallback(const UpdateCallback & cb)
+void InteractiveMarkerClient::update()
 {
-  callbacks_.setUpdateCallback(cb);
-}
+  if (!get_interactive_markers_client_) {
+    // Disconnected
+    updateStatus(WARN, "Update called when disconnected");
+    return;
+  }
 
-void InteractiveMarkerClient::setResetCallback(const ResetCallback & cb)
-{
-  callbacks_.setResetCallback(cb);
-}
+  const bool server_ready = get_interactive_markers_client_->service_is_ready();
 
-void InteractiveMarkerClient::setStatusCallback(const StatusCallback & cb)
-{
-  status_cb_ = cb;
+  switch (state_) {
+    case IDLE:
+      if (server_ready) {
+        changeState(INITIALIZE);
+      }
+      break;
+
+    case INITIALIZE:
+      if (!server_ready) {
+        updateStatus(WARN, "Server not available during initialization, resetting");
+        changeState(IDLE);
+        break;
+      }
+      // If there's an unexpected error, reset
+      if (!transformInitialMessage()) {
+        changeState(IDLE);
+        break;
+      }
+      if (checkInitializeFinished()) {
+        changeState(RUNNING);
+      }
+      break;
+
+    case RUNNING:
+      if (!server_ready) {
+        updateStatus(WARN, "Server not available while running, resetting");
+        changeState(IDLE);
+        break;
+      }
+      // If there's an unexpected error, reset
+      if (!transformUpdateMessages()) {
+        changeState(IDLE);
+        break;
+      }
+      pushUpdates();
+      break;
+
+    default:
+      updateStatus(ERROR, "Invalid state in update: " + std::to_string(getState()));
+  }
 }
 
 void InteractiveMarkerClient::setTargetFrame(std::string target_frame)
 {
-  target_frame_ = target_frame;
-  RCLCPP_DEBUG(logger_, "Target frame is now %s", target_frame_.c_str());
-
-  switch (state_) {
-    case IDLE:
-      break;
-
-    case INIT:
-    case RUNNING:
-      shutdown();
-      subscribeUpdate();
-      requestInteractiveMarkers();
-      break;
+  if (target_frame_ == target_frame) {
+    return;
   }
+
+  target_frame_ = target_frame;
+  updateStatus(INFO, "Target frame is now " + target_frame_);
+
+  // TODO(jacobperron): Maybe we can do better, efficiency-wise
+  changeState(IDLE);
 }
 
-void InteractiveMarkerClient::shutdown()
+void InteractiveMarkerClient::setInitializeCallback(const InitializeCallback & cb)
 {
-  switch (state_) {
-    case IDLE:
-      break;
+  initialize_callback_ = cb;
+}
 
-    case INIT:
-    case RUNNING:
-      get_interactive_markers_client_.reset();
-      update_sub_.reset();
-      std::lock_guard<std::mutex> lock(publisher_contexts_mutex_);
-      publisher_contexts_.clear();
-      last_num_publishers_ = 0;
-      state_ = IDLE;
-      break;
-  }
+void InteractiveMarkerClient::setUpdateCallback(const UpdateCallback & cb)
+{
+  update_callback_ = cb;
+}
+
+void InteractiveMarkerClient::setResetCallback(const ResetCallback & cb)
+{
+  reset_callback_ = cb;
+}
+
+void InteractiveMarkerClient::setStatusCallback(const StatusCallback & cb)
+{
+  status_callback_ = cb;
+}
+
+void InteractiveMarkerClient::reset()
+{
+  // TODO: thread-safety
+  state_ = IDLE;
+  first_update_ = true;
+  initial_response_msg_.reset();
+  update_queue_.clear();
 }
 
 void InteractiveMarkerClient::requestInteractiveMarkers()
 {
-  state_ = INIT;
-
-  server_ready_ = get_interactive_markers_client_->service_is_ready();
-
-  if (!server_ready_) {
+  if (!get_interactive_markers_client_) {
+    updateStatus(ERROR, "Interactive markers requested when client is disconnected");
     return;
   }
 
-  auto callback =
-    [this](rclcpp::Client<visualization_msgs::srv::GetInteractiveMarkers>::SharedFuture future) {
-      process<visualization_msgs::srv::GetInteractiveMarkers::Response::SharedPtr>(future.get());
-    };
+  updateStatus(DEBUG, "Sending request for interactive markers");
+
+  auto callback = std::bind(&InteractiveMarkerClient::processInitialMessage, this, _1);
   auto request = std::make_shared<visualization_msgs::srv::GetInteractiveMarkers::Request>();
   get_interactive_markers_client_->async_send_request(
     request,
     callback);
 }
 
-void InteractiveMarkerClient::subscribeUpdate()
+void InteractiveMarkerClient::processInitialMessage(
+  rclcpp::Client<visualization_msgs::srv::GetInteractiveMarkers>::SharedFuture future)
 {
-  if (!topic_ns_.empty()) {
-    try {
-      rclcpp::QoS update_qos(rclcpp::KeepLast(100));
-      update_sub_ = rclcpp::create_subscription<visualization_msgs::msg::InteractiveMarkerUpdate>(
-        topics_interface_,
-        topic_ns_ + "/update",
-        update_qos,
-        std::bind(&InteractiveMarkerClient::processUpdate, this, _1));
-      RCLCPP_DEBUG(logger_, "Subscribed to update topic: %s", (topic_ns_ + "/update").c_str());
-    } catch (rclcpp::exceptions::InvalidNodeError & ex) {
-      callbacks_.statusCallback(ERROR, "General", "Error subscribing: " + std::string(ex.what()));
-      return;
-    } catch (rclcpp::exceptions::NameValidationError & ex) {
-      callbacks_.statusCallback(ERROR, "General", "Error subscribing: " + std::string(ex.what()));
-      return;
-    }
-  }
-  callbacks_.statusCallback(OK, "General", "Waiting for messages.");
-}
-
-template<class MsgSharedPtrT>
-void InteractiveMarkerClient::process(const MsgSharedPtrT msg)
-{
-  callbacks_.statusCallback(OK, "General", "Receiving messages.");
-
-  // get caller ID of the sending entity
-  if (msg->server_id.empty()) {
-    callbacks_.statusCallback(ERROR, "General", "Received message with empty server_id!");
-    return;
-  }
-
-  SingleClientPtr client;
-  {
-    std::lock_guard<std::mutex> lock(publisher_contexts_mutex_);
-
-    M_SingleClient::iterator context_it = publisher_contexts_.find(msg->server_id);
-
-    // If we haven't seen this publisher before, we need to reset the
-    // display and listen to the init topic, plus of course add this
-    // publisher to our list.
-    if (context_it == publisher_contexts_.end()) {
-      RCLCPP_DEBUG(logger_, "New publisher detected: %s", msg->server_id.c_str());
-
-      client = std::make_shared<SingleClient>(
-        msg->server_id,
-        tf_buffer_core_,
-        target_frame_,
-        callbacks_);
-      context_it = publisher_contexts_.emplace(msg->server_id, client).first;
-
-      // we need to request markers again
-      requestInteractiveMarkers();
-    }
-
-    client = context_it->second;
-  }
-
-  // forward init/update to respective context
-  client->process(msg, enable_autocomplete_transparency_);
+  updateStatus(DEBUG, "Service response received for initialization");
+  auto response = future.get();
+  // TODO: thread safety
+  initial_response_msg_ = std::make_shared<InitialMessageContext>(
+    tf_buffer_core_, target_frame_, response, enable_autocomplete_transparency_);
 }
 
 void InteractiveMarkerClient::processUpdate(
   visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg)
 {
-  process<visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr>(msg);
+  // TODO: thread safety
+  if (msg->server_id.empty()) {
+    updateStatus(ERROR, "Received message with empty server ID");
+    return;
+  }
+
+  // Ignore legacy "keep alive" messages
+  if (msg->type == msg->KEEP_ALIVE) {
+    RCLCPP_WARN_ONCE(
+      logger_,
+      "KEEP_ALIVE message ignored. "
+      "Servers are no longer expected to publish this type of message.");
+    return;
+  }
+
+  if (!first_update_ && msg->seq_num != last_update_sequence_number_ + 1) {
+    std::ostringstream oss;
+    oss << "Update sequence number is out of order. " << last_update_sequence_number_ + 1 <<
+     " (expected) vs. " << msg->seq_num << " (received)";
+    updateStatus(WARN, oss.str());
+    // Change state to IDLE to cause reset
+    changeState(IDLE);
+    return;
+  }
+
+  updateStatus(DEBUG, "Received update with sequence number " + std::to_string(msg->seq_num));
+
+  first_update_ = false;
+  last_update_sequence_number_ = msg->seq_num;
+
+  if (update_queue_.size() > MAX_UPDATE_QUEUE_SIZE) {
+    updateStatus(
+      WARN,
+      "Update queue too large. Erasing message with sequence number " +
+      std::to_string(update_queue_.begin()->msg->seq_num));
+    update_queue_.pop_back();
+  }
+
+  update_queue_.push_front(UpdateMessageContext(
+      tf_buffer_core_, target_frame_, msg, enable_autocomplete_transparency_));
 }
 
-void InteractiveMarkerClient::update()
+bool InteractiveMarkerClient::transformInitialMessage()
 {
-  switch (state_) {
-    case IDLE:
-      break;
+  if (!initial_response_msg_) {
+    // We haven't received a response yet
+    return true;
+  }
 
-    case INIT:
-    case RUNNING:
-      {
-        // check if one publisher has gone offline
-        const size_t num_publishers = graph_interface_->count_publishers(
-          update_sub_->get_topic_name());
-        if (num_publishers < last_num_publishers_) {
-          callbacks_.statusCallback(ERROR, "General", "Server is offline. Resetting.");
-          shutdown();
-          subscribeUpdate();
-          requestInteractiveMarkers();
-          return;
-        }
-        last_num_publishers_ = num_publishers;
+  std::cout << "transform Initiali message" << std::endl;
+  try {
+    initial_response_msg_->getTfTransforms();
+    // TODO(jacobperron): Use custom exception
+  } catch (std::runtime_error & e) {
+    std::ostringstream oss;
+    oss << "Resetting due to tf error: " << e.what();
+    updateStatus(ERROR, oss.str());
+    return false;
+  } catch (...) {
+    std::ostringstream oss;
+    oss << "Resetting due to unknown exception";
+    updateStatus(ERROR, oss.str());
+    return false;
+  }
 
-        // check if all single clients are finished with the init channels
-        bool initialized = true;
-        std::lock_guard<std::mutex> lock(publisher_contexts_mutex_);
-        M_SingleClient::iterator it;
-        for (it = publisher_contexts_.begin(); it != publisher_contexts_.end(); ++it) {
-          // Explicitly reference the pointer to the client here, because the client
-          // might call user code, which might call shutdown(), which will delete
-          // the publisher_contexts_ map...
+  return true;
+}
 
-          SingleClientPtr single_client = it->second;
-          single_client->update();
-          if (!single_client->isInitialized()) {
-            initialized = false;
-          }
+bool InteractiveMarkerClient::transformUpdateMessages()
+{
+  for (auto it = update_queue_.begin(); it != update_queue_.end(); ++it) {
+    try {
+      it->getTfTransforms();
+      // TODO(jacobperron): Use custom exception
+    } catch (std::runtime_error & e) {
+      std::ostringstream oss;
+      oss << "Resetting due to tf error: " << e.what();
+      updateStatus(ERROR, oss.str());
+      return false;
+    } catch (...) {
+      std::ostringstream oss;
+      oss << "Resetting due to unknown exception";
+      updateStatus(ERROR, oss.str());
+      return false;
+    }
+  }
+  return true;
+}
 
-          if (publisher_contexts_.empty()) {
-            break;  // Yep, someone called shutdown()...
-          }
-        }
-        if (state_ == INIT) {
-          if (initialized) {
-            state_ = RUNNING;
-          } else if (!server_ready_) {
-            // Keep trying to request markers until server is ready
-            requestInteractiveMarkers();
-          }
-        }
-        if (state_ == RUNNING && !initialized) {
-          requestInteractiveMarkers();
-        }
-        break;
-      }
+bool InteractiveMarkerClient::checkInitializeFinished()
+{
+  if (!initial_response_msg_) {
+    // We haven't received a response yet
+    return false;
+  }
+
+  const uint64_t & response_sequence_number = initial_response_msg_->msg->sequence_number;
+  if (!initial_response_msg_->isReady()) {
+    updateStatus(DEBUG, "Initialization: Waiting for TF info");
+    return false;
+  }
+
+  // Prune old update messages
+  while (!update_queue_.empty() && update_queue_.back().msg->seq_num <= response_sequence_number) {
+    updateStatus(
+      DEBUG,
+      "Omitting update with sequence number " + std::to_string(update_queue_.back().msg->seq_num));
+    update_queue_.pop_back();
+  }
+
+  if (initialize_callback_) {
+    initialize_callback_(initial_response_msg_->msg);
+  }
+
+  updateStatus(DEBUG, "Initialized");
+
+  return true;
+}
+
+void InteractiveMarkerClient::pushUpdates() {
+  while (!update_queue_.empty() && update_queue_.back().isReady()) {
+    visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg = update_queue_.back().msg;
+    updateStatus(DEBUG, "Pushing update with sequence number " + std::to_string(msg->seq_num));
+    if (update_callback_) {
+      update_callback_(msg);
+    }
+    update_queue_.pop_back();
   }
 }
 
-void InteractiveMarkerClient::statusCallback(
-  StatusT status, const std::string & server_id,
-  const std::string & msg)
+void InteractiveMarkerClient::changeState(const State & new_state)
+{
+  if (state_ == new_state) {
+    return;
+  }
+
+  updateStatus(DEBUG, "Change state to: " + std::to_string(new_state));
+
+  switch (new_state)
+  {
+    case IDLE:
+      reset();
+      break;
+
+    case INITIALIZE:
+      requestInteractiveMarkers();
+      break;
+
+    case RUNNING:
+      break;
+
+    default:
+      updateStatus(ERROR, "Invalid state when changing state: " + std::to_string(new_state));
+      return;
+  }
+  state_ = new_state;
+}
+
+void InteractiveMarkerClient::updateStatus(const Status status, const std::string & msg)
 {
   switch (status) {
-    case OK:
-      RCLCPP_DEBUG(logger_, "%s: %s (Status: OK)", server_id.c_str(), msg.c_str());
+    case DEBUG:
+      RCLCPP_DEBUG(logger_, "%s", msg.c_str());
+      break;
+    case INFO:
+      RCLCPP_INFO(logger_, "%s", msg.c_str());
       break;
     case WARN:
-      RCLCPP_DEBUG(logger_, "%s: %s (Status: WARNING)", server_id.c_str(), msg.c_str());
+      RCLCPP_WARN(logger_, "%s", msg.c_str());
       break;
     case ERROR:
-      RCLCPP_DEBUG(logger_, "%s: %s (Status: ERROR)", server_id.c_str(), msg.c_str());
+      RCLCPP_ERROR(logger_, "%s", msg.c_str());
       break;
   }
 
-  if (status_cb_) {
-    status_cb_(status, server_id, msg);
+  if (status_callback_) {
+    status_callback_(status, msg);
   }
 }
 

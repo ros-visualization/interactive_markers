@@ -44,6 +44,7 @@ get_interactive_markers()
   {
     visualization_msgs::msg::InteractiveMarker marker;
     marker.name = "test_marker_0";
+    marker.header.frame_id = "test_frame_id";
     markers.push_back(marker);
   }
   {

@@ -13,7 +13,7 @@ add_library(${PROJECT_NAME}
   src/tools.cpp
   src/menu_handler.cpp
   src/interactive_marker_client.cpp
-  src/single_client.cpp
+  # src/single_client.cpp
   src/message_context.cpp
 )
 target_include_directories(${PROJECT_NAME} PUBLIC include)
