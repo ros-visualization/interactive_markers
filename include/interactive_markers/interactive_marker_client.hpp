@@ -216,6 +216,8 @@ private:
 
   std::string topic_namespace_;
 
+  std::recursive_mutex mutex_;
+
   // The response message from the request to get interactive markers
   std::shared_ptr<InitialMessageContext> initial_response_msg_;
 

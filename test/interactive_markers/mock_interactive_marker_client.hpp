@@ -61,7 +61,6 @@ public:
   visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr last_update_message;
   visualization_msgs::srv::GetInteractiveMarkers::Response::SharedPtr last_response_message;
 
-private:
   std::string topic_namespace_;
   rclcpp::Client<visualization_msgs::srv::GetInteractiveMarkers>::SharedPtr client_;
   rclcpp::Publisher<visualization_msgs::msg::InteractiveMarkerFeedback>::SharedPtr publisher_;
@@ -102,6 +101,9 @@ void MockInteractiveMarkerClient::publishFeedback(
 MockInteractiveMarkerClient::SharedFuture
 MockInteractiveMarkerClient::requestInteractiveMarkers()
 {
+  if (!client_->wait_for_service(std::chrono::seconds(2))) {
+    RCLCPP_WARN(get_logger(), "Reqested interactive markers, but service is not available");
+  }
   return client_->async_send_request(
     std::make_shared<visualization_msgs::srv::GetInteractiveMarkers::Request>());
 }

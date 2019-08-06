@@ -80,19 +80,16 @@ class TestInteractiveMarkerClient : public ::testing::Test
 protected:
   static void SetUpTestCase()
   {
-    std::cout << "SetUpTestCase()" << std::endl;
     rclcpp::init(0, nullptr);
   }
 
   static void TearDownTestCase()
   {
-    std::cout << "TearDownTestCase()" << std::endl;
     rclcpp::shutdown();
   }
 
   void SetUp()
   {
-    std::cout << "SetUp()" << std::endl;
     target_frame_id_ = "test_target_frame_id";
     topic_namespace_ = "test_namespace";
     executor_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
@@ -105,11 +102,22 @@ protected:
 
   void TearDown()
   {
-    std::cout << "TearDown()" << std::endl;
     client_.reset();
     buffer_.reset();
     node_.reset();
     executor_.reset();
+  }
+
+  void makeTfDataAvailable(const std::vector<visualization_msgs::msg::InteractiveMarker> & markers)
+  {
+    geometry_msgs::msg::TransformStamped transform_stamped;
+    transform_stamped.header.frame_id = target_frame_id_;
+    transform_stamped.header.stamp = builtin_interfaces::msg::Time(node_->now());
+    transform_stamped.transform.rotation.w = 1.0;
+    for (std::size_t i = 0u; i < markers.size(); ++i) {
+      transform_stamped.child_frame_id = markers[0].header.frame_id;
+      ASSERT_TRUE(buffer_->setTransform(transform_stamped, "mock_tf_authority"));
+    }
   }
 
   std::string target_frame_id_;
@@ -124,105 +132,107 @@ TEST_F(TestInteractiveMarkerClient, states)
 {
   using namespace std::chrono_literals;
 
-  // Not using member client for this test
-  client_.reset();
-
   // IDLE -> IDLE
   {
-    interactive_markers::InteractiveMarkerClient client(
-      node_, buffer_, target_frame_id_, topic_namespace_);
-    EXPECT_EQ(client.getState(), ClientState::IDLE);
-    client.update();
-    EXPECT_EQ(client.getState(), ClientState::IDLE);
+    client_.reset(
+      new interactive_markers::InteractiveMarkerClient(
+        node_, buffer_, target_frame_id_, topic_namespace_));
+    EXPECT_EQ(client_->getState(), ClientState::IDLE);
+    client_->update();
+    EXPECT_EQ(client_->getState(), ClientState::IDLE);
   }
 
   // IDLE -> INITIALIZE -> IDLE -> INITIALIZE
   {
-    interactive_markers::InteractiveMarkerClient client(
-      node_, buffer_, target_frame_id_, topic_namespace_);
-    client.update();
-    EXPECT_EQ(client.getState(), ClientState::IDLE);
+    client_.reset(
+      new interactive_markers::InteractiveMarkerClient(
+        node_, buffer_, target_frame_id_, topic_namespace_));
+    client_->update();
+    EXPECT_EQ(client_->getState(), ClientState::IDLE);
     // Start server
     auto mock_server = std::make_shared<MockInteractiveMarkerServer>(topic_namespace_);
     executor_->add_node(mock_server);
     // Repeatedly call the client's update method until the server is detected
-    auto update_func = std::bind(&interactive_markers::InteractiveMarkerClient::update, &client);
+    auto update_func = std::bind(
+      &interactive_markers::InteractiveMarkerClient::update, client_.get());
     TIMED_EXPECT_EQ(
-      client.getState(), ClientState::INITIALIZE, 3s, 10ms, (*executor_), update_func);
+      client_->getState(), ClientState::INITIALIZE, 3s, 10ms, (*executor_), update_func);
     // Disconnect server
     executor_->remove_node(mock_server);
     mock_server.reset();
     TIMED_EXPECT_EQ(
-      client.getState(), ClientState::IDLE, 3s, 10ms, (*executor_), update_func);
+      client_->getState(), ClientState::IDLE, 3s, 10ms, (*executor_), update_func);
     // Re-start server
     mock_server.reset(new MockInteractiveMarkerServer(topic_namespace_));
     executor_->add_node(mock_server);
     TIMED_EXPECT_EQ(
-      client.getState(), ClientState::INITIALIZE, 3s, 10ms, (*executor_), update_func);
+      client_->getState(), ClientState::INITIALIZE, 3s, 10ms, (*executor_), update_func);
+    executor_->remove_node(mock_server);
   }
 
   // IDLE -> INITIALIZE -> RUNNING -> IDLE
   {
-    interactive_markers::InteractiveMarkerClient client(
-      node_, buffer_, target_frame_id_, topic_namespace_);
-    client.update();
-    EXPECT_EQ(client.getState(), ClientState::IDLE);
+    client_.reset(
+      new interactive_markers::InteractiveMarkerClient(
+        node_, buffer_, target_frame_id_, topic_namespace_));
+    // client_->update();
+    EXPECT_EQ(client_->getState(), ClientState::IDLE);
     // Start server
     auto mock_server = std::make_shared<MockInteractiveMarkerServer>(topic_namespace_);
     executor_->add_node(mock_server);
     // Repeatedly call the client's update method until the server is detected
-    auto update_func = std::bind(&interactive_markers::InteractiveMarkerClient::update, &client);
+    auto update_func = std::bind(
+      &interactive_markers::InteractiveMarkerClient::update, client_.get());
     TIMED_EXPECT_EQ(
-      client.getState(), ClientState::INITIALIZE, 3s, 10ms, (*executor_), update_func);
-    // Publish required TF data in order to finish initializing
-    geometry_msgs::msg::TransformStamped transform_stamped;
-    transform_stamped.header.frame_id = target_frame_id_;
-    transform_stamped.header.stamp = builtin_interfaces::msg::Time(node_->now());
-    transform_stamped.child_frame_id = mock_server->markers_[0].header.frame_id;
-    transform_stamped.transform.rotation.w = 1.0;
-    ASSERT_TRUE(buffer_->setTransform(transform_stamped, "mock_tf_authority"));
+      client_->getState(), ClientState::INITIALIZE, 3s, 10ms, (*executor_), update_func);
+    // Make the required TF data in order to finish initializing
+    makeTfDataAvailable(mock_server->markers_);
+    // FIXME(jacobperron): This test (and others) sometimes fail with Fast-RTPS as the
+    //                     client_->does not transition to RUNNING.
+    //                     It appears to be due to the service response never reaching the client.
+    //                     There is no apparent issue with Connext or Opensplice.
+    //                     Sleeping here fixes the test.
+    //                     Not sure if this is an issue with the test or Fast-RTPS.
+    rclcpp::sleep_for(std::chrono::seconds(1));
     TIMED_EXPECT_EQ(
-      client.getState(), ClientState::RUNNING, 3s, 10ms, (*executor_), update_func);
+      client_->getState(), ClientState::RUNNING, 3s, 10ms, (*executor_), update_func);
     // Disconnect server
     executor_->remove_node(mock_server);
     mock_server.reset();
     TIMED_EXPECT_EQ(
-      client.getState(), ClientState::IDLE, 3s, 10ms, (*executor_), update_func);
+      client_->getState(), ClientState::IDLE, 3s, 10ms, (*executor_), update_func);
   }
 
   // IDLE -> INITIALIZE -> RUNNING -> INITIALIZE -> IDLE
   {
-    interactive_markers::InteractiveMarkerClient client(
-      node_, buffer_, target_frame_id_, topic_namespace_);
-    client.update();
-    EXPECT_EQ(client.getState(), ClientState::IDLE);
+    client_.reset(
+      new interactive_markers::InteractiveMarkerClient(
+        node_, buffer_, target_frame_id_, topic_namespace_));
+    // client_->update();
+    EXPECT_EQ(client_->getState(), ClientState::IDLE);
     // Start server
     auto mock_server = std::make_shared<MockInteractiveMarkerServer>(topic_namespace_);
     executor_->add_node(mock_server);
     // Repeatedly call the client's update method until the server is detected
-    auto update_func = std::bind(&interactive_markers::InteractiveMarkerClient::update, &client);
+    auto update_func = std::bind(
+      &interactive_markers::InteractiveMarkerClient::update, client_.get());
     TIMED_EXPECT_EQ(
-      client.getState(), ClientState::INITIALIZE, 3s, 10ms, (*executor_), update_func);
-    // Publish required TF data in order to finish initializing
-    geometry_msgs::msg::TransformStamped transform_stamped;
-    transform_stamped.header.frame_id = target_frame_id_;
-    transform_stamped.header.stamp = builtin_interfaces::msg::Time(node_->now());
-    transform_stamped.child_frame_id = mock_server->markers_[0].header.frame_id;
-    transform_stamped.transform.rotation.w = 1.0;
-    ASSERT_TRUE(buffer_->setTransform(transform_stamped, "mock_tf_authority"));
+      client_->getState(), ClientState::INITIALIZE, 3s, 10ms, (*executor_), update_func);
+    // Make the required TF data in order to finish initializing
+    makeTfDataAvailable(mock_server->markers_);
     TIMED_EXPECT_EQ(
-      client.getState(), ClientState::RUNNING, 3s, 10ms, (*executor_), update_func);
+      client_->getState(), ClientState::RUNNING, 3s, 10ms, (*executor_), update_func);
     // Cause a sync error by skipping a sequence number, which should cause state change
     mock_server->publishUpdate();
     mock_server->sequence_number_ += 1;
     mock_server->publishUpdate();
     TIMED_EXPECT_EQ(
-      client.getState(), ClientState::INITIALIZE, 3s, 10ms, (*executor_), update_func);
+      client_->getState(), ClientState::INITIALIZE, 3s, 10ms, (*executor_), update_func);
     // Disconnect server
     executor_->remove_node(mock_server);
     mock_server.reset();
     TIMED_EXPECT_EQ(
-      client.getState(), ClientState::IDLE, 3s, 10ms, (*executor_), update_func);
+      client_->getState(), ClientState::IDLE, 3s, 10ms, (*executor_), update_func);
   }
 }
 
@@ -241,15 +251,15 @@ TEST_F(TestInteractiveMarkerClient, init_callback)
   // Creating a server and publishing the required TF data should trigger the callback
   auto mock_server = std::make_shared<MockInteractiveMarkerServer>(topic_namespace_);
   executor_->add_node(mock_server);
-  geometry_msgs::msg::TransformStamped transform_stamped;
-  transform_stamped.header.frame_id = target_frame_id_;
-  transform_stamped.header.stamp = builtin_interfaces::msg::Time(node_->now());
-  transform_stamped.child_frame_id = mock_server->markers_[0].header.frame_id;
-  transform_stamped.transform.rotation.w = 1.0;
-  ASSERT_TRUE(buffer_->setTransform(transform_stamped, "mock_tf_authority"));
+  makeTfDataAvailable(mock_server->markers_);
   auto update_func = std::bind(
     &interactive_markers::InteractiveMarkerClient::update, client_.get());
+  // FIXME(jacobperron): sleeping here fixes a flakey test when using Fast-RTPS.
+  //                     Not sure if this is an issue with the test or Fast-RTPS.
+  rclcpp::sleep_for(std::chrono::seconds(1));
   TIMED_EXPECT_EQ(called, true, 3s, 10ms, (*executor_), update_func);
+  std::cerr << "Another update" << std::endl;
+  client_->update();
 }
 
 TEST_F(TestInteractiveMarkerClient, update_callback)
@@ -268,16 +278,16 @@ TEST_F(TestInteractiveMarkerClient, update_callback)
   // First, we need to get into the RUNNING state
   auto mock_server = std::make_shared<MockInteractiveMarkerServer>(topic_namespace_);
   executor_->add_node(mock_server);
-  geometry_msgs::msg::TransformStamped transform_stamped;
-  transform_stamped.header.frame_id = target_frame_id_;
-  transform_stamped.header.stamp = builtin_interfaces::msg::Time(node_->now());
-  transform_stamped.child_frame_id = mock_server->markers_[0].header.frame_id;
-  transform_stamped.transform.rotation.w = 1.0;
-  ASSERT_TRUE(buffer_->setTransform(transform_stamped, "mock_tf_authority"));
+  makeTfDataAvailable(mock_server->markers_);
   auto update_func = std::bind(
     &interactive_markers::InteractiveMarkerClient::update, client_.get());
+  // FIXME(jacobperron): sleeping here fixes a flakey test when using Fast-RTPS.
+  //                     Not sure if this is an issue with the test or Fast-RTPS.
+  rclcpp::sleep_for(std::chrono::seconds(1));
   TIMED_EXPECT_EQ(
     client_->getState(), ClientState::RUNNING, 3s, 10ms, (*executor_), update_func);
+  std::cerr << "Another update" << std::endl;
+  client_->update();
 
   // Publish an update message
   geometry_msgs::msg::Pose input_pose;

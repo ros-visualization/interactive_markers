@@ -50,46 +50,48 @@
 namespace interactive_markers
 {
 
-/// Acts as a server to one or many GUIs (e.g. rviz) displaying a set of interactive markers
-///
-/// Note: Keep in mind that changes made by calling insert(), erase(), setCallback() etc.
-///       are not applied until calling applyChanges().
+/// A server to one or many clients (e.g. rviz) displaying a set of interactive markers.
+/**
+ * Note that changes made by calling insert(), erase(), setCallback() etc. are not applied until
+ * calling applyChanges().
+ */
 class InteractiveMarkerServer
 {
 public:
-  typedef visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr FeedbackConstPtr;
-  typedef std::function<void (FeedbackConstPtr)> FeedbackCallback;
+  typedef visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr FeedbackConstSharedPtr;
+  typedef std::function<void (FeedbackConstSharedPtr)> FeedbackCallback;
 
   static const uint8_t DEFAULT_FEEDBACK_CB = 255;
 
-  /// @param topic_ns      The interface will use the topics topic_ns/update and
-  ///                      topic_ns/feedback for communication.
-  /// @param server_id     If you run multiple servers on the same topic from
-  ///                      within the same node, you will need to assign different names to them.
-  ///                      Otherwise, leave this empty.
+  /// Constructor.
+  /**
+   * \param topic_namepsace The namespace for the ROS services and topics used for communication
+   *   with interactive marker clients.
+   * \param base_interface Node base interface.
+   * \param clock_interface Node clock interface.
+   * \param logging_interface Node logging interface.
+   * \param topics_interface Node topics interface.
+   * \param service_interface Node service interface.
+   */
   InteractiveMarkerServer(
-    const std::string & topic_ns,
+    const std::string & topic_namespace,
     rclcpp::node_interfaces::NodeBaseInterface::SharedPtr base_interface,
     rclcpp::node_interfaces::NodeClockInterface::SharedPtr clock_interface,
     rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_interface,
-    rclcpp::node_interfaces::NodeTimersInterface::SharedPtr timers_interface,
     rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
-    rclcpp::node_interfaces::NodeServicesInterface::SharedPtr services_interface,
-    const std::string server_id);
+    rclcpp::node_interfaces::NodeServicesInterface::SharedPtr services_interface);
 
   template<typename NodePtr>
   InteractiveMarkerServer(
-    const std::string & topic_ns, NodePtr node,
-    const std::string & server_id = "")
+    const std::string & topic_namespace,
+    NodePtr node)
   : InteractiveMarkerServer(
-      topic_ns,
+      topic_namespace,
       node->get_node_base_interface(),
       node->get_node_clock_interface(),
       node->get_node_logging_interface(),
-      node->get_node_timers_interface(),
       node->get_node_topics_interface(),
-      node->get_node_services_interface(),
-      server_id)
+      node->get_node_services_interface())
   {
   }
 
@@ -97,75 +99,102 @@ public:
   ~InteractiveMarkerServer();
 
   /// Add or replace a marker without changing its callback functions.
-  /// Note: Changes to the marker will not take effect until you call applyChanges().
-  /// The callback changes immediately.
-  /// @param int_marker     The marker to be added or replaced
-  void insert(const visualization_msgs::msg::InteractiveMarker & int_marker);
+  /**
+   * Note, changes to the marker will not take effect until you call applyChanges().
+   * The callback changes immediately.
+   *
+   * \param marker The marker to be added or replaced.
+   */
+  void insert(const visualization_msgs::msg::InteractiveMarker & marker);
 
-  /// Add or replace a marker and its callback functions
-  /// Note: Changes to the marker will not take effect until you call applyChanges().
-  /// The callback changes immediately.
-  /// @param int_marker     The marker to be added or replaced
-  /// @param feedback_cb    Function to call on the arrival of a feedback message.
-  /// @param feedback_type  Type of feedback for which to call the feedback.
+  /// Add or replace a marker and its callback functions.
+  /**
+   * Note, changes to the marker will not take effect until you call applyChanges().
+   * The callback changes immediately.
+   *
+   * \param marker The marker to be added or replaced.
+   * \param feedback_callback Function to call on the arrival of a feedback message.
+   * \param feedback_type Type of feedback for which to call the feedback callback.
+   */
   void insert(
-    const visualization_msgs::msg::InteractiveMarker & int_marker,
-    FeedbackCallback feedback_cb,
+    const visualization_msgs::msg::InteractiveMarker & marker,
+    FeedbackCallback feedback_callback,
     uint8_t feedback_type = DEFAULT_FEEDBACK_CB);
 
-  /// Update the pose of a marker with the specified name
-  /// Note: This change will not take effect until you call applyChanges()
-  /// @return true if a marker with that name exists
-  /// @param name    Name of the interactive marker
-  /// @param pose    The new pose
-  /// @param header  Header replacement. Leave this empty to use the previous one.
+  /// Update the pose of a marker by name.
+  /**
+   * Note, this change will not take effect until you call applyChanges().
+   *
+   * \param name Name of the interactive marker to update.
+   * \param pose The new pose.
+   * \param header Header replacement.
+   *   Leave this empty to use the previous one.
+   * \return true if a marker with the provided name exists, false otherwise.
+   */
   bool setPose(
     const std::string & name,
     const geometry_msgs::msg::Pose & pose,
     const std_msgs::msg::Header & header = std_msgs::msg::Header());
 
-  /// Erase the marker with the specified name
-  /// Note: This change will not take effect until you call applyChanges().
-  /// @return true if a marker with that name exists
-  /// @param name  Name of the interactive marker
+  /// Erase a marker by name.
+  /**
+   * Note, this change will not take effect until you call applyChanges().
+   * \param name Name of the interactive marker to erase.
+   * \return true if a marker with the provided name exists, false otherwise.
+   */
   bool erase(const std::string & name);
 
   /// Clear all markers.
-  /// Note: This change will not take effect until you call applyChanges().
+  /**
+   * Note, this change will not take effect until you call applyChanges().
+   */
   void clear();
 
   /// Return whether the server contains any markers.
-  /// Note: Does not include markers inserted since the last applyChanges().
-  /// @return true if the server contains no markers
+  /**
+   * Does not include markers inserted since the last applyChanges().
+   *
+   * \return true if the server contains no markers, false otherwise.
+   */
   bool empty() const;
 
-  /// Return the number of markers contained in the server
-  /// Note: Does not include markers inserted since the last applyChanges().
-  /// @return The number of markers contained in the server
+  /// Return the number of markers contained in the server.
+  /**
+   * Does not include markers inserted since the last applyChanges().
+   * \return The number of markers contained in the server.
+   */
   std::size_t size() const;
 
-  /// Add or replace a callback function for the specified marker.
-  /// Note: This change will not take effect until you call applyChanges().
-  /// The server will try to call any type-specific callback first.
-  /// If none is set, it will call the default callback.
-  /// If a callback for the given type already exists, it will be replaced.
-  /// To unset a type-specific callback, pass in an empty one.
-  /// @param name           Name of the interactive marker
-  /// @param feedback_cb    Function to call on the arrival of a feedback message.
-  /// @param feedback_type  Type of feedback for which to call the feedback.
-  ///                       Leave this empty to make this the default callback.
+  /// Add or replace a callback function for a marker.
+  /**
+   * Note, this change will not take effect until you call applyChanges().
+   * The server will try to call any type-specific callback first.
+   * If none is set, it will call the default callback.
+   * If a callback for the given type already exists, it will be replaced.
+   * To unset a type-specific callback, pass in an empty one.
+   *
+   * \param name Name of an existing interactive marker.
+   * \param feedback_callback Function to call on the arrival of a feedback message.
+   * \param feedback_type Type of feedback for which to call the feedback callback.
+   *   Leave this empty to make this the default callback.
+   * \return true if the setting the callback was successful, false if the provided
+   *   name does not match an existing marker.
+   */
   bool setCallback(
-    const std::string & name, FeedbackCallback feedback_cb,
+    const std::string & name,
+    FeedbackCallback feedback_cb,
     uint8_t feedback_type = DEFAULT_FEEDBACK_CB);
 
-  /// Apply changes made since the last call to this method &
-  /// broadcast an update to all clients.
+  /// Apply changes made since the last call to this method and broadcast an update to all clients.
   void applyChanges();
 
-  /// Get marker by name
-  /// @param name             Name of the interactive marker
-  /// @param[out] int_marker  Output message
-  /// @return true if a marker with that name exists
+  /// Get a marker by name.
+  /**
+   * \param[in] name Name of the interactive marker.
+   * \param[out] marker Output message.
+   *   Not set if a marker with the provided name does not exist.
+   * \return true if a marker with the provided name exists, false otherwise.
+   */
   bool get(std::string name, visualization_msgs::msg::InteractiveMarker & int_marker) const;
 
 private:
@@ -206,10 +235,7 @@ private:
     std::shared_ptr<visualization_msgs::srv::GetInteractiveMarkers::Response> response);
 
   // update marker pose & call user callback
-  void processFeedback(visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr feedback);
-
-  // send an empty update to keep the client GUIs happy
-  void keepAlive();
+  void processFeedback(visualization_msgs::msg::InteractiveMarkerFeedback::SharedPtr feedback);
 
   // increase sequence number & publish an update
   void publish(visualization_msgs::msg::InteractiveMarkerUpdate & update);
@@ -228,12 +254,9 @@ private:
   M_UpdateContext pending_updates_;
 
   // topic namespace to use
-  std::string topic_ns_;
+  std::string topic_namespace_;
 
   mutable std::recursive_mutex mutex_;
-
-  // this is needed when running in non-threaded mode
-  rclcpp::TimerBase::SharedPtr keep_alive_timer_;
 
   rclcpp::Service<visualization_msgs::srv::GetInteractiveMarkers>::SharedPtr
     get_interactive_markers_service_;
@@ -244,9 +267,7 @@ private:
   rclcpp::Clock::SharedPtr clock_;
   rclcpp::Logger logger_;
 
-  uint64_t seq_num_;
-
-  std::string server_id_;
+  uint64_t sequence_number_;
 };  // class InteractiveMarkerServer
 
 }  // namespace interactive_markers

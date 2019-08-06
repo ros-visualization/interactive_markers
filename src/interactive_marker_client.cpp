@@ -33,6 +33,7 @@
 // Author: David Gossow
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <utility>
 
@@ -91,7 +92,6 @@ void InteractiveMarkerClient::connect(std::string topic_namespace)
     return;
   }
 
-  // TODO(jacobperron) try-catch
   get_interactive_markers_client_ =
     rclcpp::create_client<visualization_msgs::srv::GetInteractiveMarkers>(
     node_base_interface_,
@@ -213,7 +213,7 @@ void InteractiveMarkerClient::setStatusCallback(const StatusCallback & cb)
 
 void InteractiveMarkerClient::reset()
 {
-  // TODO: thread-safety
+  std::unique_lock<std::recursive_mutex> lock(mutex_);
   state_ = IDLE;
   first_update_ = true;
   initial_response_msg_.reset();
@@ -226,7 +226,10 @@ void InteractiveMarkerClient::requestInteractiveMarkers()
     updateStatus(ERROR, "Interactive markers requested when client is disconnected");
     return;
   }
-
+  if (!get_interactive_markers_client_->wait_for_service(std::chrono::seconds(1))) {
+    updateStatus(WARN, "Service is not ready during request for interactive markers");
+    return;
+  }
   updateStatus(DEBUG, "Sending request for interactive markers");
 
   auto callback = std::bind(&InteractiveMarkerClient::processInitialMessage, this, _1);
@@ -239,17 +242,18 @@ void InteractiveMarkerClient::requestInteractiveMarkers()
 void InteractiveMarkerClient::processInitialMessage(
   rclcpp::Client<visualization_msgs::srv::GetInteractiveMarkers>::SharedFuture future)
 {
-  updateStatus(DEBUG, "Service response received for initialization");
+  updateStatus(INFO, "Service response received for initialization");
   auto response = future.get();
-  // TODO: thread safety
-  initial_response_msg_ = std::make_shared<InitialMessageContext>(
-    tf_buffer_core_, target_frame_, response, enable_autocomplete_transparency_);
+  {
+    std::unique_lock<std::recursive_mutex> lock(mutex_);
+    initial_response_msg_ = std::make_shared<InitialMessageContext>(
+      tf_buffer_core_, target_frame_, response, enable_autocomplete_transparency_);
+  }
 }
 
 void InteractiveMarkerClient::processUpdate(
   visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg)
 {
-  // TODO: thread safety
   if (msg->server_id.empty()) {
     updateStatus(ERROR, "Received message with empty server ID");
     return;
@@ -267,7 +271,7 @@ void InteractiveMarkerClient::processUpdate(
   if (!first_update_ && msg->seq_num != last_update_sequence_number_ + 1) {
     std::ostringstream oss;
     oss << "Update sequence number is out of order. " << last_update_sequence_number_ + 1 <<
-     " (expected) vs. " << msg->seq_num << " (received)";
+      " (expected) vs. " << msg->seq_num << " (received)";
     updateStatus(WARN, oss.str());
     // Change state to IDLE to cause reset
     changeState(IDLE);
@@ -293,12 +297,12 @@ void InteractiveMarkerClient::processUpdate(
 
 bool InteractiveMarkerClient::transformInitialMessage()
 {
+  std::unique_lock<std::recursive_mutex> lock(mutex_);
   if (!initial_response_msg_) {
     // We haven't received a response yet
     return true;
   }
 
-  std::cout << "transform Initiali message" << std::endl;
   try {
     initial_response_msg_->getTfTransforms();
     // TODO(jacobperron): Use custom exception
@@ -319,6 +323,7 @@ bool InteractiveMarkerClient::transformInitialMessage()
 
 bool InteractiveMarkerClient::transformUpdateMessages()
 {
+  std::unique_lock<std::recursive_mutex> lock(mutex_);
   for (auto it = update_queue_.begin(); it != update_queue_.end(); ++it) {
     try {
       it->getTfTransforms();
@@ -340,6 +345,7 @@ bool InteractiveMarkerClient::transformUpdateMessages()
 
 bool InteractiveMarkerClient::checkInitializeFinished()
 {
+  std::unique_lock<std::recursive_mutex> lock(mutex_);
   if (!initial_response_msg_) {
     // We haven't received a response yet
     return false;
@@ -368,7 +374,9 @@ bool InteractiveMarkerClient::checkInitializeFinished()
   return true;
 }
 
-void InteractiveMarkerClient::pushUpdates() {
+void InteractiveMarkerClient::pushUpdates()
+{
+  std::unique_lock<std::recursive_mutex> lock(mutex_);
   while (!update_queue_.empty() && update_queue_.back().isReady()) {
     visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg = update_queue_.back().msg;
     updateStatus(DEBUG, "Pushing update with sequence number " + std::to_string(msg->seq_num));
@@ -387,8 +395,7 @@ void InteractiveMarkerClient::changeState(const State & new_state)
 
   updateStatus(DEBUG, "Change state to: " + std::to_string(new_state));
 
-  switch (new_state)
-  {
+  switch (new_state) {
     case IDLE:
       reset();
       break;

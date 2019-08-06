@@ -45,23 +45,21 @@
 TEST(TestInteractiveMarkerServer, construction_and_destruction)
 {
   rclcpp::init(0, nullptr);
-  auto node = std::make_shared<rclcpp::Node>("test_interactive_marker_server_node", "");
+  auto node = std::make_shared<rclcpp::Node>("test_construction_and_destruction_node", "");
   {
     interactive_markers::InteractiveMarkerServer server("", node);
   }
   {
-    interactive_markers::InteractiveMarkerServer server("test_namespace", node, "test_server_id");
+    interactive_markers::InteractiveMarkerServer server("test_node_ptr_ctor_server", node);
   }
   {
     interactive_markers::InteractiveMarkerServer server(
-      "test_namespace",
+      "test_node_interfaces_ctor_server",
       node->get_node_base_interface(),
       node->get_node_clock_interface(),
       node->get_node_logging_interface(),
-      node->get_node_timers_interface(),
       node->get_node_topics_interface(),
-      node->get_node_services_interface(),
-      "test_server_id");
+      node->get_node_services_interface());
   }
 
   rclcpp::shutdown();
@@ -70,8 +68,8 @@ TEST(TestInteractiveMarkerServer, construction_and_destruction)
 TEST(TestInteractiveMarkerServer, insert)
 {
   rclcpp::init(0, nullptr);
-  auto node = std::make_shared<rclcpp::Node>("test_interactive_marker_server_node", "");
-  interactive_markers::InteractiveMarkerServer server("test_name", node, "test_server_id");
+  auto node = std::make_shared<rclcpp::Node>("test_insert_node", "");
+  interactive_markers::InteractiveMarkerServer server("test_insert_server", node);
 
   // Insert some markers
   std::vector<visualization_msgs::msg::InteractiveMarker> markers = get_interactive_markers();
@@ -94,24 +92,21 @@ class TestInteractiveMarkerServerWithMarkers : public ::testing::Test
 protected:
   static void SetUpTestCase()
   {
-    std::cout << "SetUpTestCase()" << std::endl;
     rclcpp::init(0, nullptr);
   }
 
   static void TearDownTestCase()
   {
-    std::cout << "TearDownTestCase()" << std::endl;
     rclcpp::shutdown();
   }
 
   void SetUp()
   {
-    std::cout << "SetUp()" << std::endl;
     const std::string topic_namespace = "test_namespace";
     node_ = std::make_shared<rclcpp::Node>("test_interactive_marker_server_node", "");
 
     server_ = std::make_unique<interactive_markers::InteractiveMarkerServer>(
-      topic_namespace, node_, "test_server_id");
+      topic_namespace, node_);
 
     // Insert some markers
     markers_ = get_interactive_markers();
@@ -122,13 +117,15 @@ protected:
 
     mock_client_ = std::make_shared<MockInteractiveMarkerClient>(topic_namespace);
 
-    executor_.add_node(mock_client_);
     executor_.add_node(node_);
+    executor_.add_node(mock_client_);
+
+    // Wait for discovery (or timeout)
+    ASSERT_TRUE(mock_client_->client_->wait_for_service(std::chrono::seconds(3)));
   }
 
   void TearDown()
   {
-    std::cout << "TearDown()" << std::endl;
     mock_client_.reset();
     server_.reset();
     node_.reset();
@@ -275,57 +272,66 @@ TEST_F(TestInteractiveMarkerServerWithMarkers, feedback_communication)
   // Register a callback function to capture output
   visualization_msgs::msg::InteractiveMarkerFeedback output_feedback;
   auto callback =
-    [&output_feedback](interactive_markers::InteractiveMarkerServer::FeedbackConstPtr feedback)
+    [&output_feedback]
+      (interactive_markers::InteractiveMarkerServer::FeedbackConstSharedPtr feedback)
     {
       output_feedback = *feedback;
     };
   EXPECT_TRUE(server_->setCallback(markers_[0].name, callback));
   server_->applyChanges();
-  // Wait for callback to be registered
-  // FIXME(jacobperron): This probably shouldn't be necessary...
-  TIMED_EXPECT_EQ(mock_client_->updates_received, 1u, 3s, 10ms, executor_);
 
   // Populate and publish mock feedback
   visualization_msgs::msg::InteractiveMarkerFeedback feedback;
   feedback.client_id = "test_client_id";
   feedback.marker_name = markers_[0].name;
+  feedback.event_type = feedback.POSE_UPDATE;
   feedback.pose.position.x = -3.14;
   feedback.pose.orientation.w = 1.0;
   mock_client_->publishFeedback(feedback);
-
-  // FIXME(jacobperron): Test fails due to rclcpp Time exception
-  //                     "can't subtract times with difference time sources"
-  // TIMED_EXPECT_EQ(output_feedback.client_id, feedback.client_id, 3s, 10ms, executor_);
-  // std::cout << "D" << std::endl;
-  // EXPECT_EQ(output_feedback.marker_name, markers_[0].name);
-  // EXPECT_EQ(output_feedback.pose.position.x, feedback.pose.position.x);
-  // EXPECT_EQ(output_feedback.pose.orientation.w, feedback.pose.orientation.w);
+  TIMED_EXPECT_EQ(output_feedback.client_id, feedback.client_id, 3s, 10ms, executor_);
+  EXPECT_EQ(output_feedback.marker_name, markers_[0].name);
+  EXPECT_EQ(output_feedback.pose.position.x, feedback.pose.position.x);
+  EXPECT_EQ(output_feedback.pose.orientation.w, feedback.pose.orientation.w);
 }
 
 TEST_F(TestInteractiveMarkerServerWithMarkers, update_communication)
 {
   using namespace std::chrono_literals;
 
-  EXPECT_EQ(mock_client_->updates_received, 0u);
-  // This should trigger an update publication
+  ASSERT_EQ(mock_client_->updates_received, 0u);
+  // This should not trigger an update publication
+  server_->applyChanges();
+  // Adding a marker should trigger an update
+  visualization_msgs::msg::InteractiveMarker marker;
+  marker.name = "test_update_from_added_marker";
+  server_->insert(marker);
   server_->applyChanges();
   TIMED_EXPECT_EQ(mock_client_->updates_received, 1u, 3s, 10ms, executor_);
-  EXPECT_EQ(mock_client_->last_update_message->markers.size(), 0u);
+  ASSERT_NE(mock_client_->last_update_message, nullptr);
+  EXPECT_EQ(mock_client_->last_update_message->markers.size(), 1u);
   EXPECT_EQ(mock_client_->last_update_message->poses.size(), 0u);
   EXPECT_EQ(mock_client_->last_update_message->erases.size(), 0u);
-
-  // Erase a marker and update
-  ASSERT_TRUE(server_->erase(markers_[0].name));
+  // Modifying a marker should trigger an update
+  geometry_msgs::msg::Pose pose;
+  pose.orientation.w = 1.0;
+  server_->setPose(
+    markers_[0].name,
+    pose);
   server_->applyChanges();
   TIMED_EXPECT_EQ(mock_client_->updates_received, 2u, 3s, 10ms, executor_);
+  EXPECT_EQ(mock_client_->last_update_message->markers.size(), 0u);
+  EXPECT_EQ(mock_client_->last_update_message->poses.size(), 1u);
+  EXPECT_EQ(mock_client_->last_update_message->erases.size(), 0u);
+  // Erasing a marker should trigger an update
+  ASSERT_TRUE(server_->erase(markers_[0].name));
+  server_->applyChanges();
+  TIMED_EXPECT_EQ(mock_client_->updates_received, 3u, 3s, 10ms, executor_);
   EXPECT_EQ(mock_client_->last_update_message->markers.size(), 0u);
   EXPECT_EQ(mock_client_->last_update_message->poses.size(), 0u);
   ASSERT_EQ(mock_client_->last_update_message->erases.size(), 1u);
   EXPECT_EQ(mock_client_->last_update_message->erases[0], markers_[0].name);
 }
 
-// FIXME(jacobperron): The service response is not received.
-/*
 TEST_F(TestInteractiveMarkerServerWithMarkers, get_interactive_markers_communication)
 {
   using namespace std::chrono_literals;
@@ -339,7 +345,7 @@ TEST_F(TestInteractiveMarkerServerWithMarkers, get_interactive_markers_communica
   for (std::size_t i = 0u; i < markers_.size(); ++i) {
     EXPECT_EQ(response->markers[i].header.frame_id, markers_[i].header.frame_id);
     EXPECT_EQ(response->markers[i].pose.position.x, markers_[i].pose.position.x);
-    EXPECT_EQ(response->markers[i].pose.orientation.w, marker_[i].pose.orientation.w);
+    EXPECT_EQ(response->markers[i].pose.orientation.w, markers_[i].pose.orientation.w);
     EXPECT_EQ(response->markers[i].name, markers_[i].name);
     EXPECT_EQ(response->markers[i].description, markers_[i].description);
     ASSERT_EQ(response->markers[i].menu_entries.size(), markers_[i].menu_entries.size());
@@ -356,4 +362,3 @@ TEST_F(TestInteractiveMarkerServerWithMarkers, get_interactive_markers_communica
     }
   }
 }
-*/
