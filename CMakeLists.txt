@@ -13,7 +13,6 @@ add_library(${PROJECT_NAME}
   src/tools.cpp
   src/menu_handler.cpp
   src/interactive_marker_client.cpp
-  # src/single_client.cpp
   src/message_context.cpp
 )
 target_include_directories(${PROJECT_NAME} PUBLIC include)
@@ -76,36 +75,4 @@ if(BUILD_TESTING)
   )
 endif()
 
-# C++ Unit Tests
-#
-# if(CATKIN_ENABLE_TESTING)
-#   include_directories(${GTEST_INCLUDE_DIRS})
-#
-#   add_executable(server_test EXCLUDE_FROM_ALL src/test/server_test.cpp)
-#   target_link_libraries(server_test ${PROJECT_NAME} ${GTEST_LIBRARIES})
-#   add_dependencies(tests server_test)
-#   add_rostest(test/cpp_server.test)
-#
-#   add_executable(client_test EXCLUDE_FROM_ALL src/test/client_test.cpp)
-#   target_link_libraries(client_test ${PROJECT_NAME} ${GTEST_LIBRARIES})
-#   add_dependencies(tests client_test)
-#   add_rostest(test/cpp_client.test)
-#
-#   add_executable(server_client_test EXCLUDE_FROM_ALL src/test/server_client_test.cpp)
-#   target_link_libraries(server_client_test ${PROJECT_NAME} ${GTEST_LIBRARIES})
-#   add_dependencies(tests server_client_test)
-#   add_rostest(test/cpp_server_client.test)
-#
-#   # Test program to simulate Interactive Marker with missing tf information
-#   add_executable(bursty_tf EXCLUDE_FROM_ALL src/test/bursty_tf.cpp)
-#   target_link_libraries(bursty_tf ${PROJECT_NAME})
-#   add_dependencies(tests bursty_tf)
-#
-#   # Test program to simulate Interactive Marker with wrong tf information
-#   add_executable(missing_tf EXCLUDE_FROM_ALL src/test/missing_tf.cpp)
-#   target_link_libraries(missing_tf ${PROJECT_NAME})
-#   add_dependencies(tests missing_tf)
-# endif()
-
 ament_package()
-

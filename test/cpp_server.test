@@ -1,3 +1,0 @@
-<launch>
-  <test test-name="server_test" pkg="interactive_markers" type="server_test"/>
-</launch>
