@@ -254,11 +254,6 @@ void InteractiveMarkerClient::processInitialMessage(
 void InteractiveMarkerClient::processUpdate(
   visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg)
 {
-  if (msg->server_id.empty()) {
-    updateStatus(ERROR, "Received message with empty server ID");
-    return;
-  }
-
   // Ignore legacy "keep alive" messages
   if (msg->type == msg->KEEP_ALIVE) {
     RCLCPP_WARN_ONCE(
