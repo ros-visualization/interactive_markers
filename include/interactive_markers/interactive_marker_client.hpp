@@ -60,15 +60,21 @@ namespace interactive_markers
 {
 
 /// Acts as a client to one or multiple Interactive Marker servers.
-/// Handles topic subscription, error detection and tf transformations.
-///
-/// The output is an init message followed by a stream of updates
-/// for each server. In case of an error (e.g. message loss, tf failure),
-/// the connection to the sending server is reset.
-///
-/// All timestamped messages are being transformed into the target frame,
-/// while for non-timestamped messages it is ensured that the necessary
-/// tf transformation will be available.
+/**
+ * Handles topic subscription, error detection and tf transformations.
+ *
+ * After connecting to a provided namespace, the client sends a service request
+ * to an available interactive marker server to get an initial set of markers.
+ * Once initialized, feedback messages may be sent from the client to the server
+ * as well as update messages received from the server.
+ *
+ * In case of an error (e.g. update message loss or tf failure), the connection
+ * to the server is reset.
+ *
+ * All timestamped messages are being transformed into the target frame,
+ * while for non-timestamped messages it is ensured that the necessary
+ * tf transformation will be available.
+ */
 class InteractiveMarkerClient
 {
 public:
@@ -94,9 +100,19 @@ public:
   typedef std::function<void (const std::string &)> ResetCallback;
   typedef std::function<void (const Status, const std::string &)> StatusCallback;
 
-  /// @param tf           The tf transformer to use.
-  /// @param target_frame tf frame to transform timestamped messages into.
-  /// @param topic_ns     The topic namespace (will subscribe to topic_ns/update, topic_ns/init)
+  /// Constructor.
+  /**
+   * \param node_base_interface The node base interface for creating the service client.
+   * \param topics_interface The node topics interface for creating publishers and subscriptions.
+   * \param graph_interface The node graph interface for querying the ROS graph.
+   * \param logging_interface The node logging interface for logging messages.
+   * \param tf_buffer_core The tf transformer to use.
+   * \param target_frame The tf frame to transform timestamped messages into.
+   * \param topic_namespace The interactive marker topic namespace.
+   *   This is the namespace used for the underlying ROS service and topics for communication
+   *   between the client and server.
+   *   If the namespace is not empty, then connect() is called.
+   */
   InteractiveMarkerClient(
     rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base_interface,
     rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
@@ -107,6 +123,16 @@ public:
     const std::string & target_frame = "",
     const std::string & topic_namespace = "");
 
+  /// Constructor.
+  /**
+   * \param node The object from which to get the desired node interfaces.
+   * \param tf_buffer_core The tf transformer to use.
+   * \param target_frame The tf frame to transform timestamped messages into.
+   * \param topic_namespace The interactive marker topic namespace.
+   *   This is the namespace used for the underlying ROS service and topics for communication
+   *   between the client and server.
+   *   If the namespace is not empty, then connect() is called.
+   */
   template<typename NodePtr>
   InteractiveMarkerClient(
     NodePtr node,
@@ -125,7 +151,10 @@ public:
   {
   }
 
-  /// Will cause a 'reset' call for all server ids
+  /// Destructor.
+  /**
+   * Calls reset().
+   */
   ~InteractiveMarkerClient();
 
   /// Connect to a server in a given namespace.
@@ -134,22 +163,39 @@ public:
   /// Disconnect from a server and clear the update queue.
   void disconnect();
 
-  /// Update state and call registered callbacks
+  /// Update the internal state and call registered callbacks.
   void update();
 
-  /// Change the target frame and reset the connection
+  /// Change the target frame.
+  /**
+   * This resets the connection.
+   */
   void setTargetFrame(std::string target_frame);
 
-  /// Set callback for init messages
+  /// Set the initialization callback.
+  /**
+   * The registered function is called when the client successfully initializes with a connected
+   * server.
+   */
   void setInitializeCallback(const InitializeCallback & cb);
 
-  /// Set callback for update messages
+  /// Set the callback for update messages.
+  /**
+   * If the client is connected and initialized, the registered function is called whenever an
+   * update message is received.
+   */
   void setUpdateCallback(const UpdateCallback & cb);
 
-  /// Set callback for resetting one server connection
+  /// Set the reset callback.
+  /**
+   * The registered function is called whenver the connection is reset.
+   */
   void setResetCallback(const ResetCallback & cb);
 
-  /// Set callback for status updates
+  /// Set the callback for status updates.
+  /**
+   * The registered function is called whenever there is a status message.
+   */
   void setStatusCallback(const StatusCallback & cb);
 
   inline void setEnableAutocompleteTransparency(bool enable)
