@@ -8,7 +8,7 @@ find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 
-add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME} SHARED
   src/interactive_marker_server.cpp
   src/tools.cpp
   src/menu_handler.cpp
