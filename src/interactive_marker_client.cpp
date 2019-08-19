@@ -131,7 +131,6 @@ void InteractiveMarkerClient::update()
 {
   if (!get_interactive_markers_client_) {
     // Disconnected
-    updateStatus(WARN, "Update called when disconnected");
     return;
   }
 
