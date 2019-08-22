@@ -42,6 +42,7 @@
 #include "visualization_msgs/srv/get_interactive_markers.hpp"
 
 #include "interactive_markers/detail/message_context.hpp"
+#include "interactive_markers/exceptions.hpp"
 #include "interactive_markers/tools.hpp"
 
 namespace interactive_markers
@@ -99,26 +100,25 @@ bool MessageContext<MsgT>::getTransform(
       }
     }
   } catch (tf2::ExtrapolationException & e) {
-    // rclcpp::Time latest_time;
-    // std::string error_string;
+    // Get latest common time
+    // Call lookupTransform with time=0 and use the stamp on the resultant transform.
+    geometry_msgs::msg::TransformStamped transform =
+      tf_buffer_core_->lookupTransform(
+      target_frame_, header.frame_id, tf2::TimePoint());
+    rclcpp::Time latest_time = transform.header.stamp;
 
-    // TODO(jacobperron): Re-evaluate if this logic is necessary. This call isn't available in tf2
-    // tf_.getLatestCommonTime( target_frame_, header.frame_id, latest_time, &error_string);
-
-    // if we have some tf info and it is newer than the requested time,
-    // we are very unlikely to ever receive the old tf info in the future.
-    // if ( latest_time != rclcpp::Time(0) && latest_time > header.stamp)
-    // {
-    //   std::ostringstream s;
-    //   s << "The init message contains an old timestamp and cannot be transformed ";
-    //   s << "('" << header.frame_id << "' to '" << target_frame_
-    //     << "' at time " << rclcpp::Time(header.stamp).seconds() << ").";
-    //   throw InitFailException( s.str());
-    // }
+    if (latest_time != rclcpp::Time(0) && latest_time > header.stamp) {
+      std::ostringstream oss;
+      oss << "The message contains an old timestamp and cannot be transformed " <<
+        "('" << header.frame_id << "' to '" << target_frame_ << "' at time " <<
+        rclcpp::Time(header.stamp).seconds() << ").";
+      throw exceptions::TransformError(oss.str());
+    }
     return false;
+  } catch (tf2::TransformException & e) {
+    throw exceptions::TransformError(e.what());
   }
   return true;
-  // all other exceptions need to be handled outside
 }
 
 template<class MsgT>

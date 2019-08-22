@@ -40,6 +40,7 @@
 
 #include "visualization_msgs/srv/get_interactive_markers.hpp"
 
+#include "interactive_markers/exceptions.hpp"
 #include "interactive_markers/interactive_marker_client.hpp"
 
 using namespace std::placeholders;
@@ -293,15 +294,9 @@ bool InteractiveMarkerClient::transformInitialMessage()
 
   try {
     initial_response_msg_->getTfTransforms();
-    // TODO(jacobperron): Use custom exception
-  } catch (std::runtime_error & e) {
+  } catch (const exceptions::TransformError & e) {
     std::ostringstream oss;
-    oss << "Resetting due to tf error: " << e.what();
-    updateStatus(ERROR, oss.str());
-    return false;
-  } catch (...) {
-    std::ostringstream oss;
-    oss << "Resetting due to unknown exception";
+    oss << "Resetting due to transform error: " << e.what();
     updateStatus(ERROR, oss.str());
     return false;
   }
@@ -315,15 +310,9 @@ bool InteractiveMarkerClient::transformUpdateMessages()
   for (auto it = update_queue_.begin(); it != update_queue_.end(); ++it) {
     try {
       it->getTfTransforms();
-      // TODO(jacobperron): Use custom exception
-    } catch (std::runtime_error & e) {
+    } catch (const exceptions::TransformError & e) {
       std::ostringstream oss;
-      oss << "Resetting due to tf error: " << e.what();
-      updateStatus(ERROR, oss.str());
-      return false;
-    } catch (...) {
-      std::ostringstream oss;
-      oss << "Resetting due to unknown exception";
+      oss << "Resetting due to transform error: " << e.what();
       updateStatus(ERROR, oss.str());
       return false;
     }

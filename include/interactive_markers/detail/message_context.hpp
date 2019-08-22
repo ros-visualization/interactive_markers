@@ -41,8 +41,6 @@
 #include <string>
 #include <vector>
 
-#include "tf2/exceptions.h"
-
 #include "visualization_msgs/msg/interactive_marker_init.hpp"
 #include "visualization_msgs/msg/interactive_marker_update.hpp"
 
@@ -93,13 +91,6 @@ private:
   std::string target_frame_;
   bool enable_autocomplete_transparency_;
 };  // class MessageContext
-
-class InitFailException : public tf2::TransformException
-{
-public:
-  explicit InitFailException(const std::string errorDescription)
-  : tf2::TransformException(errorDescription) {}
-};
 
 }  // namespace interactive_markers
 
