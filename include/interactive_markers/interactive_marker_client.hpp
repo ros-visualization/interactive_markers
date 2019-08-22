@@ -99,7 +99,7 @@ public:
     UpdateCallback;
   typedef std::function<void (visualization_msgs::srv::GetInteractiveMarkers::Response::SharedPtr)>
     InitializeCallback;
-  typedef std::function<void (const std::string &)> ResetCallback;
+  typedef std::function<void ()> ResetCallback;
   typedef std::function<void (const Status, const std::string &)> StatusCallback;
 
   /// Constructor.

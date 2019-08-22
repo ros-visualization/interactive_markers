@@ -235,6 +235,9 @@ void InteractiveMarkerClient::reset()
   first_update_ = true;
   initial_response_msg_.reset();
   update_queue_.clear();
+  if (reset_callback_) {
+    reset_callback_();
+  }
 }
 
 void InteractiveMarkerClient::requestInteractiveMarkers()
