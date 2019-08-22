@@ -138,7 +138,7 @@ public:
     client_id_(node_base_interface->get_fully_qualified_name()),
     clock_(clock_interface->get_clock()),
     logger_(logging_interface->get_logger()),
-    state_("InteractiveMarkerClient", IDLE),
+    state_(IDLE),
     tf_buffer_core_(tf_buffer_core),
     target_frame_(target_frame),
     topic_namespace_(topic_namespace),
@@ -241,7 +241,7 @@ public:
 
   inline State getState() const
   {
-    return static_cast<State>(state_);
+    return state_;
   }
 
 private:
@@ -289,7 +289,7 @@ private:
 
   rclcpp::Logger logger_;
 
-  StateMachine<State> state_;
+  State state_;
 
   rclcpp::Client<visualization_msgs::srv::GetInteractiveMarkers>::SharedPtr
     get_interactive_markers_client_;
