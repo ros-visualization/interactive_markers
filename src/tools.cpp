@@ -208,10 +208,10 @@ void makeArrow(
   assignDefaultColor(marker, control.orientation);
 
   float dist = fabs(pos);
-  float dir = pos > 0 ? 1 : -1;
+  float dir = pos > 0.0f ? 1.0f : -1.0f;
 
-  float inner = 0.5 * dist;
-  float outer = inner + 0.4;
+  float inner = 0.5f * dist;
+  float outer = inner + 0.4f;
 
   marker.points.resize(2);
   marker.points[0].x = dir * msg.scale * inner;
@@ -284,7 +284,7 @@ void makeDisc(
           marker.points[p + 4] = circle2[i2];
           marker.points[p + 5] = circle2[i3];
 
-          float t = 0.6 + 0.4 * (i % 2);
+          float t = 0.6f + 0.4f * static_cast<float>(i % 2);
           color.r = base_color.r * t;
           color.g = base_color.g * t;
           color.b = base_color.b * t;
@@ -315,9 +315,9 @@ void makeDisc(
           marker.points[p + 4] = circle2[i2];
           marker.points[p + 5] = circle1[i3];
 
-          color.r = base_color.r * 0.6;
-          color.g = base_color.g * 0.6;
-          color.b = base_color.b * 0.6;
+          color.r = base_color.r * 0.6f;
+          color.g = base_color.g * 0.6f;
+          color.b = base_color.b * 0.6f;
 
           marker.colors[c] = color;
           marker.colors[c + 1] = color;
@@ -370,8 +370,8 @@ void makeViewFacingButton(
 
   visualization_msgs::msg::Marker marker;
 
-  float base_scale = 0.25 * msg.scale;
-  float base_z = 1.2 * msg.scale;
+  float base_scale = 0.25f * msg.scale;
+  float base_z = 1.2f * msg.scale;
 
   marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
   marker.scale.x = base_scale;
@@ -399,9 +399,9 @@ void assignDefaultColor(
   tf2::Vector3 bt_x_axis = tf2::Matrix3x3(bt_quat) * tf2::Vector3(1, 0, 0);
 
   float x, y, z;
-  x = fabs(bt_x_axis.x());
-  y = fabs(bt_x_axis.y());
-  z = fabs(bt_x_axis.z());
+  x = static_cast<float>(fabs(bt_x_axis.x()));
+  y = static_cast<float>(fabs(bt_x_axis.y()));
+  z = static_cast<float>(fabs(bt_x_axis.z()));
 
   float max_xy = x > y ? x : y;
   float max_yz = y > z ? y : z;

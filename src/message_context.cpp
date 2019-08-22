@@ -99,7 +99,7 @@ bool MessageContext<MsgT>::getTransform(
         header.frame_id = target_frame_;
       }
     }
-  } catch (tf2::ExtrapolationException & e) {
+  } catch (tf2::ExtrapolationException) {
     // Get latest common time
     // Call lookupTransform with time=0 and use the stamp on the resultant transform.
     geometry_msgs::msg::TransformStamped transform =
