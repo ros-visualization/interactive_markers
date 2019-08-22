@@ -52,7 +52,6 @@
 #include "visualization_msgs/srv/get_interactive_markers.hpp"
 
 #include "detail/message_context.hpp"
-#include "detail/state_machine.hpp"
 
 namespace tf2
 {
