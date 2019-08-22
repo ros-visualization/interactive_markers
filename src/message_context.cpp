@@ -218,7 +218,7 @@ void MessageContext<visualization_msgs::msg::InteractiveMarkerUpdate>::getTfTran
   getTfTransforms(msg->markers, open_marker_idx_);
   getTfTransforms(msg->poses, open_pose_idx_);
   if (isReady()) {
-    RCUTILS_LOG_DEBUG("Update message with seq_num=%llu is ready.", msg->seq_num);
+    RCUTILS_LOG_DEBUG("Update message with seq_num=%lu is ready.", msg->seq_num);
   }
 }
 
@@ -227,7 +227,7 @@ void MessageContext<visualization_msgs::srv::GetInteractiveMarkers::Response>::g
 {
   getTfTransforms(msg->markers, open_marker_idx_);
   if (isReady()) {
-    RCUTILS_LOG_DEBUG("Response message with seq_num=%llu is ready.", msg->sequence_number);
+    RCUTILS_LOG_DEBUG("Response message with seq_num=%lu is ready.", msg->sequence_number);
   }
 }
 
