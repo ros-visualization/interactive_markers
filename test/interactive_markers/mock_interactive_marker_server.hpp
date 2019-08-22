@@ -85,7 +85,8 @@ MockInteractiveMarkerServer::MockInteractiveMarkerServer(
     const std::shared_ptr<visualization_msgs::srv::GetInteractiveMarkers::Request> request,
     std::shared_ptr<visualization_msgs::srv::GetInteractiveMarkers::Response> response)
     {
-      (void) request_header;
+      (void)request_header;
+      (void)request;
       RCLCPP_INFO(this->get_logger(), "Interactive markers request received");
       response->sequence_number = this->sequence_number_;
       response->markers = this->markers_;
@@ -97,6 +98,7 @@ MockInteractiveMarkerServer::MockInteractiveMarkerServer(
     10,
     [this](const visualization_msgs::msg::InteractiveMarkerFeedback::SharedPtr feedback)
     {
+      (void)feedback;
       RCLCPP_INFO(this->get_logger(), "Feedback received");
       ++this->feedback_received_;
     });

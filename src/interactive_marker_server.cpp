@@ -57,10 +57,10 @@ InteractiveMarkerServer::InteractiveMarkerServer(
   rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
   rclcpp::node_interfaces::NodeServicesInterface::SharedPtr services_interface)
 : topic_namespace_(topic_namespace),
-  sequence_number_(0),
   context_(base_interface->get_context()),
   clock_(clock_interface->get_clock()),
-  logger_(logging_interface->get_logger())
+  logger_(logging_interface->get_logger()),
+  sequence_number_(0)
 {
   const std::string update_topic = topic_namespace + "/update";
   const std::string feedback_topic = topic_namespace + "/feedback";
@@ -377,6 +377,7 @@ void InteractiveMarkerServer::getInteractiveMarkersCallback(
   std::shared_ptr<visualization_msgs::srv::GetInteractiveMarkers::Response> response)
 {
   (void)request_header;
+  (void)request;
 
   RCLCPP_INFO(logger_, "Responding to request to get interactive markers");
   response->sequence_number = sequence_number_;
