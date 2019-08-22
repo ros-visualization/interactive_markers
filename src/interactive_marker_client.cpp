@@ -177,7 +177,9 @@ void InteractiveMarkerClient::setTargetFrame(std::string target_frame)
   target_frame_ = target_frame;
   updateStatus(INFO, "Target frame is now " + target_frame_);
 
-  // TODO(jacobperron): Maybe we can do better, efficiency-wise
+  // Call reset for change to take effect
+  // This will cause interactive markers to be requested again from the server
+  // The additional request might be avoided by doing something else, but this is easier
   changeState(IDLE);
 }
 
