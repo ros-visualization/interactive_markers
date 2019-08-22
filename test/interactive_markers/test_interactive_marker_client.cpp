@@ -58,7 +58,7 @@ TEST(TestInteractiveMarkerClientInitialize, construction_destruction)
   }
   {
     interactive_markers::InteractiveMarkerClient client(
-      node, buffer, "test_frame_id", "test_namespace");
+      node, buffer, "test_frame_id", "test_namespace", std::chrono::seconds(3));
   }
   {
     interactive_markers::InteractiveMarkerClient client(
@@ -66,22 +66,17 @@ TEST(TestInteractiveMarkerClientInitialize, construction_destruction)
       node->get_node_topics_interface(),
       node->get_node_services_interface(),
       node->get_node_graph_interface(),
+      node->get_node_clock_interface(),
       node->get_node_logging_interface(),
       buffer,
       "test_frame_id",
-      "test_namespace");
+      "test_namespace",
+      std::chrono::milliseconds(100));
   }
   {
     // Invalid namespace (shouldn't crash)
     interactive_markers::InteractiveMarkerClient client(
-      node->get_node_base_interface(),
-      node->get_node_topics_interface(),
-      node->get_node_services_interface(),
-      node->get_node_graph_interface(),
-      node->get_node_logging_interface(),
-      buffer,
-      "test_frame_id",
-      "th!s//is/aninvalid_namespace?");
+      node, buffer, "test_frame_id", "th!s//is/aninvalid_namespace?");
   }
 
   rclcpp::shutdown();
@@ -198,13 +193,6 @@ TEST_F(TestInteractiveMarkerClient, states)
       client_->getState(), ClientState::INITIALIZE, 3s, 10ms, (*executor_), update_func);
     // Make the required TF data in order to finish initializing
     makeTfDataAvailable(mock_server->markers_);
-    // FIXME(jacobperron): This test (and others) sometimes fail with Fast-RTPS as the
-    //                     client does not transition to RUNNING.
-    //                     It appears to be due to the service response never reaching the client.
-    //                     There is no apparent issue with Connext or Opensplice.
-    //                     Sleeping here fixes the test.
-    //                     Not sure if this is an issue with the test or Fast-RTPS.
-    rclcpp::sleep_for(std::chrono::seconds(1));
     TIMED_EXPECT_EQ(
       client_->getState(), ClientState::RUNNING, 3s, 10ms, (*executor_), update_func);
     // Disconnect server
@@ -264,9 +252,6 @@ TEST_F(TestInteractiveMarkerClient, init_callback)
   makeTfDataAvailable(mock_server->markers_);
   auto update_func = std::bind(
     &interactive_markers::InteractiveMarkerClient::update, client_.get());
-  // FIXME(jacobperron): sleeping here fixes a flakey test when using Fast-RTPS.
-  //                     Not sure if this is an issue with the test or Fast-RTPS.
-  rclcpp::sleep_for(std::chrono::seconds(1));
   TIMED_EXPECT_EQ(called, true, 3s, 10ms, (*executor_), update_func);
 }
 
@@ -289,9 +274,6 @@ TEST_F(TestInteractiveMarkerClient, update_callback)
   makeTfDataAvailable(mock_server->markers_);
   auto update_func = std::bind(
     &interactive_markers::InteractiveMarkerClient::update, client_.get());
-  // FIXME(jacobperron): sleeping here fixes a flakey test when using Fast-RTPS.
-  //                     Not sure if this is an issue with the test or Fast-RTPS.
-  rclcpp::sleep_for(std::chrono::seconds(1));
   TIMED_EXPECT_EQ(
     client_->getState(), ClientState::RUNNING, 3s, 10ms, (*executor_), update_func);
 

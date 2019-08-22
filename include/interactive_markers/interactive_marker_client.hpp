@@ -36,6 +36,7 @@
 #ifndef INTERACTIVE_MARKERS__INTERACTIVE_MARKER_CLIENT_HPP_
 #define INTERACTIVE_MARKERS__INTERACTIVE_MARKER_CLIENT_HPP_
 
+#include <chrono>
 #include <deque>
 #include <functional>
 #include <memory>
@@ -107,6 +108,7 @@ public:
    * \param node_base_interface The node base interface for creating the service client.
    * \param topics_interface The node topics interface for creating publishers and subscriptions.
    * \param graph_interface The node graph interface for querying the ROS graph.
+   * \param clock_interface The node clock interface for getting the current time.
    * \param logging_interface The node logging interface for logging messages.
    * \param tf_buffer_core The tf transformer to use.
    * \param target_frame The tf frame to transform timestamped messages into.
@@ -114,16 +116,40 @@ public:
    *   This is the namespace used for the underlying ROS service and topics for communication
    *   between the client and server.
    *   If the namespace is not empty, then connect() is called.
+   * \param request_timeout Timeout in seconds before retrying to request interactive markers from
+   *   a connected server.
    */
+  template<class Rep = int64_t, class Period = std::ratio<1>>
   InteractiveMarkerClient(
     rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base_interface,
     rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
     rclcpp::node_interfaces::NodeServicesInterface::SharedPtr services_interface,
     rclcpp::node_interfaces::NodeGraphInterface::SharedPtr graph_interface,
+    rclcpp::node_interfaces::NodeClockInterface::SharedPtr clock_interface,
     rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_interface,
     std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core,
     const std::string & target_frame = "",
-    const std::string & topic_namespace = "");
+    const std::string & topic_namespace = "",
+    const std::chrono::duration<Rep, Period> & request_timeout = std::chrono::seconds(1))
+  : node_base_interface_(node_base_interface),
+    topics_interface_(topics_interface),
+    services_interface_(services_interface),
+    graph_interface_(graph_interface),
+    client_id_(node_base_interface->get_fully_qualified_name()),
+    clock_(clock_interface->get_clock()),
+    logger_(logging_interface->get_logger()),
+    state_("InteractiveMarkerClient", IDLE),
+    tf_buffer_core_(tf_buffer_core),
+    target_frame_(target_frame),
+    topic_namespace_(topic_namespace),
+    request_timeout_(request_timeout),
+    initial_response_msg_(0),
+    first_update_(true),
+    last_update_sequence_number_(0u),
+    enable_autocomplete_transparency_(true)
+  {
+    connect(topic_namespace_);
+  }
 
   /// Constructor.
   /**
@@ -134,22 +160,27 @@ public:
    *   This is the namespace used for the underlying ROS service and topics for communication
    *   between the client and server.
    *   If the namespace is not empty, then connect() is called.
+   * \param request_timeout Timeout in seconds before retrying to request interactive markers from
+   *   a connected server.
    */
-  template<typename NodePtr>
+  template<typename NodePtr, class Rep = int64_t, class Period = std::ratio<1>>
   InteractiveMarkerClient(
     NodePtr node,
     std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core,
     const std::string & target_frame = "",
-    const std::string & topic_namespace = "")
+    const std::string & topic_namespace = "",
+    const std::chrono::duration<Rep, Period> & request_timeout = std::chrono::seconds(1))
   : InteractiveMarkerClient(
       node->get_node_base_interface(),
       node->get_node_topics_interface(),
       node->get_node_services_interface(),
       node->get_node_graph_interface(),
+      node->get_node_clock_interface(),
       node->get_node_logging_interface(),
       tf_buffer_core,
       target_frame,
-      topic_namespace)
+      topic_namespace,
+      request_timeout)
   {
   }
 
@@ -254,6 +285,8 @@ private:
 
   std::string client_id_;
 
+  rclcpp::Clock::SharedPtr clock_;
+
   rclcpp::Logger logger_;
 
   StateMachine<State> state_;
@@ -271,6 +304,12 @@ private:
   std::string topic_namespace_;
 
   std::recursive_mutex mutex_;
+
+  // Time of the last request for interactive markers
+  rclcpp::Time request_time_;
+
+  // Timeout while waiting for service response message
+  rclcpp::Duration request_timeout_;
 
   // The response message from the request to get interactive markers
   std::shared_ptr<InitialMessageContext> initial_response_msg_;

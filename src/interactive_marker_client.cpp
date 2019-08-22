@@ -49,33 +49,6 @@ namespace interactive_markers
 
 const size_t MAX_UPDATE_QUEUE_SIZE = 100u;
 
-InteractiveMarkerClient::InteractiveMarkerClient(
-  rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base_interface,
-  rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
-  rclcpp::node_interfaces::NodeServicesInterface::SharedPtr services_interface,
-  rclcpp::node_interfaces::NodeGraphInterface::SharedPtr graph_interface,
-  rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_interface,
-  std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core,
-  const std::string & target_frame,
-  const std::string & topic_namespace)
-: node_base_interface_(node_base_interface),
-  topics_interface_(topics_interface),
-  services_interface_(services_interface),
-  graph_interface_(graph_interface),
-  client_id_(node_base_interface->get_fully_qualified_name()),
-  logger_(logging_interface->get_logger()),
-  state_("InteractiveMarkerClient", IDLE),
-  tf_buffer_core_(tf_buffer_core),
-  target_frame_(target_frame),
-  topic_namespace_(topic_namespace),
-  initial_response_msg_(0),
-  first_update_(true),
-  last_update_sequence_number_(0u),
-  enable_autocomplete_transparency_(true)
-{
-  connect(topic_namespace_);
-}
-
 InteractiveMarkerClient::~InteractiveMarkerClient()
 {
 }
@@ -249,13 +222,14 @@ void InteractiveMarkerClient::requestInteractiveMarkers()
     updateStatus(WARN, "Service is not ready during request for interactive markers");
     return;
   }
-  updateStatus(DEBUG, "Sending request for interactive markers");
+  updateStatus(INFO, "Sending request for interactive markers");
 
   auto callback = std::bind(&InteractiveMarkerClient::processInitialMessage, this, _1);
   auto request = std::make_shared<visualization_msgs::srv::GetInteractiveMarkers::Request>();
   get_interactive_markers_client_->async_send_request(
     request,
     callback);
+  request_time_ = clock_->now();
 }
 
 void InteractiveMarkerClient::processInitialMessage(
@@ -361,7 +335,13 @@ bool InteractiveMarkerClient::checkInitializeFinished()
 {
   std::unique_lock<std::recursive_mutex> lock(mutex_);
   if (!initial_response_msg_) {
-    // We haven't received a response yet
+    // We haven't received a response yet, check for timeout
+    if ((clock_->now() - request_time_) > request_timeout_) {
+      updateStatus(
+        WARN, "Did not receive response with interactive markers, resending request...");
+      requestInteractiveMarkers();
+    }
+
     return false;
   }
 
