@@ -62,6 +62,7 @@ InteractiveMarkerClient::InteractiveMarkerClient(
   topics_interface_(topics_interface),
   services_interface_(services_interface),
   graph_interface_(graph_interface),
+  client_id_(node_base_interface->get_fully_qualified_name()),
   logger_(logging_interface->get_logger()),
   state_("InteractiveMarkerClient", IDLE),
   tf_buffer_core_(tf_buffer_core),
@@ -102,15 +103,13 @@ void InteractiveMarkerClient::connect(std::string topic_namespace)
       topic_namespace_ + "/get_interactive_markers",
       rmw_qos_profile_services_default,
       nullptr);
-  } catch (rclcpp::exceptions::InvalidNodeError & ex) {
-    updateStatus(ERROR, "Error subscribing: " + std::string(ex.what()));
-    return;
-  } catch (rclcpp::exceptions::NameValidationError & ex) {
-    updateStatus(ERROR, "Error subscribing: " + std::string(ex.what()));
-    return;
-  }
 
-  try {
+    rclcpp::QoS feedback_qos(rclcpp::KeepLast(100));
+    feedback_pub_ = rclcpp::create_publisher<visualization_msgs::msg::InteractiveMarkerFeedback>(
+      topics_interface_,
+      topic_namespace_ + "/feedback",
+      feedback_qos);
+
     rclcpp::QoS update_qos(rclcpp::KeepLast(100));
     update_sub_ = rclcpp::create_subscription<visualization_msgs::msg::InteractiveMarkerUpdate>(
       topics_interface_,
@@ -119,12 +118,10 @@ void InteractiveMarkerClient::connect(std::string topic_namespace)
       std::bind(&InteractiveMarkerClient::processUpdate, this, _1));
   } catch (rclcpp::exceptions::InvalidNodeError & ex) {
     updateStatus(ERROR, "Error subscribing: " + std::string(ex.what()));
-    // Disconnect the service client
     disconnect();
     return;
   } catch (rclcpp::exceptions::NameValidationError & ex) {
     updateStatus(ERROR, "Error subscribing: " + std::string(ex.what()));
-    // Disconnect the service client
     disconnect();
     return;
   }
@@ -135,8 +132,16 @@ void InteractiveMarkerClient::connect(std::string topic_namespace)
 void InteractiveMarkerClient::disconnect()
 {
   get_interactive_markers_client_.reset();
+  feedback_pub_.reset();
   update_sub_.reset();
   reset();
+}
+
+void InteractiveMarkerClient::publishFeedback(
+  visualization_msgs::msg::InteractiveMarkerFeedback feedback)
+{
+  feedback.client_id = client_id_;
+  feedback_pub_->publish(feedback);
 }
 
 void InteractiveMarkerClient::update()

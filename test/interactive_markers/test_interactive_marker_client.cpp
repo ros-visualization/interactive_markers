@@ -187,7 +187,6 @@ TEST_F(TestInteractiveMarkerClient, states)
     client_.reset(
       new interactive_markers::InteractiveMarkerClient(
         node_, buffer_, target_frame_id_, topic_namespace_));
-    // client_->update();
     EXPECT_EQ(client_->getState(), ClientState::IDLE);
     // Start server
     auto mock_server = std::make_shared<MockInteractiveMarkerServer>(topic_namespace_);
@@ -200,7 +199,7 @@ TEST_F(TestInteractiveMarkerClient, states)
     // Make the required TF data in order to finish initializing
     makeTfDataAvailable(mock_server->markers_);
     // FIXME(jacobperron): This test (and others) sometimes fail with Fast-RTPS as the
-    //                     client_->does not transition to RUNNING.
+    //                     client does not transition to RUNNING.
     //                     It appears to be due to the service response never reaching the client.
     //                     There is no apparent issue with Connext or Opensplice.
     //                     Sleeping here fixes the test.
@@ -220,7 +219,6 @@ TEST_F(TestInteractiveMarkerClient, states)
     client_.reset(
       new interactive_markers::InteractiveMarkerClient(
         node_, buffer_, target_frame_id_, topic_namespace_));
-    // client_->update();
     EXPECT_EQ(client_->getState(), ClientState::IDLE);
     // Start server
     auto mock_server = std::make_shared<MockInteractiveMarkerServer>(topic_namespace_);
@@ -313,4 +311,23 @@ TEST_F(TestInteractiveMarkerClient, update_callback)
   EXPECT_EQ(output_pose.position.y, input_pose.position.y);
   EXPECT_EQ(output_pose.position.z, input_pose.position.z);
   EXPECT_EQ(output_pose.orientation.w, input_pose.orientation.w);
+}
+
+TEST_F(TestInteractiveMarkerClient, feedback)
+{
+  using namespace std::chrono_literals;
+
+  auto mock_server = std::make_shared<MockInteractiveMarkerServer>(topic_namespace_);
+  executor_->add_node(mock_server);
+
+  EXPECT_EQ(mock_server->feedback_received_, 0u);
+
+  // Publish a feedback message
+  visualization_msgs::msg::InteractiveMarkerFeedback feedback_msg;
+  client_->publishFeedback(feedback_msg);
+  TIMED_EXPECT_EQ(mock_server->feedback_received_, 1u, 3s, 10ms, (*executor_));
+
+  // Publish another
+  client_->publishFeedback(feedback_msg);
+  TIMED_EXPECT_EQ(mock_server->feedback_received_, 2u, 3s, 10ms, (*executor_));
 }

@@ -46,6 +46,7 @@
 #include "rclcpp/logger.hpp"
 #include "rclcpp/rclcpp.hpp"
 
+#include "visualization_msgs/msg/interactive_marker_feedback.hpp"
 #include "visualization_msgs/msg/interactive_marker_update.hpp"
 #include "visualization_msgs/srv/get_interactive_markers.hpp"
 
@@ -167,6 +168,9 @@ public:
   /// Update the internal state and call registered callbacks.
   void update();
 
+  /// Publish a feedback message to the server.
+  void publishFeedback(visualization_msgs::msg::InteractiveMarkerFeedback feedback);
+
   /// Change the target frame.
   /**
    * This resets the connection.
@@ -248,6 +252,8 @@ private:
   rclcpp::node_interfaces::NodeServicesInterface::SharedPtr services_interface_;
   rclcpp::node_interfaces::NodeGraphInterface::SharedPtr graph_interface_;
 
+  std::string client_id_;
+
   rclcpp::Logger logger_;
 
   StateMachine<State> state_;
@@ -255,6 +261,7 @@ private:
   rclcpp::Client<visualization_msgs::srv::GetInteractiveMarkers>::SharedPtr
     get_interactive_markers_client_;
 
+  rclcpp::Publisher<visualization_msgs::msg::InteractiveMarkerFeedback>::SharedPtr feedback_pub_;
   rclcpp::SubscriptionBase::SharedPtr update_sub_;
 
   std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core_;
