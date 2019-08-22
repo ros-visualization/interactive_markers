@@ -93,14 +93,22 @@ void InteractiveMarkerClient::connect(std::string topic_namespace)
     return;
   }
 
-  get_interactive_markers_client_ =
-    rclcpp::create_client<visualization_msgs::srv::GetInteractiveMarkers>(
-    node_base_interface_,
-    graph_interface_,
-    services_interface_,
-    topic_namespace_ + "/get_interactive_markers",
-    rmw_qos_profile_services_default,
-    nullptr);
+  try {
+    get_interactive_markers_client_ =
+      rclcpp::create_client<visualization_msgs::srv::GetInteractiveMarkers>(
+      node_base_interface_,
+      graph_interface_,
+      services_interface_,
+      topic_namespace_ + "/get_interactive_markers",
+      rmw_qos_profile_services_default,
+      nullptr);
+  } catch (rclcpp::exceptions::InvalidNodeError & ex) {
+    updateStatus(ERROR, "Error subscribing: " + std::string(ex.what()));
+    return;
+  } catch (rclcpp::exceptions::NameValidationError & ex) {
+    updateStatus(ERROR, "Error subscribing: " + std::string(ex.what()));
+    return;
+  }
 
   try {
     rclcpp::QoS update_qos(rclcpp::KeepLast(100));
@@ -111,9 +119,13 @@ void InteractiveMarkerClient::connect(std::string topic_namespace)
       std::bind(&InteractiveMarkerClient::processUpdate, this, _1));
   } catch (rclcpp::exceptions::InvalidNodeError & ex) {
     updateStatus(ERROR, "Error subscribing: " + std::string(ex.what()));
+    // Disconnect the service client
+    disconnect();
     return;
   } catch (rclcpp::exceptions::NameValidationError & ex) {
     updateStatus(ERROR, "Error subscribing: " + std::string(ex.what()));
+    // Disconnect the service client
+    disconnect();
     return;
   }
 

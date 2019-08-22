@@ -71,6 +71,18 @@ TEST(TestInteractiveMarkerClientInitialize, construction_destruction)
       "test_frame_id",
       "test_namespace");
   }
+  {
+    // Invalid namespace (shouldn't crash)
+    interactive_markers::InteractiveMarkerClient client(
+      node->get_node_base_interface(),
+      node->get_node_topics_interface(),
+      node->get_node_services_interface(),
+      node->get_node_graph_interface(),
+      node->get_node_logging_interface(),
+      buffer,
+      "test_frame_id",
+      "th!s//is/aninvalid_namespace?");
+  }
 
   rclcpp::shutdown();
 }
