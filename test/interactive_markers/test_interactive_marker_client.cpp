@@ -268,8 +268,6 @@ TEST_F(TestInteractiveMarkerClient, init_callback)
   //                     Not sure if this is an issue with the test or Fast-RTPS.
   rclcpp::sleep_for(std::chrono::seconds(1));
   TIMED_EXPECT_EQ(called, true, 3s, 10ms, (*executor_), update_func);
-  std::cerr << "Another update" << std::endl;
-  client_->update();
 }
 
 TEST_F(TestInteractiveMarkerClient, update_callback)
@@ -296,8 +294,6 @@ TEST_F(TestInteractiveMarkerClient, update_callback)
   rclcpp::sleep_for(std::chrono::seconds(1));
   TIMED_EXPECT_EQ(
     client_->getState(), ClientState::RUNNING, 3s, 10ms, (*executor_), update_func);
-  std::cerr << "Another update" << std::endl;
-  client_->update();
 
   // Publish an update message
   geometry_msgs::msg::Pose input_pose;
@@ -311,6 +307,35 @@ TEST_F(TestInteractiveMarkerClient, update_callback)
   EXPECT_EQ(output_pose.position.y, input_pose.position.y);
   EXPECT_EQ(output_pose.position.z, input_pose.position.z);
   EXPECT_EQ(output_pose.orientation.w, input_pose.orientation.w);
+}
+
+TEST_F(TestInteractiveMarkerClient, reset_callback)
+{
+  using namespace std::chrono_literals;
+
+  bool reset_called = false;
+  auto callback = [&reset_called]()
+    {
+      reset_called = true;
+    };
+
+  client_->setResetCallback(callback);
+
+  // Get out of the IDLE state by creating a server and publishing the required TF data
+  auto mock_server = std::make_shared<MockInteractiveMarkerServer>(topic_namespace_);
+  executor_->add_node(mock_server);
+  makeTfDataAvailable(mock_server->markers_);
+  auto update_func = std::bind(
+    &interactive_markers::InteractiveMarkerClient::update, client_.get());
+  TIMED_EXPECT_EQ(
+    client_->getState(), ClientState::INITIALIZE, 3s, 10ms, (*executor_), update_func);
+
+  // Disconnect server to cause reset
+  executor_->remove_node(mock_server);
+  mock_server.reset();
+  TIMED_EXPECT_EQ(
+    client_->getState(), ClientState::IDLE, 3s, 10ms, (*executor_), update_func);
+  EXPECT_TRUE(reset_called);
 }
 
 TEST_F(TestInteractiveMarkerClient, feedback)

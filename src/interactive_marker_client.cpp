@@ -78,7 +78,6 @@ InteractiveMarkerClient::InteractiveMarkerClient(
 
 InteractiveMarkerClient::~InteractiveMarkerClient()
 {
-  disconnect();
 }
 
 void InteractiveMarkerClient::connect(std::string topic_namespace)
