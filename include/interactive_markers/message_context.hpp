@@ -33,8 +33,8 @@
 
 // Author: David Gossow
 
-#ifndef INTERACTIVE_MARKERS__DETAIL__MESSAGE_CONTEXT_HPP_
-#define INTERACTIVE_MARKERS__DETAIL__MESSAGE_CONTEXT_HPP_
+#ifndef INTERACTIVE_MARKERS__MESSAGE_CONTEXT_HPP_
+#define INTERACTIVE_MARKERS__MESSAGE_CONTEXT_HPP_
 
 #include <list>
 #include <memory>
@@ -94,4 +94,4 @@ private:
 
 }  // namespace interactive_markers
 
-#endif  // INTERACTIVE_MARKERS__DETAIL__MESSAGE_CONTEXT_HPP_
+#endif  // INTERACTIVE_MARKERS__MESSAGE_CONTEXT_HPP_

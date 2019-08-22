@@ -41,8 +41,8 @@
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "visualization_msgs/srv/get_interactive_markers.hpp"
 
-#include "interactive_markers/detail/message_context.hpp"
 #include "interactive_markers/exceptions.hpp"
+#include "interactive_markers/message_context.hpp"
 #include "interactive_markers/tools.hpp"
 
 namespace interactive_markers

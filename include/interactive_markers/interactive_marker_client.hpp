@@ -51,7 +51,7 @@
 #include "visualization_msgs/msg/interactive_marker_update.hpp"
 #include "visualization_msgs/srv/get_interactive_markers.hpp"
 
-#include "detail/message_context.hpp"
+#include "interactive_markers/message_context.hpp"
 
 namespace tf2
 {
