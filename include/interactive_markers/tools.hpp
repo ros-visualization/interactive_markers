@@ -97,7 +97,7 @@ INTERACTIVE_MARKERS_PUBLIC
 void makeDisc(
   const visualization_msgs::msg::InteractiveMarker & msg,
   visualization_msgs::msg::InteractiveMarkerControl & control,
-  float width = 0.3f);
+  double width = 0.3);
 
 /// Make view facing button with text.
 /**

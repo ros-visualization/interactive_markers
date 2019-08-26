@@ -54,7 +54,7 @@ get_interactive_markers()
     marker.pose.position.x = 1.0;
     marker.pose.orientation.w = 1.0;
     marker.description = "My test marker description";
-    marker.scale = 3.14;
+    marker.scale = 3.14f;
     visualization_msgs::msg::MenuEntry menu_entry;
     menu_entry.id = 42;
     menu_entry.title = "My test menu title";

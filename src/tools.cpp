@@ -230,7 +230,7 @@ void makeArrow(
 void makeDisc(
   const visualization_msgs::msg::InteractiveMarker & msg,
   visualization_msgs::msg::InteractiveMarkerControl & control,
-  float width)
+  double width)
 {
   visualization_msgs::msg::Marker marker;
 
@@ -253,13 +253,13 @@ void makeDisc(
   geometry_msgs::msg::Point v1, v2;
 
   for (int i = 0; i < steps; i++) {
-    const float a = static_cast<float>(i) / static_cast<float>(steps) * M_PI * 2.0f;
+    const double a = static_cast<double>(i) / static_cast<double>(steps) * M_PI * 2.0;
 
     v1.y = 0.5 * cos(a);
     v1.z = 0.5 * sin(a);
 
-    v2.y = (1 + width) * v1.y;
-    v2.z = (1 + width) * v1.z;
+    v2.y = (1.0 + width) * v1.y;
+    v2.z = (1.0 + width) * v1.z;
 
     circle1.push_back(v1);
     circle2.push_back(v2);
