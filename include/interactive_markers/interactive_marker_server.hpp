@@ -48,6 +48,8 @@
 #include "visualization_msgs/msg/interactive_marker_update.hpp"
 #include "visualization_msgs/srv/get_interactive_markers.hpp"
 
+#include "interactive_markers/visibility_control.hpp"
+
 namespace interactive_markers
 {
 
@@ -56,7 +58,7 @@ namespace interactive_markers
  * Note that changes made by calling insert(), erase(), setCallback() etc. are not applied until
  * calling applyChanges().
  */
-class InteractiveMarkerServer
+class INTERACTIVE_MARKERS_PUBLIC InteractiveMarkerServer
 {
 public:
   typedef visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr FeedbackConstSharedPtr;

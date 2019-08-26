@@ -52,6 +52,7 @@
 #include "visualization_msgs/srv/get_interactive_markers.hpp"
 
 #include "interactive_markers/message_context.hpp"
+#include "interactive_markers/visibility_control.hpp"
 
 namespace tf2
 {
@@ -77,7 +78,7 @@ namespace interactive_markers
  * while for non-timestamped messages it is ensured that the necessary
  * tf transformation will be available.
  */
-class InteractiveMarkerClient
+class INTERACTIVE_MARKERS_PUBLIC InteractiveMarkerClient
 {
 public:
   enum Status

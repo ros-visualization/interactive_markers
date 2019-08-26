@@ -44,13 +44,14 @@
 #include "visualization_msgs/msg/menu_entry.hpp"
 
 #include "interactive_markers/interactive_marker_server.hpp"
+#include "interactive_markers/visibility_control.hpp"
 
 namespace interactive_markers
 {
 
 // Simple non-intrusive helper class which creates a menu and maps its
 // entries to function callbacks
-class MenuHandler
+class INTERACTIVE_MARKERS_PUBLIC MenuHandler
 {
 public:
   typedef uint32_t EntryHandle;

@@ -41,6 +41,11 @@ install(
   DIRECTORY include/
   DESTINATION include)
 
+# Causes the visibility macros to use dllexport rather than dllimport,
+# which is appropriate when building the dll but not consuming it.
+target_compile_definitions(${PROJECT_NAME}
+  PRIVATE "INTERACTIVE_MARKERS_BUILDING_LIBRARY")
+
 ament_export_dependencies("rclcpp")
 ament_export_dependencies("rmw")
 ament_export_dependencies("tf2")

@@ -37,6 +37,8 @@
 
 #include "visualization_msgs/msg/interactive_marker.hpp"
 
+#include "interactive_markers/visibility_control.hpp"
+
 namespace interactive_markers
 {
 
@@ -47,6 +49,7 @@ namespace interactive_markers
  * \param msg[inout] Interactive marker to be completed.
  * \param enable_autocomplete_transparency If false, auto-completed markers will have alpha = 1.0.
  */
+INTERACTIVE_MARKERS_PUBLIC
 void autoComplete(
   visualization_msgs::msg::InteractiveMarker & msg,
   bool enable_autocomplete_transparency = true);
@@ -57,6 +60,7 @@ void autoComplete(
  * \param control[inout] The control to be completed.
  * \param enable_autocomplete_transparency If false, auto-completed markers will have alpha = 1.0.
  */
+INTERACTIVE_MARKERS_PUBLIC
 void autoComplete(
   const visualization_msgs::msg::InteractiveMarker & msg,
   visualization_msgs::msg::InteractiveMarkerControl & control,
@@ -68,6 +72,7 @@ void autoComplete(
  *
  * \param msg[inout] Interactive marker for which control names are made unique.
  */
+INTERACTIVE_MARKERS_PUBLIC
 void uniqueifyControlNames(visualization_msgs::msg::InteractiveMarker & msg);
 
 /// Make a default-style arrow marker.
@@ -76,6 +81,7 @@ void uniqueifyControlNames(visualization_msgs::msg::InteractiveMarker & msg);
  * \param control[inout] The control where the arrow marker is inserted.
  * \param pos[in] How far from the center should the arrow be, and on which side.
  */
+INTERACTIVE_MARKERS_PUBLIC
 void makeArrow(
   const visualization_msgs::msg::InteractiveMarker & msg,
   visualization_msgs::msg::InteractiveMarkerControl & control,
@@ -87,6 +93,7 @@ void makeArrow(
  * \param control[inout] The control where the disc marker is inserted.
  * \param width[in] The width of the disc relative to its inner radius.
  */
+INTERACTIVE_MARKERS_PUBLIC
 void makeDisc(
   const visualization_msgs::msg::InteractiveMarker & msg,
   visualization_msgs::msg::InteractiveMarkerControl & control,
@@ -98,6 +105,7 @@ void makeDisc(
  * \param control[inout] The control where the button is inserted.
  * \param text[in] The text to display on the button.
  */
+INTERACTIVE_MARKERS_PUBLIC
 void makeViewFacingButton(
   const visualization_msgs::msg::InteractiveMarker & msg,
   visualization_msgs::msg::InteractiveMarkerControl & control,
@@ -108,6 +116,7 @@ void makeViewFacingButton(
  * \param marker[inout] The marker to color.
  * \param quat[in] The orientation that determines the color.
  */
+INTERACTIVE_MARKERS_PUBLIC
 void assignDefaultColor(
   visualization_msgs::msg::Marker & marker,
   const geometry_msgs::msg::Quaternion & quat);
@@ -117,6 +126,7 @@ void assignDefaultColor(
  * \param msg[in] The interactive marker to describe.
  * \return A control that shows the description of the provided interactive marker.
  */
+INTERACTIVE_MARKERS_PUBLIC
 visualization_msgs::msg::InteractiveMarkerControl makeTitle(
   const visualization_msgs::msg::InteractiveMarker & msg);
 
