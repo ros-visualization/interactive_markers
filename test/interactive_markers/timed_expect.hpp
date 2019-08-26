@@ -56,6 +56,10 @@
 
 #define TIMED_EXPECT_EQ_CHOOSER(lhs, rhs, timeout, period, executor, func, args, ...) args
 
+// Workaround for MSVC's preprocessor
+// See: https://stackoverflow.com/a/5134656
+#define EXPAND(x) x
+
 /// Assert equality with a timeout.
 /**
  * This macro blocks until lhs == rhs or a timeout occurs.
@@ -72,7 +76,8 @@
  * \param func The optional function to call.
  */
 #define TIMED_EXPECT_EQ(...) \
-  TIMED_EXPECT_EQ_CHOOSER( \
-    __VA_ARGS__, TIMED_EXPECT_EQ_6_ARGS(__VA_ARGS__), TIMED_EXPECT_EQ_5_ARGS(__VA_ARGS__), UNUSED)
+  EXPAND(TIMED_EXPECT_EQ_CHOOSER( \
+      __VA_ARGS__, TIMED_EXPECT_EQ_6_ARGS(__VA_ARGS__), TIMED_EXPECT_EQ_5_ARGS(__VA_ARGS__), \
+      UNUSED))
 
 #endif  // INTERACTIVE_MARKERS__TIMED_EXPECT_HPP_
