@@ -38,7 +38,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#define TIMED_EXPECT_EQ_6_ARGS(lhs, rhs, timeout, period, executor, func) \
+#define TIMED_EXPECT_EQ_6_ARGS(lhs, rhs, timeout, period, executor, func, ...) \
   do { \
     auto start_time = std::chrono::steady_clock::now(); \
     while (lhs != rhs && \
@@ -51,8 +51,8 @@
     EXPECT_EQ(lhs, rhs); \
   } while (0)
 
-#define TIMED_EXPECT_EQ_5_ARGS(lhs, rhs, timeout, period, executor) \
-  TIMED_EXPECT_EQ_6_ARGS(lhs, rhs, timeout, period, executor, [] {})
+#define TIMED_EXPECT_EQ_5_ARGS(lhs, rhs, timeout, period, executor, ...) \
+  TIMED_EXPECT_EQ_6_ARGS(lhs, rhs, timeout, period, executor, [] {}, UNUSED)
 
 #define TIMED_EXPECT_EQ_CHOOSER(lhs, rhs, timeout, period, executor, func, args, ...) args
 
@@ -77,7 +77,9 @@
  */
 #define TIMED_EXPECT_EQ(...) \
   EXPAND(TIMED_EXPECT_EQ_CHOOSER( \
-      __VA_ARGS__, TIMED_EXPECT_EQ_6_ARGS(__VA_ARGS__), TIMED_EXPECT_EQ_5_ARGS(__VA_ARGS__), \
+      __VA_ARGS__, \
+      TIMED_EXPECT_EQ_6_ARGS(__VA_ARGS__, UNUSED), \
+      TIMED_EXPECT_EQ_5_ARGS(__VA_ARGS__, UNUSED), \
       UNUSED))
 
 #endif  // INTERACTIVE_MARKERS__TIMED_EXPECT_HPP_
