@@ -51,7 +51,7 @@ namespace interactive_markers
 
 // Simple non-intrusive helper class which creates a menu and maps its
 // entries to function callbacks
-class INTERACTIVE_MARKERS_PUBLIC MenuHandler
+class MenuHandler
 {
 public:
   typedef uint32_t EntryHandle;

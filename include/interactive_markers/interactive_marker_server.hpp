@@ -58,7 +58,7 @@ namespace interactive_markers
  * Note that changes made by calling insert(), erase(), setCallback() etc. are not applied until
  * calling applyChanges().
  */
-class INTERACTIVE_MARKERS_PUBLIC InteractiveMarkerServer
+class InteractiveMarkerServer
 {
 public:
   typedef visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr FeedbackConstSharedPtr;
@@ -76,6 +76,7 @@ public:
    * \param topics_interface Node topics interface.
    * \param service_interface Node service interface.
    */
+  INTERACTIVE_MARKERS_PUBLIC
   InteractiveMarkerServer(
     const std::string & topic_namespace,
     rclcpp::node_interfaces::NodeBaseInterface::SharedPtr base_interface,
@@ -99,6 +100,7 @@ public:
   }
 
   /// Destruction of the interface will lead to all managed markers being cleared.
+  INTERACTIVE_MARKERS_PUBLIC
   ~InteractiveMarkerServer();
 
   /// Add or replace a marker without changing its callback functions.
@@ -108,6 +110,7 @@ public:
    *
    * \param marker The marker to be added or replaced.
    */
+  INTERACTIVE_MARKERS_PUBLIC
   void insert(const visualization_msgs::msg::InteractiveMarker & marker);
 
   /// Add or replace a marker and its callback functions.
@@ -119,6 +122,7 @@ public:
    * \param feedback_callback Function to call on the arrival of a feedback message.
    * \param feedback_type Type of feedback for which to call the feedback callback.
    */
+  INTERACTIVE_MARKERS_PUBLIC
   void insert(
     const visualization_msgs::msg::InteractiveMarker & marker,
     FeedbackCallback feedback_callback,
@@ -134,6 +138,7 @@ public:
    *   Leave this empty to use the previous one.
    * \return true if a marker with the provided name exists, false otherwise.
    */
+  INTERACTIVE_MARKERS_PUBLIC
   bool setPose(
     const std::string & name,
     const geometry_msgs::msg::Pose & pose,
@@ -145,12 +150,14 @@ public:
    * \param name Name of the interactive marker to erase.
    * \return true if a marker with the provided name exists, false otherwise.
    */
+  INTERACTIVE_MARKERS_PUBLIC
   bool erase(const std::string & name);
 
   /// Clear all markers.
   /**
    * Note, this change will not take effect until you call applyChanges().
    */
+  INTERACTIVE_MARKERS_PUBLIC
   void clear();
 
   /// Return whether the server contains any markers.
@@ -159,6 +166,7 @@ public:
    *
    * \return true if the server contains no markers, false otherwise.
    */
+  INTERACTIVE_MARKERS_PUBLIC
   bool empty() const;
 
   /// Return the number of markers contained in the server.
@@ -166,6 +174,7 @@ public:
    * Does not include markers inserted since the last applyChanges().
    * \return The number of markers contained in the server.
    */
+  INTERACTIVE_MARKERS_PUBLIC
   std::size_t size() const;
 
   /// Add or replace a callback function for a marker.
@@ -183,12 +192,14 @@ public:
    * \return true if the setting the callback was successful, false if the provided
    *   name does not match an existing marker.
    */
+  INTERACTIVE_MARKERS_PUBLIC
   bool setCallback(
     const std::string & name,
     FeedbackCallback feedback_cb,
     uint8_t feedback_type = DEFAULT_FEEDBACK_CB);
 
   /// Apply changes made since the last call to this method and broadcast an update to all clients.
+  INTERACTIVE_MARKERS_PUBLIC
   void applyChanges();
 
   /// Get a marker by name.
@@ -198,6 +209,7 @@ public:
    *   Not set if a marker with the provided name does not exist.
    * \return true if a marker with the provided name exists, false otherwise.
    */
+  INTERACTIVE_MARKERS_PUBLIC
   bool get(std::string name, visualization_msgs::msg::InteractiveMarker & int_marker) const;
 
 private:

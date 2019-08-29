@@ -78,7 +78,7 @@ namespace interactive_markers
  * while for non-timestamped messages it is ensured that the necessary
  * tf transformation will be available.
  */
-class INTERACTIVE_MARKERS_PUBLIC InteractiveMarkerClient
+class InteractiveMarkerClient
 {
 public:
   enum Status
@@ -188,24 +188,30 @@ public:
   /**
    * Calls reset().
    */
+  INTERACTIVE_MARKERS_PUBLIC
   ~InteractiveMarkerClient();
 
   /// Connect to a server in a given namespace.
+  INTERACTIVE_MARKERS_PUBLIC
   void connect(std::string topic_namespace);
 
   /// Disconnect from a server and clear the update queue.
+  INTERACTIVE_MARKERS_PUBLIC
   void disconnect();
 
   /// Update the internal state and call registered callbacks.
+  INTERACTIVE_MARKERS_PUBLIC
   void update();
 
   /// Publish a feedback message to the server.
+  INTERACTIVE_MARKERS_PUBLIC
   void publishFeedback(visualization_msgs::msg::InteractiveMarkerFeedback feedback);
 
   /// Change the target frame.
   /**
    * This resets the connection.
    */
+  INTERACTIVE_MARKERS_PUBLIC
   void setTargetFrame(std::string target_frame);
 
   /// Set the initialization callback.
@@ -213,6 +219,7 @@ public:
    * The registered function is called when the client successfully initializes with a connected
    * server.
    */
+  INTERACTIVE_MARKERS_PUBLIC
   void setInitializeCallback(const InitializeCallback & cb);
 
   /// Set the callback for update messages.
@@ -220,25 +227,30 @@ public:
    * If the client is connected and initialized, the registered function is called whenever an
    * update message is received.
    */
+  INTERACTIVE_MARKERS_PUBLIC
   void setUpdateCallback(const UpdateCallback & cb);
 
   /// Set the reset callback.
   /**
    * The registered function is called whenver the connection is reset.
    */
+  INTERACTIVE_MARKERS_PUBLIC
   void setResetCallback(const ResetCallback & cb);
 
   /// Set the callback for status updates.
   /**
    * The registered function is called whenever there is a status message.
    */
+  INTERACTIVE_MARKERS_PUBLIC
   void setStatusCallback(const StatusCallback & cb);
 
+  INTERACTIVE_MARKERS_PUBLIC
   inline void setEnableAutocompleteTransparency(bool enable)
   {
     enable_autocomplete_transparency_ = enable;
   }
 
+  INTERACTIVE_MARKERS_PUBLIC
   inline State getState() const
   {
     return state_;
