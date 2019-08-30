@@ -1,67 +1,92 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(interactive_markers)
-find_package(catkin REQUIRED 
-  rosconsole
-  roscpp
-  rospy
-  rostest
-  std_msgs
-  tf
-  visualization_msgs
-)
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES interactive_markers
-  CATKIN_DEPENDS roscpp rosconsole rospy tf visualization_msgs
-)
-catkin_python_setup()
 
-include_directories(include ${catkin_INCLUDE_DIRS})
+# Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
 
-add_library(${PROJECT_NAME} 
-src/interactive_marker_server.cpp
-src/tools.cpp
-src/menu_handler.cpp
-src/interactive_marker_client.cpp
-src/single_client.cpp
-src/message_context.cpp
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rmw REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
+
+add_library(${PROJECT_NAME} SHARED
+  src/interactive_marker_server.cpp
+  src/tools.cpp
+  src/menu_handler.cpp
+  src/interactive_marker_client.cpp
+  src/message_context.cpp
 )
-
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+target_include_directories(${PROJECT_NAME} PUBLIC include)
+ament_target_dependencies(${PROJECT_NAME}
+  "rclcpp"
+  "rmw"
+  "tf2"
+  "tf2_geometry_msgs"
+  "visualization_msgs")
 
 install(TARGETS ${PROJECT_NAME}
-  DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
-install(DIRECTORY include/interactive_markers/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h")
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin)
 
-# C++ Unit Tests
-#
-if(CATKIN_ENABLE_TESTING)
-  include_directories(${GTEST_INCLUDE_DIRS})
+install(
+  DIRECTORY include/
+  DESTINATION include)
 
-  add_executable(server_test EXCLUDE_FROM_ALL src/test/server_test.cpp)
-  target_link_libraries(server_test ${PROJECT_NAME} ${GTEST_LIBRARIES})
-  add_dependencies(tests server_test)
-  add_rostest(test/cpp_server.test)
+# Causes the visibility macros to use dllexport rather than dllimport,
+# which is appropriate when building the dll but not consuming it.
+target_compile_definitions(${PROJECT_NAME}
+  PRIVATE "INTERACTIVE_MARKERS_BUILDING_LIBRARY")
 
-  add_executable(client_test EXCLUDE_FROM_ALL src/test/client_test.cpp)
-  target_link_libraries(client_test ${PROJECT_NAME} ${GTEST_LIBRARIES})
-  add_dependencies(tests client_test)
-  add_rostest(test/cpp_client.test)
+ament_export_dependencies("rclcpp")
+ament_export_dependencies("rmw")
+ament_export_dependencies("tf2")
+ament_export_dependencies("tf2_geometry_msgs")
+ament_export_dependencies("visualization_msgs")
+ament_export_include_directories(include)
+ament_export_libraries(${PROJECT_NAME})
 
-  add_executable(server_client_test EXCLUDE_FROM_ALL src/test/server_client_test.cpp)
-  target_link_libraries(server_client_test ${PROJECT_NAME} ${GTEST_LIBRARIES})
-  add_dependencies(tests server_client_test)
-  add_rostest(test/cpp_server_client.test)
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  find_package(ament_lint_auto REQUIRED)
+  find_package(geometry_msgs REQUIRED)
+  find_package(std_msgs REQUIRED)
 
-  # Test program to simulate Interactive Marker with missing tf information
-  add_executable(bursty_tf EXCLUDE_FROM_ALL src/test/bursty_tf.cpp)
-  target_link_libraries(bursty_tf ${PROJECT_NAME})
-  add_dependencies(tests bursty_tf)
+  set(ament_cmake_flake8_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
 
-  # Test program to simulate Interactive Marker with wrong tf information
-  add_executable(missing_tf EXCLUDE_FROM_ALL src/test/missing_tf.cpp)
-  target_link_libraries(missing_tf ${PROJECT_NAME})
-  add_dependencies(tests missing_tf)
+  ament_add_gtest(test_interactive_marker_server
+    test/${PROJECT_NAME}/test_interactive_marker_server.cpp
+  )
+  ament_target_dependencies(test_interactive_marker_server
+    "geometry_msgs"
+    "rclcpp"
+    "std_msgs"
+  )
+  target_link_libraries(test_interactive_marker_server
+    ${PROJECT_NAME}
+  )
+
+  ament_add_gtest(test_interactive_marker_client
+    test/${PROJECT_NAME}/test_interactive_marker_client.cpp
+  )
+  ament_target_dependencies(test_interactive_marker_client
+    "geometry_msgs"
+    "rclcpp"
+    "std_msgs"
+    "tf2"
+  )
+  target_link_libraries(test_interactive_marker_client
+    ${PROJECT_NAME}
+  )
 endif()
+
+ament_package()
