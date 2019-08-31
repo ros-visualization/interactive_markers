@@ -106,7 +106,7 @@ void InteractiveMarkerServer::applyChanges()
   std::unique_lock<std::recursive_mutex> lock(mutex_);
 
   if (pending_updates_.empty()) {
-    RCLCPP_INFO(logger_, "No changes to apply");
+    RCLCPP_DEBUG(logger_, "No changes to apply");
     return;
   }
 
@@ -128,7 +128,7 @@ void InteractiveMarkerServer::applyChanges()
       case UpdateContext::FULL_UPDATE:
         {
           if (marker_context_it == marker_contexts_.end()) {
-            RCLCPP_INFO(logger_, "Creating new context for %s", update_it->first.c_str());
+            RCLCPP_DEBUG(logger_, "Creating new context for %s", update_it->first.c_str());
             // create a new int_marker context
             marker_context_it = marker_contexts_.insert(
               std::make_pair(update_it->first, MarkerContext())).first;
@@ -137,7 +137,7 @@ void InteractiveMarkerServer::applyChanges()
             marker_context_it->second.default_feedback_cb = update_it->second.default_feedback_cb;
             marker_context_it->second.feedback_cbs = update_it->second.feedback_cbs;
           } else {
-            RCLCPP_INFO(logger_, "Updating existing context for '%s'", update_it->first.c_str());
+            RCLCPP_DEBUG(logger_, "Updating existing context for '%s'", update_it->first.c_str());
           }
           marker_context_it->second.int_marker = update_it->second.int_marker;
           update.markers.push_back(marker_context_it->second.int_marker);
@@ -152,7 +152,7 @@ void InteractiveMarkerServer::applyChanges()
               "Pending pose update for non-existing marker found. This is a bug in "
               "InteractiveMarkerInterface.");
           } else {
-            RCLCPP_INFO(logger_, "Updating pose for '%s'", update_it->first.c_str());
+            RCLCPP_DEBUG(logger_, "Updating pose for '%s'", update_it->first.c_str());
             marker_context_it->second.int_marker.pose = update_it->second.int_marker.pose;
             marker_context_it->second.int_marker.header = update_it->second.int_marker.header;
 
@@ -167,7 +167,7 @@ void InteractiveMarkerServer::applyChanges()
 
       case UpdateContext::ERASE:
         {
-          RCLCPP_INFO(logger_, "Erasing '%s'", update_it->first.c_str());
+          RCLCPP_DEBUG(logger_, "Erasing '%s'", update_it->first.c_str());
           if (marker_context_it != marker_contexts_.end()) {
             marker_contexts_.erase(update_it->first);
             update.erases.push_back(update_it->first);
@@ -273,15 +273,15 @@ bool InteractiveMarkerServer::setCallback(
   if (marker_context_it != marker_contexts_.end()) {
     // the marker exists, so we can just overwrite the existing callbacks
     if (feedback_type == DEFAULT_FEEDBACK_CB) {
-      RCLCPP_INFO(logger_, "Replacing default callback for marker '%s'", name.c_str());
+      RCLCPP_DEBUG(logger_, "Replacing default callback for marker '%s'", name.c_str());
       marker_context_it->second.default_feedback_cb = feedback_cb;
     } else {
       if (feedback_cb) {
-        RCLCPP_INFO(
+        RCLCPP_DEBUG(
           logger_, "Replacing callback type %u for marker '%s'", feedback_type, name.c_str());
         marker_context_it->second.feedback_cbs[feedback_type] = feedback_cb;
       } else {
-        RCLCPP_INFO(logger_, "Erasing callback for marker '%s'", name.c_str());
+        RCLCPP_DEBUG(logger_, "Erasing callback for marker '%s'", name.c_str());
         marker_context_it->second.feedback_cbs.erase(feedback_type);
       }
     }
@@ -289,15 +289,15 @@ bool InteractiveMarkerServer::setCallback(
 
   if (update_it != pending_updates_.end()) {
     if (feedback_type == DEFAULT_FEEDBACK_CB) {
-      RCLCPP_INFO(logger_, "Setting default callback for marker '%s'", name.c_str());
+      RCLCPP_DEBUG(logger_, "Setting default callback for marker '%s'", name.c_str());
       update_it->second.default_feedback_cb = feedback_cb;
     } else {
       if (feedback_cb) {
         update_it->second.feedback_cbs[feedback_type] = feedback_cb;
-        RCLCPP_INFO(
+        RCLCPP_DEBUG(
           logger_, "Setting callback type %u for marker '%s'", feedback_type, name.c_str());
       } else {
-        RCLCPP_INFO(logger_, "Erasing callback for marker '%s'", name.c_str());
+        RCLCPP_DEBUG(logger_, "Erasing callback for marker '%s'", name.c_str());
         update_it->second.feedback_cbs.erase(feedback_type);
       }
     }
@@ -316,7 +316,7 @@ void InteractiveMarkerServer::insert(const visualization_msgs::msg::InteractiveM
 
   update_it->second.update_type = UpdateContext::FULL_UPDATE;
   update_it->second.int_marker = marker;
-  RCLCPP_INFO(logger_, "Marker inserted with name '%s'", marker.name.c_str());
+  RCLCPP_DEBUG(logger_, "Marker inserted with name '%s'", marker.name.c_str());
 }
 
 void InteractiveMarkerServer::insert(
@@ -379,12 +379,12 @@ void InteractiveMarkerServer::getInteractiveMarkersCallback(
   (void)request_header;
   (void)request;
 
-  RCLCPP_INFO(logger_, "Responding to request to get interactive markers");
+  RCLCPP_DEBUG(logger_, "Responding to request to get interactive markers");
   response->sequence_number = sequence_number_;
   response->markers.reserve(marker_contexts_.size());
   M_MarkerContext::iterator it;
   for (it = marker_contexts_.begin(); it != marker_contexts_.end(); it++) {
-    RCLCPP_INFO(logger_, "Sending marker '%s'", it->second.int_marker.name.c_str());
+    RCLCPP_DEBUG(logger_, "Sending marker '%s'", it->second.int_marker.name.c_str());
     response->markers.push_back(it->second.int_marker);
   }
 }
@@ -392,7 +392,6 @@ void InteractiveMarkerServer::getInteractiveMarkersCallback(
 void InteractiveMarkerServer::processFeedback(
   visualization_msgs::msg::InteractiveMarkerFeedback::SharedPtr feedback)
 {
-  RCLCPP_INFO(logger_, "Feedback message received");
   std::unique_lock<std::recursive_mutex> lock(mutex_);
 
   M_MarkerContext::iterator marker_context_it = marker_contexts_.find(feedback->marker_name);
@@ -408,7 +407,7 @@ void InteractiveMarkerServer::processFeedback(
   if (marker_context.last_client_id != feedback->client_id &&
     (clock_->now() - marker_context.last_feedback).seconds() < 1.0)
   {
-    RCLCPP_INFO(logger_, "Rejecting feedback for %s: conflicting feedback from separate clients.",
+    RCLCPP_DEBUG(logger_, "Rejecting feedback for %s: conflicting feedback from separate clients.",
       feedback->marker_name.c_str());
     return;
   }
@@ -433,7 +432,7 @@ void InteractiveMarkerServer::processFeedback(
     marker_context.feedback_cbs.find(feedback->event_type);
   if (feedback_cb_it != marker_context.feedback_cbs.end() && feedback_cb_it->second) {
     // call type-specific callback
-    RCLCPP_INFO(
+    RCLCPP_DEBUG(
       logger_,
       "Calling feedback callback %u for marker '%s'",
       feedback->event_type,
@@ -441,7 +440,7 @@ void InteractiveMarkerServer::processFeedback(
     feedback_cb_it->second(feedback);
   } else if (marker_context.default_feedback_cb) {
     // call default callback
-    RCLCPP_INFO(
+    RCLCPP_DEBUG(
       logger_, "Calling default feedback callback for marker '%s'", feedback->marker_name.c_str());
     marker_context.default_feedback_cb(feedback);
   }
@@ -468,7 +467,7 @@ void InteractiveMarkerServer::doSetPose(
 
   update_it->second.int_marker.pose = pose;
   update_it->second.int_marker.header = header;
-  RCLCPP_INFO(logger_, "Marker '%s' is now at %f, %f, %f",
+  RCLCPP_DEBUG(logger_, "Marker '%s' is now at %f, %f, %f",
     update_it->first.c_str(), pose.position.x, pose.position.y, pose.position.z);
 }
 

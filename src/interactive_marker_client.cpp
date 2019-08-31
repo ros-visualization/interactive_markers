@@ -300,7 +300,7 @@ bool InteractiveMarkerClient::transformInitialMessage()
   } catch (const exceptions::TransformError & e) {
     std::ostringstream oss;
     oss << "Resetting due to transform error: " << e.what();
-    updateStatus(STATUS_ERROR, oss.str());
+    updateStatus(STATUS_DEBUG, oss.str());  // DEBUG here to reduce spam from repeated resetting
     return false;
   }
 
