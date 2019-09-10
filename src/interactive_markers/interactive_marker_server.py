@@ -98,7 +98,7 @@ class InteractiveMarkerServer:
         self.update_pub = rospy.Publisher(topic_ns+"/update", InteractiveMarkerUpdate, queue_size=100)
 
         rospy.Subscriber(topic_ns+"/feedback", InteractiveMarkerFeedback, self.processFeedback, queue_size=q_size)
-        rospy.Timer(rospy.Duration(0.5), self.keepAlive)
+        rospy.Timer(rospy.Duration(0.5), self.keepAlive, reset=True)
 
         self.publishInit()
 
