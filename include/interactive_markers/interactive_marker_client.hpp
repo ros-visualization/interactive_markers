@@ -83,17 +83,17 @@ class InteractiveMarkerClient
 public:
   enum Status
   {
-    DEBUG = 0,
-    INFO,
-    WARN,
-    ERROR
+    STATUS_DEBUG = 0,
+    STATUS_INFO,
+    STATUS_WARN,
+    STATUS_ERROR
   };
 
   enum State
   {
-    IDLE,
-    INITIALIZE,
-    RUNNING
+    STATE_IDLE,
+    STATE_INITIALIZE,
+    STATE_RUNNING
   };
 
   typedef std::function<void (visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr)>
@@ -138,7 +138,7 @@ public:
     client_id_(node_base_interface->get_fully_qualified_name()),
     clock_(clock_interface->get_clock()),
     logger_(logging_interface->get_logger()),
-    state_(IDLE),
+    state_(STATE_IDLE),
     tf_buffer_core_(tf_buffer_core),
     target_frame_(target_frame),
     topic_namespace_(topic_namespace),
