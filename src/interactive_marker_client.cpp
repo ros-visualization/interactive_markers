@@ -56,7 +56,7 @@ InteractiveMarkerClient::~InteractiveMarkerClient()
 
 void InteractiveMarkerClient::connect(std::string topic_namespace)
 {
-  changeState(IDLE);
+  changeState(STATE_IDLE);
   topic_namespace_ = topic_namespace;
 
   // Terminate any existing connection
@@ -90,16 +90,16 @@ void InteractiveMarkerClient::connect(std::string topic_namespace)
       update_qos,
       std::bind(&InteractiveMarkerClient::processUpdate, this, _1));
   } catch (rclcpp::exceptions::InvalidNodeError & ex) {
-    updateStatus(ERROR, "Failed to connect: " + std::string(ex.what()));
+    updateStatus(STATUS_ERROR, "Failed to connect: " + std::string(ex.what()));
     disconnect();
     return;
   } catch (rclcpp::exceptions::NameValidationError & ex) {
-    updateStatus(ERROR, "Failed to connect: " + std::string(ex.what()));
+    updateStatus(STATUS_ERROR, "Failed to connect: " + std::string(ex.what()));
     disconnect();
     return;
   }
 
-  updateStatus(INFO, "Connected on namespace: " + topic_namespace_);
+  updateStatus(STATUS_INFO, "Connected on namespace: " + topic_namespace_);
 }
 
 void InteractiveMarkerClient::disconnect()
@@ -127,44 +127,44 @@ void InteractiveMarkerClient::update()
   const bool server_ready = get_interactive_markers_client_->service_is_ready();
 
   switch (state_) {
-    case IDLE:
+    case STATE_IDLE:
       if (server_ready) {
-        changeState(INITIALIZE);
+        changeState(STATE_INITIALIZE);
       }
       break;
 
-    case INITIALIZE:
+    case STATE_INITIALIZE:
       if (!server_ready) {
-        updateStatus(WARN, "Server not available during initialization, resetting");
-        changeState(IDLE);
+        updateStatus(STATUS_WARN, "Server not available during initialization, resetting");
+        changeState(STATE_IDLE);
         break;
       }
       // If there's an unexpected error, reset
       if (!transformInitialMessage()) {
-        changeState(IDLE);
+        changeState(STATE_IDLE);
         break;
       }
       if (checkInitializeFinished()) {
-        changeState(RUNNING);
+        changeState(STATE_RUNNING);
       }
       break;
 
-    case RUNNING:
+    case STATE_RUNNING:
       if (!server_ready) {
-        updateStatus(WARN, "Server not available while running, resetting");
-        changeState(IDLE);
+        updateStatus(STATUS_WARN, "Server not available while running, resetting");
+        changeState(STATE_IDLE);
         break;
       }
       // If there's an unexpected error, reset
       if (!transformUpdateMessages()) {
-        changeState(IDLE);
+        changeState(STATE_IDLE);
         break;
       }
       pushUpdates();
       break;
 
     default:
-      updateStatus(ERROR, "Invalid state in update: " + std::to_string(getState()));
+      updateStatus(STATUS_ERROR, "Invalid state in update: " + std::to_string(getState()));
   }
 }
 
@@ -175,12 +175,12 @@ void InteractiveMarkerClient::setTargetFrame(std::string target_frame)
   }
 
   target_frame_ = target_frame;
-  updateStatus(INFO, "Target frame is now " + target_frame_);
+  updateStatus(STATUS_INFO, "Target frame is now " + target_frame_);
 
   // Call reset for change to take effect
   // This will cause interactive markers to be requested again from the server
   // The additional request might be avoided by doing something else, but this is easier
-  changeState(IDLE);
+  changeState(STATE_IDLE);
 }
 
 void InteractiveMarkerClient::setInitializeCallback(const InitializeCallback & cb)
@@ -206,7 +206,7 @@ void InteractiveMarkerClient::setStatusCallback(const StatusCallback & cb)
 void InteractiveMarkerClient::reset()
 {
   std::unique_lock<std::recursive_mutex> lock(mutex_);
-  state_ = IDLE;
+  state_ = STATE_IDLE;
   first_update_ = true;
   initial_response_msg_.reset();
   update_queue_.clear();
@@ -218,14 +218,14 @@ void InteractiveMarkerClient::reset()
 void InteractiveMarkerClient::requestInteractiveMarkers()
 {
   if (!get_interactive_markers_client_) {
-    updateStatus(ERROR, "Interactive markers requested when client is disconnected");
+    updateStatus(STATUS_ERROR, "Interactive markers requested when client is disconnected");
     return;
   }
   if (!get_interactive_markers_client_->wait_for_service(std::chrono::seconds(1))) {
-    updateStatus(WARN, "Service is not ready during request for interactive markers");
+    updateStatus(STATUS_WARN, "Service is not ready during request for interactive markers");
     return;
   }
-  updateStatus(INFO, "Sending request for interactive markers");
+  updateStatus(STATUS_INFO, "Sending request for interactive markers");
 
   auto callback = std::bind(&InteractiveMarkerClient::processInitialMessage, this, _1);
   auto request = std::make_shared<visualization_msgs::srv::GetInteractiveMarkers::Request>();
@@ -238,7 +238,7 @@ void InteractiveMarkerClient::requestInteractiveMarkers()
 void InteractiveMarkerClient::processInitialMessage(
   rclcpp::Client<visualization_msgs::srv::GetInteractiveMarkers>::SharedFuture future)
 {
-  updateStatus(INFO, "Service response received for initialization");
+  updateStatus(STATUS_INFO, "Service response received for initialization");
   auto response = future.get();
   {
     std::unique_lock<std::recursive_mutex> lock(mutex_);
@@ -263,20 +263,21 @@ void InteractiveMarkerClient::processUpdate(
     std::ostringstream oss;
     oss << "Update sequence number is out of order. " << last_update_sequence_number_ + 1 <<
       " (expected) vs. " << msg->seq_num << " (received)";
-    updateStatus(WARN, oss.str());
-    // Change state to IDLE to cause reset
-    changeState(IDLE);
+    updateStatus(STATUS_WARN, oss.str());
+    // Change state to STATE_IDLE to cause reset
+    changeState(STATE_IDLE);
     return;
   }
 
-  updateStatus(DEBUG, "Received update with sequence number " + std::to_string(msg->seq_num));
+  updateStatus(
+    STATUS_DEBUG, "Received update with sequence number " + std::to_string(msg->seq_num));
 
   first_update_ = false;
   last_update_sequence_number_ = msg->seq_num;
 
   if (update_queue_.size() > MAX_UPDATE_QUEUE_SIZE) {
     updateStatus(
-      WARN,
+      STATUS_WARN,
       "Update queue too large. Erasing message with sequence number " +
       std::to_string(update_queue_.begin()->msg->seq_num));
     update_queue_.pop_back();
@@ -299,7 +300,7 @@ bool InteractiveMarkerClient::transformInitialMessage()
   } catch (const exceptions::TransformError & e) {
     std::ostringstream oss;
     oss << "Resetting due to transform error: " << e.what();
-    updateStatus(ERROR, oss.str());
+    updateStatus(STATUS_ERROR, oss.str());
     return false;
   }
 
@@ -315,7 +316,7 @@ bool InteractiveMarkerClient::transformUpdateMessages()
     } catch (const exceptions::TransformError & e) {
       std::ostringstream oss;
       oss << "Resetting due to transform error: " << e.what();
-      updateStatus(ERROR, oss.str());
+      updateStatus(STATUS_ERROR, oss.str());
       return false;
     }
   }
@@ -329,7 +330,7 @@ bool InteractiveMarkerClient::checkInitializeFinished()
     // We haven't received a response yet, check for timeout
     if ((clock_->now() - request_time_) > request_timeout_) {
       updateStatus(
-        WARN, "Did not receive response with interactive markers, resending request...");
+        STATUS_WARN, "Did not receive response with interactive markers, resending request...");
       requestInteractiveMarkers();
     }
 
@@ -338,14 +339,14 @@ bool InteractiveMarkerClient::checkInitializeFinished()
 
   const uint64_t & response_sequence_number = initial_response_msg_->msg->sequence_number;
   if (!initial_response_msg_->isReady()) {
-    updateStatus(DEBUG, "Initialization: Waiting for TF info");
+    updateStatus(STATUS_DEBUG, "Initialization: Waiting for TF info");
     return false;
   }
 
   // Prune old update messages
   while (!update_queue_.empty() && update_queue_.back().msg->seq_num <= response_sequence_number) {
     updateStatus(
-      DEBUG,
+      STATUS_DEBUG,
       "Omitting update with sequence number " + std::to_string(update_queue_.back().msg->seq_num));
     update_queue_.pop_back();
   }
@@ -354,7 +355,7 @@ bool InteractiveMarkerClient::checkInitializeFinished()
     initialize_callback_(initial_response_msg_->msg);
   }
 
-  updateStatus(DEBUG, "Initialized");
+  updateStatus(STATUS_DEBUG, "Initialized");
 
   return true;
 }
@@ -364,7 +365,8 @@ void InteractiveMarkerClient::pushUpdates()
   std::unique_lock<std::recursive_mutex> lock(mutex_);
   while (!update_queue_.empty() && update_queue_.back().isReady()) {
     visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg = update_queue_.back().msg;
-    updateStatus(DEBUG, "Pushing update with sequence number " + std::to_string(msg->seq_num));
+    updateStatus(
+      STATUS_DEBUG, "Pushing update with sequence number " + std::to_string(msg->seq_num));
     if (update_callback_) {
       update_callback_(msg);
     }
@@ -378,22 +380,22 @@ void InteractiveMarkerClient::changeState(const State & new_state)
     return;
   }
 
-  updateStatus(DEBUG, "Change state to: " + std::to_string(new_state));
+  updateStatus(STATUS_DEBUG, "Change state to: " + std::to_string(new_state));
 
   switch (new_state) {
-    case IDLE:
+    case STATE_IDLE:
       reset();
       break;
 
-    case INITIALIZE:
+    case STATE_INITIALIZE:
       requestInteractiveMarkers();
       break;
 
-    case RUNNING:
+    case STATE_RUNNING:
       break;
 
     default:
-      updateStatus(ERROR, "Invalid state when changing state: " + std::to_string(new_state));
+      updateStatus(STATUS_ERROR, "Invalid state when changing state: " + std::to_string(new_state));
       return;
   }
   state_ = new_state;
@@ -402,16 +404,16 @@ void InteractiveMarkerClient::changeState(const State & new_state)
 void InteractiveMarkerClient::updateStatus(const Status status, const std::string & msg)
 {
   switch (status) {
-    case DEBUG:
+    case STATUS_DEBUG:
       RCLCPP_DEBUG(logger_, "%s", msg.c_str());
       break;
-    case INFO:
+    case STATUS_INFO:
       RCLCPP_INFO(logger_, "%s", msg.c_str());
       break;
-    case WARN:
+    case STATUS_WARN:
       RCLCPP_WARN(logger_, "%s", msg.c_str());
       break;
-    case ERROR:
+    case STATUS_ERROR:
       RCLCPP_ERROR(logger_, "%s", msg.c_str());
       break;
   }

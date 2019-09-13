@@ -144,9 +144,9 @@ TEST_F(TestInteractiveMarkerClient, states)
     client_.reset(
       new interactive_markers::InteractiveMarkerClient(
         node_, buffer_, target_frame_id_, topic_namespace_));
-    EXPECT_EQ(client_->getState(), ClientState::IDLE);
+    EXPECT_EQ(client_->getState(), ClientState::STATE_IDLE);
     client_->update();
-    EXPECT_EQ(client_->getState(), ClientState::IDLE);
+    EXPECT_EQ(client_->getState(), ClientState::STATE_IDLE);
   }
 
   // IDLE -> INITIALIZE -> IDLE -> INITIALIZE
@@ -155,7 +155,7 @@ TEST_F(TestInteractiveMarkerClient, states)
       new interactive_markers::InteractiveMarkerClient(
         node_, buffer_, target_frame_id_, topic_namespace_));
     client_->update();
-    EXPECT_EQ(client_->getState(), ClientState::IDLE);
+    EXPECT_EQ(client_->getState(), ClientState::STATE_IDLE);
     // Start server
     auto mock_server = std::make_shared<MockInteractiveMarkerServer>(topic_namespace_);
     executor_->add_node(mock_server);
@@ -163,17 +163,17 @@ TEST_F(TestInteractiveMarkerClient, states)
     auto update_func = std::bind(
       &interactive_markers::InteractiveMarkerClient::update, client_.get());
     TIMED_EXPECT_EQ(
-      client_->getState(), ClientState::INITIALIZE, 3s, 10ms, (*executor_), update_func);
+      client_->getState(), ClientState::STATE_INITIALIZE, 3s, 10ms, (*executor_), update_func);
     // Disconnect server
     executor_->remove_node(mock_server);
     mock_server.reset();
     TIMED_EXPECT_EQ(
-      client_->getState(), ClientState::IDLE, 3s, 10ms, (*executor_), update_func);
+      client_->getState(), ClientState::STATE_IDLE, 3s, 10ms, (*executor_), update_func);
     // Re-start server
     mock_server.reset(new MockInteractiveMarkerServer(topic_namespace_));
     executor_->add_node(mock_server);
     TIMED_EXPECT_EQ(
-      client_->getState(), ClientState::INITIALIZE, 3s, 10ms, (*executor_), update_func);
+      client_->getState(), ClientState::STATE_INITIALIZE, 3s, 10ms, (*executor_), update_func);
     executor_->remove_node(mock_server);
   }
 
@@ -182,7 +182,7 @@ TEST_F(TestInteractiveMarkerClient, states)
     client_.reset(
       new interactive_markers::InteractiveMarkerClient(
         node_, buffer_, target_frame_id_, topic_namespace_));
-    EXPECT_EQ(client_->getState(), ClientState::IDLE);
+    EXPECT_EQ(client_->getState(), ClientState::STATE_IDLE);
     // Start server
     auto mock_server = std::make_shared<MockInteractiveMarkerServer>(topic_namespace_);
     executor_->add_node(mock_server);
@@ -190,16 +190,16 @@ TEST_F(TestInteractiveMarkerClient, states)
     auto update_func = std::bind(
       &interactive_markers::InteractiveMarkerClient::update, client_.get());
     TIMED_EXPECT_EQ(
-      client_->getState(), ClientState::INITIALIZE, 3s, 10ms, (*executor_), update_func);
+      client_->getState(), ClientState::STATE_INITIALIZE, 3s, 10ms, (*executor_), update_func);
     // Make the required TF data in order to finish initializing
     makeTfDataAvailable(mock_server->markers_);
     TIMED_EXPECT_EQ(
-      client_->getState(), ClientState::RUNNING, 3s, 10ms, (*executor_), update_func);
+      client_->getState(), ClientState::STATE_RUNNING, 3s, 10ms, (*executor_), update_func);
     // Disconnect server
     executor_->remove_node(mock_server);
     mock_server.reset();
     TIMED_EXPECT_EQ(
-      client_->getState(), ClientState::IDLE, 3s, 10ms, (*executor_), update_func);
+      client_->getState(), ClientState::STATE_IDLE, 3s, 10ms, (*executor_), update_func);
   }
 
   // IDLE -> INITIALIZE -> RUNNING -> INITIALIZE -> IDLE
@@ -207,7 +207,7 @@ TEST_F(TestInteractiveMarkerClient, states)
     client_.reset(
       new interactive_markers::InteractiveMarkerClient(
         node_, buffer_, target_frame_id_, topic_namespace_));
-    EXPECT_EQ(client_->getState(), ClientState::IDLE);
+    EXPECT_EQ(client_->getState(), ClientState::STATE_IDLE);
     // Start server
     auto mock_server = std::make_shared<MockInteractiveMarkerServer>(topic_namespace_);
     executor_->add_node(mock_server);
@@ -215,22 +215,22 @@ TEST_F(TestInteractiveMarkerClient, states)
     auto update_func = std::bind(
       &interactive_markers::InteractiveMarkerClient::update, client_.get());
     TIMED_EXPECT_EQ(
-      client_->getState(), ClientState::INITIALIZE, 3s, 10ms, (*executor_), update_func);
+      client_->getState(), ClientState::STATE_INITIALIZE, 3s, 10ms, (*executor_), update_func);
     // Make the required TF data in order to finish initializing
     makeTfDataAvailable(mock_server->markers_);
     TIMED_EXPECT_EQ(
-      client_->getState(), ClientState::RUNNING, 3s, 10ms, (*executor_), update_func);
+      client_->getState(), ClientState::STATE_RUNNING, 3s, 10ms, (*executor_), update_func);
     // Cause a sync error by skipping a sequence number, which should cause state change
     mock_server->publishUpdate();
     mock_server->sequence_number_ += 1;
     mock_server->publishUpdate();
     TIMED_EXPECT_EQ(
-      client_->getState(), ClientState::INITIALIZE, 3s, 10ms, (*executor_), update_func);
+      client_->getState(), ClientState::STATE_INITIALIZE, 3s, 10ms, (*executor_), update_func);
     // Disconnect server
     executor_->remove_node(mock_server);
     mock_server.reset();
     TIMED_EXPECT_EQ(
-      client_->getState(), ClientState::IDLE, 3s, 10ms, (*executor_), update_func);
+      client_->getState(), ClientState::STATE_IDLE, 3s, 10ms, (*executor_), update_func);
   }
 }
 
@@ -275,7 +275,7 @@ TEST_F(TestInteractiveMarkerClient, update_callback)
   auto update_func = std::bind(
     &interactive_markers::InteractiveMarkerClient::update, client_.get());
   TIMED_EXPECT_EQ(
-    client_->getState(), ClientState::RUNNING, 3s, 10ms, (*executor_), update_func);
+    client_->getState(), ClientState::STATE_RUNNING, 3s, 10ms, (*executor_), update_func);
 
   // Publish an update message
   geometry_msgs::msg::Pose input_pose;
@@ -310,13 +310,13 @@ TEST_F(TestInteractiveMarkerClient, reset_callback)
   auto update_func = std::bind(
     &interactive_markers::InteractiveMarkerClient::update, client_.get());
   TIMED_EXPECT_EQ(
-    client_->getState(), ClientState::INITIALIZE, 3s, 10ms, (*executor_), update_func);
+    client_->getState(), ClientState::STATE_INITIALIZE, 3s, 10ms, (*executor_), update_func);
 
   // Disconnect server to cause reset
   executor_->remove_node(mock_server);
   mock_server.reset();
   TIMED_EXPECT_EQ(
-    client_->getState(), ClientState::IDLE, 3s, 10ms, (*executor_), update_func);
+    client_->getState(), ClientState::STATE_IDLE, 3s, 10ms, (*executor_), update_func);
   EXPECT_TRUE(reset_called);
 }
 
