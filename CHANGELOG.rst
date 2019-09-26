@@ -2,6 +2,25 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.0.0 (2019-09-26)
+------------------
+* Add missing visibility macros (`#51 <https://github.com/ros-visualization/interactive_markers/issues/51>`_)
+* Less verbose logging (`#45 <https://github.com/ros-visualization/interactive_markers/issues/45>`_)
+* Rename enums to avoid collisions with MSVC compiler defines (`#49 <https://github.com/ros-visualization/interactive_markers/issues/49>`_)
+* Catch polymorphic exceptions by reference (`#48 <https://github.com/ros-visualization/interactive_markers/issues/48>`_)
+* Port to ROS 2 (`#44 <https://github.com/ros-visualization/interactive_markers/issues/44>`_)
+    * Style and other aesthetic changes
+    * Use tf2::BufferCoreInterface
+    * Replace 'init' topic with a ROS service
+    * Merge SingleClient logic into InteractiveMarkerClient
+    * Remove notion of server ID
+    * Add feedback publisher to client
+    * Default to C++14 and set stricter compiler flags
+    * Fix Windows compiler warnings
+    * Remove StateMachine class
+    * Fix Clang warnings
+* Contributors: David Gossow, Jacob Perron, Scott K Logan
+
 1.11.4 (2018-04-16)
 -------------------
 * Fixed a crash when updates arrive, or are being processed, while shutdown is called (`#36 <https://github.com/ros-visualization/interactive_markers/issues/36>`_)
