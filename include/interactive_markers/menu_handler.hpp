@@ -66,47 +66,58 @@ public:
     UNCHECKED
   };
 
+  INTERACTIVE_MARKERS_PUBLIC
   MenuHandler();
 
   /// Insert top-level entry with feedback function
+  INTERACTIVE_MARKERS_PUBLIC
   EntryHandle insert(const std::string & title, const FeedbackCallback & feedback_cb);
 
   /// Insert top-level entry with custom (client-side) command
+  INTERACTIVE_MARKERS_PUBLIC
   EntryHandle insert(
     const std::string & title,
     const uint8_t command_type = visualization_msgs::msg::MenuEntry::FEEDBACK,
     const std::string & command = "");
 
   /// Insert second-level entry with feedback function
+  INTERACTIVE_MARKERS_PUBLIC
   EntryHandle insert(
     EntryHandle parent, const std::string & title,
     const FeedbackCallback & feedback_cb);
 
   /// Insert second-level entry with custom (client-side) command
+  INTERACTIVE_MARKERS_PUBLIC
   EntryHandle insert(
     EntryHandle parent, const std::string & title,
     const uint8_t command_type = visualization_msgs::msg::MenuEntry::FEEDBACK,
     const std::string & command = "");
 
   /// Specify if an entry should be visible or hidden
+  INTERACTIVE_MARKERS_PUBLIC
   bool setVisible(EntryHandle handle, bool visible);
 
   /// Specify if an entry is checked or can't be checked at all
+  INTERACTIVE_MARKERS_PUBLIC
   bool setCheckState(EntryHandle handle, CheckState check_state);
 
   /// Get the current state of an entry
   /// @return true if the entry exists
+  INTERACTIVE_MARKERS_PUBLIC
   bool getCheckState(EntryHandle handle, CheckState & check_state) const;
 
   /// Copy current menu state into the marker given by the specified name &
   /// divert callback for MENU_SELECT feedback to this manager
+  INTERACTIVE_MARKERS_PUBLIC
   bool apply(InteractiveMarkerServer & server, const std::string & marker_name);
 
   /// Re-apply to all markers that this was applied to previously
+  INTERACTIVE_MARKERS_PUBLIC
   bool reApply(InteractiveMarkerServer & server);
 
   /// Get the title for the given menu entry
   /// @return true if the entry exists
+  INTERACTIVE_MARKERS_PUBLIC
   bool getTitle(EntryHandle handle, std::string & title) const;
 
 private:
