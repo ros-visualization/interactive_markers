@@ -47,8 +47,8 @@ from visualization_msgs.srv import GetInteractiveMarkers
 from threading import Lock
 
 
-# Represents a single marker
 class MarkerContext:
+    """Represents a single marker."""
 
     def __init__(self, time):
         self.last_feedback = time
@@ -58,8 +58,9 @@ class MarkerContext:
         self.int_marker = InteractiveMarker()
 
 
-# Represents an update to a single marker
 class UpdateContext:
+    """Represents an update to a single marker."""
+
     FULL_UPDATE = 0
     POSE_UPDATE = 1
     ERASE = 2
@@ -71,18 +72,24 @@ class UpdateContext:
         self.feedback_cbs = dict()
 
 
-## Acts as a server displaying a set of interactive markers.
-##
-## Note: Keep in mind that changes made by calling insert(), erase(), setCallback() etc.
-##       are not applied until calling applyChanges().
 class InteractiveMarkerServer:
+    """
+    A server to one or many clients (e.g. rviz) displaying a set of interactive markers.
+
+    Note: Keep in mind that changes made by calling insert(), erase(), setCallback() etc.
+          are not applied until calling applyChanges().
+    """
+
     DEFAULT_FEEDBACK_CB = 255
 
-    ## @brief Create an InteractiveMarkerServer and associated ROS connections
-    ## @parma node          The node to attach this interactive marker server to.
-    ## @param topic_ns      The interface will use the topics topic_ns/update and
-    ##                      topic_ns/feedback for communication.
     def __init__(self, node, topic_ns, q_size=100):
+        """
+        Create an InteractiveMarkerServer and associated ROS connections.
+
+        :param node: The node to attach this interactive marker server to.
+        :param topic_ns: The interface will use the topics topic_ns/update and topic_ns/feedback
+            for communication.
+        """
         self.node = node
         self.topic_ns = topic_ns
         self.seq_num = 0
@@ -119,17 +126,23 @@ class InteractiveMarkerServer:
         self.update_pub = None
         self.feedback_sub = None
 
-    ## @brief Destruction of the interface will lead to all managed markers being cleared.
     def __del__(self):
+        """Destruction of the interface will lead to all managed markers being cleared."""
+
         self.shutdown()
 
-    ## @brief Add or replace a marker.
-    ## Note: Changes to the marker will not take effect until you call applyChanges().
-    ## The callback changes immediately.
-    ## @param marker The marker to be added or replaced
-    ## @param feedback_cb Function to call on the arrival of a feedback message.
-    ## @param feedback_type Type of feedback for which to call the feedback.
     def insert(self, marker, feedback_cb=-1, feedback_type=DEFAULT_FEEDBACK_CB):
+        """
+        Add or replace a marker.
+
+        Note: Changes to the marker will not take effect until you call applyChanges().
+        The callback changes immediately.
+
+        :param marker: The marker to be added or replaced.
+        :param feedback_cb: Function to call on the arrival of a feedback message.
+        :param feedback_type: Type of feedback for which to call the feedback.
+        """
+
         with self.mutex:
             try:
                 update = self.pending_updates[marker.name]
@@ -141,13 +154,18 @@ class InteractiveMarkerServer:
         if feedback_cb != -1:
             self.setCallback(marker.name, feedback_cb, feedback_type)
 
-    ## @brief Update the pose of a marker with the specified name
-    ## Note: This change will not take effect until you call applyChanges()
-    ## @param name Name of the interactive marker
-    ## @param pose The new pose
-    ## @param header Header replacement. Leave this empty to use the previous one.
-    ## @return True if a marker with that name exists
     def setPose(self, name, pose, header=Header()):
+        """
+        Update the pose of a marker with the specified name.
+
+        Note: This change will not take effect until you call applyChanges()
+
+        :param name: Name of the interactive marker.
+        :param pose: The new pose.
+        :param header: Header replacement. Leave this empty to use the previous one.
+        :return: True if a marker with that name exists, False otherwise.
+        """
+
         with self.mutex:
             try:
                 marker_context = self.marker_contexts[name]
@@ -170,11 +188,16 @@ class InteractiveMarkerServer:
                 self.doSetPose(update, name, pose, header)
             return True
 
-    ## @brief Erase the marker with the specified name
-    ## Note: This change will not take effect until you call applyChanges().
-    ## @param name Name of the interactive marker
-    ## @return True if a marker with that name exists
     def erase(self, name):
+        """
+        Erase the marker with the specified name.
+
+        Note: This change will not take effect until you call applyChanges().
+
+        :param name: Name of the interactive marker.
+        :return: True if a marker with that name exists, False otherwise.
+        """
+
         with self.mutex:
             try:
                 self.pending_updates[name].update_type = UpdateContext.ERASE
@@ -189,24 +212,33 @@ class InteractiveMarkerServer:
                 except:
                     return False
 
-    ## @brief Clear all markers.
-    ## Note: This change will not take effect until you call applyChanges().
     def clear(self):
+        """
+        Clear all markers.
+
+        Note: This change will not take effect until you call applyChanges().
+        """
+
         self.pending_updates = dict()
         for marker_name in self.marker_contexts.keys():
             self.erase(marker_name)
 
-    ## @brief Add or replace a callback function for the specified marker.
-    ## Note: This change will not take effect until you call applyChanges().
-    ## The server will try to call any type-specific callback first.
-    ## If none is set, it will call the default callback.
-    ## If a callback for the given type already exists, it will be replaced.
-    ## To unset a type-specific callback, pass in an empty one.
-    ## @param name           Name of the interactive marker
-    ## @param feedback_cb    Function to call on the arrival of a feedback message.
-    ## @param feedback_type  Type of feedback for which to call the feedback.
-    ##                       Leave this empty to make this the default callback.
     def setCallback(self, name, feedback_cb, feedback_type=DEFAULT_FEEDBACK_CB):
+        """
+        Add or replace a callback function for the specified marker.
+
+        Note: This change will not take effect until you call applyChanges().
+        The server will try to call any type-specific callback first.
+        If none is set, it will call the default callback.
+        If a callback for the given type already exists, it will be replaced.
+        To unset a type-specific callback, pass in an empty one.
+
+        :param name: Name of the interactive marker
+        :param feedback_cb: Function to call on the arrival of a feedback message.
+        :param feedback_type: Type of feedback for which to call the feedback.
+            Leave this empty to make this the default callback.
+        """
+
         with self.mutex:
             try:
                 marker_context = self.marker_contexts[name]
@@ -240,9 +272,9 @@ class InteractiveMarkerServer:
                         del update.feedback_cbs[feedback_type]
             return True
 
-    ## @brief Apply changes made since the last call to this method &
-    ## broadcast an update to all clients.
     def applyChanges(self):
+        """Apply changes made since the last call to this method and broadcast to clients."""
+
         with self.mutex:
             if len(self.pending_updates.keys()) == 0:
                 return
@@ -293,10 +325,14 @@ class InteractiveMarkerServer:
         self.seq_num += 1
         self.publish(update_msg)
 
-    ## @brief Get marker by name
-    ## @param name Name of the interactive marker
-    ## @return Marker if exists, None otherwise
     def get(self, name):
+        """
+        Get marker by name.
+
+        :param name: Name of the interactive marker.
+        :return: Marker if exists, None otherwise.
+        """
+
         try:
             update = self.pending_updates[name]
         except:
@@ -321,8 +357,9 @@ class InteractiveMarkerServer:
             return update.int_marker
         return None
 
-    # update marker pose & call user callback.
     def processFeedback(self, feedback):
+        """Update marker pose and call user callback."""
+
         with self.mutex:
             # ignore feedback for non-existing markers
             try:
@@ -373,13 +410,15 @@ class InteractiveMarkerServer:
             except:
                 pass
 
-    # increase sequence number & publish an update
     def publish(self, update):
+        """Increase the sequence number and publish an update."""
+
         update.seq_num = self.seq_num
         self.update_pub.publish(update)
 
     def getInteractiveMarkersCallback(self, request, response):
         """Process a service request to get the current interactive markers."""
+
         with self.mutex:
             response.sequence_number = self.seq_num
 
@@ -390,8 +429,9 @@ class InteractiveMarkerServer:
 
             return response
 
-    # update pose, schedule update without locking
     def doSetPose(self, update, name, pose, header):
+        """Schedule a pose update pose without locking."""
+
         if update is None:
             update = UpdateContext()
             update.update_type = UpdateContext.POSE_UPDATE
