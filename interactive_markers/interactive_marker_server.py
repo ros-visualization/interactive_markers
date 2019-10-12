@@ -53,8 +53,8 @@ class MarkerContext:
     def __init__(self, time):
         self.last_feedback = time
         self.last_client_id = ""
-        self.default_feedback_cb = None
-        self.feedback_cbs = dict()
+        self.default_feedback_callback = None
+        self.feedback_callbacks = dict()
         self.int_marker = InteractiveMarker()
 
 
@@ -68,8 +68,8 @@ class UpdateContext:
     def __init__(self):
         self.update_type = self.FULL_UPDATE
         self.int_marker = InteractiveMarker()
-        self.default_feedback_cb = None
-        self.feedback_cbs = dict()
+        self.default_feedback_callback = None
+        self.feedback_callbacks = dict()
 
 
 class InteractiveMarkerServer:
@@ -80,7 +80,7 @@ class InteractiveMarkerServer:
           are not applied until calling applyChanges().
     """
 
-    DEFAULT_FEEDBACK_CB = 255
+    DEFAULT_FEEDBACK_CALLBACK = 255
 
     def __init__(self, node, topic_ns, q_size=100):
         """
@@ -131,7 +131,7 @@ class InteractiveMarkerServer:
 
         self.shutdown()
 
-    def insert(self, marker, feedback_cb=-1, feedback_type=DEFAULT_FEEDBACK_CB):
+    def insert(self, marker, *, feedback_callback=None, feedback_type=DEFAULT_FEEDBACK_CALLBACK):
         """
         Add or replace a marker.
 
@@ -139,7 +139,7 @@ class InteractiveMarkerServer:
         The callback changes immediately.
 
         :param marker: The marker to be added or replaced.
-        :param feedback_cb: Function to call on the arrival of a feedback message.
+        :param feedback_callback: Function to call on the arrival of a feedback message.
         :param feedback_type: Type of feedback for which to call the feedback.
         """
 
@@ -151,8 +151,8 @@ class InteractiveMarkerServer:
                 self.pending_updates[marker.name] = update
             update.update_type = UpdateContext.FULL_UPDATE
             update.int_marker = marker
-        if feedback_cb != -1:
-            self.setCallback(marker.name, feedback_cb, feedback_type)
+        if feedback_callback is not None:
+            self.setCallback(marker.name, feedback_callback, feedback_type)
 
     def setPose(self, name, pose, header=Header()):
         """
@@ -223,18 +223,17 @@ class InteractiveMarkerServer:
         for marker_name in self.marker_contexts.keys():
             self.erase(marker_name)
 
-    def setCallback(self, name, feedback_cb, feedback_type=DEFAULT_FEEDBACK_CB):
+    def setCallback(self, name, feedback_callback, feedback_type=DEFAULT_FEEDBACK_CALLBACK):
         """
         Add or replace a callback function for the specified marker.
 
         Note: This change will not take effect until you call applyChanges().
         The server will try to call any type-specific callback first.
-        If none is set, it will call the default callback.
         If a callback for the given type already exists, it will be replaced.
-        To unset a type-specific callback, pass in an empty one.
+        To unset a callback, pass a value of None.
 
         :param name: Name of the interactive marker
-        :param feedback_cb: Function to call on the arrival of a feedback message.
+        :param feedback_callback: Function to call on the arrival of a feedback message.
         :param feedback_type: Type of feedback for which to call the feedback.
             Leave this empty to make this the default callback.
         """
@@ -255,21 +254,21 @@ class InteractiveMarkerServer:
             # and the update, if there's any
             if marker_context:
                 # the marker exists, so we can just overwrite the existing callbacks
-                if feedback_type == self.DEFAULT_FEEDBACK_CB:
-                    marker_context.default_feedback_cb = feedback_cb
+                if feedback_type == self.DEFAULT_FEEDBACK_CALLBACK:
+                    marker_context.default_feedback_callback = feedback_callback
                 else:
-                    if feedback_cb:
-                        marker_context.feedback_cbs[feedback_type] = feedback_cb
-                    else:
-                        del marker_context.feedback_cbs[feedback_type]
+                    if feedback_callback:
+                        marker_context.feedback_callbacks[feedback_type] = feedback_callback
+                    elif feedback_type in marker_context.feedback_callbacks:
+                        del marker_context.feedback_callbacks[feedback_type]
             if update:
-                if feedback_type == self.DEFAULT_FEEDBACK_CB:
-                    update.default_feedback_cb = feedback_cb
+                if feedback_type == self.DEFAULT_FEEDBACK_CALLBACK:
+                    update.default_feedback_callback = feedback_callback
                 else:
-                    if feedback_cb:
-                        update.feedback_cbs[feedback_type] = feedback_cb
-                    else:
-                        del update.feedback_cbs[feedback_type]
+                    if feedback_callback:
+                        update.feedback_callbacks[feedback_type] = feedback_callback
+                    elif feedback_type in update.feedback_callbacks:
+                        del update.feedback_callbacks[feedback_type]
             return True
 
     def applyChanges(self):
@@ -290,8 +289,8 @@ class InteractiveMarkerServer:
                         self.node.get_logger().debug("Creating new context for " + name)
                         # create a new int_marker context
                         marker_context = MarkerContext(self.node.get_clock().now())
-                        marker_context.default_feedback_cb = update.default_feedback_cb
-                        marker_context.feedback_cbs = update.feedback_cbs
+                        marker_context.default_feedback_callback = update.default_feedback_callback
+                        marker_context.feedback_callbacks = update.feedback_callbacks
                         self.marker_contexts[name] = marker_context
 
                     marker_context.int_marker = update.int_marker
@@ -401,14 +400,10 @@ class InteractiveMarkerServer:
                         self.doSetPose(None, feedback.marker_name, feedback.pose, feedback.header)
 
         # call feedback handler
-        try:
-            feedback_cb = marker_context.feedback_cbs[feedback.event_type]
-            feedback_cb(feedback)
-        except KeyError:
-            try:
-                marker_context.default_feedback_cb(feedback)
-            except:
-                pass
+        feedback_callback = marker_context.feedback_callbacks.get(
+            feedback.event_type, marker_context.default_feedback_callback)
+        if feedback_callback is not None:
+            feedback_callback(feedback)
 
     def publish(self, update):
         """Increase the sequence number and publish an update."""

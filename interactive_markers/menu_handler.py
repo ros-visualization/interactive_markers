@@ -125,7 +125,10 @@ class MenuHandler:
         marker.menu_entries = list()
         self.pushMenuEntries(self.top_level_handles_, marker.menu_entries, 0)
 
-        server.insert(marker, self.processFeedback, InteractiveMarkerFeedback.MENU_SELECT)
+        server.insert(
+            marker,
+            feedback_callback=self.processFeedback,
+            feedback_type=InteractiveMarkerFeedback.MENU_SELECT)
         self.managed_markers_.add(marker_name)
         return True
 
