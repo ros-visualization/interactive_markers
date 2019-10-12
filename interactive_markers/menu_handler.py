@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright (c) 2011, Willow Garage, Inc.
 # All rights reserved.
 #
@@ -34,7 +32,7 @@
 
 # Author: Michael Ferguson
 
-import rospy
+import sys
 
 from visualization_msgs.msg import InteractiveMarkerFeedback
 from visualization_msgs.msg import MenuEntry
@@ -72,7 +70,7 @@ class MenuHandler:
                 parent_context = self.entry_contexts_[parent]
                 parent_context.sub_entries.append(handle)
             except:
-                rospy.logerr("Parent menu entry " + str(parent) + " not found.")
+                print("Parent menu entry " + str(parent) + " not found.", file=sys.stderr)
                 return None
         else:
             self.top_level_handles_.append(handle)
@@ -159,7 +157,9 @@ class MenuHandler:
                 if not self.pushMenuEntries(context.sub_entries, entries_out, handle):
                     return False
             except:
-                rospy.logerr("Internal error: context handle not found! This is a bug in MenuHandler.")
+                print(
+                    "Internal error: context handle not found! This is a bug in MenuHandler.",
+                    file=sys.stderr)
                 return False
         return True
 

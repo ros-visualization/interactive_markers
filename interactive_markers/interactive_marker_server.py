@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright (c) 2011, Willow Garage, Inc.
 # All rights reserved.
 #
@@ -34,15 +32,17 @@
 
 # Author: Michael Ferguson
 
-import rospy
+import rclpy
+from rclpy.duration import Duration
+from rclpy.time import Time
 
 from std_msgs.msg import Header
 
 from visualization_msgs.msg import InteractiveMarker
 from visualization_msgs.msg import InteractiveMarkerFeedback
-from visualization_msgs.msg import InteractiveMarkerInit
 from visualization_msgs.msg import InteractiveMarkerPose
 from visualization_msgs.msg import InteractiveMarkerUpdate
+from visualization_msgs.srv import GetInteractiveMarkers
 
 from threading import Lock
 
@@ -50,8 +50,8 @@ from threading import Lock
 # Represents a single marker
 class MarkerContext:
 
-    def __init__(self):
-        self.last_feedback = rospy.Time.now()
+    def __init__(self, time):
+        self.last_feedback = time
         self.last_client_id = ""
         self.default_feedback_cb = None
         self.feedback_cbs = dict()
@@ -79,17 +79,14 @@ class InteractiveMarkerServer:
     DEFAULT_FEEDBACK_CB = 255
 
     ## @brief Create an InteractiveMarkerServer and associated ROS connections
+    ## @parma node          The node to attach this interactive marker server to.
     ## @param topic_ns      The interface will use the topics topic_ns/update and
     ##                      topic_ns/feedback for communication.
-    ## @param server_id     If you run multiple servers on the same topic from
-    ##                      within the same node, you will need to assign different names to them.
-    ##                      Otherwise, leave this empty.
-    def __init__(self, topic_ns, server_id="", q_size=100):
+    def __init__(self, node, topic_ns, q_size=100):
+        self.node = node
         self.topic_ns = topic_ns
         self.seq_num = 0
         self.mutex = Lock()
-
-        self.server_id = rospy.get_name() + server_id
 
         # contains the current state of all markers
         # string : MarkerContext
@@ -99,18 +96,32 @@ class InteractiveMarkerServer:
         # string : UpdateContext
         self.pending_updates = dict()
 
-        self.init_pub = rospy.Publisher(topic_ns+"/update_full", InteractiveMarkerInit, latch=True, queue_size=100)
-        self.update_pub = rospy.Publisher(topic_ns+"/update", InteractiveMarkerUpdate, queue_size=100)
+        self.get_interactive_markers_srv = self.node.create_service(
+            GetInteractiveMarkers,
+            topic_ns + "/get_interactive_markers",
+            self.getInteractiveMarkersCallback
+        )
 
-        rospy.Subscriber(topic_ns+"/feedback", InteractiveMarkerFeedback, self.processFeedback, queue_size=q_size)
-        rospy.Timer(rospy.Duration(0.5), self.keepAlive)
+        self.update_pub = self.node.create_publisher(InteractiveMarkerUpdate, topic_ns + "/update", q_size)
 
-        self.publishInit()
+        self.feedback_sub = self.node.create_subscription(InteractiveMarkerFeedback, topic_ns + "/feedback", self.processFeedback, q_size)
+
+    def shutdown(self):
+        """
+        Shutdown the interactive marker server.
+
+        This should be called before the node is destroyed so that the internal ROS entities
+        can be destroyed.
+        """
+        self.clear()
+        self.applyChanges()
+        self.get_interactive_markers_srv = None
+        self.update_pub = None
+        self.feedback_sub = None
 
     ## @brief Destruction of the interface will lead to all managed markers being cleared.
     def __del__(self):
-        self.clear()
-        self.applyChanges()
+        self.shutdown()
 
     ## @brief Add or replace a marker.
     ## Note: Changes to the marker will not take effect until you call applyChanges().
@@ -244,9 +255,9 @@ class InteractiveMarkerServer:
                     try:
                         marker_context = self.marker_contexts[name]
                     except:
-                        rospy.logdebug("Creating new context for " + name)
+                        self.node.get_logger().debug("Creating new context for " + name)
                         # create a new int_marker context
-                        marker_context = MarkerContext()
+                        marker_context = MarkerContext(self.node.get_clock().now())
                         marker_context.default_feedback_cb = update.default_feedback_cb
                         marker_context.feedback_cbs = update.feedback_cbs
                         self.marker_contexts[name] = marker_context
@@ -266,8 +277,9 @@ class InteractiveMarkerServer:
                         pose_update.name = marker_context.int_marker.name
                         update_msg.poses.append(pose_update)
                     except:
-                        rospy.logerr("""\
-Pending pose update for non-existing marker found. This is a bug in InteractiveMarkerInterface.""")
+                        self.node.get_logger().error(
+                            'Pending pose update for non-existing marker found. '
+                            'This is a bug in InteractiveMarkerServer.')
 
                 elif update.update_type == UpdateContext.ERASE:
                     try:
@@ -280,7 +292,6 @@ Pending pose update for non-existing marker found. This is a bug in InteractiveM
 
         self.seq_num += 1
         self.publish(update_msg)
-        self.publishInit()
 
     ## @brief Get marker by name
     ## @param name Name of the interactive marker
@@ -321,17 +332,17 @@ Pending pose update for non-existing marker found. This is a bug in InteractiveM
 
             # if two callers try to modify the same marker, reject (timeout= 1 sec)
             if marker_context.last_client_id != feedback.client_id \
-               and (rospy.Time.now() - marker_context.last_feedback).to_sec() < 1.0:
-                rospy.logdebug("Rejecting feedback for " +
+               and (self.node.get_clock().now() - marker_context.last_feedback) < Duration(seconds=1.0):
+                self.node.get_logger().debug("Rejecting feedback for " +
                                feedback.marker_name +
                                ": conflicting feedback from separate clients.")
                 return
 
-            marker_context.last_feedback = rospy.Time.now()
+            marker_context.last_feedback = self.node.get_clock().now()
             marker_context.last_client_id = feedback.client_id
 
             if feedback.event_type == feedback.POSE_UPDATE:
-                if marker_context.int_marker.header.stamp == rospy.Time():
+                if marker_context.int_marker.header.stamp == Time(clock_type=self.node.get_clock().clock_type):
                     # keep the old header
                     try:
                         self.doSetPose(self.pending_updates[feedback.marker_name],
@@ -357,35 +368,27 @@ Pending pose update for non-existing marker found. This is a bug in InteractiveM
             feedback_cb = marker_context.feedback_cbs[feedback.event_type]
             feedback_cb(feedback)
         except KeyError:
-            #try:
-            marker_context.default_feedback_cb(feedback)
-            #except:
-                #pass
-
-    # send an empty update to keep the client GUIs happy
-    def keepAlive(self, msg):
-        empty_msg = InteractiveMarkerUpdate()
-        empty_msg.type = empty_msg.KEEP_ALIVE
-        self.publish(empty_msg)
+            try:
+                marker_context.default_feedback_cb(feedback)
+            except:
+                pass
 
     # increase sequence number & publish an update
     def publish(self, update):
-        update.server_id = self.server_id
         update.seq_num = self.seq_num
         self.update_pub.publish(update)
 
-    # publish the current complete state to the latched "init" topic
-    def publishInit(self):
+    def getInteractiveMarkersCallback(self, request, response):
+        """Process a service request to get the current interactive markers."""
         with self.mutex:
-            init = InteractiveMarkerInit()
-            init.server_id = self.server_id
-            init.seq_num = self.seq_num
+            response.sequence_number = self.seq_num
 
+            self.node.get_logger().debug('Markers requested. Responding with the following markers:')
             for name, marker_context in self.marker_contexts.items():
-                rospy.logdebug("Publishing " + name)
-                init.markers.append(marker_context.int_marker)
+                self.node.get_logger().debug('    ' + name)
+                response.markers.append(marker_context.int_marker)
 
-            self.init_pub.publish(init)
+            return response
 
     # update pose, schedule update without locking
     def doSetPose(self, update, name, pose, header):
@@ -398,6 +401,6 @@ Pending pose update for non-existing marker found. This is a bug in InteractiveM
 
         update.int_marker.pose = pose
         update.int_marker.header = header
-        rospy.logdebug("Marker '" + name + "' is now at " +
+        self.node.get_logger().debug("Marker '" + name + "' is now at " +
                        str(pose.position.x) + ", " + str(pose.position.y) +
                        ", " + str(pose.position.z))
