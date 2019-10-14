@@ -64,7 +64,6 @@ class MenuHandler:
 
     def insert(self, title, parent=None, command_type=MenuEntry.FEEDBACK, command="", callback=None):
         """Insert a new menu item."""
-
         handle = self.doInsert(title, command_type, command, callback)
         if parent is not None:
             try:
@@ -79,7 +78,6 @@ class MenuHandler:
 
     def setVisible(self, handle, visible):
         """Specify if an entry should be visible or hidden."""
-
         try:
             context = self.entry_contexts_[handle]
             context.visible = visible
@@ -89,7 +87,6 @@ class MenuHandler:
 
     def setCheckState(self, handle, check_state):
         """Specify if an entry is checked or can't be checked at all."""
-
         try:
             context = self.entry_contexts_[handle]
             context.check_state = check_state
@@ -103,7 +100,6 @@ class MenuHandler:
 
         :return: CheckState if the entry exists and has checkbox, None otherwise.
         """
-
         try:
             context = self.entry_contexts_[handle]
             return context.check_state
@@ -116,7 +112,6 @@ class MenuHandler:
 
         Divert callback for MENU_SELECT feedback to this manager.
         """
-
         marker = server.get(marker_name)
         if not marker:
             self.managed_markers_.remove(marker_name)
@@ -133,10 +128,7 @@ class MenuHandler:
         return True
 
     def reApply(self, server):
-        """
-        Re-apply to all markers that this was applied to previously.
-        """
-
+        """Re-apply to all markers that this was applied to previously."""
         success = True
         # self.apply() might remove elements from
         # self.managed_markers_. To prevent errors, copy the
@@ -152,7 +144,6 @@ class MenuHandler:
 
         :return: The title, None if menu entry does not exist.
         """
-
         try:
             return self.entry_contexts_[handle].title
         except:
@@ -160,7 +151,6 @@ class MenuHandler:
 
     def processFeedback(self, feedback):
         """Call registered callback functions for given feedback command."""
-
         try:
             context = self.entry_contexts_[feedback.menu_entry_id]
         except KeyError:
@@ -173,7 +163,6 @@ class MenuHandler:
 
         Calls itself recursively to add the entire menu tree.
         """
-
         for handle in handles_in:
             try:
                 context = self.entry_contexts_[handle]
@@ -207,7 +196,6 @@ class MenuHandler:
 
     def doInsert(self, title, command_type, command, feedback_cb):
         """Insert without adding a top-level entry."""
-
         handle = self.current_handle_
         self.current_handle_ += 1
 

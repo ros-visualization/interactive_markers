@@ -128,7 +128,6 @@ class InteractiveMarkerServer:
 
     def __del__(self):
         """Destruction of the interface will lead to all managed markers being cleared."""
-
         self.shutdown()
 
     def insert(self, marker, *, feedback_callback=None, feedback_type=DEFAULT_FEEDBACK_CALLBACK):
@@ -142,7 +141,6 @@ class InteractiveMarkerServer:
         :param feedback_callback: Function to call on the arrival of a feedback message.
         :param feedback_type: Type of feedback for which to call the feedback.
         """
-
         with self.mutex:
             try:
                 update = self.pending_updates[marker.name]
@@ -165,7 +163,6 @@ class InteractiveMarkerServer:
         :param header: Header replacement. Leave this empty to use the previous one.
         :return: True if a marker with that name exists, False otherwise.
         """
-
         with self.mutex:
             try:
                 marker_context = self.marker_contexts[name]
@@ -197,7 +194,6 @@ class InteractiveMarkerServer:
         :param name: Name of the interactive marker.
         :return: True if a marker with that name exists, False otherwise.
         """
-
         with self.mutex:
             try:
                 self.pending_updates[name].update_type = UpdateContext.ERASE
@@ -218,7 +214,6 @@ class InteractiveMarkerServer:
 
         Note: This change will not take effect until you call applyChanges().
         """
-
         self.pending_updates = dict()
         for marker_name in self.marker_contexts.keys():
             self.erase(marker_name)
@@ -237,7 +232,6 @@ class InteractiveMarkerServer:
         :param feedback_type: Type of feedback for which to call the feedback.
             Leave this empty to make this the default callback.
         """
-
         with self.mutex:
             try:
                 marker_context = self.marker_contexts[name]
@@ -273,7 +267,6 @@ class InteractiveMarkerServer:
 
     def applyChanges(self):
         """Apply changes made since the last call to this method and broadcast to clients."""
-
         with self.mutex:
             if len(self.pending_updates.keys()) == 0:
                 return
@@ -331,7 +324,6 @@ class InteractiveMarkerServer:
         :param name: Name of the interactive marker.
         :return: Marker if exists, None otherwise.
         """
-
         try:
             update = self.pending_updates[name]
         except:
@@ -358,7 +350,6 @@ class InteractiveMarkerServer:
 
     def processFeedback(self, feedback):
         """Update marker pose and call user callback."""
-
         with self.mutex:
             # ignore feedback for non-existing markers
             try:
@@ -407,13 +398,11 @@ class InteractiveMarkerServer:
 
     def publish(self, update):
         """Increase the sequence number and publish an update."""
-
         update.seq_num = self.seq_num
         self.update_pub.publish(update)
 
     def getInteractiveMarkersCallback(self, request, response):
         """Process a service request to get the current interactive markers."""
-
         with self.mutex:
             response.sequence_number = self.seq_num
 
@@ -426,7 +415,6 @@ class InteractiveMarkerServer:
 
     def doSetPose(self, update, name, pose, header):
         """Schedule a pose update pose without locking."""
-
         if update is None:
             update = UpdateContext()
             update.update_type = UpdateContext.POSE_UPDATE
