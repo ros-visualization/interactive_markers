@@ -63,7 +63,6 @@ if(BUILD_TESTING)
   find_package(geometry_msgs REQUIRED)
   find_package(std_msgs REQUIRED)
 
-  set(ament_cmake_flake8_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 
   ament_add_gtest(test_interactive_marker_server

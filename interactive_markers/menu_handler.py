@@ -33,17 +33,21 @@
 # Author: Michael Ferguson
 
 import sys
+from typing import Dict
+from typing import List
+from typing import Set
 
 from visualization_msgs.msg import InteractiveMarkerFeedback
 from visualization_msgs.msg import MenuEntry
 
 
 class EntryContext:
+
     def __init__(self):
-        self.title = ""
-        self.command = ""
+        self.title = ''
+        self.command = ''
         self.command_type = 0
-        self.sub_entries = list()
+        self.sub_entries = []
         self.visible = True
         self.check_state = 0
         self.feedback_cb = None
@@ -57,42 +61,48 @@ class MenuHandler:
     UNCHECKED = 2
 
     def __init__(self):
-        self.top_level_handles_ = list()    # std::vector<EntryHandle>
-        self.entry_contexts_ = dict()       # boost::unordered_map<EntryHandle, EntryContext>
+        self.top_level_handles_: List[int] = []
+        self.entry_contexts_: Dict[int, EntryContext] = {}
         self.current_handle_ = 1
-        self.managed_markers_ = set()       # std::set<std::string>
+        self.managed_markers_: Set[str] = set()
 
-    def insert(self, title, parent=None, command_type=MenuEntry.FEEDBACK, command="", callback=None):
+    def insert(
+        self,
+        title,
+        parent=None,
+        command_type=MenuEntry.FEEDBACK,
+        command='',
+        callback=None
+    ):
         """Insert a new menu item."""
         handle = self.doInsert(title, command_type, command, callback)
         if parent is not None:
-            try:
-                parent_context = self.entry_contexts_[parent]
-                parent_context.sub_entries.append(handle)
-            except:
-                print("Parent menu entry " + str(parent) + " not found.", file=sys.stderr)
+            if parent not in self.entry_contexts_:
+                print("Parent menu entry '{}' not found".format(parent), file=sys.stderr)
                 return None
+            parent_context = self.entry_contexts_[parent]
+            parent_context.sub_entries.append(handle)
         else:
             self.top_level_handles_.append(handle)
         return handle
 
     def setVisible(self, handle, visible):
         """Specify if an entry should be visible or hidden."""
-        try:
-            context = self.entry_contexts_[handle]
-            context.visible = visible
-            return True
-        except:
+        if handle not in self.entry_contexts_:
             return False
+
+        context = self.entry_contexts_[handle]
+        context.visible = visible
+        return True
 
     def setCheckState(self, handle, check_state):
         """Specify if an entry is checked or can't be checked at all."""
-        try:
-            context = self.entry_contexts_[handle]
-            context.check_state = check_state
-            return True
-        except:
+        if handle not in self.entry_contexts_:
             return False
+
+        context = self.entry_contexts_[handle]
+        context.check_state = check_state
+        return True
 
     def getCheckState(self, handle):
         """
@@ -100,11 +110,11 @@ class MenuHandler:
 
         :return: CheckState if the entry exists and has checkbox, None otherwise.
         """
-        try:
-            context = self.entry_contexts_[handle]
-            return context.check_state
-        except:
+        if handle not in self.entry_contexts_:
             return None
+
+        context = self.entry_contexts_[handle]
+        return context.check_state
 
     def apply(self, server, marker_name):
         """
@@ -117,13 +127,14 @@ class MenuHandler:
             self.managed_markers_.remove(marker_name)
             return False
 
-        marker.menu_entries = list()
+        marker.menu_entries = []
         self.pushMenuEntries(self.top_level_handles_, marker.menu_entries, 0)
 
         server.insert(
             marker,
             feedback_callback=self.processFeedback,
-            feedback_type=InteractiveMarkerFeedback.MENU_SELECT)
+            feedback_type=InteractiveMarkerFeedback.MENU_SELECT
+        )
         self.managed_markers_.add(marker_name)
         return True
 
@@ -144,17 +155,16 @@ class MenuHandler:
 
         :return: The title, None if menu entry does not exist.
         """
-        try:
-            return self.entry_contexts_[handle].title
-        except:
+        if handle not in self.entry_contexts_:
             return None
+        return self.entry_contexts_[handle].title
 
     def processFeedback(self, feedback):
         """Call registered callback functions for given feedback command."""
-        try:
-            context = self.entry_contexts_[feedback.menu_entry_id]
-        except KeyError:
+        if feedback.menu_entry_id not in self.entry_contexts_:
             return
+
+        context = self.entry_contexts_[feedback.menu_entry_id]
         context.feedback_cb(feedback)
 
     def pushMenuEntries(self, handles_in, entries_out, parent_handle):
@@ -164,17 +174,18 @@ class MenuHandler:
         Calls itself recursively to add the entire menu tree.
         """
         for handle in handles_in:
-            try:
-                context = self.entry_contexts_[handle]
-                if not context.visible:
-                    continue
-                entries_out.append(self.makeEntry(context, handle, parent_handle))
-                if not self.pushMenuEntries(context.sub_entries, entries_out, handle):
-                    return False
-            except:
+            if handle not in self.entry_contexts_:
                 print(
-                    "Internal error: context handle not found! This is a bug in MenuHandler.",
-                    file=sys.stderr)
+                    'Internal error: context handle not found! This is a bug in MenuHandler.',
+                    file=sys.stderr
+                )
+                return False
+
+            context = self.entry_contexts_[handle]
+            if not context.visible:
+                continue
+            entries_out.append(self.makeEntry(context, handle, parent_handle))
+            if not self.pushMenuEntries(context.sub_entries, entries_out, handle):
                 return False
         return True
 
@@ -183,9 +194,9 @@ class MenuHandler:
         if context.check_state == self.NO_CHECKBOX:
             menu_entry.title = context.title
         elif context.check_state == self.CHECKED:
-            menu_entry.title = "[x] "+context.title
+            menu_entry.title = '[x] ' + context.title
         elif context.check_state == self.UNCHECKED:
-            menu_entry.title = "[ ] "+context.title
+            menu_entry.title = '[ ] ' + context.title
 
         menu_entry.command = context.command
         menu_entry.command_type = context.command_type

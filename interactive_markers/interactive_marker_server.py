@@ -32,7 +32,8 @@
 
 # Author: Michael Ferguson
 
-import rclpy
+from threading import Lock
+
 from rclpy.duration import Duration
 from rclpy.time import Time
 
@@ -44,17 +45,15 @@ from visualization_msgs.msg import InteractiveMarkerPose
 from visualization_msgs.msg import InteractiveMarkerUpdate
 from visualization_msgs.srv import GetInteractiveMarkers
 
-from threading import Lock
-
 
 class MarkerContext:
     """Represents a single marker."""
 
     def __init__(self, time):
         self.last_feedback = time
-        self.last_client_id = ""
+        self.last_client_id = ''
         self.default_feedback_callback = None
-        self.feedback_callbacks = dict()
+        self.feedback_callbacks = {}
         self.int_marker = InteractiveMarker()
 
 
@@ -69,7 +68,7 @@ class UpdateContext:
         self.update_type = self.FULL_UPDATE
         self.int_marker = InteractiveMarker()
         self.default_feedback_callback = None
-        self.feedback_callbacks = dict()
+        self.feedback_callbacks = {}
 
 
 class InteractiveMarkerServer:
@@ -82,36 +81,45 @@ class InteractiveMarkerServer:
 
     DEFAULT_FEEDBACK_CALLBACK = 255
 
-    def __init__(self, node, topic_ns, q_size=100):
+    def __init__(self, node, namespace, q_size=100):
         """
         Create an InteractiveMarkerServer and associated ROS connections.
 
         :param node: The node to attach this interactive marker server to.
-        :param topic_ns: The interface will use the topics topic_ns/update and topic_ns/feedback
-            for communication.
+        :param namespace: The communication namespace of the interactie marker server.
+            Clients that want to interact should connect with the same namespace.
         """
         self.node = node
-        self.topic_ns = topic_ns
+        self.namespace = namespace
         self.seq_num = 0
         self.mutex = Lock()
 
         # contains the current state of all markers
         # string : MarkerContext
-        self.marker_contexts = dict()
+        self.marker_contexts = {}
 
         # updates that have to be sent on the next publish
         # string : UpdateContext
-        self.pending_updates = dict()
+        self.pending_updates = {}
+
+        get_interactive_markers_service_name = namespace + '/get_interactive_markers'
+        update_topic = namespace + '/update'
+        feedback_topic = namespace + '/feedback'
 
         self.get_interactive_markers_srv = self.node.create_service(
             GetInteractiveMarkers,
-            topic_ns + "/get_interactive_markers",
+            get_interactive_markers_service_name,
             self.getInteractiveMarkersCallback
         )
 
-        self.update_pub = self.node.create_publisher(InteractiveMarkerUpdate, topic_ns + "/update", q_size)
+        self.update_pub = self.node.create_publisher(InteractiveMarkerUpdate, update_topic, q_size)
 
-        self.feedback_sub = self.node.create_subscription(InteractiveMarkerFeedback, topic_ns + "/feedback", self.processFeedback, q_size)
+        self.feedback_sub = self.node.create_subscription(
+            InteractiveMarkerFeedback,
+            feedback_topic,
+            self.processFeedback,
+            q_size
+        )
 
     def shutdown(self):
         """
@@ -142,9 +150,9 @@ class InteractiveMarkerServer:
         :param feedback_type: Type of feedback for which to call the feedback.
         """
         with self.mutex:
-            try:
+            if marker.name in self.pending_updates:
                 update = self.pending_updates[marker.name]
-            except:
+            else:
                 update = UpdateContext()
                 self.pending_updates[marker.name] = update
             update.update_type = UpdateContext.FULL_UPDATE
@@ -164,21 +172,15 @@ class InteractiveMarkerServer:
         :return: True if a marker with that name exists, False otherwise.
         """
         with self.mutex:
-            try:
-                marker_context = self.marker_contexts[name]
-            except:
-                marker_context = None
-            try:
-                update = self.pending_updates[name]
-            except:
-                update = None
+            marker_context = self.marker_contexts.get(name, None)
+            update = self.pending_updates.get(name, None)
             # if there's no marker and no pending addition for it, we can't update the pose
             if marker_context is None and update is None:
                 return False
             if update is not None and update.update_type == UpdateContext.FULL_UPDATE:
                 return False
 
-            if header.frame_id is None or header.frame_id == "":
+            if header.frame_id is None or header.frame_id == '':
                 # keep the old header
                 self.doSetPose(update, name, pose, marker_context.int_marker.header)
             else:
@@ -195,18 +197,15 @@ class InteractiveMarkerServer:
         :return: True if a marker with that name exists, False otherwise.
         """
         with self.mutex:
-            try:
+            if name in self.pending_updates:
                 self.pending_updates[name].update_type = UpdateContext.ERASE
                 return True
-            except:
-                try:
-                    self.marker_contexts[name]  # check exists
-                    update = UpdateContext()
-                    update.update_type = UpdateContext.ERASE
-                    self.pending_updates[name] = update
-                    return True
-                except:
-                    return False
+            if name in self.marker_contexts:
+                update = UpdateContext()
+                update.update_type = UpdateContext.ERASE
+                self.pending_updates[name] = update
+                return True
+            return False
 
     def clear(self):
         """
@@ -214,7 +213,7 @@ class InteractiveMarkerServer:
 
         Note: This change will not take effect until you call applyChanges().
         """
-        self.pending_updates = dict()
+        self.pending_updates = {}
         for marker_name in self.marker_contexts.keys():
             self.erase(marker_name)
 
@@ -233,14 +232,8 @@ class InteractiveMarkerServer:
             Leave this empty to make this the default callback.
         """
         with self.mutex:
-            try:
-                marker_context = self.marker_contexts[name]
-            except:
-                marker_context = None
-            try:
-                update = self.pending_updates[name]
-            except:
-                update = None
+            marker_context = self.marker_contexts.get(name, None)
+            update = self.pending_updates.get(name, None)
             if marker_context is None and update is None:
                 return False
 
@@ -276,10 +269,10 @@ class InteractiveMarkerServer:
 
             for name, update in self.pending_updates.items():
                 if update.update_type == UpdateContext.FULL_UPDATE:
-                    try:
+                    if name in self.marker_contexts:
                         marker_context = self.marker_contexts[name]
-                    except:
-                        self.node.get_logger().debug("Creating new context for " + name)
+                    else:
+                        self.node.get_logger().debug('Creating new context for ' + name)
                         # create a new int_marker context
                         marker_context = MarkerContext(self.node.get_clock().now())
                         marker_context.default_feedback_callback = update.default_feedback_callback
@@ -290,29 +283,28 @@ class InteractiveMarkerServer:
                     update_msg.markers.append(marker_context.int_marker)
 
                 elif update.update_type == UpdateContext.POSE_UPDATE:
-                    try:
-                        marker_context = self.marker_contexts[name]
-                        marker_context.int_marker.pose = update.int_marker.pose
-                        marker_context.int_marker.header = update.int_marker.header
-
-                        pose_update = InteractiveMarkerPose()
-                        pose_update.header = marker_context.int_marker.header
-                        pose_update.pose = marker_context.int_marker.pose
-                        pose_update.name = marker_context.int_marker.name
-                        update_msg.poses.append(pose_update)
-                    except:
+                    if name not in self.marker_contexts:
                         self.node.get_logger().error(
                             'Pending pose update for non-existing marker found. '
                             'This is a bug in InteractiveMarkerServer.')
+                        continue
+
+                    marker_context = self.marker_contexts[name]
+                    marker_context.int_marker.pose = update.int_marker.pose
+                    marker_context.int_marker.header = update.int_marker.header
+
+                    pose_update = InteractiveMarkerPose()
+                    pose_update.header = marker_context.int_marker.header
+                    pose_update.pose = marker_context.int_marker.pose
+                    pose_update.name = marker_context.int_marker.name
+                    update_msg.poses.append(pose_update)
 
                 elif update.update_type == UpdateContext.ERASE:
-                    try:
+                    if name in self.marker_contexts:
                         marker_context = self.marker_contexts[name]
                         del self.marker_contexts[name]
                         update_msg.erases.append(name)
-                    except:
-                        pass
-                self.pending_updates = dict()
+                self.pending_updates = {}
 
         self.seq_num += 1
         self.publish(update_msg)
@@ -324,23 +316,20 @@ class InteractiveMarkerServer:
         :param name: Name of the interactive marker.
         :return: Marker if exists, None otherwise.
         """
-        try:
+        if name in self.pending_updates:
             update = self.pending_updates[name]
-        except:
-            try:
-                marker_context = self.marker_contexts[name]
-            except:
-                return None
-            return marker_context.int_marker
+        elif name in self.marker_contexts:
+            return self.marker_contexts[name].int_marker
+        else:
+            return None
 
         # if there's an update pending, we'll have to account for that
         if update.update_type == UpdateContext.ERASE:
             return None
         elif update.update_type == UpdateContext.POSE_UPDATE:
-            try:
-                marker_context = self.marker_contexts[name]
-            except:
+            if name not in self.marker_contexts:
                 return None
+            marker_context = self.marker_contexts[name]
             int_marker = marker_context.int_marker
             int_marker.pose = update.int_marker.pose
             return int_marker
@@ -352,43 +341,41 @@ class InteractiveMarkerServer:
         """Update marker pose and call user callback."""
         with self.mutex:
             # ignore feedback for non-existing markers
-            try:
-                marker_context = self.marker_contexts[feedback.marker_name]
-            except:
+            if feedback.marker_name not in self.marker_contexts:
                 return
 
+            marker_context = self.marker_contexts[feedback.marker_name]
+
             # if two callers try to modify the same marker, reject (timeout= 1 sec)
-            if marker_context.last_client_id != feedback.client_id \
-               and (self.node.get_clock().now() - marker_context.last_feedback) < Duration(seconds=1.0):
-                self.node.get_logger().debug("Rejecting feedback for " +
-                               feedback.marker_name +
-                               ": conflicting feedback from separate clients.")
+            time_since_last_feedback = self.node.get_clock().now() - marker_context.last_feedback
+            if (marker_context.last_client_id != feedback.client_id and
+                    time_since_last_feedback < Duration(seconds=1.0)):
+                self.node.get_logger().debug(
+                    "Rejecting feedback for '{}': conflicting feedback from separate clients"
+                    .format(feedback.marker_name)
+                )
                 return
 
             marker_context.last_feedback = self.node.get_clock().now()
             marker_context.last_client_id = feedback.client_id
 
             if feedback.event_type == feedback.POSE_UPDATE:
-                if marker_context.int_marker.header.stamp == Time(clock_type=self.node.get_clock().clock_type):
+                if (marker_context.int_marker.header.stamp ==
+                        Time(clock_type=self.node.get_clock().clock_type)):
                     # keep the old header
-                    try:
-                        self.doSetPose(self.pending_updates[feedback.marker_name],
-                                       feedback.marker_name,
-                                       feedback.pose,
-                                       marker_context.int_marker.header)
-                    except:
-                        self.doSetPose(None,
-                                       feedback.marker_name,
-                                       feedback.pose,
-                                       marker_context.int_marker.header)
+                    header = marker_context.int_marker.header
                 else:
-                    try:
-                        self.doSetPose(self.pending_updates[feedback.marker_name],
-                                       feedback.marker_name,
-                                       feedback.pose,
-                                       feedback.header)
-                    except:
-                        self.doSetPose(None, feedback.marker_name, feedback.pose, feedback.header)
+                    header = feedback.header
+
+                if feedback.marker_name in self.pending_updates:
+                    self.doSetPose(
+                        self.pending_updates[feedback.marker_name],
+                        feedback.marker_name,
+                        feedback.pose,
+                        header
+                    )
+                else:
+                    self.doSetPose(None, feedback.marker_name, feedback.pose, header)
 
         # call feedback handler
         feedback_callback = marker_context.feedback_callbacks.get(
@@ -406,7 +393,9 @@ class InteractiveMarkerServer:
         with self.mutex:
             response.sequence_number = self.seq_num
 
-            self.node.get_logger().debug('Markers requested. Responding with the following markers:')
+            self.node.get_logger().debug(
+                'Markers requested. Responding with the following markers:'
+            )
             for name, marker_context in self.marker_contexts.items():
                 self.node.get_logger().debug('    ' + name)
                 response.markers.append(marker_context.int_marker)
@@ -424,6 +413,6 @@ class InteractiveMarkerServer:
 
         update.int_marker.pose = pose
         update.int_marker.header = header
-        self.node.get_logger().debug("Marker '" + name + "' is now at " +
-                       str(pose.position.x) + ", " + str(pose.position.y) +
-                       ", " + str(pose.position.z))
+        self.node.get_logger().debug(
+            "Marker '{name}' is now at {pose.position.x}, {pose.position.y}, {pose.position.z}"
+            .format_map(locals()))
