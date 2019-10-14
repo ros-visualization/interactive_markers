@@ -309,7 +309,7 @@ class InteractiveMarkerServer:
                         marker_context = self.marker_contexts[name]
                         del self.marker_contexts[name]
                         update_msg.erases.append(name)
-                self.pending_updates = {}
+            self.pending_updates = {}
 
         self.seq_num += 1
         self.publish(update_msg)
@@ -387,6 +387,9 @@ class InteractiveMarkerServer:
             feedback.event_type, marker_context.default_feedback_callback)
         if feedback_callback is not None:
             feedback_callback(feedback)
+
+        # apply any pose updates
+        self.applyChanges()
 
     def publish(self, update):
         """Increase the sequence number and publish an update."""
