@@ -81,13 +81,14 @@ class InteractiveMarkerServer:
 
     DEFAULT_FEEDBACK_CALLBACK = 255
 
-    def __init__(self, node, namespace, q_size=100):
+    def __init__(self, node, namespace, update_pub_depth=100):
         """
         Create an InteractiveMarkerServer and associated ROS connections.
 
         :param node: The node to attach this interactive marker server to.
         :param namespace: The communication namespace of the interactie marker server.
             Clients that want to interact should connect with the same namespace.
+        :param update_pub_depth: QoS depth setting for the update publisher.
         """
         self.node = node
         self.namespace = namespace
@@ -112,13 +113,17 @@ class InteractiveMarkerServer:
             self.getInteractiveMarkersCallback
         )
 
-        self.update_pub = self.node.create_publisher(InteractiveMarkerUpdate, update_topic, q_size)
+        self.update_pub = self.node.create_publisher(
+            InteractiveMarkerUpdate,
+            update_topic,
+            update_pub_depth
+        )
 
         self.feedback_sub = self.node.create_subscription(
             InteractiveMarkerFeedback,
             feedback_topic,
             self.processFeedback,
-            q_size
+            1
         )
 
     def shutdown(self):
@@ -413,6 +418,3 @@ class InteractiveMarkerServer:
 
         update.int_marker.pose = pose
         update.int_marker.header = header
-        self.node.get_logger().debug(
-            "Marker '{name}' is now at {pose.position.x}, {pose.position.y}, {pose.position.z}"
-            .format_map(locals()))
