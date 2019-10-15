@@ -34,12 +34,10 @@
 
 from threading import Lock
 
+from builtin_interfaces.msg import Time
 from rclpy.duration import Duration
 from rclpy.qos import QoSProfile
-
-from builtin_interfaces.msg import Time
 from std_msgs.msg import Header
-
 from visualization_msgs.msg import InteractiveMarker
 from visualization_msgs.msg import InteractiveMarkerFeedback
 from visualization_msgs.msg import InteractiveMarkerPose
