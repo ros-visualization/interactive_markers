@@ -118,6 +118,8 @@ public:
    *   If the namespace is not empty, then connect() is called.
    * \param request_timeout Timeout in seconds before retrying to request interactive markers from
    *   a connected server.
+   * \param update_sub_qos QoS settings for the underlying update subscription.
+   * \param feedback_pub_qos QoS settings for the underlying feedback publisher.
    */
   template<class Rep = int64_t, class Period = std::ratio<1>>
   InteractiveMarkerClient(
@@ -130,7 +132,9 @@ public:
     std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core,
     const std::string & target_frame = "",
     const std::string & topic_namespace = "",
-    const std::chrono::duration<Rep, Period> & request_timeout = std::chrono::seconds(1))
+    const std::chrono::duration<Rep, Period> & request_timeout = std::chrono::seconds(1),
+    const rclcpp::QoS & update_sub_qos = rclcpp::QoS(100),
+    const rclcpp::QoS & feedback_pub_qos = rclcpp::QoS(100))
   : node_base_interface_(node_base_interface),
     topics_interface_(topics_interface),
     services_interface_(services_interface),
@@ -143,6 +147,8 @@ public:
     target_frame_(target_frame),
     topic_namespace_(topic_namespace),
     request_timeout_(request_timeout),
+    update_sub_qos_(update_sub_qos),
+    feedback_pub_qos_(feedback_pub_qos),
     initial_response_msg_(0),
     first_update_(true),
     last_update_sequence_number_(0u),
@@ -162,6 +168,8 @@ public:
    *   If the namespace is not empty, then connect() is called.
    * \param request_timeout Timeout in seconds before retrying to request interactive markers from
    *   a connected server.
+   * \param update_sub_qos QoS settings for the underlying update subscription.
+   * \param feedback_pub_qos QoS settings for the underlying feedback publisher.
    */
   template<typename NodePtr, class Rep = int64_t, class Period = std::ratio<1>>
   InteractiveMarkerClient(
@@ -169,7 +177,9 @@ public:
     std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core,
     const std::string & target_frame = "",
     const std::string & topic_namespace = "",
-    const std::chrono::duration<Rep, Period> & request_timeout = std::chrono::seconds(1))
+    const std::chrono::duration<Rep, Period> & request_timeout = std::chrono::seconds(1),
+    const rclcpp::QoS & update_sub_qos = rclcpp::QoS(100),
+    const rclcpp::QoS & feedback_pub_qos = rclcpp::QoS(100))
   : InteractiveMarkerClient(
       node->get_node_base_interface(),
       node->get_node_topics_interface(),
@@ -180,7 +190,9 @@ public:
       tf_buffer_core,
       target_frame,
       topic_namespace,
-      request_timeout)
+      request_timeout,
+      update_sub_qos,
+      feedback_pub_qos)
   {
   }
 
@@ -322,6 +334,10 @@ private:
 
   // Timeout while waiting for service response message
   rclcpp::Duration request_timeout_;
+
+  rclcpp::QoS update_sub_qos_;
+
+  rclcpp::QoS feedback_pub_qos_;
 
   // The response message from the request to get interactive markers
   std::shared_ptr<InitialMessageContext> initial_response_msg_;

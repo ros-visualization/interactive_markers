@@ -55,7 +55,9 @@ InteractiveMarkerServer::InteractiveMarkerServer(
   rclcpp::node_interfaces::NodeClockInterface::SharedPtr clock_interface,
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_interface,
   rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
-  rclcpp::node_interfaces::NodeServicesInterface::SharedPtr services_interface)
+  rclcpp::node_interfaces::NodeServicesInterface::SharedPtr services_interface,
+  const rclcpp::QoS & update_pub_qos,
+  const rclcpp::QoS & feedback_sub_qos)
 : topic_namespace_(topic_namespace),
   context_(base_interface->get_context()),
   clock_(clock_interface->get_clock()),
@@ -79,17 +81,13 @@ InteractiveMarkerServer::InteractiveMarkerServer(
     rmw_qos_profile_services_default,
     base_interface->get_default_callback_group());
 
-  rclcpp::QoS update_qos(rclcpp::KeepLast(100));
-  // update_qos.durability_volatile();
   update_pub_ = rclcpp::create_publisher<InteractiveMarkerUpdate>(
-    topics_interface, update_topic, update_qos);
+    topics_interface, update_topic, update_pub_qos);
 
-  rclcpp::QoS feedback_qos(rclcpp::KeepLast(100));
-  // feedback_qos.durability_volatile();
   feedback_sub_ = rclcpp::create_subscription<InteractiveMarkerFeedback>(
     topics_interface,
     feedback_topic,
-    feedback_qos,
+    feedback_sub_qos,
     std::bind(&InteractiveMarkerServer::processFeedback, this, std::placeholders::_1));
 }
 

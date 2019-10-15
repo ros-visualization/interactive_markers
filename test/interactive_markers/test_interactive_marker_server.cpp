@@ -54,12 +54,31 @@ TEST(TestInteractiveMarkerServer, construction_and_destruction)
   }
   {
     interactive_markers::InteractiveMarkerServer server(
+      "test_node_ptr_ctor_server", node, rclcpp::QoS(42));
+  }
+  {
+    interactive_markers::InteractiveMarkerServer server(
+      "test_node_ptr_ctor_server", node, rclcpp::QoS(1), rclcpp::QoS(99));
+  }
+  {
+    interactive_markers::InteractiveMarkerServer server(
       "test_node_interfaces_ctor_server",
       node->get_node_base_interface(),
       node->get_node_clock_interface(),
       node->get_node_logging_interface(),
       node->get_node_topics_interface(),
       node->get_node_services_interface());
+  }
+  {
+    interactive_markers::InteractiveMarkerServer server(
+      "test_node_interfaces_ctor_server",
+      node->get_node_base_interface(),
+      node->get_node_clock_interface(),
+      node->get_node_logging_interface(),
+      node->get_node_topics_interface(),
+      node->get_node_services_interface(),
+      rclcpp::QoS(1),
+      rclcpp::QoS(100));
   }
 
   rclcpp::shutdown();

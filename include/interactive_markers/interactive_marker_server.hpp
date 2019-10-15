@@ -75,6 +75,8 @@ public:
    * \param logging_interface Node logging interface.
    * \param topics_interface Node topics interface.
    * \param service_interface Node service interface.
+   * \param update_pub_qos QoS settings for the update publisher.
+   * \param feedback_sub_qos QoS settings for the feedback subscription.
    */
   INTERACTIVE_MARKERS_PUBLIC
   InteractiveMarkerServer(
@@ -83,19 +85,25 @@ public:
     rclcpp::node_interfaces::NodeClockInterface::SharedPtr clock_interface,
     rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_interface,
     rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
-    rclcpp::node_interfaces::NodeServicesInterface::SharedPtr services_interface);
+    rclcpp::node_interfaces::NodeServicesInterface::SharedPtr services_interface,
+    const rclcpp::QoS & update_pub_qos = rclcpp::QoS(100),
+    const rclcpp::QoS & feedback_sub_qos = rclcpp::QoS(1));
 
   template<typename NodePtr>
   InteractiveMarkerServer(
     const std::string & topic_namespace,
-    NodePtr node)
+    NodePtr node,
+    const rclcpp::QoS & update_pub_qos = rclcpp::QoS(100),
+    const rclcpp::QoS & feedback_sub_qos = rclcpp::QoS(1))
   : InteractiveMarkerServer(
       topic_namespace,
       node->get_node_base_interface(),
       node->get_node_clock_interface(),
       node->get_node_logging_interface(),
       node->get_node_topics_interface(),
-      node->get_node_services_interface())
+      node->get_node_services_interface(),
+      update_pub_qos,
+      feedback_sub_qos)
   {
   }
 
