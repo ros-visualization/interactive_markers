@@ -36,8 +36,8 @@ from threading import Lock
 
 from rclpy.duration import Duration
 from rclpy.qos import QoSProfile
-from rclpy.time import Time
 
+from builtin_interfaces.msg import Time
 from std_msgs.msg import Header
 
 from visualization_msgs.msg import InteractiveMarker
@@ -374,8 +374,7 @@ class InteractiveMarkerServer:
             marker_context.last_client_id = feedback.client_id
 
             if feedback.event_type == feedback.POSE_UPDATE:
-                if (marker_context.int_marker.header.stamp ==
-                        Time(clock_type=self.node.get_clock().clock_type)):
+                if (marker_context.int_marker.header.stamp == Time()):
                     # keep the old header
                     header = marker_context.int_marker.header
                 else:
