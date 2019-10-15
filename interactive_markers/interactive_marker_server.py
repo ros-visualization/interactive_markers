@@ -35,6 +35,7 @@
 from threading import Lock
 
 from rclpy.duration import Duration
+from rclpy.qos import QoSProfile
 from rclpy.time import Time
 
 from std_msgs.msg import Header
@@ -81,15 +82,22 @@ class InteractiveMarkerServer:
 
     DEFAULT_FEEDBACK_CALLBACK = 255
 
-    def __init__(self, node, namespace, *, update_pub_depth=100, feedback_sub_depth=1):
+    def __init__(
+        self,
+        node,
+        namespace,
+        *,
+        update_pub_qos=QoSProfile(depth=100),
+        feedback_sub_qos=QoSProfile(depth=1)
+    ):
         """
         Create an InteractiveMarkerServer and associated ROS connections.
 
         :param node: The node to attach this interactive marker server to.
         :param namespace: The communication namespace of the interactie marker server.
             Clients that want to interact should connect with the same namespace.
-        :param update_pub_depth: QoS depth setting for the update publisher.
-        :param feedback_sub_depth: QoS depth setting for the feedback subscription.
+        :param update_pub_qos: QoS settings for the update publisher.
+        :param feedback_sub_qos: QoS settings for the feedback subscription.
         """
         self.node = node
         self.namespace = namespace
@@ -117,14 +125,14 @@ class InteractiveMarkerServer:
         self.update_pub = self.node.create_publisher(
             InteractiveMarkerUpdate,
             update_topic,
-            update_pub_depth
+            update_pub_qos
         )
 
         self.feedback_sub = self.node.create_subscription(
             InteractiveMarkerFeedback,
             feedback_topic,
             self.processFeedback,
-            feedback_sub_depth
+            feedback_sub_qos
         )
 
     def shutdown(self):
