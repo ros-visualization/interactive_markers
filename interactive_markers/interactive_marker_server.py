@@ -81,7 +81,7 @@ class InteractiveMarkerServer:
 
     DEFAULT_FEEDBACK_CALLBACK = 255
 
-    def __init__(self, node, namespace, update_pub_depth=100):
+    def __init__(self, node, namespace, *, update_pub_depth=100, feedback_sub_depth=1):
         """
         Create an InteractiveMarkerServer and associated ROS connections.
 
@@ -89,6 +89,7 @@ class InteractiveMarkerServer:
         :param namespace: The communication namespace of the interactie marker server.
             Clients that want to interact should connect with the same namespace.
         :param update_pub_depth: QoS depth setting for the update publisher.
+        :param feedback_sub_depth: QoS depth setting for the feedback subscription.
         """
         self.node = node
         self.namespace = namespace
@@ -123,7 +124,7 @@ class InteractiveMarkerServer:
             InteractiveMarkerFeedback,
             feedback_topic,
             self.processFeedback,
-            1
+            feedback_sub_depth
         )
 
     def shutdown(self):
