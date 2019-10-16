@@ -11,11 +11,14 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rmw REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
+
+ament_python_install_package(${PROJECT_NAME})
 
 add_library(${PROJECT_NAME} SHARED
   src/interactive_marker_server.cpp
@@ -60,7 +63,6 @@ if(BUILD_TESTING)
   find_package(geometry_msgs REQUIRED)
   find_package(std_msgs REQUIRED)
 
-  set(ament_cmake_flake8_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 
   ament_add_gtest(test_interactive_marker_server
