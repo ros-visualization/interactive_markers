@@ -335,9 +335,9 @@ private:
   // Timeout while waiting for service response message
   rclcpp::Duration request_timeout_;
 
-  rclcpp::QoS update_sub_qos_;
+  const rclcpp::QoS update_sub_qos_;
 
-  rclcpp::QoS feedback_pub_qos_;
+  const rclcpp::QoS feedback_pub_qos_;
 
   // The response message from the request to get interactive markers
   std::shared_ptr<InitialMessageContext> initial_response_msg_;
