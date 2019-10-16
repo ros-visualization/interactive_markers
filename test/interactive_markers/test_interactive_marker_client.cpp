@@ -58,7 +58,23 @@ TEST(TestInteractiveMarkerClientInitialize, construction_destruction)
   }
   {
     interactive_markers::InteractiveMarkerClient client(
-      node, buffer, "test_frame_id", "test_namespace", std::chrono::seconds(3));
+      node,
+      buffer,
+      "test_frame_id",
+      "test_namespace",
+      std::chrono::seconds(3),
+      rclcpp::QoS(1),
+      rclcpp::QoS(100));
+  }
+  {
+    interactive_markers::InteractiveMarkerClient client(
+      node->get_node_base_interface(),
+      node->get_node_topics_interface(),
+      node->get_node_services_interface(),
+      node->get_node_graph_interface(),
+      node->get_node_clock_interface(),
+      node->get_node_logging_interface(),
+      buffer);
   }
   {
     interactive_markers::InteractiveMarkerClient client(
@@ -71,7 +87,9 @@ TEST(TestInteractiveMarkerClientInitialize, construction_destruction)
       buffer,
       "test_frame_id",
       "test_namespace",
-      std::chrono::milliseconds(100));
+      std::chrono::milliseconds(100),
+      rclcpp::QoS(42),
+      rclcpp::QoS(1));
   }
   {
     // Invalid namespace (shouldn't crash)

@@ -77,17 +77,15 @@ void InteractiveMarkerClient::connect(std::string topic_namespace)
       rmw_qos_profile_services_default,
       nullptr);
 
-    rclcpp::QoS feedback_qos(rclcpp::KeepLast(100));
     feedback_pub_ = rclcpp::create_publisher<visualization_msgs::msg::InteractiveMarkerFeedback>(
       topics_interface_,
       topic_namespace_ + "/feedback",
-      feedback_qos);
+      feedback_pub_qos_);
 
-    rclcpp::QoS update_qos(rclcpp::KeepLast(100));
     update_sub_ = rclcpp::create_subscription<visualization_msgs::msg::InteractiveMarkerUpdate>(
       topics_interface_,
       topic_namespace_ + "/update",
-      update_qos,
+      update_sub_qos_,
       std::bind(&InteractiveMarkerClient::processUpdate, this, _1));
   } catch (rclcpp::exceptions::InvalidNodeError & ex) {
     updateStatus(STATUS_ERROR, "Failed to connect: " + std::string(ex.what()));
