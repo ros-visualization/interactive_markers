@@ -2,6 +2,29 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.0.1 (2019-10-23)
+------------------
+* Fix test flakes by waiting for pub/sub discovery (`#55 <https://github.com/ros-visualization/interactive_markers/issues/55>`_)
+* Add parameters for QoS of update and feedback topics (`#54 <https://github.com/ros-visualization/interactive_markers/issues/54>`_)
+* Port Python implementation to ROS 2 (`#53 <https://github.com/ros-visualization/interactive_markers/issues/53>`_)
+  * Move Python files to their own directory
+  * Install Python via ament_cmake_python
+  * Make Python implementation ROS 2 compatible
+  * Use docstrings
+  * Minor refactor of callback logic
+  * Guard against None values and KeyError's
+  * Change insert() signature to take keyword arguments
+  * Rename variables for clarity (e.g. 'cb' -> 'callback')
+  * Fix PEP 257 errors
+  * Remove unused setup.py
+  * Enable flake8 tests and fix errors
+  * Improve performance
+  * Clear pending updates after applying all of them
+  * Don't rely on user to apply any pose updates
+  * Expose QoSProfile a parameter
+  * Add Python implementation dependencies to package.xml
+* Contributors: Jacob Perron
+
 2.0.0 (2019-09-26)
 ------------------
 * Add missing visibility macros (`#51 <https://github.com/ros-visualization/interactive_markers/issues/51>`_)
