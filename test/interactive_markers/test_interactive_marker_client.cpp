@@ -145,15 +145,15 @@ protected:
     }
   }
 
-  /// Wait for client and server to discover or die trying
+  /// Wait for client and server to discover each other or die trying
   void waitForDiscovery(
     std::shared_ptr<MockInteractiveMarkerServer> server,
     std::chrono::seconds timeout = std::chrono::seconds(3))
   {
     const auto start_time = std::chrono::system_clock::now();
     while (
-      (server->publisher_->get_subscription_count() != 1u ||
-      server->subscription_->get_publisher_count() != 1u) &&
+      (server->publisher_->get_subscription_count() == 0u ||
+      server->subscription_->get_publisher_count() == 0u) &&
       (std::chrono::system_clock::now() - start_time) < timeout)
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -161,6 +161,8 @@ protected:
 
     ASSERT_GT(server->publisher_->get_subscription_count(), 0u);
     ASSERT_GT(server->subscription_->get_publisher_count(), 0u);
+    // TODO(jacobperron): We should probably also wait for the client to discover the server
+    //                    to avoid flakes. This requires additional interactive marker client API.
   }
 
   std::string target_frame_id_;
