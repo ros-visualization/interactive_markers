@@ -405,7 +405,8 @@ void InteractiveMarkerServer::processFeedback(
   if (marker_context.last_client_id != feedback->client_id &&
     (clock_->now() - marker_context.last_feedback).seconds() < 1.0)
   {
-    RCLCPP_DEBUG(logger_, "Rejecting feedback for %s: conflicting feedback from separate clients.",
+    RCLCPP_DEBUG(
+      logger_, "Rejecting feedback for %s: conflicting feedback from separate clients.",
       feedback->marker_name.c_str());
     return;
   }
@@ -416,11 +417,13 @@ void InteractiveMarkerServer::processFeedback(
   if (feedback->event_type == visualization_msgs::msg::InteractiveMarkerFeedback::POSE_UPDATE) {
     if (marker_context.int_marker.header.stamp == rclcpp::Time()) {
       // keep the old header
-      doSetPose(pending_updates_.find(
+      doSetPose(
+        pending_updates_.find(
           feedback->marker_name), feedback->marker_name, feedback->pose,
         marker_context.int_marker.header);
     } else {
-      doSetPose(pending_updates_.find(
+      doSetPose(
+        pending_updates_.find(
           feedback->marker_name), feedback->marker_name, feedback->pose, feedback->header);
     }
   }
@@ -465,7 +468,8 @@ void InteractiveMarkerServer::doSetPose(
 
   update_it->second.int_marker.pose = pose;
   update_it->second.int_marker.header = header;
-  RCLCPP_DEBUG(logger_, "Marker '%s' is now at %f, %f, %f",
+  RCLCPP_DEBUG(
+    logger_, "Marker '%s' is now at %f, %f, %f",
     update_it->first.c_str(), pose.position.x, pose.position.y, pose.position.z);
 }
 
