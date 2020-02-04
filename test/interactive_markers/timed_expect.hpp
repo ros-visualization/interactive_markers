@@ -76,7 +76,8 @@
  * \param func The optional function to call.
  */
 #define TIMED_EXPECT_EQ(...) \
-  EXPAND(TIMED_EXPECT_EQ_CHOOSER( \
+  EXPAND( \
+    TIMED_EXPECT_EQ_CHOOSER( \
       __VA_ARGS__, \
       TIMED_EXPECT_EQ_6_ARGS(__VA_ARGS__, UNUSED), \
       TIMED_EXPECT_EQ_5_ARGS(__VA_ARGS__, UNUSED), \

@@ -281,7 +281,8 @@ void InteractiveMarkerClient::processUpdate(
     update_queue_.pop_back();
   }
 
-  update_queue_.push_front(UpdateMessageContext(
+  update_queue_.push_front(
+    UpdateMessageContext(
       tf_buffer_core_, target_frame_, msg, enable_autocomplete_transparency_));
 }
 

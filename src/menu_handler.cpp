@@ -47,7 +47,8 @@
 #define RCUTILS_ASSERT_MSG(cond, ...) \
   do { \
     if (!(cond)) { \
-      RCUTILS_LOG_FATAL("ASSERTION FAILED\n\tfile = %s\n\tline = %d\n\tcond = %s\n\tmessage = ", \
+      RCUTILS_LOG_FATAL( \
+        "ASSERTION FAILED\n\tfile = %s\n\tline = %d\n\tcond = %s\n\tmessage = ", \
         __FILE__, __LINE__, #cond); \
       RCUTILS_LOG_FATAL(__VA_ARGS__); \
       RCUTILS_LOG_FATAL("\n"); \

@@ -86,7 +86,8 @@ bool MessageContext<MsgT>::getTransform(
       // get transform
       geometry_msgs::msg::TransformStamped transform = tf_buffer_core_->lookupTransform(
         target_frame_, header.frame_id, tf2::timeFromSec(rclcpp::Time(header.stamp).seconds()));
-      RCUTILS_LOG_DEBUG("Transform %s -> %s at time %f is ready.",
+      RCUTILS_LOG_DEBUG(
+        "Transform %s -> %s at time %f is ready.",
         header.frame_id.c_str(), target_frame_.c_str(), rclcpp::Time(header.stamp).seconds());
 
       // if timestamp is given, transform message into target frame
@@ -146,7 +147,8 @@ void MessageContext<MsgT>::getTfTransforms(
     if (success) {
       idx_it = indices.erase(idx_it);
     } else {
-      RCUTILS_LOG_DEBUG("Transform %s -> %s at time %f is not ready.",
+      RCUTILS_LOG_DEBUG(
+        "Transform %s -> %s at time %f is not ready.",
         im_msg.header.frame_id.c_str(), target_frame_.c_str(), rclcpp::Time(
           im_msg.header.stamp).seconds());
       ++idx_it;
@@ -165,7 +167,8 @@ void MessageContext<MsgT>::getTfTransforms(
     if (getTransform(msg.header, msg.pose)) {
       idx_it = indices.erase(idx_it);
     } else {
-      RCUTILS_LOG_DEBUG("Transform %s -> %s at time %f is not ready.",
+      RCUTILS_LOG_DEBUG(
+        "Transform %s -> %s at time %f is not ready.",
         msg.header.frame_id.c_str(), target_frame_.c_str(), rclcpp::Time(
           msg.header.stamp).seconds());
       ++idx_it;
