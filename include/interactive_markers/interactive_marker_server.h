@@ -34,6 +34,7 @@
 
 #include <visualization_msgs/InteractiveMarkerUpdate.h>
 #include <visualization_msgs/InteractiveMarkerFeedback.h>
+#include <interactive_markers/visibility_control.hpp>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/thread/thread.hpp>
@@ -69,15 +70,18 @@ public:
   ///                      Otherwise, leave this empty.
   /// @param spin_thread   If set to true, will spin up a thread for message handling.
   ///                      All callbacks will be called from that thread.
+  INTERACTIVE_MARKERS_PUBLIC
   InteractiveMarkerServer( const std::string &topic_ns, const std::string &server_id="", bool spin_thread = false );
 
   /// Destruction of the interface will lead to all managed markers being cleared.
+  INTERACTIVE_MARKERS_PUBLIC
   ~InteractiveMarkerServer();
 
   /// Add or replace a marker without changing its callback functions.
   /// Note: Changes to the marker will not take effect until you call applyChanges().
   /// The callback changes immediately.
   /// @param int_marker     The marker to be added or replaced
+  INTERACTIVE_MARKERS_PUBLIC
   void insert( const visualization_msgs::InteractiveMarker &int_marker );
 
   /// Add or replace a marker and its callback functions
@@ -86,6 +90,7 @@ public:
   /// @param int_marker     The marker to be added or replaced
   /// @param feedback_cb    Function to call on the arrival of a feedback message.
   /// @param feedback_type  Type of feedback for which to call the feedback.
+  INTERACTIVE_MARKERS_PUBLIC
   void insert( const visualization_msgs::InteractiveMarker &int_marker,
                FeedbackCallback feedback_cb,
                uint8_t feedback_type=DEFAULT_FEEDBACK_CB );
@@ -96,6 +101,7 @@ public:
   /// @param name    Name of the interactive marker
   /// @param pose    The new pose
   /// @param header  Header replacement. Leave this empty to use the previous one.
+  INTERACTIVE_MARKERS_PUBLIC
   bool setPose( const std::string &name,
       const geometry_msgs::Pose &pose,
       const std_msgs::Header &header=std_msgs::Header() );
@@ -104,20 +110,24 @@ public:
   /// Note: This change will not take effect until you call applyChanges().
   /// @return true if a marker with that name exists
   /// @param name  Name of the interactive marker
+  INTERACTIVE_MARKERS_PUBLIC
   bool erase( const std::string &name );
 
   /// Clear all markers.
   /// Note: This change will not take effect until you call applyChanges().
+  INTERACTIVE_MARKERS_PUBLIC
   void clear();
   
   /// Return whether the server contains any markers.
   /// Note: Does not include markers inserted since the last applyChanges().
   /// @return true if the server contains no markers
+  INTERACTIVE_MARKERS_PUBLIC
   bool empty() const;
   
   /// Return the number of markers contained in the server
   /// Note: Does not include markers inserted since the last applyChanges().
   /// @return The number of markers contained in the server
+  INTERACTIVE_MARKERS_PUBLIC
   std::size_t size() const;
 
   /// Add or replace a callback function for the specified marker.
@@ -130,17 +140,20 @@ public:
   /// @param feedback_cb    Function to call on the arrival of a feedback message.
   /// @param feedback_type  Type of feedback for which to call the feedback.
   ///                       Leave this empty to make this the default callback.
+  INTERACTIVE_MARKERS_PUBLIC
   bool setCallback( const std::string &name, FeedbackCallback feedback_cb,
       uint8_t feedback_type=DEFAULT_FEEDBACK_CB );
 
   /// Apply changes made since the last call to this method &
   /// broadcast an update to all clients.
+  INTERACTIVE_MARKERS_PUBLIC
   void applyChanges();
 
   /// Get marker by name
   /// @param name             Name of the interactive marker
   /// @param[out] int_marker  Output message
   /// @return true if a marker with that name exists
+  INTERACTIVE_MARKERS_PUBLIC
   bool get( std::string name, visualization_msgs::InteractiveMarker &int_marker ) const;
 
 private:
