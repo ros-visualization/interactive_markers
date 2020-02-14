@@ -37,6 +37,20 @@
 
 #include <math.h>
 
+#if __cplusplus >= 199711L
+#include <chrono>
+#include <thread>
+#endif
+
+static void portable_usleep(unsigned int usecs)
+{
+#if __cplusplus >= 199711L
+  return std::this_thread::sleep_for(std::chrono::microseconds(usecs));
+#else
+  return usleep(usecs);
+#endif
+}
+
 boost::shared_ptr<interactive_markers::InteractiveMarkerServer> server;
 
 using namespace visualization_msgs;
@@ -152,7 +166,7 @@ void frameCallback(const ros::TimerEvent&)
     if (!sending) ROS_INFO("on");
     sending = true;
     br.sendTransform(tf::StampedTransform(t, time, "base_link", "bursty_frame"));
-    usleep(10000);
+    portable_usleep(10000);
   }
   else
   {

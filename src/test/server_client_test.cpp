@@ -38,6 +38,20 @@
 #include <interactive_markers/interactive_marker_server.h>
 #include <interactive_markers/interactive_marker_client.h>
 
+#if __cplusplus >= 199711L
+#include <chrono>
+#include <thread>
+#endif
+
+static void portable_usleep(unsigned int usecs)
+{
+#if __cplusplus >= 199711L
+  return std::this_thread::sleep_for(std::chrono::microseconds(usecs));
+#else
+  return usleep(usecs);
+#endif
+}
+
 #define DBG_MSG( ... ) printf( __VA_ARGS__ ); printf("\n");
 #define DBG_MSG_STREAM( ... )  std::cout << __VA_ARGS__ << std::endl;
 
@@ -103,7 +117,7 @@ void waitMsg()
   for(int i=0;i<10;i++)
   {
     ros::spinOnce();
-    usleep(1000);
+    portable_usleep(1000);
   }
 }
 
@@ -184,7 +198,7 @@ TEST(InteractiveMarkerServerAndClient, connect_tf_error)
   // Make marker tf info valid again -> connection should be successfully initialized again
   DBG_MSG("----------------------------------------");
 
-  usleep(2000000);
+  portable_usleep(2000000);
   waitMsg();
   client.update();
 
