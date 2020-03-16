@@ -34,19 +34,8 @@
 
 #include <interactive_markers/interactive_marker_server.h>
 
-#if __cplusplus >= 199711L
 #include <chrono>
 #include <thread>
-#endif
-
-static void portable_usleep(unsigned int usecs)
-{
-#if __cplusplus >= 199711L
-  return std::this_thread::sleep_for(std::chrono::microseconds(usecs));
-#else
-  return usleep(usecs);
-#endif
-}
 
 TEST(InteractiveMarkerServer, addRemove)
 {
@@ -112,7 +101,7 @@ TEST(InteractiveMarkerServer, addRemove)
   ASSERT_FALSE( server.erase("marker1") );
 
   //avoid subscriber destruction warning
-  portable_usleep(1000);
+  std::this_thread::sleep_for(std::chrono::microseconds(1000));
 }
 
 
