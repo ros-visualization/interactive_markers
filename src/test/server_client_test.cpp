@@ -106,7 +106,7 @@ void waitMsg()
   for(int i=0;i<10;i++)
   {
     ros::spinOnce();
-    std::this_thread::sleep_for(std::chrono::microseconds(1000))
+    std::this_thread::sleep_for(std::chrono::microseconds(1000));
   }
 }
 
@@ -187,7 +187,7 @@ TEST(InteractiveMarkerServerAndClient, connect_tf_error)
   // Make marker tf info valid again -> connection should be successfully initialized again
   DBG_MSG("----------------------------------------");
 
-  std::this_thread::sleep_for(std::chrono::microseconds(2000000))
+  std::this_thread::sleep_for(std::chrono::microseconds(2000000));
   waitMsg();
   client.update();
 

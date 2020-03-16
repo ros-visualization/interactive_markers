@@ -155,7 +155,7 @@ void frameCallback(const ros::TimerEvent&)
     if (!sending) ROS_INFO("on");
     sending = true;
     br.sendTransform(tf::StampedTransform(t, time, "base_link", "bursty_frame"));
-    std::this_thread::sleep_for(std::chrono::microseconds(10000))
+    std::this_thread::sleep_for(std::chrono::microseconds(10000));
   }
   else
   {
