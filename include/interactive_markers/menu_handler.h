@@ -34,6 +34,7 @@
 
 #include <visualization_msgs/MenuEntry.h>
 #include <interactive_markers/interactive_marker_server.h>
+#include <interactive_markers/visibility_control.hpp>
 
 #include <boost/function.hpp>
 #include <boost/unordered_map.hpp>

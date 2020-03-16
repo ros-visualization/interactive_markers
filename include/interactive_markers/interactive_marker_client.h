@@ -46,6 +46,7 @@
 
 #include <visualization_msgs/InteractiveMarkerInit.h>
 #include <visualization_msgs/InteractiveMarkerUpdate.h>
+#include <interactive_markers/visibility_control.hpp>
 
 #include "detail/state_machine.h"
 
@@ -85,37 +86,48 @@ public:
   /// @param tf           The tf transformer to use.
   /// @param target_frame tf frame to transform timestamped messages into.
   /// @param topic_ns     The topic namespace (will subscribe to topic_ns/update, topic_ns/init)
+  INTERACTIVE_MARKERS_PUBLIC
   InteractiveMarkerClient( tf::Transformer& tf,
       const std::string& target_frame = "",
       const std::string &topic_ns = "" );
 
   /// Will cause a 'reset' call for all server ids
+  INTERACTIVE_MARKERS_PUBLIC
   ~InteractiveMarkerClient();
 
   /// Subscribe to the topics topic_ns/update and topic_ns/init
+  INTERACTIVE_MARKERS_PUBLIC
   void subscribe( std::string topic_ns );
 
   /// Unsubscribe, clear queues & call reset callbacks
+  INTERACTIVE_MARKERS_PUBLIC
   void shutdown();
 
   /// Update tf info, call callbacks
+  INTERACTIVE_MARKERS_PUBLIC
   void update();
 
   /// Change the target frame and reset the connection
+  INTERACTIVE_MARKERS_PUBLIC
   void setTargetFrame( std::string target_frame );
 
   /// Set callback for init messages
+  INTERACTIVE_MARKERS_PUBLIC
   void setInitCb( const InitCallback& cb );
 
   /// Set callback for update messages
+  INTERACTIVE_MARKERS_PUBLIC
   void setUpdateCb( const UpdateCallback& cb );
 
   /// Set callback for resetting one server connection
+  INTERACTIVE_MARKERS_PUBLIC
   void setResetCb( const ResetCallback& cb );
 
   /// Set callback for status updates
+  INTERACTIVE_MARKERS_PUBLIC
   void setStatusCb( const StatusCallback& cb );
 
+  INTERACTIVE_MARKERS_PUBLIC
   void setEnableAutocompleteTransparency( bool enable ) { enable_autocomplete_transparency_ = enable;}
 
 private:

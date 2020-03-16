@@ -31,6 +31,7 @@
 #define RVIZ_INTERACTIVE_MARKER_TOOLS_H
 
 #include <visualization_msgs/InteractiveMarker.h>
+#include <interactive_markers/visibility_control.hpp>
 
 namespace interactive_markers
 {
@@ -39,11 +40,13 @@ namespace interactive_markers
  *
  * This also calls uniqueifyControlNames().
  * @param msg      interactive marker to be completed */
+INTERACTIVE_MARKERS_PUBLIC
 void autoComplete( visualization_msgs::InteractiveMarker &msg, bool enable_autocomplete_transparency = true );
 
 /// @brief fill in default values & insert default controls when none are specified
 /// @param msg      interactive marker which contains the control
 /// @param control  the control to be completed
+INTERACTIVE_MARKERS_PUBLIC
 void autoComplete( const visualization_msgs::InteractiveMarker &msg,
     visualization_msgs::InteractiveMarkerControl &control, bool enable_autocomplete_transparency = true );
 
@@ -51,11 +54,13 @@ void autoComplete( const visualization_msgs::InteractiveMarker &msg,
  *
  * Appends _u0 _u1 etc to repeated names (not including the first of each).
  * This is called by autoComplete( visualization_msgs::InteractiveMarker &msg ). */
+INTERACTIVE_MARKERS_PUBLIC
 void uniqueifyControlNames( visualization_msgs::InteractiveMarker& msg );
 
 /// make a quaternion with a fixed local x axis.
 /// The rotation around that axis will be chosen automatically.
 /// @param x,y,z    the designated x axis
+INTERACTIVE_MARKERS_PUBLIC
 geometry_msgs::Quaternion makeQuaternion( float x, float y, float z );
 
 
@@ -65,25 +70,30 @@ geometry_msgs::Quaternion makeQuaternion( float x, float y, float z );
 /// @param msg      the interactive marker that this will go into
 /// @param control  the control where to insert the arrow marker
 /// @param pos      how far from the center should the arrow be, and on which side
+INTERACTIVE_MARKERS_PUBLIC
 void makeArrow( const visualization_msgs::InteractiveMarker &msg,
     visualization_msgs::InteractiveMarkerControl &control, float pos );
 
 /// @brief make a default-style disc marker (e.g for rotating) based on the properties of the given interactive marker
 /// @param msg      the interactive marker that this will go into
 /// @param width    width of the disc, relative to its inner radius
+INTERACTIVE_MARKERS_PUBLIC
 void makeDisc( const visualization_msgs::InteractiveMarker &msg,
     visualization_msgs::InteractiveMarkerControl &control, float width = 0.3 );
 
 /// @brief make a box which shows the given text and is view facing
 /// @param msg      the interactive marker that this will go into
 /// @param text     the text to display
+INTERACTIVE_MARKERS_PUBLIC
 void makeViewFacingButton( const visualization_msgs::InteractiveMarker &msg,
     visualization_msgs::InteractiveMarkerControl &control, std::string text );
 
 /// assign an RGB value to the given marker based on the given orientation
+INTERACTIVE_MARKERS_PUBLIC
 void assignDefaultColor(visualization_msgs::Marker &marker, const geometry_msgs::Quaternion &quat );
 
 /// create a control which shows the description of the interactive marker
+INTERACTIVE_MARKERS_PUBLIC
 visualization_msgs::InteractiveMarkerControl makeTitle( const visualization_msgs::InteractiveMarker &msg );
 
 }

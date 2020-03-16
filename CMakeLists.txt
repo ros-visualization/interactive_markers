@@ -29,8 +29,15 @@ src/message_context.cpp
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
+# Causes the visibility macros to use dllexport rather than dllimport,
+# which is appropriate when building the dll but not consuming it.
+target_compile_definitions(${PROJECT_NAME}
+  PRIVATE "INTERACTIVE_MARKERS_BUILDING_LIBRARY")
+
 install(TARGETS ${PROJECT_NAME}
-  DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION})
 install(DIRECTORY include/interactive_markers/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.h")
