@@ -12,7 +12,7 @@ find_package(catkin REQUIRED
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES interactive_markers
-  CATKIN_DEPENDS roscpp rosconsole rospy tf visualization_msgs
+  CATKIN_DEPENDS roscpp rosconsole rospy tf std_msgs visualization_msgs
 )
 catkin_python_setup()
 
