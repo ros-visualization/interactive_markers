@@ -34,6 +34,9 @@
 
 #include <interactive_markers/interactive_marker_server.h>
 
+#include <chrono>
+#include <thread>
+
 TEST(InteractiveMarkerServer, addRemove)
 {
   // create an interactive marker server on the topic namespace simple_marker
@@ -98,7 +101,7 @@ TEST(InteractiveMarkerServer, addRemove)
   ASSERT_FALSE( server.erase("marker1") );
 
   //avoid subscriber destruction warning
-  usleep(1000);
+  std::this_thread::sleep_for(std::chrono::microseconds(1000));
 }
 
 

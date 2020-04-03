@@ -37,6 +37,9 @@
 
 #include <math.h>
 
+#include <chrono>
+#include <thread>
+
 boost::shared_ptr<interactive_markers::InteractiveMarkerServer> server;
 
 using namespace visualization_msgs;
@@ -152,7 +155,7 @@ void frameCallback(const ros::TimerEvent&)
     if (!sending) ROS_INFO("on");
     sending = true;
     br.sendTransform(tf::StampedTransform(t, time, "base_link", "bursty_frame"));
-    usleep(10000);
+    std::this_thread::sleep_for(std::chrono::microseconds(10000));
   }
   else
   {
