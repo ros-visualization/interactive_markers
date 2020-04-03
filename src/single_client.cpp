@@ -208,7 +208,8 @@ void SingleClient::checkInitFinished()
 
     if ( !init_it->isReady() )
     {
-      callbacks_.statusCb( InteractiveMarkerClient::OK, server_id_, "Initialization: Waiting for tf info." );
+      // Do not override previous, more detailed status message generated in transformInitMsgs()
+      // callbacks_.statusCb( InteractiveMarkerClient::OK, server_id_, "Initialization: Waiting for tf info." );
     }
     else if ( next_up_exists )
     {
