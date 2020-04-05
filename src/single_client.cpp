@@ -42,7 +42,7 @@ namespace interactive_markers
 
 SingleClient::SingleClient(
     const std::string& server_id,
-    tf::Transformer& tf,
+    tf2_ros::Buffer &tf,
     const std::string& target_frame,
     const InteractiveMarkerClient::CbCollection& callbacks
 )

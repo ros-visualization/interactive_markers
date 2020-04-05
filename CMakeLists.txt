@@ -6,13 +6,14 @@ find_package(catkin REQUIRED
   rospy
   rostest
   std_msgs
-  tf
+  tf2_ros
+  tf2_geometry_msgs
   visualization_msgs
 )
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES interactive_markers
-  CATKIN_DEPENDS roscpp rosconsole rospy tf std_msgs visualization_msgs
+  CATKIN_DEPENDS roscpp rosconsole rospy tf2_ros std_msgs visualization_msgs
 )
 catkin_python_setup()
 

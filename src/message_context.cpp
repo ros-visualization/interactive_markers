@@ -32,6 +32,7 @@
 #include "interactive_markers/detail/message_context.h"
 #include "interactive_markers/tools.h"
 
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <boost/make_shared.hpp>
 
 #define DBG_MSG( ... ) ROS_DEBUG( __VA_ARGS__ );
@@ -42,7 +43,7 @@ namespace interactive_markers
 
 template<class MsgT>
 MessageContext<MsgT>::MessageContext(
-    tf::Transformer& tf,
+    tf2_ros::Buffer& tf,
     const std::string& target_frame,
     const typename MsgT::ConstPtr& _msg,
     bool enable_autocomplete_transparency)
@@ -74,29 +75,27 @@ bool MessageContext<MsgT>::getTransform( std_msgs::Header& header, geometry_msgs
     if ( header.frame_id != target_frame_ )
     {
       // get transform
-      tf::StampedTransform transform;
-      tf_.lookupTransform( target_frame_, header.frame_id, header.stamp, transform );
+      geometry_msgs::TransformStamped transform;
+      transform = tf_.lookupTransform( target_frame_, header.frame_id, header.stamp );
       DBG_MSG( "Transform %s -> %s at time %f is ready.", header.frame_id.c_str(), target_frame_.c_str(), header.stamp.toSec() );
 
       // if timestamp is given, transform message into target frame
       if ( header.stamp != ros::Time(0) )
       {
-        tf::Pose pose;
-        tf::poseMsgToTF( pose_msg, pose );
-        pose = transform * pose;
-        // store transformed pose in original message
-        tf::poseTFToMsg( pose, pose_msg );
+        tf2::doTransform(pose_msg, pose_msg, transform);
         ROS_DEBUG_STREAM("Changing " << header.frame_id << " to "<< target_frame_);
         header.frame_id = target_frame_;
       }
     }
   }
-  catch ( tf::ExtrapolationException& e )
+  catch ( const tf2::ExtrapolationException& e )
   {
     ros::Time latest_time;
     std::string error_string;
 
-    tf_.getLatestCommonTime( target_frame_, header.frame_id, latest_time, &error_string );
+    tf_._getLatestCommonTime( tf_._lookupFrameNumber(target_frame_),
+                              tf_._lookupFrameNumber(header.frame_id),
+                              latest_time, &error_string );
 
     // if we have some tf info and it is newer than the requested time,
     // we are very unlikely to ever receive the old tf info in the future.

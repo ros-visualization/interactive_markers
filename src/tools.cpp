@@ -29,8 +29,8 @@
 
 #include "interactive_markers/tools.h"
 
-#include <tf/LinearMath/Quaternion.h>
-#include <tf/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
 
 #include <math.h>
 #include <assert.h>
@@ -63,8 +63,8 @@ void autoComplete( visualization_msgs::InteractiveMarker &msg, bool enable_autoc
   }
 
   //normalize quaternion
-  tf::Quaternion int_marker_orientation( msg.pose.orientation.x, msg.pose.orientation.y,
-      msg.pose.orientation.z, msg.pose.orientation.w );
+  tf2::Quaternion int_marker_orientation( msg.pose.orientation.x, msg.pose.orientation.y,
+                                          msg.pose.orientation.z, msg.pose.orientation.w );
   int_marker_orientation.normalize();
   msg.pose.orientation.x = int_marker_orientation.x();
   msg.pose.orientation.y = int_marker_orientation.y();
@@ -141,9 +141,9 @@ void autoComplete( const visualization_msgs::InteractiveMarker &msg,
   }
 
   // get interactive marker pose for later
-  tf::Quaternion int_marker_orientation( msg.pose.orientation.x, msg.pose.orientation.y,
-      msg.pose.orientation.z, msg.pose.orientation.w );
-  tf::Vector3 int_marker_position( msg.pose.position.x, msg.pose.position.y, msg.pose.position.z );
+  tf2::Quaternion int_marker_orientation( msg.pose.orientation.x, msg.pose.orientation.y,
+                                          msg.pose.orientation.z, msg.pose.orientation.w );
+  tf2::Vector3 int_marker_position( msg.pose.position.x, msg.pose.position.y, msg.pose.position.z );
 
   // fill in missing pose information into the markers
   for ( unsigned m=0; m<control.markers.size(); m++ )
@@ -173,8 +173,8 @@ void autoComplete( const visualization_msgs::InteractiveMarker &msg,
     }
 
     //normalize orientation
-    tf::Quaternion marker_orientation( marker.pose.orientation.x, marker.pose.orientation.y,
-        marker.pose.orientation.z, marker.pose.orientation.w );
+    tf2::Quaternion marker_orientation( marker.pose.orientation.x, marker.pose.orientation.y,
+                                        marker.pose.orientation.z, marker.pose.orientation.w );
 
     marker_orientation.normalize();
 
@@ -397,8 +397,8 @@ void assignDefaultColor(visualization_msgs::Marker &marker, const geometry_msgs:
 {
   geometry_msgs::Vector3 v;
 
-  tf::Quaternion bt_quat( quat.x, quat.y, quat.z, quat.w );
-  tf::Vector3 bt_x_axis = tf::Matrix3x3(bt_quat) * tf::Vector3(1,0,0);
+  tf2::Quaternion bt_quat( quat.x, quat.y, quat.z, quat.w );
+  tf2::Vector3 bt_x_axis = tf2::Matrix3x3(bt_quat) * tf2::Vector3(1,0,0);
 
   float x,y,z;
   x = fabs(bt_x_axis.x());

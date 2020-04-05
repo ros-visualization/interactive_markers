@@ -30,8 +30,8 @@
 
 #include <ros/ros.h>
 
-#include <tf/transform_broadcaster.h>
-#include <tf/tf.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <interactive_markers/interactive_marker_server.h>
 
@@ -131,7 +131,7 @@ void make6DofMarker( bool fixed )
 
 void frameCallback(const ros::TimerEvent&)
 {
-  static tf::TransformBroadcaster br;
+  static tf2_ros::TransformBroadcaster br;
   static bool sending = true;
 
   geometry_msgs::Pose pose;
@@ -149,12 +149,15 @@ void frameCallback(const ros::TimerEvent&)
 
   if ( seconds % 2 < 1 )
   {
-    tf::Transform t;
-    t.setOrigin(tf::Vector3(0.0, 0.0, 1.0));
-    t.setRotation(tf::Quaternion(0.0, 0.0, 0.0, 1.0));
+    geometry_msgs::TransformStamped stf;
+    stf.header.frame_id = "base_link";
+    stf.header.stamp = time;
+    stf.child_frame_id = "bursty_frame";
+    stf.transform.translation = toMsg(tf2::Vector3(0.0, 0.0, 1.0));
+    stf.transform.rotation = toMsg(tf2::Quaternion(0.0, 0.0, 0.0, 1.0));
     if (!sending) ROS_INFO("on");
     sending = true;
-    br.sendTransform(tf::StampedTransform(t, time, "base_link", "bursty_frame"));
+    br.sendTransform(stf);
     std::this_thread::sleep_for(std::chrono::microseconds(10000));
   }
   else

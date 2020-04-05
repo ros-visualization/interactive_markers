@@ -47,7 +47,7 @@
 #include <boost/function.hpp>
 #include <boost/unordered_map.hpp>
 
-#include <tf/tf.h>
+#include <tf2_ros/buffer.h>
 
 #include <deque>
 
@@ -65,7 +65,7 @@ public:
 
   SingleClient(
       const std::string& server_id,
-      tf::Transformer& tf,
+      tf2_ros::Buffer& tf,
       const std::string& target_frame,
       const InteractiveMarkerClient::CbCollection& callbacks );
 
@@ -131,7 +131,7 @@ private:
   // queue for init messages
   M_InitMessageContext init_queue_;
 
-  tf::Transformer& tf_;
+  tf2_ros::Buffer& tf_;
   std::string target_frame_;
 
   const InteractiveMarkerClient::CbCollection& callbacks_;

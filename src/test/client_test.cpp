@@ -33,8 +33,6 @@
 
 #include <gtest/gtest.h>
 
-#include <tf/transform_listener.h>
-
 #include <interactive_markers/interactive_marker_server.h>
 #include <interactive_markers/interactive_marker_client.h>
 
@@ -120,9 +118,7 @@ class SequenceTest
 public:
   void test( std::vector<Msg> messages )
   {
-    tf::Transformer tf;
-
-    //tf.setTransform();
+    tf2_ros::Buffer tf;
 
     // create an interactive marker server on the topic namespace simple_marker
 
@@ -226,11 +222,11 @@ public:
       case Msg::TF_INFO:
       {
         DBG_MSG_STREAM( i << " TF_INFO: " << msg.frame_id << " -> " << target_frame << " at time " << msg.stamp.toSec() );
-        tf::StampedTransform stf;
-        stf.frame_id_=msg.frame_id;
-        stf.child_frame_id_=target_frame;
-        stf.stamp_=msg.stamp;
-        stf.setIdentity();
+        geometry_msgs::TransformStamped stf;
+        stf.header.frame_id = msg.frame_id;
+        stf.header.stamp = msg.stamp;
+        stf.child_frame_id = target_frame;
+        stf.transform.rotation.w = 1.0;
         tf.setTransform( stf, msg.server_id );
         break;
       }

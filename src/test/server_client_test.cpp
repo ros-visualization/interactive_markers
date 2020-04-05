@@ -33,7 +33,7 @@
 
 #include <gtest/gtest.h>
 
-#include <tf/transform_listener.h>
+#include <tf2_ros/buffer.h>
 
 #include <interactive_markers/interactive_marker_server.h>
 #include <interactive_markers/interactive_marker_client.h>
@@ -112,7 +112,7 @@ void waitMsg()
 
 TEST(InteractiveMarkerServerAndClient, connect_tf_error)
 {
-  tf::TransformListener tf;
+  tf2_ros::Buffer buffer;
 
   // create an interactive marker server on the topic namespace simple_marker
   interactive_markers::InteractiveMarkerServer server("im_server_client_test","test_server",false);
@@ -124,7 +124,7 @@ TEST(InteractiveMarkerServerAndClient, connect_tf_error)
 
   resetReceivedMsgs();
 
-  interactive_markers::InteractiveMarkerClient client(tf, "valid_frame", "im_server_client_test");
+  interactive_markers::InteractiveMarkerClient client(buffer, "valid_frame", "im_server_client_test");
   client.setInitCb( &initCb );
   client.setStatusCb( &statusCb );
   client.setResetCb( &resetCb );

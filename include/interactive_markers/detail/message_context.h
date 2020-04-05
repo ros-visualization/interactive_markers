@@ -37,7 +37,7 @@
 #ifndef MESSAGE_CONTEXT_H_
 #define MESSAGE_CONTEXT_H_
 
-#include <tf/tf.h>
+#include <tf2_ros/buffer.h>
 
 #include <visualization_msgs/InteractiveMarkerInit.h>
 #include <visualization_msgs/InteractiveMarkerUpdate.h>
@@ -49,7 +49,7 @@ template<class MsgT>
 class MessageContext
 {
 public:
-  MessageContext( tf::Transformer& tf,
+  MessageContext( tf2_ros::Buffer& tf,
       const std::string& target_frame,
       const typename MsgT::ConstPtr& msg,
       bool enable_autocomplete_transparency = true);
@@ -76,15 +76,15 @@ private:
   // array indices of marker/pose updates with missing tf info
   std::list<size_t> open_marker_idx_;
   std::list<size_t> open_pose_idx_;
-  tf::Transformer& tf_;
+  tf2_ros::Buffer& tf_;
   std::string target_frame_;
   bool enable_autocomplete_transparency_;
 };
 
-class InitFailException: public tf::TransformException
+class InitFailException: public tf2::TransformException
 {
 public:
-  InitFailException(const std::string errorDescription) : tf::TransformException(errorDescription) { ; }
+  InitFailException(const std::string errorDescription) : tf2::TransformException(errorDescription) { ; }
 };
 
 

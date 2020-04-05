@@ -43,7 +43,7 @@ namespace interactive_markers
 {
 
 InteractiveMarkerClient::InteractiveMarkerClient(
-    tf::Transformer& tf,
+    tf2_ros::Buffer& tf,
     const std::string& target_frame,
     const std::string &topic_ns )
 : state_("InteractiveMarkerClient",IDLE)
