@@ -2,6 +2,21 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.11.5 (2020-04-05)
+-------------------
+* [feature]     InteractiveMarkerServer::erase(): return false for unknown marker (`#43 <https://github.com/ros-visualization/interactive_markers/issues/43>`_)
+* [fix]         Avoid overriding warning status messages (Fixes `#34 <https://github.com/ros-visualization/interactive_markers/issues/34>`_)
+* [fix]         Fixed the problem that `*.hpp` was not installed (`#66 <https://github.com/ros-visualization/interactive_markers/issues/66>`_)
+* [fix]         Make the Timer daemon survive /clock jumping back in a playback loop (`#47 <https://github.com/ros-visualization/interactive_markers/issues/47>`_)
+* [maintanence] Modernize package.xml and add missing std_msgs in CATKIN_DEPENDS
+* [maintanence] Use setuptools instead of distutils (`#67 <https://github.com/ros-visualization/interactive_markers/issues/67>`_)
+* [maintanence] Bump cmake version to 3.0.2 (`#64 <https://github.com/ros-visualization/interactive_markers/issues/64>`_)
+* [maintanence] Windows compatibility
+  * Use C++11 portable sleep (`#63 <https://github.com/ros-visualization/interactive_markers/issues/63>`_)
+  * Symbol visibility for shared libraries (`#62 <https://github.com/ros-visualization/interactive_markers/issues/62>`_)
+  * Fix install location on Windows (`#39 <https://github.com/ros-visualization/interactive_markers/issues/39>`_)
+* Contributors: Alejandro Hernández Cordero, David Gossow, Fabian Maas, Jacob Perron, Robert Haschke, Sean Yen, Shane Loretz, shela
+
 1.11.4 (2018-04-16)
 -------------------
 * Fixed a crash when updates arrive, or are being processed, while shutdown is called (`#36 <https://github.com/ros-visualization/interactive_markers/issues/36>`_)
