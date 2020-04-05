@@ -214,7 +214,7 @@ private:
   StatusCallback status_cb_;
 
   // this allows us to detect if a server died (in most cases)
-  int last_num_publishers_;
+  uint32_t last_num_publishers_;
 
   // if false, auto-completed markers will have alpha = 1.0
   bool enable_autocomplete_transparency_;
