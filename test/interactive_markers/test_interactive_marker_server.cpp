@@ -369,7 +369,7 @@ TEST_F(TestInteractiveMarkerServerWithMarkers, get_interactive_markers_communica
   MockInteractiveMarkerClient::SharedFuture future = mock_client_->requestInteractiveMarkers();
   auto ret = executor_.spin_until_future_complete<MockInteractiveMarkerClient::SharedResponse>(
     future, 3000ms);
-  ASSERT_EQ(ret, rclcpp::executor::FutureReturnCode::SUCCESS);
+  ASSERT_EQ(ret, rclcpp::FutureReturnCode::SUCCESS);
   visualization_msgs::srv::GetInteractiveMarkers::Response::SharedPtr response = future.get();
   ASSERT_EQ(response->markers.size(), markers_.size());
   for (std::size_t i = 0u; i < markers_.size(); ++i) {
