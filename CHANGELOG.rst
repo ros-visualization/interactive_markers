@@ -2,6 +2,12 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.12.0 (2020-04-26)
+-------------------
+* [maintanence] fix signed / unsigned warning
+* [maintanence] Migration to tf2
+* Contributors: Robert Haschke
+
 1.11.5 (2020-04-05)
 -------------------
 * [feature]     InteractiveMarkerServer::erase(): return false for unknown marker (`#43 <https://github.com/ros-visualization/interactive_markers/issues/43>`_)
