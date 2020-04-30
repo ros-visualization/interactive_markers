@@ -2,6 +2,16 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* avoid new deprecations (`#69 <https://github.com/ros-visualization/interactive_markers/issues/69>`_)
+* Merge pull request `#60 <https://github.com/ros-visualization/interactive_markers/issues/60>`_ from ros-visualization/revert-58-bsd3clause_fixup
+* Revert "Cleanup bsd 3 clause license usage"
+* Merge pull request `#58 <https://github.com/ros-visualization/interactive_markers/issues/58>`_ from ros-visualization/bsd3clause_fixup
+* code style only: wrap after open parenthesis if not in one line (`#57 <https://github.com/ros-visualization/interactive_markers/issues/57>`_)
+* Cleanup bsd 3 clause license usage
+* Contributors: Dirk Thomas, Tully Foote, William Woodall
+
 2.0.1 (2019-10-23)
 ------------------
 * Fix test flakes by waiting for pub/sub discovery (`#55 <https://github.com/ros-visualization/interactive_markers/issues/55>`_)
