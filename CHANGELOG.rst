@@ -2,8 +2,8 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.1.0 (2020-04-30)
+------------------
 * avoid new deprecations (`#69 <https://github.com/ros-visualization/interactive_markers/issues/69>`_)
 * Merge pull request `#60 <https://github.com/ros-visualization/interactive_markers/issues/60>`_ from ros-visualization/revert-58-bsd3clause_fixup
 * Revert "Cleanup bsd 3 clause license usage"
