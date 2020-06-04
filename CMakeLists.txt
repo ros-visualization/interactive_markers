@@ -27,7 +27,9 @@ add_library(${PROJECT_NAME} SHARED
   src/interactive_marker_client.cpp
   src/message_context.cpp
 )
-target_include_directories(${PROJECT_NAME} PUBLIC include)
+target_include_directories(${PROJECT_NAME} PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+  "$<INSTALL_INTERFACE:include>")
 ament_target_dependencies(${PROJECT_NAME}
   "rclcpp"
   "rmw"
@@ -35,7 +37,7 @@ ament_target_dependencies(${PROJECT_NAME}
   "tf2_geometry_msgs"
   "visualization_msgs")
 
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
@@ -56,6 +58,7 @@ ament_export_dependencies("tf2_geometry_msgs")
 ament_export_dependencies("visualization_msgs")
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
+ament_export_targets(${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
