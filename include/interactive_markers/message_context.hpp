@@ -62,6 +62,8 @@ public:
     typename MsgT::SharedPtr msg,
     bool enable_autocomplete_transparency = true);
 
+  MessageContext(const MessageContext &) = default;
+
   MessageContext<MsgT> & operator=(const MessageContext<MsgT> & other);
 
   // transform all messages with timestamp into target frame

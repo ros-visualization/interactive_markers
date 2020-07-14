@@ -93,7 +93,7 @@ TEST(TestInteractiveMarkerServer, insert)
 
   // Insert some markers
   std::vector<visualization_msgs::msg::InteractiveMarker> markers = get_interactive_markers();
-  for (const auto marker : markers) {
+  for (const auto & marker : markers) {
     server.insert(marker);
   }
 
@@ -130,7 +130,7 @@ protected:
 
     // Insert some markers
     markers_ = get_interactive_markers();
-    for (const auto marker : markers_) {
+    for (const auto & marker : markers_) {
       server_->insert(marker);
     }
     server_->applyChanges();
@@ -205,7 +205,7 @@ TEST_F(TestInteractiveMarkerServerWithMarkers, clear)
 TEST_F(TestInteractiveMarkerServerWithMarkers, get_marker_by_name)
 {
   // Get markers
-  for (const auto input_marker : markers_) {
+  for (const auto & input_marker : markers_) {
     visualization_msgs::msg::InteractiveMarker output_marker;
     EXPECT_TRUE(server_->get(input_marker.name, output_marker));
     EXPECT_EQ(output_marker.header.frame_id, input_marker.header.frame_id);
