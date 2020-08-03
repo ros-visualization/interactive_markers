@@ -70,6 +70,7 @@ if(BUILD_TESTING)
 
   ament_add_gtest(test_interactive_marker_server
     test/${PROJECT_NAME}/test_interactive_marker_server.cpp
+    TIMEOUT 90
   )
   ament_target_dependencies(test_interactive_marker_server
     "geometry_msgs"
