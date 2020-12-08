@@ -2,6 +2,13 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.1.3 (2020-12-08)
+------------------
+* Update maintainers (`#79 <https://github.com/ros-visualization/interactive_markers/issues/79>`_)
+* Increase test timeout necessary for Connext (`#77 <https://github.com/ros-visualization/interactive_markers/issues/77>`_)
+* Fix clang warnings (`#75 <https://github.com/ros-visualization/interactive_markers/issues/75>`_)
+* Contributors: Dirk Thomas, Jacob Perron
+
 2.1.2 (2020-06-26)
 ------------------
 * Remove explicit template parameter in `spin_until_future_complete` (`#72 <https://github.com/ros-visualization/interactive_markers/issues/72>`_)
