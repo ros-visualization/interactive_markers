@@ -39,8 +39,10 @@
 #include <string>
 #include <vector>
 
+#include "rcutils/logging_macros.h"
 #include "tf2/buffer_core_interface.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include "rclcpp/time.hpp"
 #include "visualization_msgs/srv/get_interactive_markers.hpp"
 
 #include "interactive_markers/exceptions.hpp"
