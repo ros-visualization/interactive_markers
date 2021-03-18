@@ -2,6 +2,12 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Cleanup bsd 3 clause license usage (`#61 <https://github.com/ros-visualization/interactive_markers/issues/61>`_)
+* Add missing includes (`#81 <https://github.com/ros-visualization/interactive_markers/issues/81>`_)
+* Contributors: Bjar Ne, Tully Foote
+
 2.1.3 (2020-12-08)
 ------------------
 * Update maintainers (`#79 <https://github.com/ros-visualization/interactive_markers/issues/79>`_)
