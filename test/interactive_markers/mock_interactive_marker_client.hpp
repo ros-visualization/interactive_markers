@@ -52,7 +52,7 @@ public:
     const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
   void publishFeedback(const visualization_msgs::msg::InteractiveMarkerFeedback & feedback);
-  SharedFuture requestInteractiveMarkers();
+  auto requestInteractiveMarkers();
 
   uint32_t updates_received;
   visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr last_update_message;
@@ -95,7 +95,7 @@ void MockInteractiveMarkerClient::publishFeedback(
   publisher_->publish(feedback);
 }
 
-MockInteractiveMarkerClient::SharedFuture
+auto
 MockInteractiveMarkerClient::requestInteractiveMarkers()
 {
   if (!client_->wait_for_service(std::chrono::seconds(2))) {
