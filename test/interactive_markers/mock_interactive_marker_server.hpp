@@ -93,7 +93,7 @@ MockInteractiveMarkerServer::MockInteractiveMarkerServer(
   subscription_ = create_subscription<visualization_msgs::msg::InteractiveMarkerFeedback>(
     topic_namespace_ + "/feedback",
     10,
-    [this](const visualization_msgs::msg::InteractiveMarkerFeedback::SharedPtr feedback)
+    [this](const visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr feedback)
     {
       (void)feedback;
       RCLCPP_INFO(this->get_logger(), "Feedback received");

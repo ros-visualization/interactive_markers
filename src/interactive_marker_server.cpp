@@ -384,7 +384,7 @@ void InteractiveMarkerServer::getInteractiveMarkersCallback(
 }
 
 void InteractiveMarkerServer::processFeedback(
-  visualization_msgs::msg::InteractiveMarkerFeedback::SharedPtr feedback)
+  visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr feedback)
 {
   std::unique_lock<std::recursive_mutex> lock(mutex_);
 

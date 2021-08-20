@@ -282,7 +282,7 @@ private:
     rclcpp::Client<visualization_msgs::srv::GetInteractiveMarkers>::SharedFuture future);
 
   void processUpdate(
-    visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg);
+    visualization_msgs::msg::InteractiveMarkerUpdate::ConstSharedPtr msg);
 
   bool transformInitialMessage();
 
