@@ -52,7 +52,7 @@ template<class MsgT>
 MessageContext<MsgT>::MessageContext(
   std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core,
   const std::string & target_frame,
-  typename MsgT::SharedPtr _msg,
+  typename MsgT::ConstSharedPtr _msg,
   bool enable_autocomplete_transparency)
 : tf_buffer_core_(tf_buffer_core),
   target_frame_(target_frame),

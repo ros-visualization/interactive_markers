@@ -242,7 +242,7 @@ void InteractiveMarkerClient::processInitialMessage(
 }
 
 void InteractiveMarkerClient::processUpdate(
-  visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg)
+  visualization_msgs::msg::InteractiveMarkerUpdate::ConstSharedPtr msg)
 {
   // Ignore legacy "keep alive" messages
   if (msg->type == msg->KEEP_ALIVE) {

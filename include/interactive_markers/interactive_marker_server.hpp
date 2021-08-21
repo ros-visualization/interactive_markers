@@ -254,7 +254,8 @@ private:
     std::shared_ptr<visualization_msgs::srv::GetInteractiveMarkers::Response> response);
 
   // update marker pose & call user callback
-  void processFeedback(visualization_msgs::msg::InteractiveMarkerFeedback::SharedPtr feedback);
+  void processFeedback(
+    visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr feedback);
 
   // increase sequence number & publish an update
   void publish(visualization_msgs::msg::InteractiveMarkerUpdate & update);

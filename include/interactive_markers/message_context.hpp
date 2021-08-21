@@ -55,7 +55,7 @@ public:
   MessageContext(
     std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core,
     const std::string & target_frame,
-    typename MsgT::SharedPtr msg,
+    typename MsgT::ConstSharedPtr msg,
     bool enable_autocomplete_transparency = true);
 
   MessageContext(const MessageContext &) = default;
