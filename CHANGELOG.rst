@@ -2,6 +2,13 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix deprecation warning introduced after client API update (`#83 <https://github.com/ros-visualization/interactive_markers/issues/83>`_)
+* Fix deprecated sub callback warnings (`#84 <https://github.com/ros-visualization/interactive_markers/issues/84>`_)
+* Include tf2_geometry_msgs.hpp instead of the h file. (`#82 <https://github.com/ros-visualization/interactive_markers/issues/82>`_)
+* Contributors: Abrar Rahman Protyasha, Chris Lalancette, Ivan Santiago Paunovic
+
 2.2.0 (2021-03-18)
 ------------------
 * Cleanup bsd 3 clause license usage (`#61 <https://github.com/ros-visualization/interactive_markers/issues/61>`_)
