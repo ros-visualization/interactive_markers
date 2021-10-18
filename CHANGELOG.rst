@@ -2,8 +2,8 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.0 (2021-10-18)
+------------------
 * Fix deprecation warning introduced after client API update (`#83 <https://github.com/ros-visualization/interactive_markers/issues/83>`_)
 * Fix deprecated sub callback warnings (`#84 <https://github.com/ros-visualization/interactive_markers/issues/84>`_)
 * Include tf2_geometry_msgs.hpp instead of the h file. (`#82 <https://github.com/ros-visualization/interactive_markers/issues/82>`_)
