@@ -2,6 +2,11 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.3.1 (2022-01-14)
+------------------
+* Install includes to include/ and misc CMake fixes (`#85 <https://github.com/ros-visualization/interactive_markers/issues/85>`_)
+* Contributors: Shane Loretz
+
 2.3.0 (2021-10-18)
 ------------------
 * Fix deprecation warning introduced after client API update (`#83 <https://github.com/ros-visualization/interactive_markers/issues/83>`_)
