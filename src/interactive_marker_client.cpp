@@ -178,6 +178,8 @@ void InteractiveMarkerClient::process( const MsgConstPtrT& msg )
   }
 
   SingleClientPtr client;
+  bool new_publisher = false;
+  
   {
     boost::lock_guard<boost::mutex> lock(publisher_contexts_mutex_);
 
@@ -193,12 +195,18 @@ void InteractiveMarkerClient::process( const MsgConstPtrT& msg )
       SingleClientPtr pc(new SingleClient( msg->server_id, tf_, target_frame_, callbacks_ ));
       context_it = publisher_contexts_.insert( std::make_pair(msg->server_id,pc) ).first;
       client = pc;
-
-      // we need to subscribe to the init topic again
-      subscribeInit();
+      new_publisher = true;
     }
 
     client = context_it->second;
+  }
+  
+  if (new_publisher)
+  {
+    // we need to subscribe to the init topic again
+    // but only once we lifted the lock to avoid a
+    // potential dead-lock with the SubscriptionQueue
+    subscribeInit();
   }
 
   // forward init/update to respective context
