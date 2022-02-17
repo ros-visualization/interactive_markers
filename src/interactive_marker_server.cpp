@@ -39,8 +39,8 @@
 namespace interactive_markers
 {
 
-InteractiveMarkerServer::InteractiveMarkerServer( const std::string &topic_ns, const std::string &server_id, bool spin_thread ) :
-    topic_ns_(topic_ns),
+InteractiveMarkerServer::InteractiveMarkerServer( const std::string &node_ns, const std::string &server_id, bool spin_thread ) :
+    node_handle_(node_ns),
     seq_num_(0)
 {
   if ( spin_thread )
@@ -58,9 +58,9 @@ InteractiveMarkerServer::InteractiveMarkerServer( const std::string &topic_ns, c
     server_id_ = ros::this_node::getName();
   }
 
-  std::string update_topic = topic_ns + "/update";
+  std::string update_topic = "update";
   std::string init_topic = update_topic + "_full";
-  std::string feedback_topic = topic_ns + "/feedback";
+  std::string feedback_topic = "feedback";
 
   init_pub_ = node_handle_.advertise<visualization_msgs::InteractiveMarkerInit>( init_topic, 100, true );
   update_pub_ = node_handle_.advertise<visualization_msgs::InteractiveMarkerUpdate>( update_topic, 100 );
