@@ -138,9 +138,14 @@ class InteractiveMarkerServer:
         can be destroyed.
         """
         self.clear()
-        self.applyChanges()
+        # It only makes sense to publish changes if the ROS context is still valid
+        if self.node.context.ok():
+            self.applyChanges()
+        self.node.destroy_service(self.get_interactive_markers_srv)
         self.get_interactive_markers_srv = None
+        self.node.destroy_publisher(self.update_pub)
         self.update_pub = None
+        self.node.destroy_subscription(self.feedback_sub)
         self.feedback_sub = None
 
     def __del__(self):
