@@ -364,7 +364,7 @@ TEST_F(TestInteractiveMarkerServerWithMarkers, get_interactive_markers_communica
   using namespace std::chrono_literals;
 
   auto future = mock_client_->requestInteractiveMarkers();
-  auto ret = executor_.spin_until_future_complete(future, 3000ms);
+  auto ret = executor_.spin_until_complete(future, 3000ms);
   ASSERT_EQ(ret, rclcpp::FutureReturnCode::SUCCESS);
   visualization_msgs::srv::GetInteractiveMarkers::Response::SharedPtr response = future.get();
   ASSERT_EQ(response->markers.size(), markers_.size());
