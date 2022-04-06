@@ -137,16 +137,19 @@ class InteractiveMarkerServer:
         This should be called before the node is destroyed so that the internal ROS entities
         can be destroyed.
         """
-        self.clear()
         # It only makes sense to publish changes if the ROS context is still valid
         if self.node.context.ok():
+            self.clear()
             self.applyChanges()
-        self.node.destroy_service(self.get_interactive_markers_srv)
-        self.get_interactive_markers_srv = None
-        self.node.destroy_publisher(self.update_pub)
-        self.update_pub = None
-        self.node.destroy_subscription(self.feedback_sub)
-        self.feedback_sub = None
+        if self.get_interactive_markers_srv is not None:
+            self.node.destroy_service(self.get_interactive_markers_srv)
+            self.get_interactive_markers_srv = None
+        if self.update_pub is not None:
+            self.node.destroy_publisher(self.update_pub)
+            self.update_pub = None
+        if self.feedback_sub is not None:
+            self.node.destroy_subscription(self.feedback_sub)
+            self.feedback_sub = None
 
     def __del__(self):
         """Destruction of the interface will lead to all managed markers being cleared."""
