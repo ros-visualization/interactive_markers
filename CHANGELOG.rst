@@ -2,6 +2,11 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Do not publish if context is invalid during shutdown (`#89 <https://github.com/ros-visualization/interactive_markers/issues/89>`_)
+* Contributors: Jacob Perron
+
 2.3.1 (2022-01-14)
 ------------------
 * Install includes to include/ and misc CMake fixes (`#85 <https://github.com/ros-visualization/interactive_markers/issues/85>`_)
