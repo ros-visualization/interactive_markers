@@ -84,10 +84,10 @@ InteractiveMarkerServer::InteractiveMarkerServer(
     rmw_qos_profile_services_default,
     base_interface->get_default_callback_group());
 
-  update_pub_ = rclcpp::create_publisher<InteractiveMarkerUpdate>(
+  update_pub_ = rclcpp::create_publisher<visualization_msgs::msg::InteractiveMarkerUpdate>(
     topics_interface, update_topic, update_pub_qos);
 
-  feedback_sub_ = rclcpp::create_subscription<InteractiveMarkerFeedback>(
+  feedback_sub_ = rclcpp::create_subscription<visualization_msgs::msg::InteractiveMarkerFeedback>(
     topics_interface,
     feedback_topic,
     feedback_sub_qos,
