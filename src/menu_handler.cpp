@@ -64,6 +64,7 @@ MenuHandler::MenuHandler()
 {
 }
 
+
 MenuHandler::EntryHandle MenuHandler::insert(
   const std::string & title,
   const FeedbackCallback & feedback_cb)
@@ -73,6 +74,7 @@ MenuHandler::EntryHandle MenuHandler::insert(
   top_level_handles_.push_back(handle);
   return handle;
 }
+
 
 MenuHandler::EntryHandle MenuHandler::insert(
   const std::string & title,
