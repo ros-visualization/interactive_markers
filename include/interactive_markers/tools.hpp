@@ -108,7 +108,7 @@ INTERACTIVE_MARKERS_PUBLIC
 void makeViewFacingButton(
   const visualization_msgs::msg::InteractiveMarker & msg,
   visualization_msgs::msg::InteractiveMarkerControl & control,
-  std::string text);
+  const std::string & text);
 
 /// Assign an RGB value to the given marker based on the given orientation.
 /**

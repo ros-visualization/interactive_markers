@@ -331,7 +331,7 @@ void InteractiveMarkerServer::insert(
 }
 
 bool InteractiveMarkerServer::get(
-  std::string name,
+  const std::string & name,
   visualization_msgs::msg::InteractiveMarker & marker) const
 {
   std::unique_lock<std::recursive_mutex> lock(mutex_);

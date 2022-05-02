@@ -197,7 +197,7 @@ public:
 
   /// Connect to a server in a given namespace.
   INTERACTIVE_MARKERS_PUBLIC
-  void connect(std::string topic_namespace);
+  void connect(const std::string & topic_namespace);
 
   /// Disconnect from a server and clear the update queue.
   INTERACTIVE_MARKERS_PUBLIC
@@ -216,7 +216,7 @@ public:
    * This resets the connection.
    */
   INTERACTIVE_MARKERS_PUBLIC
-  void setTargetFrame(std::string target_frame);
+  void setTargetFrame(const std::string & target_frame);
 
   /// Set the initialization callback.
   /**
