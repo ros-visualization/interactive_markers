@@ -32,13 +32,24 @@
 
 #include <list>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 
+#include "geometry_msgs/msg/pose.hpp"
+#include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/transform_stamped.hpp"
 #include "rcutils/logging_macros.h"
 #include "tf2/buffer_core_interface.h"
+#include "tf2/time.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "rclcpp/time.hpp"
+#include "std_msgs/msg/header.hpp"
+#include "visualization_msgs/msg/interactive_marker.hpp"
+#include "visualization_msgs/msg/interactive_marker_control.hpp"
+#include "visualization_msgs/msg/interactive_marker_pose.hpp"
+#include "visualization_msgs/msg/interactive_marker_update.hpp"
+#include "visualization_msgs/msg/marker.hpp"
 #include "visualization_msgs/srv/get_interactive_markers.hpp"
 
 #include "interactive_markers/exceptions.hpp"

@@ -29,7 +29,9 @@
 
 // Author: David Gossow
 
+#include <functional>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -37,10 +39,15 @@
 #include "interactive_markers/interactive_marker_server.hpp"
 
 #include "rmw/rmw.h"
-#include "rclcpp/qos.hpp"
+#include "rclcpp/rclcpp.hpp"
 
-using visualization_msgs::msg::InteractiveMarkerFeedback;
-using visualization_msgs::msg::InteractiveMarkerUpdate;
+#include "geometry_msgs/msg/pose.hpp"
+#include "std_msgs/msg/header.hpp"
+#include "visualization_msgs/msg/interactive_marker.hpp"
+#include "visualization_msgs/msg/interactive_marker_feedback.hpp"
+#include "visualization_msgs/msg/interactive_marker_pose.hpp"
+#include "visualization_msgs/msg/interactive_marker_update.hpp"
+#include "visualization_msgs/srv/get_interactive_markers.hpp"
 
 namespace interactive_markers
 {

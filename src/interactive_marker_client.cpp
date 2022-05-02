@@ -29,11 +29,19 @@
 
 // Author: David Gossow
 
+#include <chrono>
+#include <functional>
 #include <memory>
 #include <mutex>
+#include <sstream>
 #include <string>
 #include <utility>
 
+#include "rclcpp/rclcpp.hpp"
+#include "rmw/qos_profiles.h"
+
+#include "visualization_msgs/msg/interactive_marker_feedback.hpp"
+#include "visualization_msgs/msg/interactive_marker_update.hpp"
 #include "visualization_msgs/srv/get_interactive_markers.hpp"
 
 #include "interactive_markers/exceptions.hpp"

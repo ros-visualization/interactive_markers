@@ -39,8 +39,16 @@
 #include <string>
 #include <vector>
 
+#include "geometry_msgs/msg/point.hpp"
+#include "geometry_msgs/msg/vector3.hpp"
+#include "std_msgs/msg/color_rgba.hpp"
+#include "visualization_msgs/msg/interactive_marker.hpp"
+#include "visualization_msgs/msg/interactive_marker_control.hpp"
+#include "visualization_msgs/msg/marker.hpp"
+
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/LinearMath/Matrix3x3.h"
+#include "tf2/LinearMath/Vector3.h"
 
 #include "interactive_markers/tools.hpp"
 
