@@ -28,13 +28,14 @@
 
 #ifndef INTERACTIVE_MARKERS__INTERACTIVE_MARKER_FIXTURES_HPP_
 #define INTERACTIVE_MARKERS__INTERACTIVE_MARKER_FIXTURES_HPP_
+
 #include <vector>
 
 #include "visualization_msgs/msg/interactive_marker.hpp"
 #include "visualization_msgs/msg/interactive_marker_control.hpp"
 #include "visualization_msgs/msg/menu_entry.hpp"
 
-std::vector<visualization_msgs::msg::InteractiveMarker>
+static std::vector<visualization_msgs::msg::InteractiveMarker>
 get_interactive_markers()
 {
   std::vector<visualization_msgs::msg::InteractiveMarker> markers;
