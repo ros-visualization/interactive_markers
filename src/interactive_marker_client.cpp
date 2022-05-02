@@ -89,11 +89,11 @@ void InteractiveMarkerClient::connect(const std::string & topic_namespace)
       topic_namespace_ + "/update",
       update_sub_qos_,
       std::bind(&InteractiveMarkerClient::processUpdate, this, std::placeholders::_1));
-  } catch (rclcpp::exceptions::InvalidNodeError & ex) {
+  } catch (const rclcpp::exceptions::InvalidNodeError & ex) {
     updateStatus(STATUS_ERROR, "Failed to connect: " + std::string(ex.what()));
     disconnect();
     return;
-  } catch (rclcpp::exceptions::NameValidationError & ex) {
+  } catch (const rclcpp::exceptions::NameValidationError & ex) {
     updateStatus(STATUS_ERROR, "Failed to connect: " + std::string(ex.what()));
     disconnect();
     return;
