@@ -73,20 +73,42 @@ if(BUILD_TESTING)
 
   ament_lint_auto_find_test_dependencies()
 
+  add_library(interactive_marker_fixtures SHARED
+    test/${PROJECT_NAME}/interactive_marker_fixtures.cpp
+  )
+  target_include_directories(interactive_marker_fixtures PUBLIC
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+    "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
+  target_link_libraries(interactive_marker_fixtures PUBLIC
+    ${visualization_msgs_TARGETS}
+  )
+
   ament_add_gtest(test_interactive_marker_server
     test/${PROJECT_NAME}/test_interactive_marker_server.cpp
     TIMEOUT 90
   )
   target_link_libraries(test_interactive_marker_server
     ${PROJECT_NAME}
-    ${geometry_msgs_TARGETS})
+    interactive_marker_fixtures
+    ${geometry_msgs_TARGETS}
+    rclcpp::rclcpp
+    ${std_msgs_TARGETS}
+    ${visualization_msgs_TARGETS}
+  )
 
   ament_add_gtest(test_interactive_marker_client
+    test/${PROJECT_NAME}/interactive_marker_fixtures.cpp
     test/${PROJECT_NAME}/test_interactive_marker_client.cpp
   )
   target_link_libraries(test_interactive_marker_client
     ${PROJECT_NAME}
-    ${geometry_msgs_TARGETS})
+    interactive_marker_fixtures
+    ${builtin_interfaces_TARGETS}
+    ${geometry_msgs_TARGETS}
+    rclcpp::rclcpp
+    tf2::tf2
+    ${visualization_msgs_TARGETS}
+  )
 endif()
 
 ament_package()
