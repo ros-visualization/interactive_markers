@@ -216,7 +216,7 @@ public:
    * \return true if a marker with the provided name exists, false otherwise.
    */
   INTERACTIVE_MARKERS_PUBLIC
-  bool get(std::string name, visualization_msgs::msg::InteractiveMarker & int_marker) const;
+  bool get(const std::string & name, visualization_msgs::msg::InteractiveMarker & int_marker) const;
 
 private:
   // Disable copying

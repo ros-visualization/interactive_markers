@@ -374,7 +374,7 @@ void makeDisc(
 void makeViewFacingButton(
   const visualization_msgs::msg::InteractiveMarker & msg,
   visualization_msgs::msg::InteractiveMarkerControl & control,
-  std::string text)
+  const std::string & text)
 {
   control.orientation_mode = visualization_msgs::msg::InteractiveMarkerControl::VIEW_FACING;
   control.independent_marker_orientation = false;

@@ -58,7 +58,7 @@ InteractiveMarkerClient::~InteractiveMarkerClient()
 {
 }
 
-void InteractiveMarkerClient::connect(std::string topic_namespace)
+void InteractiveMarkerClient::connect(const std::string & topic_namespace)
 {
   changeState(STATE_IDLE);
   topic_namespace_ = topic_namespace;
@@ -170,7 +170,7 @@ void InteractiveMarkerClient::update()
   }
 }
 
-void InteractiveMarkerClient::setTargetFrame(std::string target_frame)
+void InteractiveMarkerClient::setTargetFrame(const std::string & target_frame)
 {
   if (target_frame_ == target_frame) {
     return;
