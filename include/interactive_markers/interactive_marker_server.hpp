@@ -36,10 +36,12 @@
 #include <memory>
 #include <mutex>
 #include <string>
-#include <thread>
 #include <unordered_map>
 
 #include "rclcpp/rclcpp.hpp"
+#include "geometry_msgs/msg/pose.hpp"
+#include "std_msgs/msg/header.hpp"
+#include "visualization_msgs/msg/interactive_marker.hpp"
 #include "visualization_msgs/msg/interactive_marker_feedback.hpp"
 #include "visualization_msgs/msg/interactive_marker_update.hpp"
 #include "visualization_msgs/srv/get_interactive_markers.hpp"

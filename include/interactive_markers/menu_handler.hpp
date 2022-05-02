@@ -37,6 +37,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "visualization_msgs/msg/interactive_marker_feedback.hpp"
 #include "visualization_msgs/msg/menu_entry.hpp"
 
 #include "interactive_markers/interactive_marker_server.hpp"

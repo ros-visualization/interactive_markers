@@ -29,12 +29,19 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <functional>
 #include <memory>
 #include <string>
+#include <thread>
 #include <vector>
 
+#include "builtin_interfaces/msg/time.hpp"
+#include "geometry_msgs/msg/pose.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/buffer_core.h"
+#include "visualization_msgs/msg/interactive_marker.hpp"
+#include "visualization_msgs/msg/interactive_marker_update.hpp"
+#include "visualization_msgs/srv/get_interactive_markers.hpp"
 
 #include "interactive_marker_fixtures.hpp"
 #include "mock_interactive_marker_server.hpp"
