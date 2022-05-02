@@ -47,8 +47,6 @@
 #include "interactive_markers/exceptions.hpp"
 #include "interactive_markers/interactive_marker_client.hpp"
 
-using namespace std::placeholders;
-
 namespace interactive_markers
 {
 
@@ -90,7 +88,7 @@ void InteractiveMarkerClient::connect(const std::string & topic_namespace)
       topics_interface_,
       topic_namespace_ + "/update",
       update_sub_qos_,
-      std::bind(&InteractiveMarkerClient::processUpdate, this, _1));
+      std::bind(&InteractiveMarkerClient::processUpdate, this, std::placeholders::_1));
   } catch (rclcpp::exceptions::InvalidNodeError & ex) {
     updateStatus(STATUS_ERROR, "Failed to connect: " + std::string(ex.what()));
     disconnect();
@@ -229,7 +227,8 @@ void InteractiveMarkerClient::requestInteractiveMarkers()
   }
   updateStatus(STATUS_INFO, "Sending request for interactive markers");
 
-  auto callback = std::bind(&InteractiveMarkerClient::processInitialMessage, this, _1);
+  auto callback = std::bind(
+    &InteractiveMarkerClient::processInitialMessage, this, std::placeholders::_1);
   auto request = std::make_shared<visualization_msgs::srv::GetInteractiveMarkers::Request>();
   get_interactive_markers_client_->async_send_request(
     request,
