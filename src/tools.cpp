@@ -86,7 +86,7 @@ void autoComplete(
   msg.pose.orientation.w = int_marker_orientation.w();
 
   // complete the controls
-  for (unsigned c = 0; c < msg.controls.size(); c++) {
+  for (size_t c = 0; c < msg.controls.size(); c++) {
     autoComplete(msg, msg.controls[c], enable_autocomplete_transparency);
   }
 
@@ -97,7 +97,7 @@ void uniqueifyControlNames(visualization_msgs::msg::InteractiveMarker & msg)
 {
   int uniqueification_number = 0;
   std::set<std::string> names;
-  for (unsigned c = 0; c < msg.controls.size(); c++) {
+  for (size_t c = 0; c < msg.controls.size(); c++) {
     std::string name = msg.controls[c].name;
     while (names.find(name) != names.end()) {
       std::stringstream ss;
@@ -157,7 +157,7 @@ void autoComplete(
   tf2::Vector3 int_marker_position(msg.pose.position.x, msg.pose.position.y, msg.pose.position.z);
 
   // fill in missing pose information into the markers
-  for (unsigned m = 0; m < control.markers.size(); m++) {
+  for (size_t m = 0; m < control.markers.size(); m++) {
     visualization_msgs::msg::Marker & marker = control.markers[m];
 
     if (marker.scale.x == 0) {

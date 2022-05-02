@@ -201,10 +201,10 @@ void MessageContext<visualization_msgs::msg::InteractiveMarkerUpdate>::init()
   for (size_t i = 0; i < msg->poses.size(); i++) {
     open_pose_idx_.push_back(i);
   }
-  for (unsigned i = 0; i < msg->markers.size(); i++) {
+  for (size_t i = 0; i < msg->markers.size(); i++) {
     autoComplete(msg->markers[i], enable_autocomplete_transparency_);
   }
-  for (unsigned i = 0; i < msg->poses.size(); i++) {
+  for (size_t i = 0; i < msg->poses.size(); i++) {
     // correct empty orientation
     if (msg->poses[i].pose.orientation.w == 0 && msg->poses[i].pose.orientation.x == 0 &&
       msg->poses[i].pose.orientation.y == 0 && msg->poses[i].pose.orientation.z == 0)
@@ -221,7 +221,7 @@ void MessageContext<visualization_msgs::srv::GetInteractiveMarkers::Response>::i
   for (size_t i = 0; i < msg->markers.size(); i++) {
     open_marker_idx_.push_back(i);
   }
-  for (unsigned i = 0; i < msg->markers.size(); i++) {
+  for (size_t i = 0; i < msg->markers.size(); i++) {
     autoComplete(msg->markers[i], enable_autocomplete_transparency_);
   }
 }
