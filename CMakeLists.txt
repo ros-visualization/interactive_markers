@@ -12,8 +12,11 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rcutils REQUIRED)
 find_package(rmw REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
@@ -31,7 +34,10 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 target_link_libraries(${PROJECT_NAME} PUBLIC
+  ${geometry_msgs_TARGETS}
   rclcpp::rclcpp
+  rcutils::rcutils
+  ${std_msgs_TARGETS}
   tf2::tf2
   ${visualization_msgs_TARGETS})
 target_link_libraries(${PROJECT_NAME} PRIVATE
@@ -58,7 +64,7 @@ ament_export_targets(export_${PROJECT_NAME})
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_lint_auto REQUIRED)
-  find_package(geometry_msgs REQUIRED)
+  find_package(builtin_interfaces REQUIRED)
 
   ament_lint_auto_find_test_dependencies()
 
