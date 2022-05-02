@@ -37,7 +37,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   ${visualization_msgs_TARGETS})
 target_link_libraries(${PROJECT_NAME} PRIVATE
   rmw::rmw
-  ${tf2_geometry_msgs_TARGETS})
+  tf2_geometry_msgs::tf2_geometry_msgs)
 
 install(TARGETS ${PROJECT_NAME} EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
