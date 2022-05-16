@@ -3,13 +3,16 @@
   <description>
      3D interactive marker communication library for RViz and similar tools.
   </description>
-  <maintainer email="jacob@openrobotics.org">Jacob Perron</maintainer>
-  <maintainer email="michel@ekumenlabs.com">Michel Hidalgo</maintainer>
+
+  <maintainer email="dharini@openrobotics.org">Dharini Dutia</maintainer>
+
   <license>BSD</license>
   <version>2.3.2</version>
 
   <author>David Gossow</author>
   <author email="william@openrobotics.org">William Woodall</author>
+  <author email="jacob@openrobotics.org">Jacob Perron</author>
+  <author email="michel@ekumenlabs.com">Michel Hidalgo</author>
 
   <url>http://ros.org/wiki/interactive_markers</url>
 
