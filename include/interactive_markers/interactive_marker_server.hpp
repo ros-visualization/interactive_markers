@@ -83,7 +83,8 @@ public:
     rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
     rclcpp::node_interfaces::NodeServicesInterface::SharedPtr services_interface,
     const rclcpp::QoS & update_pub_qos = rclcpp::QoS(100),
-    const rclcpp::QoS & feedback_sub_qos = rclcpp::QoS(1));
+    const rclcpp::QoS & feedback_sub_qos = rclcpp::QoS(1),
+    bool enable_service_introspection=false);
 
   template<typename NodePtr>
   InteractiveMarkerServer(
@@ -99,7 +100,8 @@ public:
       node->get_node_topics_interface(),
       node->get_node_services_interface(),
       update_pub_qos,
-      feedback_sub_qos)
+      feedback_sub_qos,
+      node->get_node_options().enable_service_introspection())
   {
   }
 

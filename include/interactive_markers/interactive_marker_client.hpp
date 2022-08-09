@@ -129,13 +129,14 @@ public:
     const std::string & topic_namespace = "",
     const std::chrono::duration<Rep, Period> & request_timeout = std::chrono::seconds(1),
     const rclcpp::QoS & update_sub_qos = rclcpp::QoS(100),
-    const rclcpp::QoS & feedback_pub_qos = rclcpp::QoS(100))
+    const rclcpp::QoS & feedback_pub_qos = rclcpp::QoS(100),
+    bool enable_service_introspection = false)
   : node_base_interface_(node_base_interface),
     topics_interface_(topics_interface),
     services_interface_(services_interface),
     graph_interface_(graph_interface),
     client_id_(node_base_interface->get_fully_qualified_name()),
-    clock_(clock_interface->get_clock()),
+    clock_interface_(clock_interface),
     logger_(logging_interface->get_logger()),
     state_(STATE_IDLE),
     tf_buffer_core_(tf_buffer_core),
@@ -147,7 +148,8 @@ public:
     initial_response_msg_(0),
     first_update_(true),
     last_update_sequence_number_(0u),
-    enable_autocomplete_transparency_(true)
+    enable_autocomplete_transparency_(true),
+    enable_service_introspection_(true)
   {
     connect(topic_namespace_);
   }
@@ -301,10 +303,9 @@ private:
   rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface_;
   rclcpp::node_interfaces::NodeServicesInterface::SharedPtr services_interface_;
   rclcpp::node_interfaces::NodeGraphInterface::SharedPtr graph_interface_;
+  rclcpp::node_interfaces::NodeClockInterface::SharedPtr clock_interface_;
 
   std::string client_id_;
-
-  rclcpp::Clock::SharedPtr clock_;
 
   rclcpp::Logger logger_;
 
@@ -348,6 +349,9 @@ private:
 
   // if false, auto-completed markers will have alpha = 1.0
   bool enable_autocomplete_transparency_;
+
+  // enable/disable service introspection
+  bool enable_service_introspection_;
 
   // User callbacks
   InitializeCallback initialize_callback_;

@@ -53,7 +53,8 @@ InteractiveMarkerServer::InteractiveMarkerServer(
   rclcpp::node_interfaces::NodeTopicsInterface::SharedPtr topics_interface,
   rclcpp::node_interfaces::NodeServicesInterface::SharedPtr services_interface,
   const rclcpp::QoS & update_pub_qos,
-  const rclcpp::QoS & feedback_sub_qos)
+  const rclcpp::QoS & feedback_sub_qos,
+  bool enable_service_introspection)
 : topic_namespace_(topic_namespace),
   context_(base_interface->get_context()),
   clock_(clock_interface->get_clock()),
@@ -67,6 +68,7 @@ InteractiveMarkerServer::InteractiveMarkerServer(
     visualization_msgs::srv::GetInteractiveMarkers>(
     base_interface,
     services_interface,
+    clock_interface,
     topic_namespace + "/get_interactive_markers",
     std::bind(
       &InteractiveMarkerServer::getInteractiveMarkersCallback,
@@ -75,7 +77,8 @@ InteractiveMarkerServer::InteractiveMarkerServer(
       std::placeholders::_2,
       std::placeholders::_3),
     rmw_qos_profile_services_default,
-    base_interface->get_default_callback_group());
+    base_interface->get_default_callback_group(),
+    enable_service_introspection);
 
   update_pub_ = rclcpp::create_publisher<InteractiveMarkerUpdate>(
     topics_interface, update_topic, update_pub_qos);

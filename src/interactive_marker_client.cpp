@@ -69,9 +69,11 @@ void InteractiveMarkerClient::connect(std::string topic_namespace)
       node_base_interface_,
       graph_interface_,
       services_interface_,
+      clock_interface_,
       topic_namespace_ + "/get_interactive_markers",
       rmw_qos_profile_services_default,
-      nullptr);
+      nullptr,
+      enable_service_introspection_);
 
     feedback_pub_ = rclcpp::create_publisher<visualization_msgs::msg::InteractiveMarkerFeedback>(
       topics_interface_,
@@ -226,7 +228,7 @@ void InteractiveMarkerClient::requestInteractiveMarkers()
   get_interactive_markers_client_->async_send_request(
     request,
     callback);
-  request_time_ = clock_->now();
+  request_time_ = clock_interface_->get_clock()->now();
 }
 
 void InteractiveMarkerClient::processInitialMessage(
@@ -323,7 +325,7 @@ bool InteractiveMarkerClient::checkInitializeFinished()
   std::unique_lock<std::recursive_mutex> lock(mutex_);
   if (!initial_response_msg_) {
     // We haven't received a response yet, check for timeout
-    if ((clock_->now() - request_time_) > request_timeout_) {
+    if ((clock_interface_->get_clock()->now() - request_time_) > request_timeout_) {
       updateStatus(
         STATUS_WARN, "Did not receive response with interactive markers, resending request...");
       requestInteractiveMarkers();
