@@ -10,9 +10,9 @@
   <version>2.3.2</version>
 
   <author>David Gossow</author>
-  <author email="william@openrobotics.org">William Woodall</author>
   <author email="jacob@openrobotics.org">Jacob Perron</author>
   <author email="michel@ekumenlabs.com">Michel Hidalgo</author>
+  <author email="william@openrobotics.org">William Woodall</author>
 
   <url>http://ros.org/wiki/interactive_markers</url>
 
