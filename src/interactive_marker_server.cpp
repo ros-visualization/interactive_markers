@@ -395,7 +395,7 @@ void InteractiveMarkerServer::getNames(std::vector<std::string>& names)
   M_MarkerContext::iterator it;
   for ( it = marker_contexts_.begin(); it != marker_contexts_.end(); it++ )
   {
-    names.push_back( it->second.int_marker.name );
+    names.push_back( it->first );
   }
 }
 
