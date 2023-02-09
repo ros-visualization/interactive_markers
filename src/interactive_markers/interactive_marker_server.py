@@ -382,7 +382,7 @@ Pending pose update for non-existing marker found. This is a bug in InteractiveM
 
             self.init_pub.publish(init)
 
-    # return all interactive markers
+    # return all interactive marker names
     def getNames(self):
         return [marker_name for marker_name in self.marker_contexts.keys()]
 
