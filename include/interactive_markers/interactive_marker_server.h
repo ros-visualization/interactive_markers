@@ -156,9 +156,9 @@ public:
   bool get( std::string name, visualization_msgs::InteractiveMarker &int_marker ) const;
 
   /// Return all interactive markers names in the server
-  INTERACTIVE_MARKERS_PUBLIC
   /// @param[out] names       Names of all the markers
-  void getNames(std::vector<std::string>& names);
+  INTERACTIVE_MARKERS_PUBLIC
+  std::vector<std::string> getNames();
 
 private:
 

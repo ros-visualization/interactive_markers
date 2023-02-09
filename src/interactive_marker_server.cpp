@@ -388,7 +388,7 @@ bool InteractiveMarkerServer::get( std::string name, visualization_msgs::Interac
   return false;
 }
 
-void InteractiveMarkerServer::getNames(std::vector<std::string>& names)
+std::vector<std::string> InteractiveMarkerServer::getNames()
 {
   boost::recursive_mutex::scoped_lock lock( mutex_ );
 
@@ -417,7 +417,6 @@ void InteractiveMarkerServer::publishInit()
 
   init_pub_.publish( init );
 }
-
 
 void InteractiveMarkerServer::processFeedback( const FeedbackConstPtr& feedback )
 {
