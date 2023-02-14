@@ -2,6 +2,14 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Update interactive_markers to C++17. (`#99 <https://github.com/ros-visualization/interactive_markers/issues/99>`_)
+* Update maintainers (`#98 <https://github.com/ros-visualization/interactive_markers/issues/98>`_)
+* Mirror rolling to ros2
+* update maintainer (`#92 <https://github.com/ros-visualization/interactive_markers/issues/92>`_)
+* Contributors: Audrow Nash, Chris Lalancette, Dharini Dutia
+
 2.3.2 (2022-04-08)
 ------------------
 * Do not publish if context is invalid during shutdown (`#89 <https://github.com/ros-visualization/interactive_markers/issues/89>`_)
