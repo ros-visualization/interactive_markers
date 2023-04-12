@@ -1,4 +1,8 @@
-<package format="2">
+<?xml version="1.0"?>
+<?xml-model
+  href="http://download.ros.org/schema/package_format3.xsd"
+  schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>interactive_markers</name>
   <description>
      3D interactive marker communication library for RViz and similar tools.
@@ -12,6 +16,8 @@
   <url>http://ros.org/wiki/interactive_markers</url>
 
   <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend condition="$ROS_PYTHON_VERSION == 2">python-setuptools</buildtool_depend>
+  <buildtool_depend condition="$ROS_PYTHON_VERSION == 3">python3-setuptools</buildtool_depend>
 
   <depend>rosconsole</depend>
   <depend>roscpp</depend>
