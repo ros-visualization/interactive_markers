@@ -43,7 +43,6 @@
 #include <ros/ros.h>
 #include <ros/callback_queue.h>
 
-
 #include <boost/function.hpp>
 #include <boost/unordered_map.hpp>
 
@@ -155,6 +154,11 @@ public:
   /// @return true if a marker with that name exists
   INTERACTIVE_MARKERS_PUBLIC
   bool get( std::string name, visualization_msgs::InteractiveMarker &int_marker ) const;
+
+  /// Return all interactive markers names in the server
+  /// @param[out] names       Names of all the markers
+  INTERACTIVE_MARKERS_PUBLIC
+  std::vector<std::string> getNames();
 
 private:
 

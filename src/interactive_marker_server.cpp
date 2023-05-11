@@ -34,7 +34,7 @@
 #include <visualization_msgs/InteractiveMarkerInit.h>
 
 #include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
+
 
 namespace interactive_markers
 {
@@ -386,6 +386,20 @@ bool InteractiveMarkerServer::get( std::string name, visualization_msgs::Interac
   }
 
   return false;
+}
+
+std::vector<std::string> InteractiveMarkerServer::getNames()
+{
+  boost::recursive_mutex::scoped_lock lock( mutex_ );
+
+  M_MarkerContext::iterator it;
+  std::vector<std::string> names;
+  for ( it = marker_contexts_.begin(); it != marker_contexts_.end(); it++ )
+  {
+    names.push_back( it->first );
+  }
+
+  return names;
 }
 
 void InteractiveMarkerServer::publishInit()
