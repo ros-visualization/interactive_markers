@@ -76,6 +76,8 @@ if(BUILD_TESTING)
   add_library(interactive_marker_fixtures SHARED
     test/${PROJECT_NAME}/interactive_marker_fixtures.cpp
   )
+  target_compile_definitions(interactive_marker_fixtures
+    PRIVATE "INTERACTIVE_MARKERS_BUILDING_LIBRARY")
   target_include_directories(interactive_marker_fixtures PUBLIC
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
     "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
