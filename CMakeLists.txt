@@ -73,15 +73,13 @@ if(BUILD_TESTING)
 
   ament_lint_auto_find_test_dependencies()
 
-  add_library(interactive_marker_fixtures SHARED
+  add_library(interactive_marker_fixtures
     test/${PROJECT_NAME}/interactive_marker_fixtures.cpp
   )
-  target_compile_definitions(interactive_marker_fixtures
-    PRIVATE "INTERACTIVE_MARKERS_BUILDING_LIBRARY")
-  target_include_directories(interactive_marker_fixtures PUBLIC
+  target_include_directories(interactive_marker_fixtures PRIVATE
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
     "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
-  target_link_libraries(interactive_marker_fixtures PUBLIC
+  target_link_libraries(interactive_marker_fixtures PRIVATE
     ${visualization_msgs_TARGETS}
   )
 
@@ -99,7 +97,6 @@ if(BUILD_TESTING)
   )
 
   ament_add_gtest(test_interactive_marker_client
-    test/${PROJECT_NAME}/interactive_marker_fixtures.cpp
     test/${PROJECT_NAME}/test_interactive_marker_client.cpp
   )
   target_link_libraries(test_interactive_marker_client
