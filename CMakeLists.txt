@@ -76,9 +76,6 @@ if(BUILD_TESTING)
   add_library(interactive_marker_fixtures
     test/${PROJECT_NAME}/interactive_marker_fixtures.cpp
   )
-  target_include_directories(interactive_marker_fixtures PRIVATE
-    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-    "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
   target_link_libraries(interactive_marker_fixtures PRIVATE
     ${visualization_msgs_TARGETS}
   )

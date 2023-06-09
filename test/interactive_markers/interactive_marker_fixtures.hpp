@@ -33,9 +33,6 @@
 
 #include "visualization_msgs/msg/interactive_marker.hpp"
 
-#include "interactive_markers/visibility_control.hpp"
-
-INTERACTIVE_MARKERS_PUBLIC
 std::vector<visualization_msgs::msg::InteractiveMarker> get_interactive_markers();
 
 #endif  // INTERACTIVE_MARKERS__INTERACTIVE_MARKER_FIXTURES_HPP_
