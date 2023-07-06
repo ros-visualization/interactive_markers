@@ -36,11 +36,13 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <ratio>
 #include <string>
-#include <unordered_map>
 
 #include "rclcpp/logger.hpp"
 #include "rclcpp/rclcpp.hpp"
+
+#include "tf2/buffer_core_interface.h"
 
 #include "visualization_msgs/msg/interactive_marker_feedback.hpp"
 #include "visualization_msgs/msg/interactive_marker_update.hpp"
@@ -48,11 +50,6 @@
 
 #include "interactive_markers/message_context.hpp"
 #include "interactive_markers/visibility_control.hpp"
-
-namespace tf2
-{
-class BufferCoreInterface;
-}
 
 namespace interactive_markers
 {
@@ -200,7 +197,7 @@ public:
 
   /// Connect to a server in a given namespace.
   INTERACTIVE_MARKERS_PUBLIC
-  void connect(std::string topic_namespace);
+  void connect(const std::string & topic_namespace);
 
   /// Disconnect from a server and clear the update queue.
   INTERACTIVE_MARKERS_PUBLIC
@@ -219,7 +216,7 @@ public:
    * This resets the connection.
    */
   INTERACTIVE_MARKERS_PUBLIC
-  void setTargetFrame(std::string target_frame);
+  void setTargetFrame(const std::string & target_frame);
 
   /// Set the initialization callback.
   /**

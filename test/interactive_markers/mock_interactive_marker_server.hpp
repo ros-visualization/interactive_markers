@@ -28,6 +28,7 @@
 
 #ifndef INTERACTIVE_MARKERS__MOCK_INTERACTIVE_MARKER_SERVER_HPP_
 #define INTERACTIVE_MARKERS__MOCK_INTERACTIVE_MARKER_SERVER_HPP_
+
 #include <memory>
 #include <string>
 #include <vector>

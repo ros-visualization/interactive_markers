@@ -37,13 +37,12 @@
 #include <string>
 #include <vector>
 
-#include "visualization_msgs/msg/interactive_marker_init.hpp"
-#include "visualization_msgs/msg/interactive_marker_update.hpp"
+#include "tf2/buffer_core_interface.h"
 
-namespace tf2
-{
-class BufferCoreInterface;
-}
+#include "geometry_msgs/msg/pose.hpp"
+#include "std_msgs/msg/header.hpp"
+#include "visualization_msgs/msg/interactive_marker.hpp"
+#include "visualization_msgs/msg/interactive_marker_pose.hpp"
 
 namespace interactive_markers
 {

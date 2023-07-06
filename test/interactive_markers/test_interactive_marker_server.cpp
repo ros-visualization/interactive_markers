@@ -34,6 +34,13 @@
 #include <thread>
 #include <vector>
 
+#include "geometry_msgs/msg/pose.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/header.hpp"
+#include "visualization_msgs/msg/interactive_marker.hpp"
+#include "visualization_msgs/msg/interactive_marker_feedback.hpp"
+#include "visualization_msgs/srv/get_interactive_markers.hpp"
+
 #include "interactive_marker_fixtures.hpp"
 #include "mock_interactive_marker_client.hpp"
 #include "timed_expect.hpp"

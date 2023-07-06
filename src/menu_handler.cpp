@@ -28,14 +28,17 @@
 
 // Author: David Gossow
 
+#include <exception>
 #include <functional>
-#include <memory>
 #include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 #include "interactive_markers/menu_handler.hpp"
+
+#include "visualization_msgs/msg/interactive_marker.hpp"
+#include "visualization_msgs/msg/menu_entry.hpp"
 
 // TODO(jacobperron): Remove this macro when it is available upstream
 // See: https://github.com/ros2/rcutils/pull/112

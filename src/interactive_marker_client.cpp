@@ -29,17 +29,23 @@
 
 // Author: David Gossow
 
+#include <chrono>
+#include <functional>
 #include <memory>
 #include <mutex>
+#include <sstream>
 #include <string>
 #include <utility>
 
+#include "rclcpp/rclcpp.hpp"
+#include "rmw/qos_profiles.h"
+
+#include "visualization_msgs/msg/interactive_marker_feedback.hpp"
+#include "visualization_msgs/msg/interactive_marker_update.hpp"
 #include "visualization_msgs/srv/get_interactive_markers.hpp"
 
 #include "interactive_markers/exceptions.hpp"
 #include "interactive_markers/interactive_marker_client.hpp"
-
-using namespace std::placeholders;
 
 namespace interactive_markers
 {
@@ -50,7 +56,7 @@ InteractiveMarkerClient::~InteractiveMarkerClient()
 {
 }
 
-void InteractiveMarkerClient::connect(std::string topic_namespace)
+void InteractiveMarkerClient::connect(const std::string & topic_namespace)
 {
   changeState(STATE_IDLE);
   topic_namespace_ = topic_namespace;
@@ -82,12 +88,12 @@ void InteractiveMarkerClient::connect(std::string topic_namespace)
       topics_interface_,
       topic_namespace_ + "/update",
       update_sub_qos_,
-      std::bind(&InteractiveMarkerClient::processUpdate, this, _1));
-  } catch (rclcpp::exceptions::InvalidNodeError & ex) {
+      std::bind(&InteractiveMarkerClient::processUpdate, this, std::placeholders::_1));
+  } catch (const rclcpp::exceptions::InvalidNodeError & ex) {
     updateStatus(STATUS_ERROR, "Failed to connect: " + std::string(ex.what()));
     disconnect();
     return;
-  } catch (rclcpp::exceptions::NameValidationError & ex) {
+  } catch (const rclcpp::exceptions::NameValidationError & ex) {
     updateStatus(STATUS_ERROR, "Failed to connect: " + std::string(ex.what()));
     disconnect();
     return;
@@ -162,7 +168,7 @@ void InteractiveMarkerClient::update()
   }
 }
 
-void InteractiveMarkerClient::setTargetFrame(std::string target_frame)
+void InteractiveMarkerClient::setTargetFrame(const std::string & target_frame)
 {
   if (target_frame_ == target_frame) {
     return;
@@ -221,7 +227,8 @@ void InteractiveMarkerClient::requestInteractiveMarkers()
   }
   updateStatus(STATUS_INFO, "Sending request for interactive markers");
 
-  auto callback = std::bind(&InteractiveMarkerClient::processInitialMessage, this, _1);
+  auto callback = std::bind(
+    &InteractiveMarkerClient::processInitialMessage, this, std::placeholders::_1);
   auto request = std::make_shared<visualization_msgs::srv::GetInteractiveMarkers::Request>();
   get_interactive_markers_client_->async_send_request(
     request,

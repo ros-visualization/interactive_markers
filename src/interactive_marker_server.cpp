@@ -29,7 +29,9 @@
 
 // Author: David Gossow
 
+#include <functional>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -37,10 +39,15 @@
 #include "interactive_markers/interactive_marker_server.hpp"
 
 #include "rmw/rmw.h"
-#include "rclcpp/qos.hpp"
+#include "rclcpp/rclcpp.hpp"
 
-using visualization_msgs::msg::InteractiveMarkerFeedback;
-using visualization_msgs::msg::InteractiveMarkerUpdate;
+#include "geometry_msgs/msg/pose.hpp"
+#include "std_msgs/msg/header.hpp"
+#include "visualization_msgs/msg/interactive_marker.hpp"
+#include "visualization_msgs/msg/interactive_marker_feedback.hpp"
+#include "visualization_msgs/msg/interactive_marker_pose.hpp"
+#include "visualization_msgs/msg/interactive_marker_update.hpp"
+#include "visualization_msgs/srv/get_interactive_markers.hpp"
 
 namespace interactive_markers
 {
@@ -77,10 +84,10 @@ InteractiveMarkerServer::InteractiveMarkerServer(
     rmw_qos_profile_services_default,
     base_interface->get_default_callback_group());
 
-  update_pub_ = rclcpp::create_publisher<InteractiveMarkerUpdate>(
+  update_pub_ = rclcpp::create_publisher<visualization_msgs::msg::InteractiveMarkerUpdate>(
     topics_interface, update_topic, update_pub_qos);
 
-  feedback_sub_ = rclcpp::create_subscription<InteractiveMarkerFeedback>(
+  feedback_sub_ = rclcpp::create_subscription<visualization_msgs::msg::InteractiveMarkerFeedback>(
     topics_interface,
     feedback_topic,
     feedback_sub_qos,
@@ -324,7 +331,7 @@ void InteractiveMarkerServer::insert(
 }
 
 bool InteractiveMarkerServer::get(
-  std::string name,
+  const std::string & name,
   visualization_msgs::msg::InteractiveMarker & marker) const
 {
   std::unique_lock<std::recursive_mutex> lock(mutex_);

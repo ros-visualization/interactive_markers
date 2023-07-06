@@ -31,7 +31,10 @@
 
 #include <string>
 
+#include "geometry_msgs/msg/quaternion.hpp"
 #include "visualization_msgs/msg/interactive_marker.hpp"
+#include "visualization_msgs/msg/interactive_marker_control.hpp"
+#include "visualization_msgs/msg/marker.hpp"
 
 #include "interactive_markers/visibility_control.hpp"
 
@@ -105,7 +108,7 @@ INTERACTIVE_MARKERS_PUBLIC
 void makeViewFacingButton(
   const visualization_msgs::msg::InteractiveMarker & msg,
   visualization_msgs::msg::InteractiveMarkerControl & control,
-  std::string text);
+  const std::string & text);
 
 /// Assign an RGB value to the given marker based on the given orientation.
 /**

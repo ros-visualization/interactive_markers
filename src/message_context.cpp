@@ -32,13 +32,24 @@
 
 #include <list>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 
+#include "geometry_msgs/msg/pose.hpp"
+#include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/transform_stamped.hpp"
 #include "rcutils/logging_macros.h"
 #include "tf2/buffer_core_interface.h"
+#include "tf2/time.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "rclcpp/time.hpp"
+#include "std_msgs/msg/header.hpp"
+#include "visualization_msgs/msg/interactive_marker.hpp"
+#include "visualization_msgs/msg/interactive_marker_control.hpp"
+#include "visualization_msgs/msg/interactive_marker_pose.hpp"
+#include "visualization_msgs/msg/interactive_marker_update.hpp"
+#include "visualization_msgs/msg/marker.hpp"
 #include "visualization_msgs/srv/get_interactive_markers.hpp"
 
 #include "interactive_markers/exceptions.hpp"
@@ -100,7 +111,7 @@ bool MessageContext<MsgT>::getTransform(
         header.frame_id = target_frame_;
       }
     }
-  } catch (tf2::ExtrapolationException &) {
+  } catch (const tf2::ExtrapolationException &) {
     // Get latest common time
     // Call lookupTransform with time=0 and use the stamp on the resultant transform.
     geometry_msgs::msg::TransformStamped transform =
@@ -116,7 +127,7 @@ bool MessageContext<MsgT>::getTransform(
       throw exceptions::TransformError(oss.str());
     }
     return false;
-  } catch (tf2::TransformException & e) {
+  } catch (const tf2::TransformException & e) {
     throw exceptions::TransformError(e.what());
   }
   return true;
@@ -190,10 +201,10 @@ void MessageContext<visualization_msgs::msg::InteractiveMarkerUpdate>::init()
   for (size_t i = 0; i < msg->poses.size(); i++) {
     open_pose_idx_.push_back(i);
   }
-  for (unsigned i = 0; i < msg->markers.size(); i++) {
+  for (size_t i = 0; i < msg->markers.size(); i++) {
     autoComplete(msg->markers[i], enable_autocomplete_transparency_);
   }
-  for (unsigned i = 0; i < msg->poses.size(); i++) {
+  for (size_t i = 0; i < msg->poses.size(); i++) {
     // correct empty orientation
     if (msg->poses[i].pose.orientation.w == 0 && msg->poses[i].pose.orientation.x == 0 &&
       msg->poses[i].pose.orientation.y == 0 && msg->poses[i].pose.orientation.z == 0)
@@ -210,7 +221,7 @@ void MessageContext<visualization_msgs::srv::GetInteractiveMarkers::Response>::i
   for (size_t i = 0; i < msg->markers.size(); i++) {
     open_marker_idx_.push_back(i);
   }
-  for (unsigned i = 0; i < msg->markers.size(); i++) {
+  for (size_t i = 0; i < msg->markers.size(); i++) {
     autoComplete(msg->markers[i], enable_autocomplete_transparency_);
   }
 }

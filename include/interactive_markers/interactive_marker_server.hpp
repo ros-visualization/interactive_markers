@@ -36,10 +36,12 @@
 #include <memory>
 #include <mutex>
 #include <string>
-#include <thread>
 #include <unordered_map>
 
 #include "rclcpp/rclcpp.hpp"
+#include "geometry_msgs/msg/pose.hpp"
+#include "std_msgs/msg/header.hpp"
+#include "visualization_msgs/msg/interactive_marker.hpp"
 #include "visualization_msgs/msg/interactive_marker_feedback.hpp"
 #include "visualization_msgs/msg/interactive_marker_update.hpp"
 #include "visualization_msgs/srv/get_interactive_markers.hpp"
@@ -214,7 +216,7 @@ public:
    * \return true if a marker with the provided name exists, false otherwise.
    */
   INTERACTIVE_MARKERS_PUBLIC
-  bool get(std::string name, visualization_msgs::msg::InteractiveMarker & int_marker) const;
+  bool get(const std::string & name, visualization_msgs::msg::InteractiveMarker & int_marker) const;
 
 private:
   // Disable copying
