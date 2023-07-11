@@ -2,6 +2,11 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Cleanup of interactive markers (`#101 <https://github.com/ros-visualization/interactive_markers/issues/101>`_)
+* Contributors: Chris Lalancette
+
 2.5.0 (2023-04-28)
 ------------------
 
