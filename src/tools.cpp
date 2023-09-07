@@ -190,7 +190,7 @@ void autoComplete(
     marker.pose.orientation.z = marker_orientation.z();
     marker.pose.orientation.w = marker_orientation.w();
 
-    static volatile unsigned id = 0;
+    static unsigned id = 0;
     marker.id = id++;
     marker.ns = msg.name;
 
