@@ -2,8 +2,8 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.5.2 (2023-10-04)
+------------------
 * Fixed C++20 warning that ‘++’ expression of ‘volatile’-qualified type is deprecated (`#102 <https://github.com/ros-visualization/interactive_markers/issues/102>`_)
 * Contributors: AiVerisimilitude
 
