@@ -122,7 +122,7 @@ void InteractiveMarkerClient::shutdown()
   case RUNNING:
     init_sub_.shutdown();
     update_sub_.shutdown();
-    boost::lock_guard<boost::mutex> lock(publisher_contexts_mutex_);
+    boost::lock_guard<boost::recursive_mutex> lock(publisher_contexts_mutex_);
     publisher_contexts_.clear();
     last_num_publishers_=0;
     state_=IDLE;
@@ -179,7 +179,7 @@ void InteractiveMarkerClient::process( const MsgConstPtrT& msg )
 
   SingleClientPtr client;
   {
-    boost::lock_guard<boost::mutex> lock(publisher_contexts_mutex_);
+    boost::lock_guard<boost::recursive_mutex> lock(publisher_contexts_mutex_);
 
     M_SingleClient::iterator context_it = publisher_contexts_.find(msg->server_id);
 
@@ -238,7 +238,7 @@ void InteractiveMarkerClient::update()
 
     // check if all single clients are finished with the init channels
     bool initialized = true;
-    boost::lock_guard<boost::mutex> lock(publisher_contexts_mutex_);
+    boost::lock_guard<boost::recursive_mutex> lock(publisher_contexts_mutex_);
     M_SingleClient::iterator it;
     for ( it = publisher_contexts_.begin(); it!=publisher_contexts_.end(); ++it )
     {
