@@ -418,7 +418,7 @@ void InteractiveMarkerServer::processFeedback(
   marker_context.last_client_id = feedback->client_id;
 
   if (feedback->event_type == visualization_msgs::msg::InteractiveMarkerFeedback::POSE_UPDATE) {
-    if (marker_context.int_marker.header.stamp == rclcpp::Time()) {
+    if (marker_context.int_marker.header.stamp == builtin_interfaces::msg::Time()) {
       // keep the old header
       doSetPose(
         pending_updates_.find(
