@@ -2,8 +2,8 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.5.4 (2024-03-28)
+------------------
 * Shorten the length of a lambda. (`#106 <https://github.com/ros-visualization/interactive_markers/issues/106>`_)
 * Contributors: Chris Lalancette
 
