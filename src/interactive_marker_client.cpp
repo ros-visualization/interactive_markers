@@ -76,7 +76,7 @@ void InteractiveMarkerClient::connect(const std::string & topic_namespace)
       graph_interface_,
       services_interface_,
       topic_namespace_ + "/get_interactive_markers",
-      rmw_qos_profile_services_default,
+      rclcpp::ServicesQoS(),
       nullptr);
 
     feedback_pub_ = rclcpp::create_publisher<visualization_msgs::msg::InteractiveMarkerFeedback>(
