@@ -42,7 +42,7 @@
 #include "rclcpp/logger.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-#include "tf2/buffer_core_interface.h"
+#include "tf2/buffer_core_interface.hpp"
 
 #include "visualization_msgs/msg/interactive_marker_feedback.hpp"
 #include "visualization_msgs/msg/interactive_marker_update.hpp"

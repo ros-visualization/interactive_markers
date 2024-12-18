@@ -37,7 +37,7 @@
 #include <string>
 #include <vector>
 
-#include "tf2/buffer_core_interface.h"
+#include "tf2/buffer_core_interface.hpp"
 
 #include "geometry_msgs/msg/pose.hpp"
 #include "std_msgs/msg/header.hpp"
