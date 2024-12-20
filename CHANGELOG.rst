@@ -2,6 +2,12 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Deprecating tf2 C Headers (`#109 <https://github.com/ros-visualization/interactive_markers/issues/109>`_)
+* Remove CODEOWNERS and mirror-rolling-to-main workflow (`#110 <https://github.com/ros-visualization/interactive_markers/issues/110>`_)
+* Contributors: Alejandro Hernández Cordero, Lucas Wendland
+
 2.6.1 (2024-07-08)
 ------------------
 * Use non deprecated API (`#108 <https://github.com/ros-visualization/interactive_markers/issues/108>`_)
