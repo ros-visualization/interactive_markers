@@ -2,6 +2,14 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixed deadlock (`#103 <https://github.com/ros-visualization/interactive_markers/issues/103>`_)
+* Add public function getNames to expose all marker names (`#94 <https://github.com/ros-visualization/interactive_markers/issues/94>`_)
+* Add xml-model; Add missing dep on setuptools (`#100 <https://github.com/ros-visualization/interactive_markers/issues/100>`_)
+* Update maintainer (`#91 <https://github.com/ros-visualization/interactive_markers/issues/91>`_)
+* Contributors: Dharini Dutia, Matthijs van der Burgh, Omid Heidari, g-kurz
+
 1.12.0 (2020-04-26)
 -------------------
 * [maintanence] fix signed / unsigned warning
