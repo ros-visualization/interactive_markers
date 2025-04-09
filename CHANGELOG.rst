@@ -2,8 +2,8 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.12.1 (2025-04-09)
+-------------------
 * Fixed deadlock (`#103 <https://github.com/ros-visualization/interactive_markers/issues/103>`_)
 * Add public function getNames to expose all marker names (`#94 <https://github.com/ros-visualization/interactive_markers/issues/94>`_)
 * Add xml-model; Add missing dep on setuptools (`#100 <https://github.com/ros-visualization/interactive_markers/issues/100>`_)
