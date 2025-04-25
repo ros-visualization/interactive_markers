@@ -2,8 +2,8 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.12.2 (2025-04-25)
+-------------------
 * Update CMakeLists.txt (`#112 <https://github.com/ros-visualization/interactive_markers/issues/112>`_)
 * Contributors: Arne Hitzmann
 
