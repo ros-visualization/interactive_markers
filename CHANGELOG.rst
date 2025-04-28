@@ -2,6 +2,9 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.8.0 (2025-04-28)
+------------------
+
 2.7.0 (2024-12-20)
 ------------------
 * Deprecating tf2 C Headers (`#109 <https://github.com/ros-visualization/interactive_markers/issues/109>`_)
