@@ -2,6 +2,31 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.8.0 (2025-04-28)
+------------------
+
+2.7.0 (2024-12-20)
+------------------
+* Deprecating tf2 C Headers (`#109 <https://github.com/ros-visualization/interactive_markers/issues/109>`_)
+* Remove CODEOWNERS and mirror-rolling-to-main workflow (`#110 <https://github.com/ros-visualization/interactive_markers/issues/110>`_)
+* Contributors: Alejandro Hernández Cordero, Lucas Wendland
+
+2.6.1 (2024-07-08)
+------------------
+* Use non deprecated API (`#108 <https://github.com/ros-visualization/interactive_markers/issues/108>`_)
+* Contributors: Alejandro Hernández Cordero
+
+2.6.0 (2024-04-26)
+------------------
+
+2.5.4 (2024-03-28)
+------------------
+* Shorten the length of a lambda. (`#106 <https://github.com/ros-visualization/interactive_markers/issues/106>`_)
+* Contributors: Chris Lalancette
+
+2.5.3 (2023-12-26)
+------------------
+
 2.5.2 (2023-10-04)
 ------------------
 * Fixed C++20 warning that ‘++’ expression of ‘volatile’-qualified type is deprecated (`#102 <https://github.com/ros-visualization/interactive_markers/issues/102>`_)

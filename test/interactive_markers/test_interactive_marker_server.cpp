@@ -305,9 +305,8 @@ TEST_F(TestInteractiveMarkerServerWithMarkers, feedback_communication)
 
   // Register a callback function to capture output
   visualization_msgs::msg::InteractiveMarkerFeedback output_feedback;
-  auto callback =
-    [&output_feedback]
-      (interactive_markers::InteractiveMarkerServer::FeedbackConstSharedPtr feedback)
+  using Server = interactive_markers::InteractiveMarkerServer;
+  auto callback = [&output_feedback](Server::FeedbackConstSharedPtr feedback)
     {
       output_feedback = *feedback;
     };

@@ -38,7 +38,7 @@
 #include "builtin_interfaces/msg/time.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "tf2/buffer_core.h"
+#include "tf2/buffer_core.hpp"
 #include "visualization_msgs/msg/interactive_marker.hpp"
 #include "visualization_msgs/msg/interactive_marker_update.hpp"
 #include "visualization_msgs/srv/get_interactive_markers.hpp"

@@ -31,7 +31,7 @@
 
 #include <string>
 
-#include "tf2/exceptions.h"
+#include "tf2/exceptions.hpp"
 
 namespace interactive_markers
 {

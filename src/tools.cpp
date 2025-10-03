@@ -46,9 +46,9 @@
 #include "visualization_msgs/msg/interactive_marker_control.hpp"
 #include "visualization_msgs/msg/marker.hpp"
 
-#include "tf2/LinearMath/Quaternion.h"
-#include "tf2/LinearMath/Matrix3x3.h"
-#include "tf2/LinearMath/Vector3.h"
+#include "tf2/LinearMath/Quaternion.hpp"
+#include "tf2/LinearMath/Matrix3x3.hpp"
+#include "tf2/LinearMath/Vector3.hpp"
 
 #include "interactive_markers/tools.hpp"
 
