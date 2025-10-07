@@ -2,6 +2,12 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.5.5 (2025-10-07)
+------------------
+* Explicit Time comparissons (`#105 <https://github.com/ros-visualization/interactive_markers/issues/105>`_) (`#116 <https://github.com/ros-visualization/interactive_markers/issues/116>`_)
+* Remove CODEOWNERS and mirror-rolling-to-main workflow (`#110 <https://github.com/ros-visualization/interactive_markers/issues/110>`_) (`#111 <https://github.com/ros-visualization/interactive_markers/issues/111>`_)
+* Contributors: mergify[bot]
+
 2.5.4 (2024-03-28)
 ------------------
 * Shorten the length of a lambda. (`#106 <https://github.com/ros-visualization/interactive_markers/issues/106>`_)
