@@ -2,6 +2,11 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.3.3 (2025-10-07)
+------------------
+* Explicit Time comparissons (`#105 <https://github.com/ros-visualization/interactive_markers/issues/105>`_) (`#117 <https://github.com/ros-visualization/interactive_markers/issues/117>`_)
+* Contributors: mergify[bot]
+
 2.3.2 (2022-04-08)
 ------------------
 * Do not publish if context is invalid during shutdown (`#89 <https://github.com/ros-visualization/interactive_markers/issues/89>`_)
