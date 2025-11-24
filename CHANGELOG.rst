@@ -2,6 +2,11 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.8.2 (2025-11-24)
+------------------
+* Cleanup mislabeled BSD license (`#118 <https://github.com/ros-visualization/interactive_markers/issues/118>`_)
+* Contributors: Alejandro Hernández Cordero
+
 2.8.1 (2025-10-07)
 ------------------
 * Explicit Time comparissons (`#105 <https://github.com/ros-visualization/interactive_markers/issues/105>`_)
