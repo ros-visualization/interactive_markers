@@ -35,12 +35,12 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 target_link_libraries(${PROJECT_NAME} PUBLIC
-  ${geometry_msgs_TARGETS}
+  geometry_msgs::geometry_msgs
   rclcpp::rclcpp
   rcutils::rcutils
-  ${std_msgs_TARGETS}
+  std_msgs::std_msgs
   tf2::tf2
-  ${visualization_msgs_TARGETS})
+  visualization_msgs::visualization_msgs)
 target_link_libraries(${PROJECT_NAME} PRIVATE
   rmw::rmw
   tf2_geometry_msgs::tf2_geometry_msgs)
@@ -77,7 +77,7 @@ if(BUILD_TESTING)
     test/${PROJECT_NAME}/interactive_marker_fixtures.cpp
   )
   target_link_libraries(interactive_marker_fixtures PRIVATE
-    ${visualization_msgs_TARGETS}
+    visualization_msgs::visualization_msgs
   )
 
   ament_add_gtest(test_interactive_marker_server
@@ -87,10 +87,10 @@ if(BUILD_TESTING)
   target_link_libraries(test_interactive_marker_server
     ${PROJECT_NAME}
     interactive_marker_fixtures
-    ${geometry_msgs_TARGETS}
+    geometry_msgs::geometry_msgs
     rclcpp::rclcpp
-    ${std_msgs_TARGETS}
-    ${visualization_msgs_TARGETS}
+    std_msgs::std_msgs
+    visualization_msgs::visualization_msgs
   )
 
   ament_add_gtest(test_interactive_marker_client
@@ -99,11 +99,11 @@ if(BUILD_TESTING)
   target_link_libraries(test_interactive_marker_client
     ${PROJECT_NAME}
     interactive_marker_fixtures
-    ${builtin_interfaces_TARGETS}
-    ${geometry_msgs_TARGETS}
+    builtin_interfaces::builtin_interfaces
+    geometry_msgs::geometry_msgs
     rclcpp::rclcpp
     tf2::tf2
-    ${visualization_msgs_TARGETS}
+    visualization_msgs::visualization_msgs
   )
 endif()
 
