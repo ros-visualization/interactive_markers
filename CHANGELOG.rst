@@ -2,6 +2,11 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.8.3 (2026-04-08)
+------------------
+* Use new ROSIDL aggregate CMake target (`#119 <https://github.com/ros-visualization/interactive_markers/issues/119>`_)
+* Contributors: Emerson Knapp
+
 2.8.2 (2025-11-24)
 ------------------
 * Cleanup mislabeled BSD license (`#118 <https://github.com/ros-visualization/interactive_markers/issues/118>`_)
