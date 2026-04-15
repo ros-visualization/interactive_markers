@@ -73,7 +73,7 @@ if(BUILD_TESTING)
 
   ament_lint_auto_find_test_dependencies()
 
-  add_library(interactive_marker_fixtures
+  add_library(interactive_marker_fixtures STATIC
     test/${PROJECT_NAME}/interactive_marker_fixtures.cpp
   )
   target_link_libraries(interactive_marker_fixtures PRIVATE
