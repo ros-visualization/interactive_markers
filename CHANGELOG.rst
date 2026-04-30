@@ -2,8 +2,8 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.8.4 (2026-04-30)
+------------------
 * fix: Fix compilation on MSVC 2022 (`#120 <https://github.com/ros-visualization/interactive_markers/issues/120>`_)
 * Contributors: Janosch Machowinski
 
