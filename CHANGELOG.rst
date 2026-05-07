@@ -2,6 +2,11 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix: Fix compilation on MSVC 2022 (`#120 <https://github.com/ros-visualization/interactive_markers/issues/120>`_)
+* Contributors: Janosch Machowinski
+
 2.8.3 (2026-04-08)
 ------------------
 * Use new ROSIDL aggregate CMake target (`#119 <https://github.com/ros-visualization/interactive_markers/issues/119>`_)
