@@ -88,12 +88,12 @@ public:
     STATE_RUNNING
   };
 
-  typedef std::function<void (visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr)>
-    UpdateCallback;
-  typedef std::function<void (visualization_msgs::srv::GetInteractiveMarkers::Response::SharedPtr)>
-    InitializeCallback;
-  typedef std::function<void ()> ResetCallback;
-  typedef std::function<void (const Status, const std::string &)> StatusCallback;
+  using UpdateCallback =
+    std::function<void (visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr)>;
+  using InitializeCallback =
+    std::function<void (visualization_msgs::srv::GetInteractiveMarkers::Response::SharedPtr)>;
+  using ResetCallback = std::function<void ()>;
+  using StatusCallback = std::function<void (const Status, const std::string &)>;
 
   /// Constructor.
   /**
@@ -261,9 +261,9 @@ public:
   }
 
 private:
-  typedef MessageContext<visualization_msgs::srv::GetInteractiveMarkers::Response>
-    InitialMessageContext;
-  typedef MessageContext<visualization_msgs::msg::InteractiveMarkerUpdate> UpdateMessageContext;
+  using InitialMessageContext =
+    MessageContext<visualization_msgs::srv::GetInteractiveMarkers::Response>;
+  using UpdateMessageContext = MessageContext<visualization_msgs::msg::InteractiveMarkerUpdate>;
 
   // Disable copying
   InteractiveMarkerClient(const InteractiveMarkerClient &) = delete;

@@ -51,10 +51,10 @@ namespace interactive_markers
 class MenuHandler
 {
 public:
-  typedef uint32_t EntryHandle;
+  using EntryHandle = uint32_t;
 
-  typedef visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr FeedbackConstPtr;
-  typedef std::function<void (const FeedbackConstPtr &)> FeedbackCallback;
+  using FeedbackConstPtr = visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr;
+  using FeedbackCallback = std::function<void (const FeedbackConstPtr &)>;
 
   enum CheckState
   {

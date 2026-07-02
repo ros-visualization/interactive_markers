@@ -28,8 +28,7 @@
 
 // Author: David Gossow
 
-#include <inttypes.h>
-
+#include <cinttypes>
 #include <list>
 #include <memory>
 #include <sstream>

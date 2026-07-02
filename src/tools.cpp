@@ -33,6 +33,7 @@
 #endif
 #endif
 
+#include <algorithm>
 #include <cmath>
 #include <set>
 #include <sstream>
@@ -99,7 +100,7 @@ void uniqueifyControlNames(visualization_msgs::msg::InteractiveMarker & msg)
   std::set<std::string> names;
   for (size_t c = 0; c < msg.controls.size(); c++) {
     std::string name = msg.controls[c].name;
-    while (names.find(name) != names.end()) {
+    while (names.contains(name)) {
       std::stringstream ss;
       ss << name << "_u" << uniqueification_number++;
       name = ss.str();
@@ -218,7 +219,7 @@ void makeArrow(
 
   assignDefaultColor(marker, control.orientation);
 
-  float dist = fabs(pos);
+  float dist = std::abs(pos);
   float dir = pos > 0.0f ? 1.0f : -1.0f;
 
   float inner = 0.5f * dist;
@@ -409,14 +410,11 @@ void assignDefaultColor(
   tf2::Quaternion bt_quat(quat.x, quat.y, quat.z, quat.w);
   tf2::Vector3 bt_x_axis = tf2::Matrix3x3(bt_quat) * tf2::Vector3(1, 0, 0);
 
-  float x, y, z;
-  x = static_cast<float>(fabs(bt_x_axis.x()));
-  y = static_cast<float>(fabs(bt_x_axis.y()));
-  z = static_cast<float>(fabs(bt_x_axis.z()));
+  const float x = static_cast<float>(std::abs(bt_x_axis.x()));
+  const float y = static_cast<float>(std::abs(bt_x_axis.y()));
+  const float z = static_cast<float>(std::abs(bt_x_axis.z()));
 
-  float max_xy = x > y ? x : y;
-  float max_yz = y > z ? y : z;
-  float max_xyz = max_xy > max_yz ? max_xy : max_yz;
+  const float max_xyz = std::max({x, y, z});
 
   marker.color.r = x / max_xyz;
   marker.color.g = y / max_xyz;

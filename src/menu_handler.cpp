@@ -282,7 +282,7 @@ void MenuHandler::processFeedback(
   const visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr & feedback)
 {
   std::unordered_map<EntryHandle, EntryContext>::iterator context =
-    entry_contexts_.find( (EntryHandle) feedback->menu_entry_id);
+    entry_contexts_.find(static_cast<EntryHandle>(feedback->menu_entry_id));
 
   if (context != entry_contexts_.end() && context->second.feedback_cb) {
     context->second.feedback_cb(feedback);

@@ -188,10 +188,7 @@ bool InteractiveMarkerServer::erase(const std::string & name)
 {
   std::unique_lock<std::recursive_mutex> lock(mutex_);
 
-  if (
-    marker_contexts_.end() == marker_contexts_.find(name) &&
-    pending_updates_.end() == pending_updates_.find(name))
-  {
+  if (!marker_contexts_.contains(name) && !pending_updates_.contains(name)) {
     return false;
   }
   pending_updates_[name].update_type = UpdateContext::ERASE;
