@@ -377,6 +377,8 @@ void InteractiveMarkerServer::getInteractiveMarkersCallback(
   (void)request_header;
   (void)request;
 
+  std::unique_lock<std::recursive_mutex> lock(mutex_);
+
   RCLCPP_DEBUG(logger_, "Responding to request to get interactive markers");
   response->sequence_number = sequence_number_;
   response->markers.reserve(marker_contexts_.size());
