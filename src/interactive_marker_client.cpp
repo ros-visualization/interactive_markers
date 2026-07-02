@@ -30,10 +30,10 @@
 // Author: David Gossow
 
 #include <chrono>
+#include <format>  // NOLINT(build/include_order): cpplint misclassifies the C++20 header as C
 #include <functional>
 #include <memory>
 #include <mutex>
-#include <sstream>
 #include <string>
 #include <utility>
 
@@ -164,7 +164,8 @@ void InteractiveMarkerClient::update()
       break;
 
     default:
-      updateStatus(STATUS_ERROR, "Invalid state in update: " + std::to_string(getState()));
+      updateStatus(
+        STATUS_ERROR, std::format("Invalid state in update: {}", static_cast<int>(getState())));
   }
 }
 
@@ -261,17 +262,18 @@ void InteractiveMarkerClient::processUpdate(
   }
 
   if (!first_update_ && msg->seq_num != last_update_sequence_number_ + 1) {
-    std::ostringstream oss;
-    oss << "Update sequence number is out of order. " << last_update_sequence_number_ + 1 <<
-      " (expected) vs. " << msg->seq_num << " (received)";
-    updateStatus(STATUS_WARN, oss.str());
+    updateStatus(
+      STATUS_WARN,
+      std::format(
+        "Update sequence number is out of order. {} (expected) vs. {} (received)",
+        last_update_sequence_number_ + 1, msg->seq_num));
     // Change state to STATE_IDLE to cause reset
     changeState(STATE_IDLE);
     return;
   }
 
   updateStatus(
-    STATUS_DEBUG, "Received update with sequence number " + std::to_string(msg->seq_num));
+    STATUS_DEBUG, std::format("Received update with sequence number {}", msg->seq_num));
 
   first_update_ = false;
   last_update_sequence_number_ = msg->seq_num;
@@ -279,8 +281,9 @@ void InteractiveMarkerClient::processUpdate(
   if (update_queue_.size() > MAX_UPDATE_QUEUE_SIZE) {
     updateStatus(
       STATUS_WARN,
-      "Update queue too large. Erasing message with sequence number " +
-      std::to_string(update_queue_.begin()->msg->seq_num));
+      std::format(
+        "Update queue too large. Erasing message with sequence number {}",
+        update_queue_.begin()->msg->seq_num));
     update_queue_.pop_back();
   }
 
@@ -300,9 +303,8 @@ bool InteractiveMarkerClient::transformInitialMessage()
   try {
     initial_response_msg_->getTfTransforms();
   } catch (const exceptions::TransformError & e) {
-    std::ostringstream oss;
-    oss << "Resetting due to transform error: " << e.what();
-    updateStatus(STATUS_DEBUG, oss.str());  // DEBUG here to reduce spam from repeated resetting
+    // DEBUG here to reduce spam from repeated resetting
+    updateStatus(STATUS_DEBUG, std::format("Resetting due to transform error: {}", e.what()));
     return false;
   }
 
@@ -316,9 +318,7 @@ bool InteractiveMarkerClient::transformUpdateMessages()
     try {
       it->getTfTransforms();
     } catch (const exceptions::TransformError & e) {
-      std::ostringstream oss;
-      oss << "Resetting due to transform error: " << e.what();
-      updateStatus(STATUS_ERROR, oss.str());
+      updateStatus(STATUS_ERROR, std::format("Resetting due to transform error: {}", e.what()));
       return false;
     }
   }
@@ -349,7 +349,8 @@ bool InteractiveMarkerClient::checkInitializeFinished()
   while (!update_queue_.empty() && update_queue_.back().msg->seq_num <= response_sequence_number) {
     updateStatus(
       STATUS_DEBUG,
-      "Omitting update with sequence number " + std::to_string(update_queue_.back().msg->seq_num));
+      std::format(
+        "Omitting update with sequence number {}", update_queue_.back().msg->seq_num));
     update_queue_.pop_back();
   }
 
@@ -368,7 +369,7 @@ void InteractiveMarkerClient::pushUpdates()
   while (!update_queue_.empty() && update_queue_.back().isReady()) {
     visualization_msgs::msg::InteractiveMarkerUpdate::SharedPtr msg = update_queue_.back().msg;
     updateStatus(
-      STATUS_DEBUG, "Pushing update with sequence number " + std::to_string(msg->seq_num));
+      STATUS_DEBUG, std::format("Pushing update with sequence number {}", msg->seq_num));
     if (update_callback_) {
       update_callback_(msg);
     }
@@ -382,7 +383,7 @@ void InteractiveMarkerClient::changeState(const State & new_state)
     return;
   }
 
-  updateStatus(STATUS_DEBUG, "Change state to: " + std::to_string(new_state));
+  updateStatus(STATUS_DEBUG, std::format("Change state to: {}", static_cast<int>(new_state)));
 
   switch (new_state) {
     case STATE_IDLE:
@@ -397,7 +398,9 @@ void InteractiveMarkerClient::changeState(const State & new_state)
       break;
 
     default:
-      updateStatus(STATUS_ERROR, "Invalid state when changing state: " + std::to_string(new_state));
+      updateStatus(
+        STATUS_ERROR,
+        std::format("Invalid state when changing state: {}", static_cast<int>(new_state)));
       return;
   }
   state_ = new_state;
