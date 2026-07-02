@@ -33,6 +33,7 @@
 
 #include <functional>
 #include <set>
+#include <span>  // NOLINT(build/include_order): cpplint misclassifies the C++20 header as C
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -137,7 +138,7 @@ private:
   // entries_out.  Calls itself recursively to add the entire menu
   // tree.
   bool pushMenuEntries(
-    std::vector<EntryHandle> & handles_in,
+    std::span<const EntryHandle> handles_in,
     std::vector<visualization_msgs::msg::MenuEntry> & entries_out,
     EntryHandle parent_handle);
 

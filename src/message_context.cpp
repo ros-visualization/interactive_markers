@@ -32,6 +32,7 @@
 #include <format>  // NOLINT(build/include_order): cpplint misclassifies the C++20 header as C
 #include <list>
 #include <memory>
+#include <span>  // NOLINT(build/include_order): cpplint misclassifies the C++20 header as C
 #include <string>
 #include <vector>
 
@@ -135,10 +136,9 @@ bool MessageContext<MsgT>::getTransform(
 
 template<class MsgT>
 void MessageContext<MsgT>::getTfTransforms(
-  std::vector<visualization_msgs::msg::InteractiveMarker> & msg_vec, std::list<size_t> & indices)
+  std::span<visualization_msgs::msg::InteractiveMarker> msg_vec, std::list<size_t> & indices)
 {
-  std::list<size_t>::iterator idx_it;
-  for (idx_it = indices.begin(); idx_it != indices.end(); ) {
+  for (auto idx_it = indices.begin(); idx_it != indices.end(); ) {
     visualization_msgs::msg::InteractiveMarker & im_msg = msg_vec[*idx_it];
     // transform interactive marker
     bool success = getTransform(im_msg.header, im_msg.pose);
@@ -167,11 +167,10 @@ void MessageContext<MsgT>::getTfTransforms(
 
 template<class MsgT>
 void MessageContext<MsgT>::getTfTransforms(
-  std::vector<visualization_msgs::msg::InteractiveMarkerPose> & msg_vec,
+  std::span<visualization_msgs::msg::InteractiveMarkerPose> msg_vec,
   std::list<size_t> & indices)
 {
-  std::list<size_t>::iterator idx_it;
-  for (idx_it = indices.begin(); idx_it != indices.end(); ) {
+  for (auto idx_it = indices.begin(); idx_it != indices.end(); ) {
     visualization_msgs::msg::InteractiveMarkerPose & msg = msg_vec[*idx_it];
     if (getTransform(msg.header, msg.pose)) {
       idx_it = indices.erase(idx_it);
