@@ -46,6 +46,7 @@
 #include "visualization_msgs/msg/interactive_marker_update.hpp"
 #include "visualization_msgs/srv/get_interactive_markers.hpp"
 
+#include "interactive_markers/node_interfaces.hpp"
 #include "interactive_markers/visibility_control.hpp"
 
 namespace interactive_markers
@@ -87,7 +88,7 @@ public:
     const rclcpp::QoS & update_pub_qos = rclcpp::QoS(100),
     const rclcpp::QoS & feedback_sub_qos = rclcpp::QoS(1));
 
-  template<typename NodePtr>
+  template<ServerNodeInterfaces NodePtr>
   InteractiveMarkerServer(
     const std::string & topic_namespace,
     NodePtr node,
