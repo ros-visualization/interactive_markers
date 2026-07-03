@@ -59,8 +59,8 @@ namespace interactive_markers
 class InteractiveMarkerServer
 {
 public:
-  typedef visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr FeedbackConstSharedPtr;
-  typedef std::function<void (FeedbackConstSharedPtr)> FeedbackCallback;
+  using FeedbackConstSharedPtr = visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr;
+  using FeedbackCallback = std::function<void (FeedbackConstSharedPtr)>;
 
   static const uint8_t DEFAULT_FEEDBACK_CB = 255;
 
@@ -232,7 +232,7 @@ private:
     visualization_msgs::msg::InteractiveMarker int_marker;
   };
 
-  typedef std::unordered_map<std::string, MarkerContext> M_MarkerContext;
+  using M_MarkerContext = std::unordered_map<std::string, MarkerContext>;
 
   // represents an update to a single marker
   struct UpdateContext
@@ -248,7 +248,7 @@ private:
     std::unordered_map<uint8_t, FeedbackCallback> feedback_cbs;
   };
 
-  typedef std::unordered_map<std::string, UpdateContext> M_UpdateContext;
+  using M_UpdateContext = std::unordered_map<std::string, UpdateContext>;
 
   void getInteractiveMarkersCallback(
     const std::shared_ptr<rmw_request_id_t> request_header,

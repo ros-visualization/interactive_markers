@@ -1,18 +1,17 @@
 cmake_minimum_required(VERSION 3.20)
 project(interactive_markers)
 
-# Default to C++17
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif()
-
+# The C++/C standard comes from ament_ros_defaults (cxx_std_20 / c_std_17),
+# provided by the ament_cmake_ros_core::ament_ros_defaults INTERFACE target and
+# linked into the library's public interface below, propagating to consumers as
+# a minimum standard.
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
+find_package(ament_cmake_ros_core REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rcutils REQUIRED)
@@ -35,6 +34,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 target_link_libraries(${PROJECT_NAME} PUBLIC
+  ament_cmake_ros_core::ament_ros_defaults
   geometry_msgs::geometry_msgs
   rclcpp::rclcpp
   rcutils::rcutils
@@ -58,6 +58,7 @@ target_compile_definitions(${PROJECT_NAME}
   PRIVATE "INTERACTIVE_MARKERS_BUILDING_LIBRARY")
 
 ament_export_dependencies(
+  "ament_cmake_ros_core"
   "geometry_msgs"
   "rclcpp"
   "std_msgs"
