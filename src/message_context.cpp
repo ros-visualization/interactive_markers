@@ -29,9 +29,9 @@
 // Author: David Gossow
 
 #include <cinttypes>
+#include <format>  // NOLINT(build/include_order): cpplint misclassifies the C++20 header as C
 #include <list>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -120,11 +120,11 @@ bool MessageContext<MsgT>::getTransform(
     rclcpp::Time source_time(header.stamp, RCL_ROS_TIME);
 
     if (latest_time != rclcpp::Time(0) && latest_time > source_time) {
-      std::ostringstream oss;
-      oss << "The message contains an old timestamp and cannot be transformed " <<
-        "('" << header.frame_id << "' to '" << target_frame_ << "' at time " <<
-        rclcpp::Time(header.stamp).seconds() << ").";
-      throw exceptions::TransformError(oss.str());
+      throw exceptions::TransformError(
+        std::format(
+          "The message contains an old timestamp and cannot be transformed "
+          "('{}' to '{}' at time {}).",
+          header.frame_id, target_frame_, rclcpp::Time(header.stamp).seconds()));
     }
     return false;
   } catch (const tf2::TransformException & e) {

@@ -35,8 +35,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <format>  // NOLINT(build/include_order): cpplint misclassifies the C++20 header as C
 #include <set>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -101,9 +101,7 @@ void uniqueifyControlNames(visualization_msgs::msg::InteractiveMarker & msg)
   for (size_t c = 0; c < msg.controls.size(); c++) {
     std::string name = msg.controls[c].name;
     while (names.contains(name)) {
-      std::stringstream ss;
-      ss << name << "_u" << uniqueification_number++;
-      name = ss.str();
+      name = std::format("{}_u{}", name, uniqueification_number++);
     }
     msg.controls[c].name = name;
     names.insert(name);
