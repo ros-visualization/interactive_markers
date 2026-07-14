@@ -31,6 +31,7 @@
 #include <exception>
 #include <functional>
 #include <set>
+#include <span>  // NOLINT(build/include_order): cpplint misclassifies the C++20 header as C
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -186,14 +187,12 @@ bool MenuHandler::apply(InteractiveMarkerServer & server, const std::string & ma
 }
 
 bool MenuHandler::pushMenuEntries(
-  std::vector<EntryHandle> & handles_in,
+  std::span<const EntryHandle> handles_in,
   std::vector<visualization_msgs::msg::MenuEntry> & entries_out,
   EntryHandle parent_handle)
 {
-  for (unsigned t = 0; t < handles_in.size(); t++) {
-    EntryHandle handle = handles_in[t];
-    std::unordered_map<EntryHandle, EntryContext>::iterator context_it =
-      entry_contexts_.find(handle);
+  for (const EntryHandle handle : handles_in) {
+    auto context_it = entry_contexts_.find(handle);
 
     if (context_it == entry_contexts_.end()) {
       RCUTILS_LOG_ERROR("Internal error: context handle not found! This is a bug in MenuHandler.");
@@ -207,7 +206,7 @@ bool MenuHandler::pushMenuEntries(
     }
 
     entries_out.push_back(makeEntry(context, handle, parent_handle));
-    if (false == pushMenuEntries(context.sub_entries, entries_out, handle)) {
+    if (!pushMenuEntries(context.sub_entries, entries_out, handle)) {
       return false;
     }
   }
@@ -235,18 +234,19 @@ MenuHandler::EntryHandle MenuHandler::doInsert(
   const std::string & command,
   const FeedbackCallback & feedback_cb)
 {
-  EntryHandle handle = current_handle_;
-  current_handle_++;
+  const EntryHandle handle = current_handle_++;
 
-  EntryContext context;
-  context.title = title;
-  context.command = command;
-  context.command_type = command_type;
-  context.visible = true;
-  context.check_state = NO_CHECKBOX;
-  context.feedback_cb = feedback_cb;
-
-  entry_contexts_[handle] = context;
+  entry_contexts_.try_emplace(
+    handle,
+    EntryContext{
+      .title = title,
+      .command = command,
+      .command_type = command_type,
+      .sub_entries = {},
+      .visible = true,
+      .check_state = NO_CHECKBOX,
+      .feedback_cb = feedback_cb,
+  });
   return handle;
 }
 

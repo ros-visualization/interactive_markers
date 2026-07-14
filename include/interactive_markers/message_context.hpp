@@ -34,6 +34,7 @@
 
 #include <list>
 #include <memory>
+#include <span>  // NOLINT(build/include_order): cpplint misclassifies the C++20 header as C
 #include <string>
 #include <vector>
 
@@ -75,10 +76,10 @@ private:
   bool getTransform(std_msgs::msg::Header & header, geometry_msgs::msg::Pose & pose_msg);
 
   void getTfTransforms(
-    std::vector<visualization_msgs::msg::InteractiveMarker> & msg_vec,
+    std::span<visualization_msgs::msg::InteractiveMarker> msg_vec,
     std::list<size_t> & indices);
   void getTfTransforms(
-    std::vector<visualization_msgs::msg::InteractiveMarkerPose> & msg_vec,
+    std::span<visualization_msgs::msg::InteractiveMarkerPose> msg_vec,
     std::list<size_t> & indices);
 
   // array indices of marker/pose updates with missing tf info
