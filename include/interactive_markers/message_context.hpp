@@ -60,7 +60,7 @@ public:
 
   MessageContext(const MessageContext &) = default;
 
-  MessageContext<MsgT> & operator=(const MessageContext<MsgT> & other);
+  MessageContext<MsgT> & operator=(const MessageContext<MsgT> & other) = default;
 
   // transform all messages with timestamp into target frame
   void getTfTransforms();

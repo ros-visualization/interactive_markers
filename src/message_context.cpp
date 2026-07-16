@@ -76,16 +76,6 @@ MessageContext<MsgT>::MessageContext(
 }
 
 template<class MsgT>
-MessageContext<MsgT> & MessageContext<MsgT>::operator=(const MessageContext<MsgT> & other)
-{
-  open_marker_idx_ = other.open_marker_idx_;
-  open_pose_idx_ = other.open_pose_idx_;
-  target_frame_ = other.target_frame_;
-  enable_autocomplete_transparency_ = other.enable_autocomplete_transparency_;
-  return *this;
-}
-
-template<class MsgT>
 bool MessageContext<MsgT>::getTransform(
   std_msgs::msg::Header & header,
   geometry_msgs::msg::Pose & pose_msg)

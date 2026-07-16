@@ -34,6 +34,7 @@
 #endif
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <format>  // NOLINT(build/include_order): cpplint misclassifies the C++20 header as C
 #include <set>
@@ -189,8 +190,8 @@ void autoComplete(
     marker.pose.orientation.z = marker_orientation.z();
     marker.pose.orientation.w = marker_orientation.w();
 
-    static unsigned id = 0;
-    marker.id = id++;
+    static std::atomic<unsigned> id{0};
+    marker.id = id.fetch_add(1, std::memory_order_relaxed);
     marker.ns = msg.name;
 
     // If transparency is disabled, set alpha to 1.0 for all semi-transparent markers
