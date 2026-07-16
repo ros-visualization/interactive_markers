@@ -49,6 +49,7 @@
 #include "visualization_msgs/srv/get_interactive_markers.hpp"
 
 #include "interactive_markers/message_context.hpp"
+#include "interactive_markers/node_interfaces.hpp"
 #include "interactive_markers/visibility_control.hpp"
 
 namespace interactive_markers
@@ -163,7 +164,7 @@ public:
    * \param update_sub_qos QoS settings for the underlying update subscription.
    * \param feedback_pub_qos QoS settings for the underlying feedback publisher.
    */
-  template<typename NodePtr, class Rep = int64_t, class Period = std::ratio<1>>
+  template<ClientNodeInterfaces NodePtr, class Rep = int64_t, class Period = std::ratio<1>>
   InteractiveMarkerClient(
     NodePtr node,
     std::shared_ptr<tf2::BufferCoreInterface> tf_buffer_core,
