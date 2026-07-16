@@ -242,6 +242,7 @@ MenuHandler::EntryHandle MenuHandler::doInsert(
       .title = title,
       .command = command,
       .command_type = command_type,
+      .sub_entries = {},
       .visible = true,
       .check_state = NO_CHECKBOX,
       .feedback_cb = feedback_cb,
