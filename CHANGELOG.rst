@@ -2,6 +2,15 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.9.1 (2026-07-16)
+------------------
+* concepts (`#125 <https://github.com/ros-visualization/interactive_markers/issues/125>`_)
+* Safety and correctness fixes (`#124 <https://github.com/ros-visualization/interactive_markers/issues/124>`_)
+* Use std::span (`#123 <https://github.com/ros-visualization/interactive_markers/issues/123>`_)
+* CPP20: Use std::format (`#122 <https://github.com/ros-visualization/interactive_markers/issues/122>`_)
+* CPP20 Modernization (`#121 <https://github.com/ros-visualization/interactive_markers/issues/121>`_)
+* Contributors: Alejandro Hernández Cordero
+
 2.9.0 (2026-05-07)
 ------------------
 * fix: Fix compilation on MSVC 2022 (`#120 <https://github.com/ros-visualization/interactive_markers/issues/120>`_)
