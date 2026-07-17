@@ -31,8 +31,8 @@
 from collections.abc import Callable
 from dataclasses import dataclass
 from dataclasses import field
-import sys
 
+import rclpy.logging
 from visualization_msgs.msg import InteractiveMarkerFeedback
 from visualization_msgs.msg import MenuEntry
 
@@ -75,7 +75,8 @@ class MenuHandler:
         handle = self.doInsert(title, command_type, command, callback)
         if parent is not None:
             if parent not in self.entry_contexts_:
-                print(f"Parent menu entry '{parent}' not found", file=sys.stderr)
+                rclpy.logging.get_logger('MenuHandler').error(
+                    f"Parent menu entry '{parent}' not found")
                 return None
             parent_context = self.entry_contexts_[parent]
             parent_context.sub_entries.append(handle)
@@ -173,10 +174,8 @@ class MenuHandler:
         """
         for handle in handles_in:
             if handle not in self.entry_contexts_:
-                print(
-                    'Internal error: context handle not found! This is a bug in MenuHandler.',
-                    file=sys.stderr
-                )
+                rclpy.logging.get_logger('MenuHandler').error(
+                    'Internal error: context handle not found! This is a bug in MenuHandler.')
                 return False
 
             context = self.entry_contexts_[handle]
