@@ -119,8 +119,8 @@ class MenuHandler:
         Divert callback for MENU_SELECT feedback to this manager.
         """
         marker = server.get(marker_name)
-        if not marker:
-            self.managed_markers_.remove(marker_name)
+        if marker is None:
+            self.managed_markers_.discard(marker_name)
             return False
 
         marker.menu_entries = []
@@ -161,7 +161,8 @@ class MenuHandler:
             return
 
         context = self.entry_contexts_[feedback.menu_entry_id]
-        context.feedback_cb(feedback)
+        if context.feedback_cb is not None:
+            context.feedback_cb(feedback)
 
     def pushMenuEntries(self, handles_in, entries_out, parent_handle):
         """

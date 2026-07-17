@@ -234,6 +234,38 @@ class InteractiveMarkerServer:
         for marker_name in self.marker_contexts.keys():
             self.erase(marker_name)
 
+    def size(self):
+        """
+        Get the number of markers managed by this server.
+
+        Does not include markers inserted since the last call to applyChanges().
+
+        :return: The number of markers.
+        """
+        with self.mutex:
+            return len(self.marker_contexts)
+
+    def empty(self):
+        """
+        Check if there are any markers managed by this server.
+
+        Does not include markers inserted since the last call to applyChanges().
+
+        :return: True if there are no markers, False otherwise.
+        """
+        with self.mutex:
+            return not self.marker_contexts
+
+    def __len__(self):
+        """
+        Get the number of markers managed by this server.
+
+        Does not include markers inserted since the last call to applyChanges().
+
+        :return: The number of markers.
+        """
+        return self.size()
+
     def setCallback(self, name, feedback_callback, feedback_type=DEFAULT_FEEDBACK_CALLBACK):
         """
         Add or replace a callback function for the specified marker.
