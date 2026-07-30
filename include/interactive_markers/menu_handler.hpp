@@ -31,6 +31,7 @@
 #ifndef INTERACTIVE_MARKERS__MENU_HANDLER_HPP_
 #define INTERACTIVE_MARKERS__MENU_HANDLER_HPP_
 
+#include <cstdint>
 #include <functional>
 #include <set>
 #include <span>  // NOLINT(build/include_order): cpplint misclassifies the C++20 header as C
@@ -38,14 +39,16 @@
 #include <unordered_map>
 #include <vector>
 
-#include "visualization_msgs/msg/interactive_marker_feedback.hpp"
-#include "visualization_msgs/msg/menu_entry.hpp"
+#include "visualization_msgs/msg/detail/interactive_marker_feedback__struct.hpp"
+#include "visualization_msgs/msg/detail/menu_entry__struct.hpp"
 
-#include "interactive_markers/interactive_marker_server.hpp"
 #include "interactive_markers/visibility_control.hpp"
 
 namespace interactive_markers
 {
+
+// Only referenced by reference below; see interactive_markers/interactive_marker_server.hpp
+class InteractiveMarkerServer;
 
 // Simple non-intrusive helper class which creates a menu and maps its
 // entries to function callbacks

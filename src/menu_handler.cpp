@@ -38,7 +38,10 @@
 
 #include "interactive_markers/menu_handler.hpp"
 
+#include "interactive_markers/interactive_marker_server.hpp"
+
 #include "visualization_msgs/msg/interactive_marker.hpp"
+#include "visualization_msgs/msg/interactive_marker_feedback.hpp"
 #include "visualization_msgs/msg/menu_entry.hpp"
 
 // TODO(jacobperron): Remove this macro when it is available upstream

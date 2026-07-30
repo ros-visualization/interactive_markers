@@ -32,6 +32,7 @@
 #define INTERACTIVE_MARKERS__INTERACTIVE_MARKER_CLIENT_HPP_
 
 #include <chrono>
+#include <cstdint>
 #include <deque>
 #include <functional>
 #include <memory>
@@ -39,18 +40,36 @@
 #include <ratio>
 #include <string>
 
+#include "rclcpp/client.hpp"
+#include "rclcpp/clock.hpp"
+#include "rclcpp/duration.hpp"
 #include "rclcpp/logger.hpp"
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/node_interfaces/node_base_interface.hpp"
+#include "rclcpp/node_interfaces/node_clock_interface.hpp"
+#include "rclcpp/node_interfaces/node_graph_interface.hpp"
+#include "rclcpp/node_interfaces/node_logging_interface.hpp"
+#include "rclcpp/node_interfaces/node_services_interface.hpp"
+#include "rclcpp/node_interfaces/node_topics_interface.hpp"
+#include "rclcpp/publisher.hpp"
+#include "rclcpp/qos.hpp"
+#include "rclcpp/subscription_base.hpp"
+#include "rclcpp/time.hpp"
 
-#include "tf2/buffer_core_interface.hpp"
-
-#include "visualization_msgs/msg/interactive_marker_feedback.hpp"
-#include "visualization_msgs/msg/interactive_marker_update.hpp"
-#include "visualization_msgs/srv/get_interactive_markers.hpp"
+#include "visualization_msgs/msg/detail/interactive_marker_feedback__struct.hpp"
+#include "visualization_msgs/msg/detail/interactive_marker_feedback__traits.hpp"
+#include "visualization_msgs/msg/detail/interactive_marker_update__struct.hpp"
+#include "visualization_msgs/srv/detail/get_interactive_markers__struct.hpp"
+#include "visualization_msgs/srv/detail/get_interactive_markers__traits.hpp"
 
 #include "interactive_markers/message_context.hpp"
 #include "interactive_markers/node_interfaces.hpp"
 #include "interactive_markers/visibility_control.hpp"
+
+namespace tf2
+{
+// Only ever held by std::shared_ptr here; see tf2/buffer_core_interface.hpp
+class BufferCoreInterface;
+}  // namespace tf2
 
 namespace interactive_markers
 {
