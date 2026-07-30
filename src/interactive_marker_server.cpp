@@ -29,6 +29,8 @@
 
 // Author: David Gossow
 
+#include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -44,6 +46,7 @@
 #include "rclcpp/create_service.hpp"
 #include "rclcpp/create_subscription.hpp"
 #include "rclcpp/create_timer.hpp"
+#include "rclcpp/logging.hpp"
 #include "rclcpp/utilities.hpp"
 
 #include "geometry_msgs/msg/pose.hpp"

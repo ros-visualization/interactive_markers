@@ -29,6 +29,7 @@
 // Author: David Gossow
 
 #include <cinttypes>
+#include <cstddef>
 #include <format>  // NOLINT(build/include_order): cpplint misclassifies the C++20 header as C
 #include <list>
 #include <memory>

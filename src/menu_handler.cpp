@@ -28,6 +28,7 @@
 
 // Author: David Gossow
 
+#include <cstdint>
 #include <exception>
 #include <functional>
 #include <set>
@@ -39,6 +40,8 @@
 #include "interactive_markers/menu_handler.hpp"
 
 #include "interactive_markers/interactive_marker_server.hpp"
+
+#include "rcutils/logging_macros.h"
 
 #include "visualization_msgs/msg/interactive_marker.hpp"
 #include "visualization_msgs/msg/interactive_marker_feedback.hpp"

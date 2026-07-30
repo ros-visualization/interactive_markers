@@ -36,6 +36,7 @@
 #include <algorithm>
 #include <atomic>
 #include <cmath>
+#include <cstddef>
 #include <format>  // NOLINT(build/include_order): cpplint misclassifies the C++20 header as C
 #include <set>
 #include <string>
