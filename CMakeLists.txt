@@ -69,10 +69,19 @@ ament_export_targets(export_${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  find_package(ament_cmake_pytest REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   find_package(builtin_interfaces REQUIRED)
 
   ament_lint_auto_find_test_dependencies()
+
+  # Python tests for the package installed by ament_python_install_package().
+  # Target names are suffixed to avoid clashing with the C++ gtest targets.
+  ament_add_pytest_test(test_menu_handler_py test/test_menu_handler.py)
+  ament_add_pytest_test(test_interactive_marker_server_py
+    test/test_interactive_marker_server.py
+    TIMEOUT 90
+  )
 
   add_library(interactive_marker_fixtures STATIC
     test/${PROJECT_NAME}/interactive_marker_fixtures.cpp
