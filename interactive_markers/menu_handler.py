@@ -28,25 +28,26 @@
 
 # Author: Michael Ferguson
 
-import sys
-from typing import Dict
-from typing import List
-from typing import Set
+from collections.abc import Callable
+from dataclasses import dataclass
+from dataclasses import field
 
+import rclpy.logging
 from visualization_msgs.msg import InteractiveMarkerFeedback
 from visualization_msgs.msg import MenuEntry
 
 
+@dataclass
 class EntryContext:
+    """Represents a single menu entry."""
 
-    def __init__(self):
-        self.title = ''
-        self.command = ''
-        self.command_type = 0
-        self.sub_entries = []
-        self.visible = True
-        self.check_state = 0
-        self.feedback_cb = None
+    title: str = ''
+    command: str = ''
+    command_type: int = 0
+    sub_entries: list[int] = field(default_factory=list)
+    visible: bool = True
+    check_state: int = 0
+    feedback_cb: Callable | None = None
 
 
 class MenuHandler:
@@ -57,10 +58,10 @@ class MenuHandler:
     UNCHECKED = 2
 
     def __init__(self):
-        self.top_level_handles_: List[int] = []
-        self.entry_contexts_: Dict[int, EntryContext] = {}
+        self.top_level_handles_: list[int] = []
+        self.entry_contexts_: dict[int, EntryContext] = {}
         self.current_handle_ = 1
-        self.managed_markers_: Set[str] = set()
+        self.managed_markers_: set[str] = set()
 
     def insert(
         self,
@@ -74,7 +75,8 @@ class MenuHandler:
         handle = self.doInsert(title, command_type, command, callback)
         if parent is not None:
             if parent not in self.entry_contexts_:
-                print("Parent menu entry '{}' not found".format(parent), file=sys.stderr)
+                rclpy.logging.get_logger('MenuHandler').error(
+                    f"Parent menu entry '{parent}' not found")
                 return None
             parent_context = self.entry_contexts_[parent]
             parent_context.sub_entries.append(handle)
@@ -172,10 +174,8 @@ class MenuHandler:
         """
         for handle in handles_in:
             if handle not in self.entry_contexts_:
-                print(
-                    'Internal error: context handle not found! This is a bug in MenuHandler.',
-                    file=sys.stderr
-                )
+                rclpy.logging.get_logger('MenuHandler').error(
+                    'Internal error: context handle not found! This is a bug in MenuHandler.')
                 return False
 
             context = self.entry_contexts_[handle]
@@ -207,13 +207,12 @@ class MenuHandler:
         handle = self.current_handle_
         self.current_handle_ += 1
 
-        context = EntryContext()
-        context.title = title
-        context.command = command
-        context.command_type = command_type
-        context.visible = True
-        context.check_state = self.NO_CHECKBOX
-        context.feedback_cb = feedback_cb
-
-        self.entry_contexts_[handle] = context
+        self.entry_contexts_[handle] = EntryContext(
+            title=title,
+            command=command,
+            command_type=command_type,
+            visible=True,
+            check_state=self.NO_CHECKBOX,
+            feedback_cb=feedback_cb,
+        )
         return handle

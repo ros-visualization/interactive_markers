@@ -29,11 +29,16 @@
 
 # Author: Michael Ferguson
 
+from collections.abc import Callable
+from dataclasses import dataclass
+from dataclasses import field
 from threading import Lock
+from typing import ClassVar
 
 from builtin_interfaces.msg import Time
 from rclpy.duration import Duration
 from rclpy.qos import QoSProfile
+import rclpy.time
 from std_msgs.msg import Header
 from visualization_msgs.msg import InteractiveMarker
 from visualization_msgs.msg import InteractiveMarkerFeedback
@@ -42,29 +47,32 @@ from visualization_msgs.msg import InteractiveMarkerUpdate
 from visualization_msgs.srv import GetInteractiveMarkers
 
 
+@dataclass
 class MarkerContext:
     """Represents a single marker."""
 
-    def __init__(self, time):
-        self.last_feedback = time
-        self.last_client_id = ''
-        self.default_feedback_callback = None
-        self.feedback_callbacks = {}
-        self.int_marker = InteractiveMarker()
+    # rclpy.time.Time, not the builtin_interfaces.msg.Time imported above: this
+    # holds a clock reading, not a message stamp.
+    last_feedback: rclpy.time.Time
+    last_client_id: str = ''
+    default_feedback_callback: Callable | None = None
+    feedback_callbacks: dict[int, Callable] = field(default_factory=dict)
+    int_marker: InteractiveMarker = field(default_factory=InteractiveMarker)
 
 
+@dataclass
 class UpdateContext:
     """Represents an update to a single marker."""
 
-    FULL_UPDATE = 0
-    POSE_UPDATE = 1
-    ERASE = 2
+    # ClassVar keeps these constants out of the generated __init__.
+    FULL_UPDATE: ClassVar[int] = 0
+    POSE_UPDATE: ClassVar[int] = 1
+    ERASE: ClassVar[int] = 2
 
-    def __init__(self):
-        self.update_type = self.FULL_UPDATE
-        self.int_marker = InteractiveMarker()
-        self.default_feedback_callback = None
-        self.feedback_callbacks = {}
+    update_type: int = FULL_UPDATE
+    int_marker: InteractiveMarker = field(default_factory=InteractiveMarker)
+    default_feedback_callback: Callable | None = None
+    feedback_callbacks: dict[int, Callable] = field(default_factory=dict)
 
 
 class InteractiveMarkerServer:
@@ -189,8 +197,8 @@ class InteractiveMarkerServer:
         :return: True if a marker with that name exists, False otherwise.
         """
         with self.mutex:
-            marker_context = self.marker_contexts.get(name, None)
-            update = self.pending_updates.get(name, None)
+            marker_context = self.marker_contexts.get(name)
+            update = self.pending_updates.get(name)
             # if there's no marker and no pending addition for it, we can't update the pose
             if marker_context is None and update is None:
                 return False
@@ -231,7 +239,7 @@ class InteractiveMarkerServer:
         Note: This change will not take effect until you call applyChanges().
         """
         self.pending_updates = {}
-        for marker_name in self.marker_contexts.keys():
+        for marker_name in self.marker_contexts:
             self.erase(marker_name)
 
     def size(self):
@@ -281,8 +289,8 @@ class InteractiveMarkerServer:
             Leave this empty to make this the default callback.
         """
         with self.mutex:
-            marker_context = self.marker_contexts.get(name, None)
-            update = self.pending_updates.get(name, None)
+            marker_context = self.marker_contexts.get(name)
+            update = self.pending_updates.get(name)
             if marker_context is None and update is None:
                 return False
 
@@ -310,7 +318,7 @@ class InteractiveMarkerServer:
     def applyChanges(self):
         """Apply changes made since the last call to this method and broadcast to clients."""
         with self.mutex:
-            if len(self.pending_updates.keys()) == 0:
+            if not self.pending_updates:
                 return
 
             update_msg = InteractiveMarkerUpdate()
@@ -321,11 +329,13 @@ class InteractiveMarkerServer:
                     if name in self.marker_contexts:
                         marker_context = self.marker_contexts[name]
                     else:
-                        self.node.get_logger().debug('Creating new context for ' + name)
+                        self.node.get_logger().debug(f'Creating new context for {name}')
                         # create a new int_marker context
-                        marker_context = MarkerContext(self.node.get_clock().now())
-                        marker_context.default_feedback_callback = update.default_feedback_callback
-                        marker_context.feedback_callbacks = update.feedback_callbacks
+                        marker_context = MarkerContext(
+                            last_feedback=self.node.get_clock().now(),
+                            default_feedback_callback=update.default_feedback_callback,
+                            feedback_callbacks=update.feedback_callbacks,
+                        )
                         self.marker_contexts[name] = marker_context
 
                     marker_context.int_marker = update.int_marker
@@ -350,7 +360,6 @@ class InteractiveMarkerServer:
 
                 elif update.update_type == UpdateContext.ERASE:
                     if name in self.marker_contexts:
-                        marker_context = self.marker_contexts[name]
                         del self.marker_contexts[name]
                         update_msg.erases.append(name)
             self.pending_updates = {}
@@ -400,8 +409,8 @@ class InteractiveMarkerServer:
             if (marker_context.last_client_id != feedback.client_id and
                     time_since_last_feedback < Duration(seconds=1.0)):
                 self.node.get_logger().debug(
-                    "Rejecting feedback for '{}': conflicting feedback from separate clients"
-                    .format(feedback.marker_name)
+                    f"Rejecting feedback for '{feedback.marker_name}': "
+                    'conflicting feedback from separate clients'
                 )
                 return
 
@@ -448,7 +457,7 @@ class InteractiveMarkerServer:
                 'Markers requested. Responding with the following markers:'
             )
             for name, marker_context in self.marker_contexts.items():
-                self.node.get_logger().debug('    ' + name)
+                self.node.get_logger().debug(f'    {name}')
                 response.markers.append(marker_context.int_marker)
 
             return response
