@@ -31,10 +31,10 @@
 
 #include <string>
 
-#include "geometry_msgs/msg/detail/quaternion__struct.hpp"
-#include "visualization_msgs/msg/detail/interactive_marker__struct.hpp"
-#include "visualization_msgs/msg/detail/interactive_marker_control__struct.hpp"
-#include "visualization_msgs/msg/detail/marker__struct.hpp"
+#include "geometry_msgs/msg/quaternion.hpp"
+#include "visualization_msgs/msg/interactive_marker.hpp"
+#include "visualization_msgs/msg/interactive_marker_control.hpp"
+#include "visualization_msgs/msg/marker.hpp"
 
 #include "interactive_markers/visibility_control.hpp"
 

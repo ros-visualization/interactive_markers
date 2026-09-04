@@ -56,15 +56,12 @@
 
 #include "rmw/types.h"
 
-#include "geometry_msgs/msg/detail/pose__struct.hpp"
-#include "std_msgs/msg/detail/header__struct.hpp"
-#include "visualization_msgs/msg/detail/interactive_marker__struct.hpp"
-#include "visualization_msgs/msg/detail/interactive_marker_feedback__struct.hpp"
-#include "visualization_msgs/msg/detail/interactive_marker_feedback__traits.hpp"
-#include "visualization_msgs/msg/detail/interactive_marker_update__struct.hpp"
-#include "visualization_msgs/msg/detail/interactive_marker_update__traits.hpp"
-#include "visualization_msgs/srv/detail/get_interactive_markers__struct.hpp"
-#include "visualization_msgs/srv/detail/get_interactive_markers__traits.hpp"
+#include "geometry_msgs/msg/pose.hpp"
+#include "std_msgs/msg/header.hpp"
+#include "visualization_msgs/msg/interactive_marker.hpp"
+#include "visualization_msgs/msg/interactive_marker_feedback.hpp"
+#include "visualization_msgs/msg/interactive_marker_update.hpp"
+#include "visualization_msgs/srv/get_interactive_markers.hpp"
 
 #include "interactive_markers/node_interfaces.hpp"
 #include "interactive_markers/visibility_control.hpp"

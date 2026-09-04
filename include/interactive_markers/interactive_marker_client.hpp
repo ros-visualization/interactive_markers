@@ -55,11 +55,9 @@
 #include "rclcpp/subscription_base.hpp"
 #include "rclcpp/time.hpp"
 
-#include "visualization_msgs/msg/detail/interactive_marker_feedback__struct.hpp"
-#include "visualization_msgs/msg/detail/interactive_marker_feedback__traits.hpp"
-#include "visualization_msgs/msg/detail/interactive_marker_update__struct.hpp"
-#include "visualization_msgs/srv/detail/get_interactive_markers__struct.hpp"
-#include "visualization_msgs/srv/detail/get_interactive_markers__traits.hpp"
+#include "visualization_msgs/msg/interactive_marker_feedback.hpp"
+#include "visualization_msgs/msg/interactive_marker_update.hpp"
+#include "visualization_msgs/srv/get_interactive_markers.hpp"
 
 #include "interactive_markers/message_context.hpp"
 #include "interactive_markers/node_interfaces.hpp"
