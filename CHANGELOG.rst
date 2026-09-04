@@ -2,6 +2,12 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.9.2 (2026-09-04)
+------------------
+* Python3 modernization (`#127 <https://github.com/ros-visualization/interactive_markers/issues/127>`_)
+* Added Python tests (`#126 <https://github.com/ros-visualization/interactive_markers/issues/126>`_)
+* Contributors: Alejandro Hernández Cordero
+
 2.9.1 (2026-07-16)
 ------------------
 * concepts (`#125 <https://github.com/ros-visualization/interactive_markers/issues/125>`_)
