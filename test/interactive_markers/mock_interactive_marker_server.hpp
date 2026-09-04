@@ -34,7 +34,12 @@
 #include <vector>
 
 #include "geometry_msgs/msg/pose.hpp"
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/logging.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/node_options.hpp"
+#include "rclcpp/publisher.hpp"
+#include "rclcpp/service.hpp"
+#include "rclcpp/subscription.hpp"
 #include "visualization_msgs/msg/interactive_marker.hpp"
 #include "visualization_msgs/msg/interactive_marker_feedback.hpp"
 #include "visualization_msgs/msg/interactive_marker_pose.hpp"

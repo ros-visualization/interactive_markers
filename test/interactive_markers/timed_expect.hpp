@@ -33,8 +33,6 @@
 #include <chrono>
 #include <thread>
 
-#include "rclcpp/rclcpp.hpp"
-
 #define TIMED_EXPECT_EQ_6_ARGS(lhs, rhs, timeout, period, executor, func, ...) \
   do { \
     auto start_time = std::chrono::steady_clock::now(); \

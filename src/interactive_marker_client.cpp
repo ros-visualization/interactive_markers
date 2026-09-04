@@ -30,19 +30,16 @@
 // Author: David Gossow
 
 #include <chrono>
-#include <cstddef>
-#include <cstdint>
 #include <format>  // NOLINT(build/include_order): cpplint misclassifies the C++20 header as C
 #include <functional>
 #include <memory>
 #include <mutex>
 #include <string>
-#include <utility>
 
+#include "rclcpp/client.hpp"
 #include "rclcpp/create_client.hpp"
 #include "rclcpp/create_publisher.hpp"
 #include "rclcpp/create_subscription.hpp"
-#include "rclcpp/create_timer.hpp"
 #include "rclcpp/exceptions.hpp"
 #include "rclcpp/logging.hpp"
 #include "rclcpp/qos.hpp"
