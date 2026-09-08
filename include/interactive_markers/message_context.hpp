@@ -32,6 +32,7 @@
 #ifndef INTERACTIVE_MARKERS__MESSAGE_CONTEXT_HPP_
 #define INTERACTIVE_MARKERS__MESSAGE_CONTEXT_HPP_
 
+#include <cstddef>
 #include <list>
 #include <memory>
 #include <span>  // NOLINT(build/include_order): cpplint misclassifies the C++20 header as C

@@ -32,13 +32,30 @@
 #ifndef INTERACTIVE_MARKERS__INTERACTIVE_MARKER_SERVER_HPP_
 #define INTERACTIVE_MARKERS__INTERACTIVE_MARKER_SERVER_HPP_
 
+#include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_map>
 
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/clock.hpp"
+#include "rclcpp/context.hpp"
+#include "rclcpp/logger.hpp"
+#include "rclcpp/node_interfaces/node_base_interface.hpp"
+#include "rclcpp/node_interfaces/node_clock_interface.hpp"
+#include "rclcpp/node_interfaces/node_logging_interface.hpp"
+#include "rclcpp/node_interfaces/node_services_interface.hpp"
+#include "rclcpp/node_interfaces/node_topics_interface.hpp"
+#include "rclcpp/publisher.hpp"
+#include "rclcpp/qos.hpp"
+#include "rclcpp/service.hpp"
+#include "rclcpp/subscription.hpp"
+#include "rclcpp/time.hpp"
+
+#include "rmw/types.h"
+
 #include "geometry_msgs/msg/pose.hpp"
 #include "std_msgs/msg/header.hpp"
 #include "visualization_msgs/msg/interactive_marker.hpp"
