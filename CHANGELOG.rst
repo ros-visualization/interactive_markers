@@ -2,6 +2,12 @@
 Changelog for package interactive_markers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.9.3 (2026-10-22)
+------------------
+* Added missing dependency (`#129 <https://github.com/ros-visualization/interactive_markers//issues/129>`_)
+* Optimize include headers (`#128 <https://github.com/ros-visualization/interactive_markers//issues/128>`_)
+* Contributors: Alejandro Hernández Cordero
+
 2.9.2 (2026-09-04)
 ------------------
 * Python3 modernization (`#127 <https://github.com/ros-visualization/interactive_markers/issues/127>`_)
