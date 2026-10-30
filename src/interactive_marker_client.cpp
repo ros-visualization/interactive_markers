@@ -40,6 +40,7 @@
 #include "rclcpp/create_client.hpp"
 #include "rclcpp/create_publisher.hpp"
 #include "rclcpp/create_subscription.hpp"
+#include "rclcpp/create_timer.hpp"
 #include "rclcpp/exceptions.hpp"
 #include "rclcpp/logging.hpp"
 #include "rclcpp/qos.hpp"

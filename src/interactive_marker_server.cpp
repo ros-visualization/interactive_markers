@@ -45,6 +45,7 @@
 #include "rclcpp/create_publisher.hpp"
 #include "rclcpp/create_service.hpp"
 #include "rclcpp/create_subscription.hpp"
+#include "rclcpp/create_timer.hpp"
 #include "rclcpp/logging.hpp"
 #include "rclcpp/node_interfaces/node_base_interface.hpp"
 #include "rclcpp/node_interfaces/node_clock_interface.hpp"
