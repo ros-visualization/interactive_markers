@@ -115,6 +115,15 @@ if(BUILD_TESTING)
     tf2::tf2
     visualization_msgs::visualization_msgs
   )
+
+  ament_add_gtest(test_tools
+    test/${PROJECT_NAME}/test_tools.cpp
+  )
+  target_link_libraries(test_tools
+    ${PROJECT_NAME}
+    geometry_msgs::geometry_msgs
+    visualization_msgs::visualization_msgs
+  )
 endif()
 
 ament_package()
